@@ -1,0 +1,8 @@
+.vs/
+.vscode/
+build/
+
+CmakeLists.txt
+*.log
+*.tmp
+*.bak
