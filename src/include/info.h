@@ -1,3 +1,4 @@
+#pragma once
 #include "exec.h"
 #include <filesystem>
 #include <string>

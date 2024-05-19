@@ -1,8 +1,10 @@
 #include "network.h"
-#include <QByteArray>
+#include <QtCore/QByteArray>
 namespace neko {
 
     using namespace std::literals;
+    networkBase::Config networkBase::Dconfig{};
+    constexpr networkBase::Api networkBase::api;
 
     std::unordered_map<networkBase::Opt, std::string> networkBase::optMap = {
         {networkBase::Opt::downloadFile, "downloadFile"s},

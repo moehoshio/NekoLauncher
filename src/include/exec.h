@@ -35,10 +35,8 @@ SOFTWARE.
 #include <regex>
 #include <string>
 
-
-
-
-#include "threadpool.h" // NekoL Project Customization
+// NekoL Project Customization
+#include "threadpool.h"
 #include <SimpleIni/SimpleIni.h>
 
 namespace neko {
@@ -54,13 +52,15 @@ namespace neko {
     constexpr inline decltype(auto) operator|(const std::initializer_list<T> &val, F &&func) {
         return func(std::forward<std::initializer_list<T>>(val));
     }
-
-    constexpr inline decltype(auto) operator|(Range auto &&val, auto &&func) {
-        for (const auto &it : val) {
-            func(val);
+    namespace range {
+        constexpr inline decltype(auto) operator|(Range auto &&val, auto &&func) {
+            for (const auto &it : val) {
+                func(val);
+            }
+            return val;
         }
-        return val;
-    }
+    } // namespace range
+
 } // namespace neko
 
 namespace exec {
@@ -166,4 +166,34 @@ namespace exec {
         std::regex proxyRegex(R"((http|https|socks5|socks4)://([\w.-]+)(:\d+))");
         return std::regex_match(address, proxyRegex);
     };
+
+    inline bool matchExtName(const std::string &name, const std::string &targetExtension) {
+        if (name.empty() || targetExtension.empty())
+            return false;
+
+        size_t lastDotIndex = name.find_last_of('.');
+
+        if (lastDotIndex != std::string::npos) {
+            std::string fileExtension = name.substr(lastDotIndex + 1);
+
+#ifdef _WIN32
+            for (auto &c : fileExtension) {
+                c = tolower(c);
+            }
+#endif
+
+            return fileExtension == targetExtension;
+        }
+
+        return false;
+    }
+    inline bool matchExtNames(const std::string & name , const std::vector<std::string> & targetExtensions ){
+        for ( const auto &it : targetExtensions)
+        {
+            if (matchExtName(name,it)) {
+                return true;
+            }
+        }
+        return false;
+    }
 } // namespace exec

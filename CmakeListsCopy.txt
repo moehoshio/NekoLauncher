@@ -1,51 +1,79 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.20)
 project(NakoL)
 
 list(APPEND SRCFILES
-    src/main.cpp
+    src/mainwindow.cpp    
+    src/mainwindow_moc.cpp
     src/loguru.cpp
     src/exec.cpp
     src/info.cpp
     src/network.cpp
+    src/autoinit.cpp
+    src/main.cpp
 )
+
 
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
 )
 
+
 list(APPEND LIBRARY_DIRS
 
 )
+
+
+set(CMAKE_PREFIX_PATH "C:/Qt//6.6.1/msvc2019_64")
+
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
-set(Qt6_DIR "C:/Qt/6.6.1/msvc2019_64")
-
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets MultimediaWidgets)
-find_package(Qt6 COMPONENTS WebEngineWidgets)
-
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets MultimediaWidgets REQUIRED)
 
 add_executable(NekoL ${SRCFILES})
+
 
 target_include_directories(NekoL PRIVATE ${INCLUDE_DIRS})
 target_compile_features(NekoL PRIVATE cxx_std_20)
 
-target_link_libraries(NekoL PRIVATE 
-Qt6::WebEngineWidgets Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets 
-${LIBRARY_DIRS}/Debug/libcurl-d_imp.lib
+
+set(QtBin C:/Qt/6.6.1/msvc2019_64/bin)
+
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/src/mainwindow_moc.cpp
+    COMMAND ${QtBin}/moc ${CMAKE_SOURCE_DIR}/src/include/mainwindow.h -o ${CMAKE_SOURCE_DIR}/src/mainwindow_moc.cpp
+    DEPENDS ${CMAKE_SOURCE_DIR}/src/include/mainwindow.h
+    COMMENT "Generating MOC file for mainwindow.h"
 )
+
+
+target_link_libraries(NekoL PRIVATE 
+Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets Qt6::Gui
+${LIBRARY_DIRS}/libapps.lib
+${LIBRARY_DIRS}/openssl.lib
+${LIBRARY_DIRS}/libcurl_imp.lib
+${LIBRARY_DIRS}/libcrypto.lib
+${LIBRARY_DIRS}/libssl.lib
+${LIBRARY_DIRS}/zlib.lib
+)
+
 
 if(MSVC)
-    # set_target_properties(NekoL PROPERTIES WIN32_EXECUTABLE TRUE)
+    set_target_properties(NekoL PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
-file(COPY 
-    ${Qt6_DIR}/bin/Qt6CoreD.dll
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
-)
+
+
+
+# file(COPY 
+#     ${LIBRARY_DIRS}/Debug/libcurl-d.dll
+#     ${LIBRARY_DIRS}/zlib.dll
+#     ${QtBin}/Qt6Cored.dll
+#     ${QtBin}/Qt6Guid.dll
+#     ${QtBin}/Qt6Widgetsd.dll
+#     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
+# )

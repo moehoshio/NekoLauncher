@@ -312,7 +312,7 @@ inline void ThreadPool::start_worker(
 
                 try {
                     task();
-                } catch(const std::exception& e) {
+                } catch(const std::exception& ) {
                     // Handle the exception here, you might want to log it
                     // Restart the worker thread to continue processing tasks
                     std::unique_lock<std::mutex> lock(this->queue_mutex);
