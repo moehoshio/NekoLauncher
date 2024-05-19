@@ -1,4 +1,8 @@
-# Neko Launcher
+# dev branches
+
+This branch applies to unfinished development, and it may fail to build successfully.
+
+## Neko Launcher
 
 NekoL (Neko launcher or NekoLc) is a modern, customizable cross-platform launcher framework. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
 It can launch any object, wrapping around anything, and includes self-updating and automatic software content updates.  
