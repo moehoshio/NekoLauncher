@@ -2,19 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 project(NakoL)
 
 
-list(APPEND SRCFILES
-    src/mainwindow.cpp    
-    src/loguru.cpp
-    src/exec.cpp
-    src/info.cpp
-    src/network.cpp
-    src/autoinit.cpp
-    src/headbar.cpp
-    src/main.cpp
-    
-)
-
-
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
 )
@@ -28,6 +15,21 @@ list(APPEND LIBRARY_DIRS
 set(CMAKE_PREFIX_PATH "C:/Qt/6.6.1/msvc2019_64")
 
 set(QtBin C:/Qt/6.6.1/msvc2019_64/bin)
+
+
+
+list(APPEND SRCFILES
+    src/mainwindow.cpp    
+    src/loguru.cpp
+    src/exec.cpp
+    src/info.cpp
+    src/network.cpp
+    src/autoinit.cpp
+    src/headbar.cpp
+    src/main.cpp
+    
+)
+
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)

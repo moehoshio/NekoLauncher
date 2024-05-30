@@ -26,7 +26,7 @@
 #include <QtMultimedia/QMediaPlayer>
 #include <QtMultimediaWidgets/QVideoWidget>
 
-#include <SimpleIni/SimpleIni.h>
+#include "SimpleIni/SimpleIni.h"
 
 namespace ui {
 

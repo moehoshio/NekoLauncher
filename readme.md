@@ -6,7 +6,7 @@ This branch applies to unfinished development, and it may fail to build successf
 
 NekoL (Neko launcher or NekoLc) is a modern, customizable cross-platform launcher framework. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
 It can launch any object, wrapping around anything, and includes self-updating and automatic software content updates.  
-This is also my first project learning C++ for nearly a year. Through this project, I continue to grow, and learn more content and knowledge.
+This is also my first project learning C++ for nearly a year. Through this project,learn more content and knowledge.
 
 ## Recruiting Contributors
 
@@ -26,6 +26,42 @@ Our main program also uses cross-platform methods, making it supported on most p
 In other words, if you change the GUI version or framework, it might support other platforms as well, more or less.
 
 ## Build
+
+prerequisites:  
+std >= c++20  
+qt6  
+cmake  
+libcurl  
+
+Already included in the project dependencies:  
+
+simpleIni  
+nlohmann/json  
+loguru  
+threadpool  
+...
+
+Clone code to the you host and :  
+
+```shell
+cp CmakeListsCopy.txt CmakeLists.txt
+cmake ./build
+cmake --build ./build
+```
+
+Custom include and library path in CMakeList.txt :  
+INCLUDE_DIRS  
+LIBRARY_DIRS  
+
+```cmake
+list(APPEND INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/src/include
+    /to/path/
+)
+```
+
+CMAKE_PREFIX_PATH : qt path  
+QtBin : qt bin path  
 
 ### Contribution and Customization
 
