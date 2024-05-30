@@ -25,7 +25,6 @@ namespace neko {
         if (proxyUnexpected)
             proxy = ""s;
         
-        nlog::Info(FI, LI, "%s : proxy : %s", FN, proxy.c_str());
         bool
             dev = exec::getConfigObj().GetBoolValue("dev", "enable", false),
             tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
@@ -36,7 +35,7 @@ namespace neko {
             "", // host
             (dev == true && tls == false) ? "http://"s : "https://"s};
 
-        nlog::Info(FI, LI, "%s :  dev: %s , tls : %s , protocol : %s", FN, exec::boolTo<const char *>(dev), exec::boolTo<const char *>(tls), Dconfig.protocol.c_str());
+        nlog::Info(FI, LI, "%s :  proxy : %s , dev: %s , tls : %s , protocol : %s , dUseragent : %s ", FN, Dconfig.proxy.c_str(),exec::boolTo<const char *>(dev), exec::boolTo<const char *>(tls), Dconfig.protocol.c_str() ,Dconfig.userAgent.c_str());
 
         return exec::getThreadObj().enqueue( []() {
             network net;
@@ -55,7 +54,7 @@ namespace neko {
                 bool res = net.autoRetry(Opt::onlyRequest, Aargs);
 
                 if (res) {
-                    nlog::Info(FI, LI, "%s : get is true , host : %s , retCode : %d", FN, it, retCode);
+                    nlog::Info(FI, LI, "%s : testing okay , host : %s , retCode : %d", FN, it, retCode);
                     Dconfig.host = it;
                     return;
                 }

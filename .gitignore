@@ -6,3 +6,5 @@ CmakeLists.txt
 *.log
 *.tmp
 *.bak
+
+*_moc.cpp

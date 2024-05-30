@@ -1,6 +1,7 @@
 #include "autoinit.h"
 #include "mainwindow.h"
 
+
 #include <iostream>
 
 
@@ -12,17 +13,16 @@
 #include <QtGui/QGuiApplication>
 
 
-#include <curl/curl.h>
-
-
 int main(int argc, char *argv[]){
     try
     {
         QApplication app(argc, argv);
         neko::autoInit(argc, argv);
-        ui::MainWindow w(exec::getConfigObj());
+        ui::MainWindow w(exec::getConfigObj(),nullptr);
         w.show();
-        return app.exec();
+        app.exec();
+        nlog::Info(FI,LI,"%s : Exit",FN);
+        return 0;
     }
     catch(const std::exception&) {
         

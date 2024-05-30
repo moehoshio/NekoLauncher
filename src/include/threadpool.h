@@ -28,7 +28,8 @@
 
 
 // NekoL Project Customization
-
+#include "log.h"
+#include "fn.h"
 #include <vector>
 #include <queue>
 #include <memory>
@@ -191,6 +192,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
 // the destructor joins all threads
 inline ThreadPool::~ThreadPool()
 {
+    nlog::Info(FI,LI,"%s : Enter",FN);
     std::unique_lock<std::mutex> lock(queue_mutex);
     stop = true;
     pool_size = 0;

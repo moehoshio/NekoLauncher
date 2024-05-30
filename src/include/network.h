@@ -204,9 +204,10 @@ namespace neko {
             }
 
             if (args.config.proxy == "")
-                curl_easy_setopt(curl, CURLOPT_PROXY, NULL);
+                curl_easy_setopt(curl, CURLOPT_NOPROXY);
             else if (args.config.proxy != "true")
                 curl_easy_setopt(curl, CURLOPT_PROXY, args.config.proxy.c_str());
+                
 
             if (args.resBreakPoint) {
                 try {
@@ -472,6 +473,7 @@ namespace neko {
         }
 
         inline T autoRetryGet(Opt opt, autoRetryArgs &ra) {
+            nlog::Info(FI,LI,"%s : expect code : %d , sleep : %d , times : %d", FN, ra.code, ra.sleep, ra.times);
             RetHttpCode code;
             if (!ra.args.code) {
                 ra.args.code = &code;
@@ -480,6 +482,7 @@ namespace neko {
             for (size_t i = 0; i < ra.times; ++ra.times) {
 
                 T res = get(opt, ra.args);
+                nlog::Info(FI,LI,"%s : this req code : %d", FN, *ra.args.code);
                 if (*ra.args.code == ra.code ||
                             // 416 represent the file size requested for download in the breakpoint continuation exceeded the actual size.
                             // this if it is enabled res BreakPoint ,default download end.
@@ -511,6 +514,7 @@ namespace neko {
         }
         inline bool Multi(Opt opt, MultiArgs &ma) {
 
+
             constexpr size_t fiveM = (5 * 1024) * 1024;
 
             struct Data {
@@ -529,11 +533,14 @@ namespace neko {
             switch (ma.approach) {
                 case MultiArgs::Size: // fixed size 5MB
                     nums = maxSize / fiveM;
+                    nlog::Info(FI,LI,"%s : approach : %s , used thread nums : %zu , expect nums : %d",FN,"SIze",ma.nums,ma.code);
                     break;
                 case MultiArgs::Quantity: // fixed quantity 100 files
                     oneSize = maxSize / 100;
+                    nlog::Info(FI,LI,"%s : approach : %s , used thread nums : %zu , expect nums : %d",FN,"Quantity",ma.nums,ma.code);
                     break;
                 case MultiArgs::Auto: {
+                    nlog::Info(FI,LI,"%s : approach : %s , used thread nums : %zu , expect nums : %d",FN,"Auto",ma.nums,ma.code);
                     if (maxSize < (10 * fiveM))
                         oneSize = maxSize / 100;
                     else
@@ -569,21 +576,30 @@ namespace neko {
                 args.range = list[i].range.c_str();
                 args.fileName = list[i].name.c_str();
                 bool ret = list[i].result.get();
-                if (!ret && !exec::getThreadObj().enqueue(autoRetry(opt, autoRetryArgs{args})).get())
+                if (!ret && !exec::getThreadObj().enqueue(autoRetry(opt, autoRetryArgs{args})).get()){
+                    nlog::Err(FI,LI,"%s :  %d state : fail to twice ! , range : %s , file : %s",FN,i,args.range,args.fileName);
                     return false;
+                }
+                    
             }
             oneIof file;
             for (size_t i = 0; i < 3; ++i) {
                 bool is = file.init(ma.args.fileName, std::chrono::seconds(10),ma.args.fileName);
-                if (!is)
+                if (is)
                     break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
             }
 
-            if (!file.get()->is_open())
+            if (!file.get()->is_open()){
+                nlog::Info(FI,LI,"%s : fail to open file %s! ",FN,ma.args.fileName);
                 return false;
+            }
+                
 
             for (const auto &it : list) {
                 std::ifstream ifs(it.name);
+                if (!ifs.is_open())
+                    nlog::Err(FI,LI,"%s : fail to open temp file %s !",it.name.c_str());
                 (*file.get()) << ifs;
                 ifs.close();
             }

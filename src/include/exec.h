@@ -187,13 +187,26 @@ namespace exec {
 
         return false;
     }
-    inline bool matchExtNames(const std::string & name , const std::vector<std::string> & targetExtensions ){
-        for ( const auto &it : targetExtensions)
-        {
-            if (matchExtName(name,it)) {
+    inline bool matchExtNames(const std::string &name, const std::vector<std::string> &targetExtensions) {
+        for (const auto &it : targetExtensions) {
+            if (matchExtName(name, it)) {
                 return true;
             }
         }
         return false;
+    }
+    inline auto matchSizes(const std::string &s) {
+        std::regex r("\\b(\\d+)x(\\d+)\\b");
+        std::smatch match;
+        std::regex_search(s, match, r);
+        return match;
+    }
+    inline std::vector<std::string> matchSizesV(const std::string &s) {
+        auto res = matchSizes(s);
+        std::vector<std::string> v;
+        for (const auto &it : res) {
+            v.push_back(it);
+        }
+        return v;
     }
 } // namespace exec
