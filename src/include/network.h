@@ -18,6 +18,7 @@ namespace neko {
         
         using RetHttpCode = int;
 
+        //if not waiting , testing host (set Dconfig.host) may not be ready
         static std::future<void> init();
 
         struct Config {
@@ -31,10 +32,10 @@ namespace neko {
             constexpr static const char *hostList[]{
 #include "../data/hostlist"
             };
-            constexpr static const char *mainenance{"/api/get?maintenance"};
-            constexpr static const char *testing{"/testing/ping"};
-            constexpr static const char *info{"/api/get?info"};
-            constexpr static const char *token{"api/get?token"};
+            constexpr static const char *mainenance = "/api/get?maintenance";
+            constexpr static const char *testing = "/testing/ping";
+            constexpr static const char *info = "/api/get?info";
+            constexpr static const char *token = "api/get?token";
         };
 
         static Config Dconfig;
@@ -49,9 +50,9 @@ namespace neko {
             postText,
             postFile,
             retPostText,    // with return value.
-            getSize,        // generally speaking, using size_t or T support size_t constructing . with return value.
+            getSize,        // using getCase or getSize . with return value.
             getContent,     // with return value.
-            getContentType, // T requires support std::string constructing. with return value.
+            getContentType, // using getCase func. with return value.
             // use getContentAndStorage (to file) func, T requires operator<< (std::ostream&). with return value.
             getHeadContent // with return value.
 
@@ -390,7 +391,7 @@ namespace neko {
                 case Opt::getContent:
                 case Opt::getHeadContent: {
                     if (opt == Opt::getHeadContent) {
-                        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L); // 使用HEAD请求
+                        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L); // using HEAD
                         curl_easy_setopt(curl, CURLOPT_HEADERDATA, &ret);
                         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, args.headerCallback);
                     } else {

@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 project(NakoL)
 
+
 list(APPEND SRCFILES
     src/mainwindow.cpp    
-    src/mainwindow_moc.cpp
     src/loguru.cpp
     src/exec.cpp
     src/info.cpp
     src/network.cpp
     src/autoinit.cpp
+    src/headbar.cpp
     src/main.cpp
+    
 )
 
 
@@ -23,32 +25,47 @@ list(APPEND LIBRARY_DIRS
 )
 
 
-set(CMAKE_PREFIX_PATH "C:/Qt//6.6.1/msvc2019_64")
+set(CMAKE_PREFIX_PATH "C:/Qt/6.6.1/msvc2019_64")
 
+set(QtBin C:/Qt/6.6.1/msvc2019_64/bin)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_CXX_EXTENSIONS False)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets MultimediaWidgets REQUIRED)
 
-add_executable(NekoL ${SRCFILES})
+
+function(generate_moc SOURCE_HEADER)
+get_filename_component(SOURCE_NAME ${SOURCE_HEADER} NAME_WE)
+set(MOC_FILE ${CMAKE_SOURCE_DIR}/src/${SOURCE_NAME}_moc.cpp)
+
+add_custom_command(
+    OUTPUT ${MOC_FILE}
+    COMMAND ${QtBin}/moc ${SOURCE_HEADER} -o ${MOC_FILE}
+    DEPENDS ${SOURCE_HEADER}
+    COMMENT "Generating MOC file for ${SOURCE_HEADER}"
+)
+
+set(GENERATED_MOC_FILES ${GENERATED_MOC_FILES} ${MOC_FILE} PARENT_SCOPE)
+endfunction()
+
+set(HEADERS
+${CMAKE_SOURCE_DIR}/src/include/mainwindow.h
+${CMAKE_SOURCE_DIR}/src/include/headbar.h
+)
+
+foreach(HEADER ${HEADERS})
+generate_moc(${HEADER})
+endforeach()
+
+
+add_executable(NekoL ${SRCFILES} ${GENERATED_MOC_FILES})
 
 
 target_include_directories(NekoL PRIVATE ${INCLUDE_DIRS})
 target_compile_features(NekoL PRIVATE cxx_std_20)
-
-
-set(QtBin C:/Qt/6.6.1/msvc2019_64/bin)
-
-add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/src/mainwindow_moc.cpp
-    COMMAND ${QtBin}/moc ${CMAKE_SOURCE_DIR}/src/include/mainwindow.h -o ${CMAKE_SOURCE_DIR}/src/mainwindow_moc.cpp
-    DEPENDS ${CMAKE_SOURCE_DIR}/src/include/mainwindow.h
-    COMMENT "Generating MOC file for mainwindow.h"
-)
 
 
 target_link_libraries(NekoL PRIVATE 
@@ -56,14 +73,15 @@ Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets Qt6::Gui
 ${LIBRARY_DIRS}/libapps.lib
 ${LIBRARY_DIRS}/openssl.lib
 ${LIBRARY_DIRS}/libcurl_imp.lib
-${LIBRARY_DIRS}/libcrypto.lib
-${LIBRARY_DIRS}/libssl.lib
-${LIBRARY_DIRS}/zlib.lib
+${LIBRARY_DIRS}/libcrypto_static.lib
+${LIBRARY_DIRS}/libssl_static.lib
+${LIBRARY_DIRS}/zlibstatic.lib
 )
 
 
 if(MSVC)
     set_target_properties(NekoL PROPERTIES WIN32_EXECUTABLE TRUE)
+    # target_sources(t01 PRIVATE icon.rc)
 endif()
 
 

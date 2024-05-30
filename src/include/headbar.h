@@ -1,11 +1,15 @@
 #pragma once
 
 #include <QtWidgets/QToolBar>
-#include <QtCore/QEvent>
-#include <QtGui/QWindow>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/qwidget.h>
 #include <QtWidgets/QGraphicsBlurEffect>
+
+
+#include <QtCore/QEvent>
+
+
+#include <QtGui/QWindow>
 #include <QtGui/QPainter>
 
 

@@ -6,7 +6,7 @@ namespace nerr {
     enum class errType {
         None,
 
-        // one
+        // one.h
         TheSame,
         // timeout
         TimeOut,

@@ -9,7 +9,7 @@ namespace neko {
     public:
         enum class State {
             over,
-            unDone,
+            undone,
             tryAgainLater
         };
     inline State autoUpdate(){

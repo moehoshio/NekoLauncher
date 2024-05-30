@@ -65,7 +65,8 @@ namespace neko {
                 Data::home = std::string(path);
 
             if (std::string t = exec::getConfigObj().GetValue("more", "temp", "");
-                std::filesystem::is_directory(t))
+                std::filesystem::is_directory(t)
+            )
                 Data::temp = t | exec::move;
             else
                 Data::temp = std::filesystem::temp_directory_path().string();

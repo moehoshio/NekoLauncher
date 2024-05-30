@@ -41,9 +41,6 @@ SOFTWARE.
 
 namespace neko {
 
-    template <typename T>
-    concept Range = std::ranges::range<T>;
-
     constexpr inline decltype(auto) operator|(auto &&val, auto &&func) {
         return func(std::forward<decltype(val)>(val));
     }
@@ -53,6 +50,9 @@ namespace neko {
         return func(std::forward<std::initializer_list<T>>(val));
     }
     namespace range {
+
+        template <typename T>
+        concept Range = std::ranges::range<T>;
         constexpr inline decltype(auto) operator|(Range auto &&val, auto &&func) {
             for (const auto &it : val) {
                 func(val);
