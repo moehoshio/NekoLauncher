@@ -13,7 +13,8 @@ namespace neko {
             tryAgainLater
         };
     inline State autoUpdate(){
-        
+        network net;
+        auto 
     }
     };
 } // namespace neko

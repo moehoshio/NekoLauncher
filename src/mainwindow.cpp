@@ -28,9 +28,6 @@ namespace ui {
             default:
                 break;
         }
-        // backgroundLabel->hide();
-        // ->raise(); //帶到前景
-        // pushButton->raise();
     }
 
     void MainWindow::setImgbgBase() {
@@ -52,7 +49,6 @@ namespace ui {
         videoWidget->setMinimumSize(scrSize.width() * 0.35, scrSize.height() * 0.35);
         videoWidget->setAspectRatioMode(Qt::KeepAspectRatioByExpanding);
         player->setLoops(-1);
-        // gridLayout->addWidget(videoWidget);
     }
 
     void MainWindow::setBase() {

@@ -107,11 +107,7 @@ namespace neko {
         static_assert(!std::is_pointer<T>::value, "Error: Template parameter T cannot be a pointer type! If using pointer types, please use the T * getPtr function.");
 
     public:
-        using TType = T;
-        using FType = F;
         network() = default;
-        // This constructor can be used for type deduction. Maybe
-        network(T, F){};
         struct Args {
             const char *url;
             const char *fileName = nullptr;

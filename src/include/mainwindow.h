@@ -80,13 +80,16 @@ namespace ui {
         void setImgbg(std::shared_ptr<QByteArray> &&data);
         void setVidbg(const std::string &file);
         void setVidbg(QUrl url);
+
+
         void resizeEvent(QResizeEvent *event) override;
 
-        ~MainWindow() noexcept = default;
         bool event(QEvent *event) override;
         void dropEvent(QDropEvent *p_event) override;
         void dragEnterEvent(QDragEnterEvent *p_event) override;
         void dragMoveEvent(QDragMoveEvent *p_event) override;
+
+        ~MainWindow() noexcept = default;
 
 
         void onVidDgCallback(std::string filePath);

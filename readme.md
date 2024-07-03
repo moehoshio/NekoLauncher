@@ -19,8 +19,6 @@ We use Qt6 to build the GUI. Its minimum requirements are:
 - Windows 10 (H1809) x86_64
 - macOS 11 x86_64, x86_64h, and arm64
 - Linux (Ubuntu 20.04, OpenSuSE 15.4) x86_64
-- iOS 14 armv8 (arm64)
-- Android 8.0 (API level 26) armeabi-v7a, x86, arm64-v8, and x86_64
 
 Our main program also uses cross-platform methods, making it supported on most platforms.  
 In other words, if you change the GUI version or framework, it might support other platforms as well, more or less.
@@ -52,11 +50,15 @@ cmake --build ./build
 Custom include and library path in CMakeList.txt :  
 INCLUDE_DIRS  
 LIBRARY_DIRS  
+e.g
 
 ```cmake
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
-    /to/path/
+    /to/path/include
+)
+list(APPEND LIBRARY_DIRS
+    /to/path/libs
 )
 ```
 
