@@ -47,7 +47,7 @@ namespace neko{
 class ThreadPool {
 public:
     explicit ThreadPool(std::size_t threads
-        = (std::max)(2u, (std::thread::hardware_concurrency() - 1) ));
+        = (std::max)(2u, std::thread::hardware_concurrency() ));
 
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)

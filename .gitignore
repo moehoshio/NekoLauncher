@@ -8,3 +8,5 @@ CmakeLists.txt
 *.bak
 
 *_moc.cpp
+mainwindow copy.cpp
+mainwindow copy.h
