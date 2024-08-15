@@ -13,11 +13,11 @@ int main(int argc, char *argv[]) {
     try {
         QApplication app(argc, argv);
         neko::autoInit(argc, argv);
-        ui::MainWindow w(exec::getConfigObj(), nullptr);
+        ui::MainWindow w;
         w.show();
 
-        neko::core c;
-        c.autoUpdate(&w);
+        // neko::core c;
+        // c.autoUpdate(&w);
 
         return app.exec();
     } catch (const std::exception &) {

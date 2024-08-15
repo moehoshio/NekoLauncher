@@ -7,6 +7,7 @@
 
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QGroupBox>
+#include <QtWidgets/QFontComboBox>
 
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QStyle>
@@ -32,6 +33,7 @@
 #include <QtGui/QIntValidator>
 #include <QtGui/QValidator>
 
+#include <QtGui/QScreen>
 namespace ui {
 
     class pixmapWidget : public QWidget {
@@ -103,7 +105,6 @@ namespace ui {
             QButtonGroup *bgSelectButtonGroup;
             QRadioButton *bgSelectRadioNone;
             QRadioButton *bgSelectRadioImage;
-            QRadioButton *bgSelectRadioVideo;
 
             // input
             QWidget *bgInputLayoutWidget;
@@ -130,6 +131,14 @@ namespace ui {
             QLabel *styleBlurEffectRadiusText;
             QSlider *styleBlurEffectRadiusSlider;
             QWidget *styleBlurEffectRadiusSpacing;
+
+
+            QWidget * stylePointSizeEditLayoutWidget;
+            QHBoxLayout * stylePointSizeEditLayout;
+            QLabel *stylePointSizeEditText;
+            QLineEdit *stylePointSizeEditLine;
+            QValidator *stylePointSizeValidator;
+            QFontComboBox * stylePointSizeEditFontBox;
             // style group
 
             // window group
@@ -209,23 +218,35 @@ namespace ui {
 
         pixmapWidget *bgWidget;
         QGraphicsBlurEffect *m_pBlurEffect;
-        int blurVal;
+        
         QWidget *widget;
         Index *index;
         Setting *setting;
+
+        QFont f;
+        int blurVal;
 
         pageState state;
         pageState oldState;
 
     public:
+        
         void resizeEvent(QResizeEvent *event);
 
+        void resizeItem();
+
+        
         void setupSize();
+        
 
         void setupStyle();
         void setupTranslucentBackground();
 
         void setupText();
+        void setupFont();
+
+        void autoSetText(QFont text);
+        void setTextFont(QFont text,QFont h2,QFont h1);
 
         void setupConnect();
 
