@@ -6,12 +6,12 @@
 #include <QtWidgets/QWidget>
 
 #include <QtWidgets/QCheckBox>
-#include <QtWidgets/QGroupBox>
 #include <QtWidgets/QFontComboBox>
+#include <QtWidgets/QGroupBox>
 
+#include <QtWidgets/QGraphicsBlurEffect>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QStyle>
-#include <QtWidgets/QGraphicsBlurEffect>
 
 #include <QtWidgets/QScrollArea>
 
@@ -134,13 +134,12 @@ namespace ui {
             QSlider *styleBlurEffectRadiusSlider;
             QWidget *styleBlurEffectRadiusSpacing;
 
-
-            QWidget * stylePointSizeEditLayoutWidget;
-            QHBoxLayout * stylePointSizeEditLayout;
+            QWidget *stylePointSizeEditLayoutWidget;
+            QHBoxLayout *stylePointSizeEditLayout;
             QLabel *stylePointSizeEditText;
             QLineEdit *stylePointSizeEditLine;
             QValidator *stylePointSizeValidator;
-            QFontComboBox * stylePointSizeEditFontBox;
+            QFontComboBox *stylePointSizeEditFontBox;
             // style group
 
             // window group
@@ -179,16 +178,16 @@ namespace ui {
 
             // network group
 
-            //more group
-            QGroupBox * moreGroup;
-            QVBoxLayout * moreGroupLayout;
+            // more group
+            QGroupBox *moreGroup;
+            QVBoxLayout *moreGroupLayout;
 
-            QWidget * moreTempLayoutWidget;
-            QHBoxLayout * moreTempLayout;
-            QLabel * moreTempText;
-            QLineEdit * moreTempEdit;
-            QToolButton * moreTempTool;
-            //more group
+            QWidget *moreTempLayoutWidget;
+            QHBoxLayout *moreTempLayout;
+            QLabel *moreTempText;
+            QLineEdit *moreTempEdit;
+            QToolButton *moreTempTool;
+            // more group
 
             SettingPageTwo(QWidget *parent = nullptr);
         };
@@ -198,8 +197,20 @@ namespace ui {
             QWidget *scrollContent;
             QVBoxLayout *scrollLayout;
 
-            QWidget *devOpt;
-            SettingPageThree(QWidget *parent = nullptr) : QWidget(parent){};
+            QGroupBox *devOptGroup;
+            QVBoxLayout *devOptGroupLayout;
+
+            QWidget *devOptCheckLayoutWidget;
+            QHBoxLayout *devOptCheckLayout;
+            QCheckBox *devOptEnable;
+            QCheckBox *devOptDebug;
+            QCheckBox *devOptTls;
+
+            QWidget *devServerInputLayoutWidget;
+            QHBoxLayout *devServerInputLayout;
+            QCheckBox *devServerAuto;
+            QLineEdit *devServerEdit;
+            SettingPageThree(QWidget *parent = nullptr);
         };
 
         struct Index : public QWidget {
@@ -231,7 +242,7 @@ namespace ui {
 
         pixmapWidget *bgWidget;
         QGraphicsBlurEffect *m_pBlurEffect;
-        
+
         QWidget *widget;
         Index *index;
         Setting *setting;
@@ -243,14 +254,11 @@ namespace ui {
         pageState oldState;
 
     public:
-        
         void resizeEvent(QResizeEvent *event);
 
         void resizeItem();
 
-        
         void setupSize();
-        
 
         void setupStyle();
         void setupTranslucentBackground();
@@ -261,7 +269,7 @@ namespace ui {
         void setupBase(neko::Config config);
 
         void autoSetText(QFont text);
-        void setTextFont(QFont text,QFont h2,QFont h1);
+        void setTextFont(QFont text, QFont h2, QFont h1);
 
         void setupConnect();
 
