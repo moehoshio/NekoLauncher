@@ -11,7 +11,6 @@ namespace neko {
         {networkBase::Opt::onlyRequest, "onlyRequest"s},
         {networkBase::Opt::postText, "postText"s},
         {networkBase::Opt::postFile, "postFile"s},
-        {networkBase::Opt::retPostText, "retPostText"s},
         {networkBase::Opt::getSize, "getSize"s},
         {networkBase::Opt::getContent, "getContent"s},
         {networkBase::Opt::getContentType, "getContentType"s},
@@ -30,9 +29,9 @@ namespace neko {
             tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
 
         networkBase::Dconfig = {
-            "NekoL /"s + info::getVersion(),
+            "NekoLc /"s + info::getVersion(),
             proxy | exec::move,
-            "", // host
+            Api::hostList[0],
             (dev == true && tls == false) ? "http://"s : "https://"s};
 
         nlog::Info(FI, LI, "%s :  proxy : %s , dev: %s , tls : %s , protocol : %s , dUseragent : %s ", FN, Dconfig.proxy.c_str(),exec::boolTo<const char *>(dev), exec::boolTo<const char *>(tls), Dconfig.protocol.c_str() ,Dconfig.userAgent.c_str());
@@ -80,7 +79,7 @@ size_t neko::networkBase::Header_Callback(char *ptr, size_t size, size_t nmemb, 
 }
 
 size_t neko::networkBase::Write_CallbackFile(char *contents, size_t size, size_t nmemb, void *userp) {
-    std::ofstream *file = static_cast<std::ofstream *>(userp);
+    std::fstream *file = static_cast<std::fstream *>(userp);
     file->write(contents, size * nmemb);
     return size * nmemb;
 }

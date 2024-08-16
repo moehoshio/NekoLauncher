@@ -1,5 +1,6 @@
 #pragma once
 #include "io.h"
+#include "cconfig.h"
 #include "network.h"
 #include <filesystem>
 namespace neko {
@@ -10,17 +11,22 @@ namespace neko {
 
     void currentPathCorrection();
 
+    void configInfoPrint(Config config);
+    
+
     inline void autoInit(int argc, char *argv[]) {
 
         currentPathCorrection();
 
         if (exec::getConfigObj().LoadFile("config.ini") < 0)
-            ; // If there is a callback, the user can be notified
+            oneIof o("loadBad.txt"); // If there is a callback, the user can be notified
 
         info::init();
         setLog(argc, argv);
         setThreadNums();
         setLogThreadName();
+        configInfoPrint(exec::getConfigObj());
         networkBase::init().get();
+        
     };
 } // namespace neko
