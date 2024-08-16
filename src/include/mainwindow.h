@@ -34,6 +34,8 @@
 #include <QtGui/QValidator>
 
 #include <QtGui/QScreen>
+
+#include "cconfig.h"
 namespace ui {
 
     class pixmapWidget : public QWidget {
@@ -171,11 +173,22 @@ namespace ui {
 
             QWidget *netThreadLayoutWidget;
             QHBoxLayout *netThreadLayout;
-            QCheckBox *netThreadAutoEnable;
+            QCheckBox *netThreadNotAutoEnable;
             QLineEdit *netThreadSetNums;
             QValidator *netThreadSetNumsValidator;
 
             // network group
+
+            //more group
+            QGroupBox * moreGroup;
+            QVBoxLayout * moreGroupLayout;
+
+            QWidget * moreTempLayoutWidget;
+            QHBoxLayout * moreTempLayout;
+            QLabel * moreTempText;
+            QLineEdit * moreTempEdit;
+            QToolButton * moreTempTool;
+            //more group
 
             SettingPageTwo(QWidget *parent = nullptr);
         };
@@ -245,14 +258,18 @@ namespace ui {
         void setupText();
         void setupFont();
 
+        void setupBase(neko::Config config);
+
         void autoSetText(QFont text);
         void setTextFont(QFont text,QFont h2,QFont h1);
 
         void setupConnect();
 
-        MainWindow();
+        MainWindow(neko::Config config);
 
         void updatePage(pageState state, pageState oldState);
+
+        void closeEvent(QCloseEvent *event);
     };
 
 } // namespace ui

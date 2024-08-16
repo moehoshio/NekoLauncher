@@ -13,8 +13,10 @@ int main(int argc, char *argv[]) {
     try {
         QApplication app(argc, argv);
         neko::autoInit(argc, argv);
-        ui::MainWindow w;
+        neko::Config config(exec::getConfigObj());
+        ui::MainWindow w(config);
         w.show();
+        
 
         // neko::core c;
         // c.autoUpdate(&w);

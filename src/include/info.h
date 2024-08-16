@@ -22,6 +22,10 @@ namespace neko {
 
 
     public:
+        inline static void setTemp(const char * tmp){
+            if (std::filesystem::is_directory(tmp))
+                Data::temp = tmp;
+        }
         constexpr inline static std::string getVersion() {
             return Data::version;
         };

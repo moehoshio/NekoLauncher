@@ -60,7 +60,13 @@ namespace neko {
             exec::getThreadObj().set_pool_size(static_cast<size_t>(threadNums));
         nlog::Info(FI,LI,"%s : End. expect thread nums : %d ",FN,threadNums);
     }
+    void configInfoPrint(Config config){
+        nlog::Info(FI,LI,"%s : config main : bg : %s , windowSize : %s , useSysWinodwFrame: %s , barKeepRight : %s ",FN,config.main.bg,config.main.windowSize,exec::boolTo<const char *>(config.main.useSysWindowFrame),exec::boolTo<const char *>(config.main.barKeepRight));
+        nlog::Info(FI,LI,"%s : config net : thread : %d , proxy : %s",FN,config.net.thread,config.net.proxy);
+        nlog::Info(FI,LI,"%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ",FN,exec::boolTo<const char *>(config.dev.enable),exec::boolTo<const char *>(config.dev.debug),config.dev.server,exec::boolTo<const char *>(config.dev.tls));
+        nlog::Info(FI,LI,"%s : config dev : temp : %s ",FN,config.more.temp);
 
+    }
     void currentPathCorrection() {
 
 #if defined(__APPLE__) // if using the macOS package need ?
