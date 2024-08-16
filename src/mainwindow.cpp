@@ -511,7 +511,7 @@ namespace ui {
                     break;
             }
         });
-        connect(setting->page2->styleBlurEffectRadiusSlider, &QSlider::valueChanged, this, [&](int val) {
+        connect(setting->page2->styleBlurEffectRadiusSlider, &QSlider::valueChanged, [&, this](int val) {
             if (val != 1) {
                 blurVal = val;
                 m_pBlurEffect->setBlurRadius(blurVal);
@@ -578,19 +578,24 @@ namespace ui {
         QIcon icon;
         icon.addFile(QString::fromUtf8("img/ico.png"), QSize(256, 256), QIcon::Normal, QIcon::Off);
         this->setWindowIcon(icon);
-
         if (std::string("none") == config.main.bgType) {
-            nlog::Info(FI, LI, "%s : bg type is none", FN);
             setting->page2->bgSelectRadioNone->setChecked(true);
         } else {
-            nlog::Info(FI, LI, "%s : bg type is Image", FN);
             bgWidget->setPixmap(config.main.bg);
-            bgWidget->setGeometry(-12, -12, width() + 50, height() + 20);
-            bgWidget->show();
             setting->page2->bgSelectRadioImage->setChecked(true);
         }
 
         setting->page2->bgInputLineEdit->setText(config.main.bg);
+        if (config.style.blurValue > 22)
+            blurVal = 22;
+        else if (config.style.blurValue == 1 || config.style.blurValue < 0)
+            blurVal = 0;
+        else
+            blurVal = config.style.blurValue;
+
+        bgWidget->setGraphicsEffect(m_pBlurEffect);
+        setting->page2->styleBlurEffectRadiusSlider->setValue(blurVal);
+        m_pBlurEffect->setBlurRadius(blurVal);
 
         switch (config.style.blurHint) {
             case 2:
@@ -607,16 +612,6 @@ namespace ui {
                 m_pBlurEffect->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
                 break;
         }
-
-        if (config.style.blurValue > 22)
-            blurVal = 22;
-        else if (config.style.blurValue == 1 || config.style.blurValue < 0)
-            blurVal = 0;
-
-        bgWidget->setGraphicsEffect(m_pBlurEffect);
-        setting->page2->styleBlurEffectRadiusSlider->setValue(blurVal);
-        m_pBlurEffect->setBlurRadius(blurVal);
-        
 
         setting->page2->winSysFrameCheckBox->setChecked(config.main.useSysWindowFrame);
         setting->page2->winBarKeepRightCheckBox->setChecked(config.main.barKeepRight);
@@ -722,7 +717,8 @@ namespace ui {
         cfg.style.fontPointSize = setting->page2->stylePointSizeEditLine->text().toInt();
         std::string fontFamiliesText = setting->page2->stylePointSizeEditFontBox->currentText().toStdString();
         cfg.style.fontFamilies = fontFamiliesText.c_str();
-        if (setting->page2->netThreadNotAutoEnable)
+
+        if (setting->page2->netThreadNotAutoEnable->isChecked())
             cfg.net.thread = setting->page2->netThreadSetNums->text().toInt();
         else
             cfg.net.thread = 0;
