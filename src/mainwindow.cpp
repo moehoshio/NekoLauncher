@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "autoinit.h"
 #include "exec.h"
 #include "info.h"
 #include <filesystem>
@@ -140,7 +141,6 @@ namespace ui {
         styleBlurEffectRadiusLayout->addWidget(styleBlurEffectRadiusSlider);
         styleBlurEffectRadiusLayout->addWidget(styleBlurEffectRadiusSpacing);
         styleBlurEffectRadiusSlider->setOrientation(Qt::Horizontal);
-        styleBlurEffectRadiusSlider->setValue(10);
         styleBlurEffectRadiusSlider->setRange(0, 22);
 
         stylePointSizeEditLayoutWidget->setLayout(stylePointSizeEditLayout);
@@ -379,7 +379,6 @@ namespace ui {
         setting->page2->styleBlurEffectSelectRadioQuality->setText("Quality");
         setting->page2->styleBlurEffectRadiusText->setText("blurValue");
         setting->page2->stylePointSizeEditText->setText("font");
-        setting->page2->stylePointSizeEditLine->setText("10");
 
         setting->page2->winSizeEditText->setText("size");
         setting->page2->winSizeEditTextX->setText("X");
@@ -402,19 +401,25 @@ namespace ui {
         setting->closeButton->setToolTip("close");
     }
 
-    void MainWindow::setupFont() {
-        f.setPointSize(10);
+    void MainWindow::setupFont(neko::Config config) {
+
+        f.setPointSize(config.style.fontPointSize);
+        setting->page2->stylePointSizeEditLine->setText(QString::number(config.style.fontPointSize));
+        if (!std::string(config.style.fontFamilies).empty()) {
+            f.setFamilies(QList<QString>{config.style.fontFamilies});
+            setting->page2->stylePointSizeEditFontBox->setEditText(config.style.fontFamilies);
+        }
         autoSetText(f);
     }
     void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
-                 index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums}) {
+                 index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit}) {
             normal->setFont(text);
         }
 
         for (auto h2Title : std::vector<QWidget *>{
-                 index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->netGroup}) {
+                 index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->netGroup, setting->page2->moreGroup}) {
             h2Title->setFont(h2);
         }
 
@@ -573,36 +578,61 @@ namespace ui {
         QIcon icon;
         icon.addFile(QString::fromUtf8("img/ico.png"), QSize(256, 256), QIcon::Normal, QIcon::Off);
         this->setWindowIcon(icon);
-        
 
-        m_pBlurEffect->setBlurRadius(10);
-        bgWidget->setGraphicsEffect(m_pBlurEffect);
-        bgWidget->setPixmap(config.main.bg);
+        if (std::string("none") == config.main.bgType) {
+            nlog::Info(FI, LI, "%s : bg type is none", FN);
+            setting->page2->bgSelectRadioNone->setChecked(true);
+        } else {
+            nlog::Info(FI, LI, "%s : bg type is Image", FN);
+            bgWidget->setPixmap(config.main.bg);
+            bgWidget->setGeometry(-12, -12, width() + 50, height() + 20);
+            bgWidget->show();
+            setting->page2->bgSelectRadioImage->setChecked(true);
+        }
+
         setting->page2->bgInputLineEdit->setText(config.main.bg);
 
-        auto sizeRes = exec::matchSizesV(config.main.windowSize);
-        if (config.main.windowSize && sizeRes.size() == 3) {
-            setting->page2->winSizeEditWidth->setText(sizeRes[1].c_str());
-            setting->page2->winSizeEditHeight->setText(sizeRes[2].c_str());
-            this->resize(std::stoi(sizeRes[1]), std::stoi(sizeRes[2]));
+        switch (config.style.blurHint) {
+            case 2:
+                setting->page2->styleBlurEffectSelectRadioQuality->setChecked(true);
+                m_pBlurEffect->setBlurHints(QGraphicsBlurEffect::QualityHint);
+                break;
+            case 3:
+                setting->page2->styleBlurEffectSelectRadioAnimation->setChecked(true);
+                m_pBlurEffect->setBlurHints(QGraphicsBlurEffect::AnimationHint);
+                break;
+            case 1:
+            default:
+                setting->page2->styleBlurEffectSelectRadioPerformance->setChecked(true);
+                m_pBlurEffect->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
+                break;
         }
+
+        if (config.style.blurValue > 22)
+            blurVal = 22;
+        else if (config.style.blurValue == 1 || config.style.blurValue < 0)
+            blurVal = 0;
+
+        bgWidget->setGraphicsEffect(m_pBlurEffect);
+        setting->page2->styleBlurEffectRadiusSlider->setValue(blurVal);
+        m_pBlurEffect->setBlurRadius(blurVal);
+        
+
         setting->page2->winSysFrameCheckBox->setChecked(config.main.useSysWindowFrame);
         setting->page2->winBarKeepRightCheckBox->setChecked(config.main.barKeepRight);
 
-        if (config.net.thread > 0){
-                setting->page2->netThreadNotAutoEnable->setChecked(true);
-                setting->page2->netThreadSetNums->setText(QString::number(config.net.thread));    
-                setting->page2->netThreadSetNums->show();
+        if (config.net.thread > 0) {
+            setting->page2->netThreadNotAutoEnable->setChecked(true);
+            setting->page2->netThreadSetNums->setText(QString::number(config.net.thread));
+            setting->page2->netThreadSetNums->show();
         }
 
-
-        if (config.net.proxy == std::string("true") || exec::isProxyAddress(config.net.proxy)){
+        if (std::string("true") == config.net.proxy || exec::isProxyAddress(config.net.proxy)) {
             setting->page2->netProxyEnable->setChecked(true);
             setting->page2->netProxyEdit->show();
             if (exec::isProxyAddress(config.net.proxy))
                 setting->page2->netProxyEdit->setText(config.net.proxy);
         }
-
 
         if (std::filesystem::is_directory(config.more.temp)) {
             setting->page2->moreTempEdit->setText(config.more.temp);
@@ -627,10 +657,18 @@ namespace ui {
         setupSize();
 
         setupText();
-        setupFont();
+        setupFont(config);
 
         setupStyle();
         setupConnect();
+
+        auto sizeRes = exec::matchSizesV(config.main.windowSize);
+        if (config.main.windowSize && sizeRes.size() == 3) {
+            setting->page2->winSizeEditWidth->setText(sizeRes[1].c_str());
+            setting->page2->winSizeEditHeight->setText(sizeRes[2].c_str());
+            this->resize(std::stoi(sizeRes[1]), std::stoi(sizeRes[2]));
+            resizeItem();
+        }
     }
 
     void MainWindow::updatePage(MainWindow::pageState state, MainWindow::pageState oldState) {
@@ -660,4 +698,45 @@ namespace ui {
                 break;
         }
     }
+    void MainWindow::closeEvent(QCloseEvent *event) {
+        neko::Config cfg(exec::getConfigObj());
+        std::string bgText = setting->page2->bgInputLineEdit->text().toStdString();
+        switch (setting->page2->bgSelectButtonGroup->checkedId()) {
+            case 1:
+                cfg.main.bgType = "none";
+                break;
+            case 2:
+                cfg.main.bgType = "image";
+
+                cfg.main.bg = bgText.c_str();
+                break;
+            default:
+                break;
+        };
+        std::string windowSize = setting->page2->winSizeEditWidth->text().toStdString() + "x" + setting->page2->winSizeEditHeight->text().toStdString();
+        cfg.main.windowSize = windowSize.c_str();
+        cfg.main.useSysWindowFrame = setting->page2->winSysFrameCheckBox->isChecked();
+        cfg.main.barKeepRight = setting->page2->winBarKeepRightCheckBox->isChecked();
+        cfg.style.blurHint = setting->page2->styleBulrEffectButtonGroup->checkedId();
+        cfg.style.blurValue = setting->page2->styleBlurEffectRadiusSlider->value();
+        cfg.style.fontPointSize = setting->page2->stylePointSizeEditLine->text().toInt();
+        std::string fontFamiliesText = setting->page2->stylePointSizeEditFontBox->currentText().toStdString();
+        cfg.style.fontFamilies = fontFamiliesText.c_str();
+        if (setting->page2->netThreadNotAutoEnable)
+            cfg.net.thread = setting->page2->netThreadSetNums->text().toInt();
+        else
+            cfg.net.thread = 0;
+
+        std::string proxyText = setting->page2->netProxyEdit->text().toStdString();
+        if (setting->page2->netProxyEnable->isChecked())
+            cfg.net.proxy = (setting->page2->netProxyEdit->text().isEmpty()) ? "true" : proxyText.c_str();
+        else
+            cfg.net.proxy = "";
+        std::string tempText = setting->page2->moreTempEdit->text().toStdString();
+        cfg.more.temp = tempText.c_str();
+        neko::configInfoPrint(cfg);
+
+        neko::Config::save(exec::getConfigObj(), "config.ini", cfg);
+    }
+
 } // namespace ui

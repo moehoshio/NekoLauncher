@@ -256,7 +256,7 @@ namespace ui {
         void setupTranslucentBackground();
 
         void setupText();
-        void setupFont();
+        void setupFont(neko::Config config);
 
         void setupBase(neko::Config config);
 

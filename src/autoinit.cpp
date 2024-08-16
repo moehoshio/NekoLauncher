@@ -61,10 +61,11 @@ namespace neko {
         nlog::Info(FI,LI,"%s : End. expect thread nums : %d ",FN,threadNums);
     }
     void configInfoPrint(Config config){
-        nlog::Info(FI,LI,"%s : config main : bg : %s , windowSize : %s , useSysWinodwFrame: %s , barKeepRight : %s ",FN,config.main.bg,config.main.windowSize,exec::boolTo<const char *>(config.main.useSysWindowFrame),exec::boolTo<const char *>(config.main.barKeepRight));
+        nlog::Info(FI,LI,"%s : config main : bgType : %s , bg : %s , windowSize : %s , useSysWinodwFrame: %s , barKeepRight : %s ",FN,config.main.bgType,config.main.bg,config.main.windowSize,exec::boolTo<const char *>(config.main.useSysWindowFrame),exec::boolTo<const char *>(config.main.barKeepRight));
         nlog::Info(FI,LI,"%s : config net : thread : %d , proxy : %s",FN,config.net.thread,config.net.proxy);
+        nlog::Info(FI,LI,"%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ",FN,config.style.blurHint,config.style.blurValue,config.style.fontPointSize,config.style.fontFamilies);
         nlog::Info(FI,LI,"%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ",FN,exec::boolTo<const char *>(config.dev.enable),exec::boolTo<const char *>(config.dev.debug),config.dev.server,exec::boolTo<const char *>(config.dev.tls));
-        nlog::Info(FI,LI,"%s : config dev : temp : %s ",FN,config.more.temp);
+        nlog::Info(FI,LI,"%s : config more : temp : %s ",FN,config.more.temp);
 
     }
     void currentPathCorrection() {
