@@ -5,6 +5,8 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QWidget>
 
+#include <QtWidgets/QToolBar>
+
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QGroupBox>
@@ -27,6 +29,9 @@
 
 #include <QtWidgets/QFileDialog>
 
+#include <QtGui/QWindow>
+#include <QtGui/QtEvents>
+
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
 
@@ -36,7 +41,36 @@
 #include <QtGui/QScreen>
 
 #include "cconfig.h"
+
 namespace ui {
+
+    class ToolBar : public QToolBar {
+        Q_OBJECT
+    public:
+        ToolBar(QWidget *parent = nullptr) : QToolBar(parent) {
+            setMovable(false);
+            setFloatable(false);
+
+            setAcceptDrops(true);
+
+            setContextMenuPolicy(Qt::PreventContextMenu);
+        }
+        bool event(QEvent *event) {
+            if (event->type() == QEvent::MouseButtonPress)
+                emit request_move_window();
+
+            return QToolBar::event(event);
+        }
+        void dragEnterEvent(QDragEnterEvent *event) {
+            event->acceptProposedAction();
+        }
+
+        void dragMoveEvent(QDragMoveEvent *p_event) {
+            p_event->acceptProposedAction();
+        }
+    signals:
+        void request_move_window();
+    };
 
     class pixmapWidget : public QWidget {
         QPixmap bg;
@@ -236,6 +270,13 @@ namespace ui {
             QScrollArea *scrollArea;
             QVBoxLayout *scrollAreaLayout;
         };
+        struct HeadBar : public QWidget {
+            ToolBar *toolbar;
+            QAction *close_;
+            QAction *minimize;
+            QAction *maximize;
+            HeadBar(QWidget *parent = nullptr);
+        };
 
     private:
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
@@ -246,6 +287,8 @@ namespace ui {
         QWidget *widget;
         Index *index;
         Setting *setting;
+
+        HeadBar *headbar;
 
         QFont f;
         int blurVal;
@@ -278,6 +321,21 @@ namespace ui {
         void updatePage(pageState state, pageState oldState);
 
         void closeEvent(QCloseEvent *event);
+
+        void dragEnterEvent(QDragEnterEvent *p_event) {
+
+            p_event->acceptProposedAction();
+        }
+
+        void dragMoveEvent(QDragMoveEvent *p_event) {
+
+            p_event->acceptProposedAction();
+        }
+
+        void dropEvent(QDropEvent *p_event) {
+            p_event->acceptProposedAction();
+        }
+        bool event(QEvent *event);
     };
 
 } // namespace ui

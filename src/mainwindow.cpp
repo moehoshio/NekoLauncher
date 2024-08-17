@@ -275,20 +275,25 @@ namespace ui {
 
         switch (state) {
             case pageState::index:
+                index->resize(size());
+                int h1;
+                if (setting->page2->winSysFrameCheckBox->isChecked())
+                    h1 = this->height();
+                else
+                    h1 = this->height() - headbar->height();
 
-                index->resize(this->size());
-                index->versionText->setGeometry(QRect(5, this->size().height() - std::max<double>(height() * 0.1, 60), std::max<double>(width() * 0.12, 160), std::max<double>(height() * 0.1, 60)));
-                index->startButton->setGeometry(QRect(this->size().width() * 0.33, this->size().height() * 0.78, this->size().width() * 0.36, this->size().height() * 0.18));
-                index->menuButton->setGeometry(QRect(this->size().width() * 0.82, this->size().height() * 0.82, this->size().width() * 0.15, this->size().height() * 0.1));
+                index->versionText->setGeometry(QRect(8, h1 - std::max<double>(h1 * 0.01, 65), std::max<double>(width() * 0.12, 180), std::max<double>(h1 * 0.1, 65)));
+                index->startButton->setGeometry(QRect(this->size().width() * 0.33, h1 * 0.78, this->size().width() * 0.36, h1 * 0.18));
+                index->menuButton->setGeometry(QRect(this->size().width() * 0.82, h1 * 0.82, this->size().width() * 0.15, h1 * 0.1));
 
                 break;
             case pageState::setting: {
-                setting->resize(this->size());
+                setting->resize(size());
                 setting->page1->accountGroup->setGeometry(QRect(setting->page1->width() * 0.1, setting->page1->height() * 0.05, width() * 0.8, height() * 0.2));
                 setting->page1->accountLogInOutLayoutWidget->setGeometry(QRect(0, 0, width() * 0.8, height() * 0.2));
-                setting->page2->setGeometry(QRect(0, 0, width(), height()));
-                setting->page2->scrollContent->setGeometry(QRect(0, 0, width(), height() * 2));
-                setting->page2->pageScrollArea->setGeometry(QRect(0, 0, width(), height() - 8));
+                setting->page2->setGeometry(QRect(0, 0, width(), (setting->page2->winSysFrameCheckBox->isChecked()) ? height() : height() - headbar->height()));
+                setting->page2->scrollContent->setGeometry(QRect(0, 0, width(), (setting->page2->winSysFrameCheckBox->isChecked()) ? height() * 2 : height() * 2 - headbar->height()));
+                setting->page2->pageScrollArea->setGeometry(QRect(0, 0, width(), (setting->page2->winSysFrameCheckBox->isChecked()) ? height() - 8 : height() - 8 - headbar->height()));
                 setting->page3->scrollContent->setGeometry(QRect(0, 0, width(), height() * 2));
                 setting->page3->pageScrollArea->setGeometry(QRect(0, 0, width(), height() - 8));
                 setting->page2->styleBlurEffectRadiusSlider->setMaximumWidth(width() * 0.5);
@@ -347,6 +352,10 @@ namespace ui {
 
     void MainWindow::setupStyle() {
         this->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255));");
+        headbar->setStyleSheet("background-color: rgba(245,245,245,230)");
+        headbar->toolbar->setStyleSheet("QToolBar { background-color: rgba(245, 245, 245,230); }"
+                                        "QToolButton {background-color: rgba(245, 245, 245,230);}"
+                                        "QToolButton:hover {background-color: rgba(155, 155, 155,180);}");
 
         setting->setStyleSheet("background-color: rgba(150,150,150,100);");
 
@@ -388,7 +397,7 @@ namespace ui {
     }
     void MainWindow::setupTranslucentBackground() {
         ;
-        for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent,setting->page3->pageScrollArea, setting->page3->scrollContent}) {
+        for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
         for (auto transparentWidgets : std::vector<QWidget *>{widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto}) {
@@ -595,6 +604,20 @@ namespace ui {
                 setting->page2->netThreadSetNums->hide();
             }
         });
+
+        connect(setting->page2->winSysFrameCheckBox, &QCheckBox::toggled, [=, this](bool checkd) {
+            if (checkd) {
+                this->setWindowFlags(Qt::Window);
+                headbar->hide();
+                headbar->toolbar->hide();
+            } else {
+                this->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+                headbar->show();
+                headbar->toolbar->show();
+            }
+            this->show();
+        });
+
         connect(setting->page2->winSizeEditWidth, &QLineEdit::editingFinished, [=, this]() {
             auto text = setting->page2->winSizeEditWidth->text();
             if (text.isEmpty())
@@ -625,6 +648,21 @@ namespace ui {
                 setting->page3->devServerEdit->show();
             }
         });
+        connect(headbar->toolbar, &ToolBar::request_move_window,
+                [=, this] {
+                    this->windowHandle()->startSystemMove();
+                });
+        connect(headbar->close_, &QAction::triggered,
+                [=, this]() { QApplication::quit(); });
+        connect(headbar->maximize, &QAction::triggered,
+                [=, this] {
+                    if (windowState() == Qt::WindowMaximized)
+                        setWindowState(Qt::WindowNoState);
+                    else
+                        setWindowState(Qt::WindowMaximized);
+                });
+        connect(headbar->minimize, &QAction::triggered,
+                [=, this]() { setWindowState(Qt::WindowMinimized); });
     }
 
     void MainWindow::setupBase(neko::Config config) {
@@ -632,6 +670,16 @@ namespace ui {
         this->setCentralWidget(widget);
         this->setAcceptDrops(true);
         this->setWindowTitle("Neko Launcher");
+        this->setAttribute(Qt::WA_Hover);
+        this->addToolBar(headbar->toolbar);
+        if (!config.main.useSysWindowFrame) {
+            this->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+            this->setAttribute(Qt::WA_Hover);
+            headbar->show();
+        } else {
+            headbar->hide();
+        }
+
         QIcon icon;
         icon.addFile(QString::fromUtf8("img/ico.png"), QSize(256, 256), QIcon::Normal, QIcon::Off);
         this->setWindowIcon(icon);
@@ -708,8 +756,25 @@ namespace ui {
         setting->hide();
         bgWidget->lower();
     }
+    MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
+
+        toolbar = new ToolBar(this);
+        close_ = new QAction(QIcon::fromTheme("window-close"), "close", toolbar);
+
+        minimize = new QAction(QIcon::fromTheme("window-minimize"), "minimize", toolbar);
+
+        maximize = new QAction(QIcon::fromTheme("window-maximize"), "maximize", toolbar);
+
+        auto sp1 = toolbar->addSeparator();
+        auto sp2 = toolbar->addSeparator();
+
+        toolbar->addActions(
+            {close_, sp1, maximize, sp2, minimize});
+    }
 
     MainWindow::MainWindow(neko::Config config) {
+
+        headbar = new HeadBar(this);
         bgWidget = new pixmapWidget(this);
         m_pBlurEffect = new QGraphicsBlurEffect;
         widget = new QWidget(this);
@@ -811,6 +876,56 @@ namespace ui {
         neko::configInfoPrint(cfg);
 
         neko::Config::save(exec::getConfigObj(), "config.ini", cfg);
+    }
+    bool MainWindow::event(QEvent *event) {
+        constexpr qreal border = 11;
+        switch (event->type()) {
+
+            case QEvent::HoverMove: {
+                auto p = dynamic_cast<QHoverEvent *>(event)->pos();
+                bool pointXGreaterWidthBorder = (p.x() > width() - border);
+                bool pointXLessWidthBorder = (p.x() < border);
+                bool pointYGreaterHeightToolBar = (p.y() > headbar->toolbar->height());
+                bool pointYGreaterHeightBorder = (p.y() > height() - border);
+                if (pointYGreaterHeightBorder) {
+                    if (pointXLessWidthBorder) {
+                        this->setCursor(Qt::SizeBDiagCursor);
+                    } else if (pointXGreaterWidthBorder) {
+                        this->setCursor(Qt::SizeFDiagCursor);
+                    } else {
+                        this->setCursor(Qt::SizeVerCursor);
+                    }
+                } else if (pointYGreaterHeightToolBar && (pointXGreaterWidthBorder || pointXLessWidthBorder)) {
+                    // Set cursor shape for horizontal resizing...
+                    this->setCursor(Qt::SizeHorCursor);
+                } else {
+                    setCursor(Qt::ArrowCursor);
+                }
+                break;
+            }
+            case QEvent::MouseButtonPress: {
+                auto p = dynamic_cast<QMouseEvent *>(event)->pos();
+                bool pointXGreaterWidthBorder = (p.x() > width() - border);
+                bool pointXLessWidthBorder = (p.x() < border);
+                bool pointYGreaterHeightBorder = (p.y() > height() - border);
+                Qt::Edges edges;
+                if (pointXGreaterWidthBorder)
+                    edges |= Qt::RightEdge;
+                if (pointXLessWidthBorder)
+                    edges |= Qt::LeftEdge;
+                if (pointYGreaterHeightBorder)
+                    edges |= Qt::BottomEdge;
+                if (edges != 0) {
+                    // Note: on Mac, this will return false which means isn't supported.
+                    this->windowHandle()->startSystemResize(edges);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
+        return QMainWindow::event(event);
     }
 
 } // namespace ui
