@@ -275,6 +275,10 @@ namespace ui {
             QAction *close_;
             QAction *minimize;
             QAction *maximize;
+            QAction *sp1;
+            QAction *sp2;
+            QWidget *spacer;
+            QGraphicsBlurEffect *blurEffect;
             HeadBar(QWidget *parent = nullptr);
         };
 

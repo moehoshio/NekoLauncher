@@ -352,7 +352,7 @@ namespace ui {
 
     void MainWindow::setupStyle() {
         this->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255));");
-        headbar->setStyleSheet("background-color: rgba(245,245,245,230)");
+        headbar->spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
         headbar->toolbar->setStyleSheet("QToolBar { background-color: rgba(245, 245, 245,230); }"
                                         "QToolButton {background-color: rgba(245, 245, 245,230);}"
                                         "QToolButton:hover {background-color: rgba(155, 155, 155,180);}");
@@ -400,7 +400,7 @@ namespace ui {
         for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
-        for (auto transparentWidgets : std::vector<QWidget *>{widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto}) {
+        for (auto transparentWidgets : std::vector<QWidget *>{headbar, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto}) {
             transparentWidgets->setStyleSheet("background-color: rgba(255,255,255,0);");
         }
     }
@@ -617,6 +617,21 @@ namespace ui {
             }
             this->show();
         });
+        connect(setting->page2->winBarKeepRightCheckBox, &QCheckBox::toggled, [=, this](bool checkd) {
+            headbar->toolbar->clear();
+            if (checkd) {
+                QWidget *spacer = new QWidget(headbar->toolbar);
+                spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
+                spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                spacer->setGraphicsEffect(headbar->blurEffect);
+                headbar->toolbar->addWidget(spacer);
+                headbar->toolbar->addActions(
+                    {headbar->minimize, headbar->sp1, headbar->maximize, headbar->sp2, headbar->close_});
+            } else {
+                headbar->toolbar->addActions(
+                    {headbar->close_, headbar->sp1, headbar->maximize, headbar->sp2, headbar->minimize});
+            }
+        });
 
         connect(setting->page2->winSizeEditWidth, &QLineEdit::editingFinished, [=, this]() {
             auto text = setting->page2->winSizeEditWidth->text();
@@ -676,6 +691,15 @@ namespace ui {
             this->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
             this->setAttribute(Qt::WA_Hover);
             headbar->show();
+            if (config.main.barKeepRight) {
+                headbar->spacer->setGraphicsEffect(headbar->blurEffect);
+                headbar->toolbar->addWidget(headbar->spacer);
+                headbar->toolbar->addActions(
+                    {headbar->minimize, headbar->sp1, headbar->maximize, headbar->sp2, headbar->close_});
+            } else {
+                headbar->toolbar->addActions(
+                    {headbar->close_, headbar->sp1, headbar->maximize, headbar->sp2, headbar->minimize});
+            }
         } else {
             headbar->hide();
         }
@@ -759,17 +783,21 @@ namespace ui {
     MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
 
         toolbar = new ToolBar(this);
+        spacer = new QWidget(toolbar);
         close_ = new QAction(QIcon::fromTheme("window-close"), "close", toolbar);
 
         minimize = new QAction(QIcon::fromTheme("window-minimize"), "minimize", toolbar);
 
         maximize = new QAction(QIcon::fromTheme("window-maximize"), "maximize", toolbar);
 
-        auto sp1 = toolbar->addSeparator();
-        auto sp2 = toolbar->addSeparator();
+        blurEffect = new QGraphicsBlurEffect();
 
-        toolbar->addActions(
-            {close_, sp1, maximize, sp2, minimize});
+        sp1 = toolbar->addSeparator();
+        sp2 = toolbar->addSeparator();
+
+        spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        blurEffect->setBlurRadius(30);
+        spacer->setGraphicsEffect(blurEffect);
     }
 
     MainWindow::MainWindow(neko::Config config) {
