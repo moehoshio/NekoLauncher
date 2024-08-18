@@ -10,3 +10,5 @@ CmakeLists.txt
 *_moc.cpp
 mainwindow copy.cpp
 mainwindow copy.h
+headbar copy.h
+headbar copy.cpp

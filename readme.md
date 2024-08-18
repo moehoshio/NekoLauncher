@@ -4,11 +4,14 @@ This branch applies to unfinished development, and it may fail to build successf
 
 ## Neko Launcher
 
-NekoL (Neko launcher or NekoLc) is a modern, customizable cross-platform launcher framework. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
+Nelc (Neko launcher or NekoLc) is a modern, customizable cross-platform launcher program framework. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
 It can launch any object, wrapping around anything, and includes self-updating and automatic software content updates.  
-This is also my first project learning C++ for nearly a year. Through this project,learn more content and knowledge.
+This is also my first project learning C++ for nearly a year.  
+The project is still in development, and any constructive ideas are welcome.  
+Preview :  
+![img](img/img1.png)
 
-## Recruiting Contributors
+## Become Contributors
 
 If you are interested, feel free to submit issues.
 
@@ -22,6 +25,7 @@ We use Qt6 to build the GUI. Its minimum requirements are:
 
 Our main program also uses cross-platform methods, making it supported on most platforms.  
 In other words, if you change the GUI version or framework, it might support other platforms as well, more or less.
+You can also forgo the GUI; its core should still run properly.
 
 ## Build
 
@@ -43,6 +47,7 @@ Clone code to the you host and :
 
 ```shell
 cp CmakeListsCopy.txt CmakeLists.txt
+# Customize your configuration, including the include and library directories. Then continue:
 cmake ./build
 cmake --build ./build
 ```
@@ -62,8 +67,8 @@ list(APPEND LIBRARY_DIRS
 )
 ```
 
-CMAKE_PREFIX_PATH : qt path  
-QtBin : qt bin path  
+CMAKE_PREFIX_PATH : qt path e.g  /user/home/qt/6.6.0  
+QtBin : qt bin path  e.g /user/home/qt/6.6.0/bin  
 
 ### Contribution and Customization
 

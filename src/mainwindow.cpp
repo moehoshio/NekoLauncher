@@ -944,7 +944,6 @@ namespace ui {
                 if (pointYGreaterHeightBorder)
                     edges |= Qt::BottomEdge;
                 if (edges != 0) {
-                    // Note: on Mac, this will return false which means isn't supported.
                     this->windowHandle()->startSystemResize(edges);
                 }
                 break;
