@@ -45,7 +45,7 @@ namespace neko {
                 cfg.GetBoolValue("main", "barKeepRight", true)};
             style = Style{
                 cfg.GetLongValue("style", "blurHint", 1),
-                cfg.GetLongValue("style", "blurValue", 5),
+                cfg.GetLongValue("style", "blurValue", 10),
                 cfg.GetLongValue("style", "fontPointSize", 10),
                 cfg.GetValue("style", "fontFamilies", "")};
             net = Net{

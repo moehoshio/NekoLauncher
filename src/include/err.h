@@ -56,7 +56,7 @@ namespace nerr {
         error(errCode Code, const char *Msg) noexcept : code(Code), msg(Msg){};
         error(const char *Msg) noexcept : msg(Msg){};
         ~error() noexcept = default;
-        inline const char *what() const { return msg; };
+        inline const char *what() const noexcept{ return msg; };
     };
 
 } // namespace nerr

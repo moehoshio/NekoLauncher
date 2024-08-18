@@ -1,4 +1,3 @@
-﻿//#define _CRT_SECURE_NO_WARNINGS
 #ifndef _WIN32
 // Disable all warnings from gcc/clang:
 #pragma GCC diagnostic push
@@ -201,45 +200,37 @@ namespace loguru
 	static std::thread* s_flush_thread   = nullptr;
 	static bool         s_needs_flushing = false;
 
-	static const bool s_terminal_has_color = []() {
-#ifdef _WIN32
-#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
-#define ENABLE_VIRTUAL_TERMINAL_PROCESSING  0x0004
-#endif
+	static const bool s_terminal_has_color = [](){
+		#ifdef _WIN32
+			#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+			#define ENABLE_VIRTUAL_TERMINAL_PROCESSING  0x0004
+			#endif
 
-		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (hOut != INVALID_HANDLE_VALUE) {
-			DWORD dwMode = 0;
-			GetConsoleMode(hOut, &dwMode);
-			dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-			return SetConsoleMode(hOut, dwMode) != 0;
-		}
-		return false;
-#else
-		const char* term = nullptr;
-		size_t len;
-		errno_t err = _dupenv_s(&term, &len, "TERM");
-		if (err == 0 && term != nullptr) {
-			bool has_color = (0 == strcmp(term, "cygwin")
-				|| 0 == strcmp(term, "linux")
-				|| 0 == strcmp(term, "rxvt-unicode-256color")
-				|| 0 == strcmp(term, "screen")
-				|| 0 == strcmp(term, "screen-256color")
-				|| 0 == strcmp(term, "screen.xterm-256color")
-				|| 0 == strcmp(term, "tmux-256color")
-				|| 0 == strcmp(term, "xterm")
-				|| 0 == strcmp(term, "xterm-256color")
-				|| 0 == strcmp(term, "xterm-termite")
-				|| 0 == strcmp(term, "xterm-color"));
-			free(term); // 釋放內存
-			return has_color;
-	}
-		else {
-			// ��理錯誤情況
-			// ...
+			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			if (hOut != INVALID_HANDLE_VALUE) {
+				DWORD dwMode = 0;
+				GetConsoleMode(hOut, &dwMode);
+				dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+				return SetConsoleMode(hOut, dwMode) != 0;
+			}
 			return false;
-		}
-#endif
+		#else
+			if (const char* term = getenv("TERM")) {
+				return 0 == strcmp(term, "cygwin")
+					|| 0 == strcmp(term, "linux")
+					|| 0 == strcmp(term, "rxvt-unicode-256color")
+					|| 0 == strcmp(term, "screen")
+					|| 0 == strcmp(term, "screen-256color")
+					|| 0 == strcmp(term, "screen.xterm-256color")
+					|| 0 == strcmp(term, "tmux-256color")
+					|| 0 == strcmp(term, "xterm")
+					|| 0 == strcmp(term, "xterm-256color")
+					|| 0 == strcmp(term, "xterm-termite")
+					|| 0 == strcmp(term, "xterm-color");
+			} else {
+				return false;
+			}
+		#endif
 	}();
 
 	static void print_preamble_header(char* out_buff, size_t out_buff_size);
@@ -663,24 +654,22 @@ namespace loguru
 
 	const char* home_dir()
 	{
-		const char* user_profile = nullptr;
-		size_t len;
-		errno_t err = _dupenv_s((char**) & user_profile, &len, "USERPROFILE");
-		if (err == 0 && user_profile != nullptr) {
+		#ifdef _WIN32
+			auto user_profile = getenv("USERPROFILE");
+			CHECK_F(user_profile != nullptr, "Missing USERPROFILE");
 			return user_profile;
-		}
-		else {
-
-			return nullptr;
-		}
+		#else // _WIN32
+			auto home = getenv("HOME");
+			CHECK_F(home != nullptr, "Missing HOME");
+			return home;
+		#endif // _WIN32
 	}
 
 	void suggest_log_path(const char* prefix, char* buff, unsigned buff_size)
 	{
 		if (prefix[0] == '~') {
 			snprintf(buff, buff_size - 1, "%s%s", home_dir(), prefix + 1);
-		}
-		else {
+		} else {
 			snprintf(buff, buff_size - 1, "%s", prefix);
 		}
 
@@ -694,12 +683,11 @@ namespace loguru
 			}
 		}
 
-		strncat_s(buff, buff_size, s_argv0_filename.c_str(), buff_size - strlen(buff) - 1);
-		strncat_s(buff, buff_size, "/", buff_size - strlen(buff) - 1);
-		write_date_time(buff + strlen(buff), buff_size - strlen(buff));
-		strncat_s(buff, buff_size, ".log", buff_size - strlen(buff) - 1);
+		strncat(buff, s_argv0_filename.c_str(), buff_size - strlen(buff) - 1);
+		strncat(buff, "/",                      buff_size - strlen(buff) - 1);
+		write_date_time(buff + strlen(buff),    buff_size - strlen(buff));
+		strncat(buff, ".log",                   buff_size - strlen(buff) - 1);
 	}
-
 
 	bool create_directories(const char* file_path_const)
 	{
@@ -745,12 +733,11 @@ namespace loguru
 		}
 
 		const char* mode_str = (mode == FileMode::Truncate ? "w" : "a");
-		FILE* file;
-		if (fopen_s(&file, path, mode_str) != 0) {
+		auto file = fopen(path, mode_str);
+		if (!file) {
 			LOG_F(ERROR, "Failed to open '" LOGURU_FMT(s) "'", path);
 			return false;
 		}
-
 #if LOGURU_WITH_FILEABS
 		FileAbs* file_abs = new FileAbs(); // this is deleted in file_close;
 		snprintf(file_abs->path, sizeof(file_abs->path) - 1, "%s", path);
@@ -1704,15 +1691,14 @@ namespace loguru
 
 	#undef DEFINE_EC
 
-		Text ec_to_text(EcHandle ec_handle)
+	Text ec_to_text(EcHandle ec_handle)
 	{
 		Text parent_ec = get_error_context_for(ec_handle);
 		char* with_newline = reinterpret_cast<char*>(malloc(strlen(parent_ec.c_str()) + 2));
 		with_newline[0] = '\n';
-		strcpy_s(with_newline + 1, strlen(parent_ec.c_str()) + 1, parent_ec.c_str());
+		strcpy(with_newline + 1, parent_ec.c_str());
 		return Text(with_newline);
 	}
-
 
 	// ----------------------------------------------------------------------------
 

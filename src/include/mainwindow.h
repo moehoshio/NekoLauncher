@@ -5,13 +5,15 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QWidget>
 
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QGroupBox>
-#include <QtWidgets/QFontComboBox>
+#include <QtWidgets/QToolBar>
 
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QFontComboBox>
+#include <QtWidgets/QGroupBox>
+
+#include <QtWidgets/QGraphicsBlurEffect>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QStyle>
-#include <QtWidgets/QGraphicsBlurEffect>
 
 #include <QtWidgets/QScrollArea>
 
@@ -27,6 +29,9 @@
 
 #include <QtWidgets/QFileDialog>
 
+#include <QtGui/QWindow>
+#include <QtGui/QtEvents>
+
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
 
@@ -36,7 +41,36 @@
 #include <QtGui/QScreen>
 
 #include "cconfig.h"
+
 namespace ui {
+
+    class ToolBar : public QToolBar {
+        Q_OBJECT
+    public:
+        ToolBar(QWidget *parent = nullptr) : QToolBar(parent) {
+            setMovable(false);
+            setFloatable(false);
+
+            setAcceptDrops(true);
+
+            setContextMenuPolicy(Qt::PreventContextMenu);
+        }
+        bool event(QEvent *event) {
+            if (event->type() == QEvent::MouseButtonPress)
+                emit request_move_window();
+
+            return QToolBar::event(event);
+        }
+        void dragEnterEvent(QDragEnterEvent *event) {
+            event->acceptProposedAction();
+        }
+
+        void dragMoveEvent(QDragMoveEvent *p_event) {
+            p_event->acceptProposedAction();
+        }
+    signals:
+        void request_move_window();
+    };
 
     class pixmapWidget : public QWidget {
         QPixmap bg;
@@ -134,13 +168,12 @@ namespace ui {
             QSlider *styleBlurEffectRadiusSlider;
             QWidget *styleBlurEffectRadiusSpacing;
 
-
-            QWidget * stylePointSizeEditLayoutWidget;
-            QHBoxLayout * stylePointSizeEditLayout;
+            QWidget *stylePointSizeEditLayoutWidget;
+            QHBoxLayout *stylePointSizeEditLayout;
             QLabel *stylePointSizeEditText;
             QLineEdit *stylePointSizeEditLine;
             QValidator *stylePointSizeValidator;
-            QFontComboBox * stylePointSizeEditFontBox;
+            QFontComboBox *stylePointSizeEditFontBox;
             // style group
 
             // window group
@@ -179,16 +212,16 @@ namespace ui {
 
             // network group
 
-            //more group
-            QGroupBox * moreGroup;
-            QVBoxLayout * moreGroupLayout;
+            // more group
+            QGroupBox *moreGroup;
+            QVBoxLayout *moreGroupLayout;
 
-            QWidget * moreTempLayoutWidget;
-            QHBoxLayout * moreTempLayout;
-            QLabel * moreTempText;
-            QLineEdit * moreTempEdit;
-            QToolButton * moreTempTool;
-            //more group
+            QWidget *moreTempLayoutWidget;
+            QHBoxLayout *moreTempLayout;
+            QLabel *moreTempText;
+            QLineEdit *moreTempEdit;
+            QToolButton *moreTempTool;
+            // more group
 
             SettingPageTwo(QWidget *parent = nullptr);
         };
@@ -198,8 +231,20 @@ namespace ui {
             QWidget *scrollContent;
             QVBoxLayout *scrollLayout;
 
-            QWidget *devOpt;
-            SettingPageThree(QWidget *parent = nullptr) : QWidget(parent){};
+            QGroupBox *devOptGroup;
+            QVBoxLayout *devOptGroupLayout;
+
+            QWidget *devOptCheckLayoutWidget;
+            QHBoxLayout *devOptCheckLayout;
+            QCheckBox *devOptEnable;
+            QCheckBox *devOptDebug;
+            QCheckBox *devOptTls;
+
+            QWidget *devServerInputLayoutWidget;
+            QHBoxLayout *devServerInputLayout;
+            QCheckBox *devServerAuto;
+            QLineEdit *devServerEdit;
+            SettingPageThree(QWidget *parent = nullptr);
         };
 
         struct Index : public QWidget {
@@ -225,16 +270,29 @@ namespace ui {
             QScrollArea *scrollArea;
             QVBoxLayout *scrollAreaLayout;
         };
+        struct HeadBar : public QWidget {
+            ToolBar *toolbar;
+            QAction *close_;
+            QAction *minimize;
+            QAction *maximize;
+            QAction *sp1;
+            QAction *sp2;
+            QWidget *spacer;
+            QGraphicsBlurEffect *blurEffect;
+            HeadBar(QWidget *parent = nullptr);
+        };
 
     private:
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
 
         pixmapWidget *bgWidget;
         QGraphicsBlurEffect *m_pBlurEffect;
-        
+
         QWidget *widget;
         Index *index;
         Setting *setting;
+
+        HeadBar *headbar;
 
         QFont f;
         int blurVal;
@@ -243,14 +301,11 @@ namespace ui {
         pageState oldState;
 
     public:
-        
         void resizeEvent(QResizeEvent *event);
 
         void resizeItem();
 
-        
         void setupSize();
-        
 
         void setupStyle();
         void setupTranslucentBackground();
@@ -261,7 +316,7 @@ namespace ui {
         void setupBase(neko::Config config);
 
         void autoSetText(QFont text);
-        void setTextFont(QFont text,QFont h2,QFont h1);
+        void setTextFont(QFont text, QFont h2, QFont h1);
 
         void setupConnect();
 
@@ -270,6 +325,21 @@ namespace ui {
         void updatePage(pageState state, pageState oldState);
 
         void closeEvent(QCloseEvent *event);
+
+        void dragEnterEvent(QDragEnterEvent *p_event) {
+
+            p_event->acceptProposedAction();
+        }
+
+        void dragMoveEvent(QDragMoveEvent *p_event) {
+
+            p_event->acceptProposedAction();
+        }
+
+        void dropEvent(QDropEvent *p_event) {
+            p_event->acceptProposedAction();
+        }
+        bool event(QEvent *event);
     };
 
 } // namespace ui
