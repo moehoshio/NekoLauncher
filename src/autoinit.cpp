@@ -8,7 +8,7 @@ namespace neko {
         if (!dev)
             return;
 
-        loguru::g_stderr_verbosity = loguru::Verbosity_OFF; // Avoid output to console
+        // loguru::g_stderr_verbosity = loguru::Verbosity_OFF; // Avoid output to console
 
         if (!debug) {
             std::string file_name = exec::sum(std::string("logs/"), exec::getTimeString(), ".log");
@@ -55,7 +55,7 @@ namespace neko {
     }
 
     void setThreadNums() {
-        long threadNums = exec::getConfigObj().GetLongValue("dev", "thread", 0);
+        long threadNums = exec::getConfigObj().GetLongValue("net", "thread", 0);
         if (threadNums > 0)
             exec::getThreadObj().set_pool_size(static_cast<size_t>(threadNums));
         nlog::Info(FI,LI,"%s : End. expect thread nums : %d ",FN,threadNums);

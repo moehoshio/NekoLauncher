@@ -18,7 +18,7 @@ namespace neko {
 
     std::future<void> networkBase::init() {
 
-        std::string proxy = exec::getConfigObj().GetValue("main", "proxy", "true");
+        std::string proxy = exec::getConfigObj().GetValue("net", "proxy", "true");
         // "" or true or proxyAdd ,otherwise set ""
         bool proxyUnexpected = exec::allTrue((proxy != ""), (proxy != "true"), !exec::isProxyAddress(proxy));
         if (proxyUnexpected)

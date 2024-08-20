@@ -193,12 +193,13 @@ namespace neko {
             std::string userAgent = (args.userAgent) ? args.userAgent : args.config.userAgent.c_str();
             std::string optStrT = optStr(opt);
             nlog::Info(FI, LI,
-                       "%s : url : %s , opt : %s , fileName : %s , range : %s , resBreakPoint : %s , userAgent : %s , protocol : %s , proxy : %s , data : %s ",
+                       "%s : url : %s , opt : %s , fileName : %s , range : %s , resBreakPoint : %s , userAgent : %s , protocol : %s , proxy : %s , system proxy : %s ,data : %s ",
                        FN, args.url, optStrT.c_str(), args.fileName, args.range,
                        resBreakPointStr.c_str(),
                        userAgent.c_str(),
                        args.config.protocol.c_str(),
                        args.config.proxy.c_str(),
+                       getSysProxy<const char *>(),
                        args.data);
         }
         inline bool initOpt(CURL *curl, Args &args) {
@@ -246,7 +247,7 @@ namespace neko {
         inline bool perform(CURL *curl, RetHttpCode *ref) {
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg = "get network req failed ! ：" + std::string(curl_easy_strerror(res)) + "";
+                std::string msg = "get network req failed ! ：" + std::string(curl_easy_strerror(res));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;

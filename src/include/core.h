@@ -1,10 +1,41 @@
-// #pragma once
+#pragma once
 
-// #include "nlohmann/json.hpp"
+#include "nlohmann/json.hpp"
 
-// #include "network.h"
-// #include "mainwindow.h"
-// #include "info.h"
+#include "network.h"
+#include "info.h"
+
+
+namespace neko
+{
+    struct updateMsg
+    {
+        std::string title;
+        std::string time;
+        std::string msg;
+        std::string poster;
+        int max;
+    };
+
+    class core
+    {
+    private:
+        /* data */
+    public:
+        core(/* args */);
+        ~core();
+    };
+    
+    
+} // namespace neko
+
+
+
+
+
+
+
+
 // namespace neko {
 //     class core {
 //     public:

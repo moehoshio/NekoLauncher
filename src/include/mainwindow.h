@@ -7,6 +7,8 @@
 
 #include <QtWidgets/QToolBar>
 
+#include <QtWidgets/QProgressBar>
+
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QGroupBox>
@@ -29,6 +31,7 @@
 
 #include <QtWidgets/QFileDialog>
 
+#include <QtGui/QMovie>
 #include <QtGui/QWindow>
 #include <QtGui/QtEvents>
 
@@ -41,6 +44,7 @@
 #include <QtGui/QScreen>
 
 #include "cconfig.h"
+#include "core.h"
 
 namespace ui {
 
@@ -106,10 +110,13 @@ namespace ui {
 
     class MainWindow : public QMainWindow {
         Q_OBJECT
+        public:
         enum class pageState {
             index,
-            setting
+            setting,
+            update
         };
+        private:
         struct SettingPageOne : public QWidget {
 
             QGroupBox *accountGroup;
@@ -239,6 +246,7 @@ namespace ui {
             QCheckBox *devOptEnable;
             QCheckBox *devOptDebug;
             QCheckBox *devOptTls;
+            QCheckBox *devOptUpdatePage;
 
             QWidget *devServerInputLayoutWidget;
             QHBoxLayout *devServerInputLayout;
@@ -270,6 +278,20 @@ namespace ui {
             QScrollArea *scrollArea;
             QVBoxLayout *scrollAreaLayout;
         };
+        struct UpdateDownloadPage : public QWidget
+        {
+            UpdateDownloadPage(QWidget *parent = nullptr);
+            QProgressBar * updateProgressBar;
+            pixmapWidget * poster;
+            QWidget *textLayoutWidget;
+            QVBoxLayout *textLayout;
+            QLabel * loadingLabel;
+            QMovie * loadingMv;
+            QLabel * titleH1;
+            QLabel * titleH2;
+            QLabel * text;
+        };
+        
         struct HeadBar : public QWidget {
             ToolBar *toolbar;
             QAction *close_;
@@ -277,10 +299,15 @@ namespace ui {
             QAction *maximize;
             QAction *sp1;
             QAction *sp2;
-            QWidget *spacer;
-            QGraphicsBlurEffect *blurEffect;
             HeadBar(QWidget *parent = nullptr);
         };
+
+        struct hintWinodw : public QWidget
+        {
+            QPushButton * button;
+            QLabel * msg;
+        };
+        
 
     private:
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
@@ -291,6 +318,7 @@ namespace ui {
         QWidget *widget;
         Index *index;
         Setting *setting;
+        UpdateDownloadPage * update_;
 
         HeadBar *headbar;
 
@@ -340,6 +368,16 @@ namespace ui {
             p_event->acceptProposedAction();
         }
         bool event(QEvent *event);
+
+        // void onUpdateDownloadPage(neko::updateMsg m){
+
+        // }
+        // void setUpdateDownloadVal(int val);
+
+        // template<typename F>
+        // void showHint(const char * msg,F callback){
+
+        // };
     };
 
 } // namespace ui

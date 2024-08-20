@@ -200,7 +200,7 @@ namespace ui {
         pageScrollArea->setWidget(scrollContent);
         pageScrollArea->setWidgetResizable(true);
         pageScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
 
     ui::MainWindow::SettingPageThree::SettingPageThree(QWidget *parent) : QWidget(parent) {
@@ -216,6 +216,7 @@ namespace ui {
         devOptEnable = new QCheckBox(devOptCheckLayoutWidget);
         devOptDebug = new QCheckBox(devOptCheckLayoutWidget);
         devOptTls = new QCheckBox(devOptCheckLayoutWidget);
+        devOptUpdatePage = new QCheckBox(devOptCheckLayoutWidget);
 
         devServerInputLayoutWidget = new QWidget(devOptGroup);
         devServerInputLayout = new QHBoxLayout(devServerInputLayoutWidget);
@@ -225,6 +226,7 @@ namespace ui {
         devOptCheckLayout->addWidget(devOptEnable);
         devOptCheckLayout->addWidget(devOptDebug);
         devOptCheckLayout->addWidget(devOptTls);
+        devOptCheckLayout->addWidget(devOptUpdatePage);
         devOptCheckLayoutWidget->setLayout(devOptCheckLayout);
 
         devServerInputLayout->addWidget(devServerAuto);
@@ -241,7 +243,7 @@ namespace ui {
         pageScrollArea->setWidget(scrollContent);
         pageScrollArea->setWidgetResizable(true);
         pageScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     };
 
     MainWindow::Setting::Setting(QWidget *parent) : QWidget(parent) {
@@ -269,6 +271,55 @@ namespace ui {
 
         closeButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DockWidgetCloseButton));
     };
+
+    MainWindow::UpdateDownloadPage::UpdateDownloadPage(QWidget *parent) : QWidget(parent) {
+        textLayoutWidget = new QWidget(this);
+        textLayout = new QVBoxLayout(textLayoutWidget);
+        poster = new pixmapWidget(this);
+        updateProgressBar = new QProgressBar(this);
+        loadingLabel = new QLabel(this);
+        loadingMv = new QMovie("./img/loading.gif");
+        titleH1 = new QLabel(textLayoutWidget);
+        titleH2 = new QLabel(textLayoutWidget);
+        text = new QLabel(textLayoutWidget);
+        
+        textLayout->addWidget(titleH1);
+        textLayout->addWidget(titleH2);
+        textLayout->addWidget(text);
+        textLayoutWidget->setLayout(textLayout);
+
+        updateProgressBar->setMinimum(0);
+        updateProgressBar->setMaximum(180);
+        updateProgressBar->setValue(100);
+
+        updateProgressBar->setTextVisible(true);
+        updateProgressBar->setAlignment(Qt::AlignCenter);
+        updateProgressBar->setOrientation(Qt::Horizontal);
+        updateProgressBar->setInvertedAppearance(false);
+
+        loadingMv->start();
+        loadingLabel->setAttribute(Qt::WA_NoSystemBackground);
+        loadingLabel->setMovie(loadingMv);
+        loadingLabel->setScaledContents(true);
+
+        for (auto it : std::vector<QLabel *>{titleH1, titleH2, text}) {
+            it->setAlignment(Qt::AlignCenter);
+        }
+    }
+
+    MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
+
+        toolbar = new ToolBar(this);
+        close_ = new QAction(QIcon::fromTheme("window-close"), "close", toolbar);
+
+        minimize = new QAction(QIcon::fromTheme("window-minimize"), "minimize", toolbar);
+
+        maximize = new QAction(QIcon::fromTheme("window-maximize"), "maximize", toolbar);
+
+        sp1 = toolbar->addSeparator();
+        sp2 = toolbar->addSeparator();
+    }
+
     void MainWindow::resizeItem() {
 
         bgWidget->setGeometry(-12, -12, width() + 50, height() + 20);
@@ -318,6 +369,20 @@ namespace ui {
 
                 break;
             }
+            case pageState::update: {
+                update_->resize(size());
+                int h1;
+                if (setting->page2->winSysFrameCheckBox->isChecked())
+                    h1 = this->height();
+                else
+                    h1 = this->height() - headbar->height();
+                update_->loadingLabel->setGeometry(10, h1 * 0.85, width() * 0.07, h1 * 0.08);
+                update_->textLayoutWidget->setGeometry(width() * 0.25, h1 * 0.15, width() * 0.5, h1 * 0.6);
+                update_->updateProgressBar->setGeometry(width() * 0.25, h1 * 0.85, width() * 0.5, h1 * 0.08);
+                update_->poster->setGeometry(0, 0, width(), h1);
+                
+                break;
+            }
             default:
                 break;
         }
@@ -352,12 +417,15 @@ namespace ui {
 
     void MainWindow::setupStyle() {
         this->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255));");
-        headbar->spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
         headbar->toolbar->setStyleSheet("QToolBar { background-color: rgba(245, 245, 245,230); }"
                                         "QToolButton {background-color: rgba(245, 245, 245,230);}"
                                         "QToolButton:hover {background-color: rgba(155, 155, 155,180);}");
 
         setting->setStyleSheet("background-color: rgba(150,150,150,100);");
+
+        update_->updateProgressBar->setStyleSheet("QProgressBar {border: 2px solid #fff;border-radius: 10px;text-align: center;}"
+                                                  "QProgressBar::chunk {background-color: rgba(120,120,120,188);}");
+        update_->textLayoutWidget->setStyleSheet("background-color: rgba(155,155,155,120);border-radius: 22%;");
 
         index->startButton->setStyleSheet("QPushButton { background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100));  border-radius: 30%;}"
                                           "QPushButton:hover { color: rgba(245,245,245,235); background-color: rgba(129, 129, 129, 205);}");
@@ -400,7 +468,7 @@ namespace ui {
         for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
-        for (auto transparentWidgets : std::vector<QWidget *>{headbar, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto}) {
+        for (auto transparentWidgets : std::vector<QWidget *>{headbar, update_, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, update_->titleH1, update_->titleH2, update_->text,update_->textScrollArea}) {
             transparentWidgets->setStyleSheet("background-color: rgba(255,255,255,0);");
         }
     }
@@ -410,6 +478,12 @@ namespace ui {
         index->startButton->setText("START");
         index->menuButton->setText("MENU");
         index->versionText->setText("core: v0.0.0.1\nres: v1.0.0.1");
+
+        update_->titleH1->setText("TITLE");
+        update_->titleH2->setText("H2");
+        update_->text->setText("123\n456\n789\n110\n112\n");
+        update_->updateProgressBar->setFormat("%v/%m");
+        setting->page3->devOptUpdatePage->setText("update");
         setting->page1->accountLogInOutButton->setText("logout");
         setting->page1->accountLogInOutInfoText->setText("i@i.ii");
 
@@ -472,17 +546,17 @@ namespace ui {
     void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
-                 index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
+                 update_->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
             normal->setFont(text);
         }
 
         for (auto h2Title : std::vector<QWidget *>{
-                 index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 update_->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             h2Title->setFont(h2);
         }
 
         for (auto h1Title : std::vector<QWidget *>{
-                 index->startButton}) {
+                 update_->titleH1, index->startButton}) {
             h1Title->setFont(h1);
         }
     }
@@ -623,7 +697,6 @@ namespace ui {
                 QWidget *spacer = new QWidget(headbar->toolbar);
                 spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
                 spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-                spacer->setGraphicsEffect(headbar->blurEffect);
                 headbar->toolbar->addWidget(spacer);
                 headbar->toolbar->addActions(
                     {headbar->minimize, headbar->sp1, headbar->maximize, headbar->sp2, headbar->close_});
@@ -678,6 +751,14 @@ namespace ui {
                 });
         connect(headbar->minimize, &QAction::triggered,
                 [=, this]() { setWindowState(Qt::WindowMinimized); });
+
+        connect(setting->page3->devOptUpdatePage, &QCheckBox::toggled, [=, this](bool checkd) {
+            if (checkd) {
+                oldState = state;
+                state = pageState::update;
+                updatePage(state, oldState);
+            }
+        });
     }
 
     void MainWindow::setupBase(neko::Config config) {
@@ -691,17 +772,9 @@ namespace ui {
             this->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
             this->setAttribute(Qt::WA_Hover);
             headbar->show();
-            if (config.main.barKeepRight) {
-                headbar->spacer->setGraphicsEffect(headbar->blurEffect);
-                headbar->toolbar->addWidget(headbar->spacer);
-                headbar->toolbar->addActions(
-                    {headbar->minimize, headbar->sp1, headbar->maximize, headbar->sp2, headbar->close_});
-            } else {
-                headbar->toolbar->addActions(
-                    {headbar->close_, headbar->sp1, headbar->maximize, headbar->sp2, headbar->minimize});
-            }
         } else {
             headbar->hide();
+            headbar->toolbar->hide();
         }
 
         QIcon icon;
@@ -778,26 +851,8 @@ namespace ui {
         oldState = pageState::index;
 
         setting->hide();
+        update_->hide();
         bgWidget->lower();
-    }
-    MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
-
-        toolbar = new ToolBar(this);
-        spacer = new QWidget(toolbar);
-        close_ = new QAction(QIcon::fromTheme("window-close"), "close", toolbar);
-
-        minimize = new QAction(QIcon::fromTheme("window-minimize"), "minimize", toolbar);
-
-        maximize = new QAction(QIcon::fromTheme("window-maximize"), "maximize", toolbar);
-
-        blurEffect = new QGraphicsBlurEffect();
-
-        sp1 = toolbar->addSeparator();
-        sp2 = toolbar->addSeparator();
-
-        spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        blurEffect->setBlurRadius(30);
-        spacer->setGraphicsEffect(blurEffect);
     }
 
     MainWindow::MainWindow(neko::Config config) {
@@ -806,7 +861,7 @@ namespace ui {
         bgWidget = new pixmapWidget(this);
         m_pBlurEffect = new QGraphicsBlurEffect;
         widget = new QWidget(this);
-
+        update_ = new UpdateDownloadPage(widget);
         index = new Index(widget);
         setting = new Setting(widget);
 
@@ -826,6 +881,8 @@ namespace ui {
             this->resize(std::stoi(sizeRes[1]), std::stoi(sizeRes[2]));
             resizeItem();
         }
+
+        emit setting->page2->winBarKeepRightCheckBox->toggled(config.main.barKeepRight);
     }
 
     void MainWindow::updatePage(MainWindow::pageState state, MainWindow::pageState oldState) {
@@ -837,6 +894,11 @@ namespace ui {
             case pageState::setting:
                 setting->show();
                 setting->raise();
+                break;
+            case pageState::update:
+                update_->show();
+                update_->raise();
+                break;
             default:
                 break;
         }
@@ -850,6 +912,9 @@ namespace ui {
                 break;
             case pageState::setting:
                 setting->hide();
+                break;
+            case pageState::update:
+                update_->hide();
                 break;
             default:
                 break;
