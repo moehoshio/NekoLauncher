@@ -10,6 +10,7 @@
 #include <QtWidgets/QProgressBar>
 
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QGroupBox>
 
@@ -45,7 +46,7 @@
 
 #include "cconfig.h"
 #include "core.h"
-
+#include "msgtypes.h"
 namespace ui {
 
     class ToolBar : public QToolBar {
@@ -247,6 +248,7 @@ namespace ui {
             QCheckBox *devOptDebug;
             QCheckBox *devOptTls;
             QCheckBox *devOptUpdatePage;
+            QCheckBox *devOptHintPage;
 
             QWidget *devServerInputLayoutWidget;
             QHBoxLayout *devServerInputLayout;
@@ -290,6 +292,8 @@ namespace ui {
             QLabel * titleH1;
             QLabel * titleH2;
             QLabel * text;
+            QLabel * process;
+            void onUpdateDownloadPage(const char * h1,const char * h2,const char * msg,int max,const char * poster = nullptr);
         };
         
         struct HeadBar : public QWidget {
@@ -302,10 +306,16 @@ namespace ui {
             HeadBar(QWidget *parent = nullptr);
         };
 
-        struct hintWinodw : public QWidget
+        struct HintWindow : public QWidget
         {
+            QWidget *centralWidget;
+            QVBoxLayout * centralWidgetLayout;
+            QFrame *line;
             QPushButton * button;
+            QDialogButtonBox * dialogButton;
+            QLabel * title;
             QLabel * msg;
+            HintWindow(QWidget *parent = nullptr);
         };
         
 
@@ -314,7 +324,7 @@ namespace ui {
 
         pixmapWidget *bgWidget;
         QGraphicsBlurEffect *m_pBlurEffect;
-
+        HintWindow *hintWidget;
         QWidget *widget;
         Index *index;
         Setting *setting;
@@ -369,15 +379,20 @@ namespace ui {
         }
         bool event(QEvent *event);
 
-        // void onUpdateDownloadPage(neko::updateMsg m){
+        void onUpdateDownloadPage(updateMsg m){
+            update_->onUpdateDownloadPage(m.h1.c_str(),m.h2.c_str(),m.msg.c_str(),m.max,m.poster.c_str());
+        };
+        void setUpdateDownloadVal(unsigned int val){
+            update_->updateProgressBar->setValue(val);
+        };
+        void setUpdateDownloadNow(const char * msg){
+            update_->process->setText(msg);
+        };
 
-        // }
-        // void setUpdateDownloadVal(int val);
+        template<typename F>
+        void showHint(const char * msg,F callback){
 
-        // template<typename F>
-        // void showHint(const char * msg,F callback){
-
-        // };
+        };
     };
 
 } // namespace ui

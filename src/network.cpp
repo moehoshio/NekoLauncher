@@ -66,27 +66,20 @@ namespace neko {
 
 } // namespace neko
 
-size_t neko::networkBase::Write_Callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
+size_t neko::networkBase::WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata) {
     std::string *buffer = reinterpret_cast<std::string *>(userdata);
     buffer->append(ptr, size * nmemb);
     return size * nmemb;
 }
 
-size_t neko::networkBase::Header_Callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
-    std::string *buffer = reinterpret_cast<std::string *>(userdata);
-    buffer->append(ptr, size * nmemb);
-    return size * nmemb;
-}
-
-size_t neko::networkBase::Write_CallbackFile(char *contents, size_t size, size_t nmemb, void *userp) {
+size_t neko::networkBase::WriteCallbackFile(char *contents, size_t size, size_t nmemb, void *userp) {
     std::fstream *file = static_cast<std::fstream *>(userp);
     file->write(contents, size * nmemb);
     return size * nmemb;
 }
 
-size_t neko::networkBase::Write_CallbackQBA(char *contents, size_t size, size_t nmemb, void *userp) {
-    size_t totalSize = size * nmemb;
+size_t neko::networkBase::WriteCallbackQBA(char *contents, size_t size, size_t nmemb, void *userp) {
     QByteArray *buffer = static_cast<QByteArray *>(userp);
-    buffer->append(contents, totalSize);
-    return totalSize;
+    buffer->append(contents, size * nmemb);
+    return size * nmemb;
 }

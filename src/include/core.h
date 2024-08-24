@@ -4,18 +4,11 @@
 
 #include "network.h"
 #include "info.h"
-
+#include "msgtypes.h"
 
 namespace neko
 {
-    struct updateMsg
-    {
-        std::string title;
-        std::string time;
-        std::string msg;
-        std::string poster;
-        int max;
-    };
+
 
     class core
     {

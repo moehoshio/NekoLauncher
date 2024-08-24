@@ -47,10 +47,9 @@ namespace neko {
             postText,
             postFile,
             getSize,        // using getCase or getSize . with return value.
-            getContent,     // with return value.
             getContentType, // using getCase func. with return value.
-            // use getContentAndStorage (to file) func, T requires operator<< (std::ostream&). with return value.
-            getHeadContent // with return value.
+            getContent,     // with return value.
+            getHeadContent  // with return value.
 
         };
 
@@ -98,18 +97,14 @@ namespace neko {
         }
 
         // use std string save ,Can be used in most cases ,binary or text
-        static size_t Write_Callback(char *ptr, size_t size, size_t nmemb, void *userdata);
-
-        static size_t Header_Callback(char *ptr, size_t size, size_t nmemb, void *userdata);
-
-        // write file
-        static size_t Write_CallbackFile(char *contents, size_t size, size_t nmemb, void *userp);
-
+        static size_t WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata);
+        // ofstream
+        static size_t WriteCallbackFile(char *contents, size_t size, size_t nmemb, void *userp);
         // write QByteArray
-        static size_t Write_CallbackQBA(char *contents, size_t size, size_t nmemb, void *userp);
+        static size_t WriteCallbackQBA(char *contents, size_t size, size_t nmemb, void *userp);
     };
 
-    template <typename T = std::string, typename F = decltype(networkBase::Write_Callback), typename F2 = decltype(networkBase::Header_Callback)>
+    template <typename T = std::string>
     class network : public networkBase {
         static_assert(!std::is_pointer<T>::value, "Error: Template parameter T cannot be a pointer type! If using pointer types, please use the T * getPtr function.");
 
@@ -123,8 +118,8 @@ namespace neko {
             const char *range = nullptr;
             const char *userAgent = nullptr;
             const char *data = nullptr;
-            F *writeCallback = networkBase::Write_Callback;
-            F2 *headerCallback = networkBase::Header_Callback;
+            size_t (*writeCallback)(char *, size_t, size_t, void *) = &networkBase::WriteCallbackString;
+            size_t (*headerCallback)(char *, size_t, size_t, void *) = &networkBase::WriteCallbackString;
             networkBase::Config config = networkBase::Dconfig;
         };
         struct autoRetryArgs {
@@ -339,7 +334,7 @@ namespace neko {
                 return std::string();
 
             std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-            std::size_t pos = res.find("Content-Type:");
+            std::size_t pos = res.find((opt == Opt::getSize) ? "Content-Length:" : "Content-Type:");
             if (pos == std::string::npos)
                 return std::string();
 
@@ -354,7 +349,6 @@ namespace neko {
             std::string res = getCase(Opt::getSize, args);
             if (res.empty())
                 return 0;
-
             try {
                 std::size_t size = std::stoull(res);
                 return size;
