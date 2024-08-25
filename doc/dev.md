@@ -82,7 +82,7 @@ else
             - Set default user-agent
             - Configure default host
             - Set TLS settings
-    
+
     Function prototype:
 
 ```cpp
@@ -93,7 +93,7 @@ inline void neko::autoInit(int argc, char *argv[])
     - Custom features and encapsulations are defined in this project:
     - Move operator overloading into the project's `neko` namespace.
     - Manage singleton objects:
-        - **ThreadPool** 
+        - **ThreadPool**
 
             ```cpp
             neko::ThreadPool &exec::getThreadObj();
@@ -181,65 +181,187 @@ inline void neko::autoInit(int argc, char *argv[])
         static T getSysProxy();
         ```
 
-        - Default callback functions:
+        - **Default Callback Functions**:
 
         ```cpp
-        static std::function<void()> defaultCallback;
+        static size_t WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata);
         ```
+
+        - When writing to a file is required, e.g., `Opt::downloadFile`
+
+        ```cpp
+        static size_t WriteCallbackFile(char *contents, size_t size, size_t nmemb, void *userp);
+        ```
+
+        - For cases where the return type is `QByteArray` (T = `QByteArray`)
+
+        ```cpp
+        static size_t WriteCallbackQBA(char *contents, size_t size, size_t nmemb, void *userp);
+        ```
+
+    - **network**:
+        - Prototype: (T cannot be a pointer)
+
+        ```cpp
+        template <typename T = std::string>
+        class network : public networkBase
+        ```
+
+        - **Defined Classes/Structures**:
+            - **Args**: Parameters for the current request
+                - `url`: cstr
+                - `fileName`: cstr
+                - `(ret)code`: int* returned HTTP code
+                - `resBreakPoint`: bool
+                - `range`: cstr range of the file to fetch
+                - `userAgent`: cstr
+                - `data`: cstr data to be sent when using POST
+                - `writeCallback`: `size_t(char*, size_t, size_t, void*)`
+                - `headerCallback`: `size_t(char*, size_t, size_t, void*)`
+                - `config`: Config
+                - **autoRetryArgs**: Parameters for using the `autoRetry` function
+                - `args`: Args
+                - `code`: int expected HTTP code, retries if not met
+                - `times`: size_t maximum number of retries
+                - `sleep`: size_t sleep time between retries (milliseconds)
+            - **MultiArgs**: Parameters for using the `Multi` function
+                - `args`: Args
+                - **Defined Approach Enum**: Download method
+                    - `Auto`: Splits into 100 parts if less than 50MB, otherwise 5MB each part
+                    - `Size`: Fixed size of 5MB
+                    - `Quantity`: Fixed quantity of 100 files
+                - `nums`: Number of download tasks, 0 equals thread count
+                - `approach`
+                - `code`: Expected HTTP code
+
+        - **Functions**:
+            - **Do**: Base function
+                - Applicable Options:
+                    - `Opt::onlyRequest`: Only request
+                    - `Opt::downloadFile`: Downloads to `args.fileName`; note the use of the file writing callback.
+                    - `Opt::postText`: POSTs `args.data`
+                    - `Opt::postFile`: Not implemented at the time of writing this document
+
+                        ```cpp
+                        inline void Do(Opt opt, Args &args) noexcept;
+                        ```
+
+            - **get**: Base function
+                - Applicable Options:
+                    - `Opt::postText`: POSTs `args.data` with a return content
+                    - `Opt::getContent`: Retrieves content (can be binary)
+                    - `Opt::getHeadContent`: Retrieves only the header content
+
+                        ```cpp
+                        inline T get(Opt opt, Args &args) noexcept;
+                        ```
+
+                - Returns an empty object if an error occurs
+
+            - **getCase**: Encapsulation function
+                - Applicable Options:
+                    - `Opt::getContentType`: Retrieves type from the header
+                    - `Opt::getSize`: Retrieves size from the header
+
+                        ```cpp
+                        inline std::string getCase(Opt opt, Args &args);
+                        ```
+
+                - Returns an empty object if an error occurs
+
+            - **getSize**: Encapsulation function
+
+                ```cpp
+                inline size_t getSize(Args &args) noexcept;
+                ```
+
+                - Returns 0 if an error occurs
+
+            - **getContentAndStorage**: Encapsulation function
+                - Returns content and stores it to `args.fileName`
+                - T must support `operator<<` for `std::ostream` (`std::ostream<<T`)
+
+                    ```cpp
+                    inline T getContentAndStorage(Args &args) noexcept;
+                    ```
+
+            - **getPtr**:
+
+                ```cpp
+                inline T *getPtr(Opt opt, Args &args) noexcept;
+                ```
+
+                - Overloaded version supports temporary arguments `(const Args & args)`
+
+            - **getShadPtr**:
+
+                ```cpp
+                inline std::shared_ptr<T> getShadPtr(Opt opt, Args &args) noexcept;
+                ```
+
+                - Overloaded version supports temporary arguments `(const Args & args)`
+
+            - **getUnqePtr**:
+
+                ```cpp
+                inline std::unique_ptr<T> getUnqePtr(Opt opt, Args &args) noexcept;
+                ```
+
+                - Overloaded version supports temporary arguments `(const Args & args)`
 
         - Functions to handle retry logic and non-blocking execution are provided, such as:
 
-            - **autoRetry**: Encapsulation function
-                - Scope of use: same as `Do` function
-                - If the maximum retry count is reached without obtaining the expected HTTP code, returns `false`.
-                - Note: If resume is enabled, HTTP code 416 is also considered as completed.
+        - **autoRetry**: Encapsulation function
+            - Scope of use: same as `Do` function
+            - If the maximum retry count is reached without obtaining the expected HTTP code, returns `false`.
+            - Note: If resume is enabled, HTTP code 416 is also considered as completed.
 
                 ```cpp
                 inline bool autoRetry(Opt opt, autoRetryArgs &ra);
                 ```
 
-                - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
+            - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
 
-            - **autoRetryGet**: Encapsulation function
-                - Scope of use: same as `get` function
-                - If the maximum retry count is reached without obtaining the expected HTTP code, returns an empty object.
-                - Note: If resume is enabled, HTTP code 416 is also considered as completed.
+        - **autoRetryGet**: Encapsulation function
+            - Scope of use: same as `get` function
+            - If the maximum retry count is reached without obtaining the expected HTTP code, returns an empty object.
+            - Note: If resume is enabled, HTTP code 416 is also considered as completed.
 
                 ```cpp
                 inline T autoRetryGet(Opt opt, autoRetryArgs &ra);
                 ```
 
-                - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
+            - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
 
-            - **nonBlockingDo**: Encapsulation function
-                - Scope of use: same as `Do` function
+        - **nonBlockingDo**: Encapsulation function
+            - Scope of use: same as `Do` function
 
                 ```cpp
                 inline auto nonBlockingDo(Opt opt, Args &args) -> std::future<void>;
                 ```
 
-            - **nonBlockingGet**: Encapsulation function
-                - Scope of use: same as `get` function
+        - **nonBlockingGet**: Encapsulation function
+            - Scope of use: same as `get` function
 
                 ```cpp
                 inline auto nonBlockingGet(Opt opt, Args &args) -> std::future<T>;
                 ```
 
-            - **nonBlockingGetPtr**: Encapsulation function
-                - Scope of use: same as `get` function
+        - **nonBlockingGetPtr**: Encapsulation function
+            - Scope of use: same as `get` function
 
                 ```cpp
                 inline auto nonBlockingGetPtr(Opt opt, Args &args) -> std::future<T *>;
                 ```
 
-            - **Multi**: Encapsulation function
-                - Scope of use: same as `Do` function
+        - **Multi**: Encapsulation function
+            - Scope of use: same as `Do` function
 
                 ```cpp
                 inline bool Multi(Opt opt, MultiArgs &ma);
                 ```
 
-                - Overloaded version supports temporary arguments `(const MultiArgs &ma)`.
+        - Overloaded version supports temporary arguments `(const MultiArgs &ma)`.
 
 4. **mainwindow.h**:
     - Inherits from `QMainWindow` for the main window.
