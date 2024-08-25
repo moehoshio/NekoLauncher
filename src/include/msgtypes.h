@@ -9,4 +9,14 @@ namespace ui {
         std::string poster;
         int max;
     };
+
+    struct hintMsg
+    {
+        std::string title,
+        msg,
+        poster;
+        int buttonType;
+        std::function<void(bool)> callback;
+    };
+    
 } // namespace ui

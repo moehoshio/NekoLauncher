@@ -19,7 +19,8 @@ int main(int argc, char *argv[]) {
         
 
         // neko::core c;
-        // c.autoUpdate(&w);
+        
+        exec::getThreadObj().enqueue(neko::autoUpdate,&w);
 
         return app.exec();
     } catch (const std::exception &) {

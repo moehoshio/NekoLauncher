@@ -323,6 +323,7 @@ namespace ui {
         sp2 = toolbar->addSeparator();
     }
     MainWindow::HintWindow::HintWindow(QWidget *parent) : QWidget(parent) {
+        poster = new pixmapWidget(this);
         centralWidget = new QWidget(this);
         centralWidgetLayout = new QVBoxLayout(centralWidget);
         title = new QLabel(centralWidget);
@@ -342,6 +343,8 @@ namespace ui {
         line->setFrameShadow(QFrame::Sunken);
         button->hide();
         dialogButton->hide();
+        poster->lower();
+        dialogButton->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
     }
     void MainWindow::UpdateDownloadPage::onUpdateDownloadPage(const char *h1, const char *h2, const char *msg, int max, const char *poster) {
         titleH1->setText(h1);

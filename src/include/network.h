@@ -242,7 +242,7 @@ namespace neko {
         inline bool perform(CURL *curl, RetHttpCode *ref) {
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg = "get network req failed ! ：" + std::string(curl_easy_strerror(res));
+                std::string msg = std::string("get network req failed ! ：") + std::string(curl_easy_strerror(res));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;
@@ -253,6 +253,7 @@ namespace neko {
         inline void setRetCodeAndClean(CURL *curl, RetHttpCode *ref) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, ref);
             curl_easy_cleanup(curl);
+            nlog::Info(FI, LI, "%s : this ref code : %d", FN, *ref);
         }
 
     public:
@@ -371,6 +372,7 @@ namespace neko {
             } catch (const std::exception &e) {
                 handleStdError(e, FI, LI, FN, args.code);
             }
+            return T();
         }
 
         // If error occurs, construct an empty object
@@ -509,13 +511,16 @@ namespace neko {
         }
 
         inline auto nonBlockingDo(Opt opt, Args &args) -> std::future<void> {
-            return info::getThreadObj().enqueue(Do(opt, args));
+            return exec::getThreadObj().enqueue(
+                [] { Do(opt, args); });
         }
         inline auto nonBlockingGet(Opt opt, Args &args) -> std::future<T> {
-            return info::getThreadObj().enqueue(get(opt, args));
+            return exec::getThreadObj().enqueue(
+                [] { return get(opt, args); });
         }
         inline auto nonBlockingGetPtr(Opt opt, Args &args) -> std::future<T *> {
-            return info::getThreadObj().enqueue(getPtr(opt, args));
+            return exec::getThreadObj().enqueue(
+                [] { return getPtr(opt, args); });
         }
 
         // Accepts parameters as rvalue objects, indicating the discarding of the returned HTTP code.
@@ -535,7 +540,7 @@ namespace neko {
 
             std::vector<Data> list;
 
-            size_t maxSize = autoRetry(Opt::getSize, autoRetryArgs{ma.args});
+            size_t maxSize = getSize(ma.args);
 
             size_t nums = 0;
             size_t oneSize = 0;
@@ -543,14 +548,14 @@ namespace neko {
             switch (ma.approach) {
                 case MultiArgs::Size: // fixed size 5MB
                     nums = maxSize / fiveM;
-                    nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect nums : %d", FN, "SIze", ma.nums, ma.code);
+                    nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect code : %d", FN, "SIze", ma.nums, ma.code);
                     break;
                 case MultiArgs::Quantity: // fixed quantity 100 files
                     oneSize = maxSize / 100;
-                    nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect nums : %d", FN, "Quantity", ma.nums, ma.code);
+                    nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect code : %d", FN, "Quantity", ma.nums, ma.code);
                     break;
                 case MultiArgs::Auto: {
-                    nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect nums : %d", FN, "Auto", ma.nums, ma.code);
+                    nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect code : %d", FN, "Auto", ma.nums, ma.code);
                     if (maxSize < (10 * fiveM))
                         oneSize = maxSize / 100;
                     else
@@ -561,11 +566,11 @@ namespace neko {
                     break;
             }
 
-            for (size_t i = 0; i < (nums == 0) ? 100 : nums; ++i) {
+            for (size_t i = 0; i < ((nums == 0) ? 100 : nums); ++i) {
                 // If i is 0, then start range  is 0; otherwise, i * (oneSize or five).
                 // If i equals nums, then end range is maxSize; otherwise, (i + 1) * (oneSize or five).
-                std::string start = std::to_string((i == 0) ? 0 : (i * (nums == 0) ? oneSize : fiveM));
-                std::string end = std::to_string((i == nums) ? maxSize : ((i + 1) * (nums == 0) ? oneSize : fiveM));
+                std::string start = std::to_string((i == 0) ? 0 : (i * ((nums == 0) ? oneSize : fiveM)));
+                std::string end = std::to_string((i == nums) ? maxSize : ((i + 1) * ((nums == 0) ? oneSize : fiveM)));
                 std::string range = start + "-" + end;
                 std::string name(info::getTemp() + "/" + exec::generateRandomString(12));
 
@@ -577,7 +582,9 @@ namespace neko {
                     Data{
                         range,
                         name,
-                        exec::getThreadObj().enqueue(autoRetry(opt, autoRetryArgs{args})) //
+                        exec::getThreadObj().enqueue([=, this] {
+                            return autoRetry(opt, autoRetryArgs{args, ma.code});
+                        }) //
                     });
             }
 
@@ -586,7 +593,10 @@ namespace neko {
                 args.range = list[i].range.c_str();
                 args.fileName = list[i].name.c_str();
                 bool ret = list[i].result.get();
-                if (!ret && !exec::getThreadObj().enqueue(autoRetry(opt, autoRetryArgs{args})).get()) {
+                if (!ret && !exec::getThreadObj().enqueue([=, this] {
+                                                     return autoRetry(opt, autoRetryArgs{args, ma.code});
+                                                 })
+                                 .get()) {
                     nlog::Err(FI, LI, "%s :  %d state : fail to twice ! , range : %s , file : %s", FN, i, args.range, args.fileName);
                     return false;
                 }
@@ -608,7 +618,7 @@ namespace neko {
                 std::ifstream ifs(it.name);
                 if (!ifs.is_open())
                     nlog::Err(FI, LI, "%s : fail to open temp file %s !", it.name.c_str());
-                (*file.get()) << ifs;
+                ifs >> (*file.get());
                 ifs.close();
             }
             file.get()->close();

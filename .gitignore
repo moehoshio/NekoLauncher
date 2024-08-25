@@ -1,7 +1,7 @@
 .vs/
 .vscode/
 build/
-
+testting/
 CmakeLists.txt
 *.log
 *.tmp
@@ -12,3 +12,4 @@ mainwindow copy.cpp
 mainwindow copy.h
 headbar copy.h
 headbar copy.cpp
+client copy.md
