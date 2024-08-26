@@ -48,7 +48,7 @@ namespace neko {
                     nullptr,
                     &retCode};
 
-                decltype(net)::autoRetryArgs Aargs{args, 200, 2, 50};
+                decltype(net)::autoRetryArgs Aargs{args, {200}, 2, 50};
 
                 bool res = net.autoRetry(Opt::onlyRequest, Aargs);
 
