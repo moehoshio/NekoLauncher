@@ -147,13 +147,13 @@ namespace neko {
         };
 
     private:
-        inline void doErr(const char *file, unsigned int line, const char *msg, const char *formFuncName, RetHttpCode *ref, int val) {
+        inline static void doErr(const char *file, unsigned int line, const char *msg, const char *formFuncName, RetHttpCode *ref, int val) {
             if (ref)
                 *ref = val;
             nlog::Err(file, line, "%s : %s", formFuncName, msg);
         }
 
-        inline void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName,const char * id, RetHttpCode *ret) {
+        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName,const char * id, RetHttpCode *ret) {
             switch (e.type) {
                 case nerr::errType::TheSame:
                 case nerr::errType::TimeOut:
@@ -165,13 +165,13 @@ namespace neko {
             }
         }
 
-        inline void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName,const char * id, RetHttpCode *ret) {
+        inline static void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName,const char * id, RetHttpCode *ret) {
             if (ret)
                 *ret = -3;
             nlog::Err(file, line, "%s(%s) :%s id: %s", FN, formFuncName, e.what(),id);
         }
 
-        inline void handleFileResume(const char *range, CURL *curl, size_t file_size) {
+        inline static void handleFileResume(const char *range, CURL *curl, size_t file_size) {
             if (range) {
                 size_t resume_offset = file_size + std::stoull(std::string(range).substr(0, std::string(range).find('-')));
                 curl_easy_setopt(curl, CURLOPT_RESUME_FROM, resume_offset);
@@ -179,7 +179,7 @@ namespace neko {
                 curl_easy_setopt(curl, CURLOPT_RESUME_FROM, file_size);
         }
 
-        inline void doLog(Opt opt, const Args &args) {
+        inline static void doLog(Opt opt, const Args &args) {
             std::string resBreakPointStr = (args.resBreakPoint) ? "true" : "false";
             std::string userAgent = (args.userAgent) ? args.userAgent : args.config.userAgent.c_str();
             std::string optStrT = optStr(opt);
@@ -194,7 +194,7 @@ namespace neko {
                        args.data,
                        args.id);
         }
-        inline bool initOpt(CURL *curl, Args &args) {
+        inline static bool initOpt(CURL *curl, Args &args) {
             if (!curl) {
                 doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string(args.id)).c_str(), FN,args.code, -1);
                 return false;
@@ -236,7 +236,8 @@ namespace neko {
             return true;
         }
 
-        inline bool perform(CURL *curl, RetHttpCode *ref,const char * id) {
+        inline static bool perform(CURL *curl, RetHttpCode *ref,const char * id) {
+            nlog::Info(FI,LI,"%s : Now start perform , id : %s",FN,id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
                 std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" id :") + std::string(id)));
@@ -244,10 +245,11 @@ namespace neko {
                 curl_easy_cleanup(curl);
                 return false;
             }
+            nlog::Info(FI,LI,"%s : perform is okay , id : %s",FN,id);
             return true;
         }
 
-        inline void setRetCodeAndClean(CURL *curl, RetHttpCode *ref,const char * id) {
+        inline static void setRetCodeAndClean(CURL *curl, RetHttpCode *ref,const char * id) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, ref);
             curl_easy_cleanup(curl);
             nlog::Info(FI, LI, "%s : this ref code : %d , id : %s", FN, *ref,id);
@@ -255,7 +257,7 @@ namespace neko {
 
     public:
         // Exceptions should not be thrown unless thrown within the constructor of T.
-        inline void Do(Opt opt, Args &args) noexcept {
+        inline static void Do(Opt opt, Args &args) noexcept {
             doLog(opt, args);
 
             CURL *curl = curl_easy_init();
@@ -535,6 +537,7 @@ namespace neko {
             struct Data {
                 std::string range;
                 std::string name;
+                std::string id;
                 std::future<bool> result;
             };
 
@@ -605,16 +608,19 @@ namespace neko {
                     }
                 }
                 std::string range = start + "-" + end;
-                std::string name(info::getTemp() + "/" + exec::generateRandomString(12));
+                std::string name(info::getTemp() + "/" + exec::generateRandomString(12) + "-" + std::to_string(i));
+                std::string id(std::string(ma.args.id) + "-"+std::to_string(i));
 
                 Args args{ma.args};
                 args.range = range.c_str();
                 args.fileName = name.c_str();
+                args.id = id.c_str();
 
                 list.push_back(
                     Data{
                         range | exec::move,
                         name | exec::move,
+                        id | exec::move,
                         exec::getThreadObj().enqueue([=, this] {
                             return autoRetry(opt, autoRetryArgs{args, ma.code});
                         }) //

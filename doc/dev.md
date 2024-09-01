@@ -1,4 +1,8 @@
 # dev
+[module](#module-list)  
+[style guide](#style-guide)  
+[module for example](../test/)  
+[server](server.md)  
 
 ## Style Guide
 
@@ -216,12 +220,13 @@ inline void neko::autoInit(int argc, char *argv[])
                 - `range`: cstr range of the file to fetch
                 - `userAgent`: cstr
                 - `data`: cstr data to be sent when using POST
+                - `id` : cstr
                 - `writeCallback`: `size_t(char*, size_t, size_t, void*)`
                 - `headerCallback`: `size_t(char*, size_t, size_t, void*)`
                 - `config`: Config
-                - **autoRetryArgs**: Parameters for using the `autoRetry` function
+            - **autoRetryArgs**: Parameters for using the `autoRetry` function
                 - `args`: Args
-                - `code`: int expected HTTP code, retries if not met
+                - `code`: vector list int expected HTTP code, retries if not met
                 - `times`: size_t maximum number of retries
                 - `sleep`: size_t sleep time between retries (milliseconds)
             - **MultiArgs**: Parameters for using the `Multi` function
@@ -232,8 +237,15 @@ inline void neko::autoInit(int argc, char *argv[])
                     - `Quantity`: Fixed quantity of 100 files
                 - `nums`: Number of download tasks, 0 equals thread count
                 - `approach`
-                - `code`: Expected HTTP code
-
+                - `code`: vector list int , Expected HTTP code, Usually http code 206
+            - **Error Return Values**: (Args::code)  
+                - `-1`: Indicates an error occurred during libcurl initialization.
+                - `-3`: Indicates an unexpected standard exception occurred.
+                - `-4`: Indicates an error during the execution of a network request, such as an SSL connection failure, DNS resolution failure, etc.
+                - `-5`: Indicates the use of an incorrect method/option. Refer to the applicable options for the function later.
+                - `-6`: Occurs in the getSize function, indicating an invalid Content-Length value.
+                - `-7`: Occurs in the getSize function, indicating the Content-Length value is out of range.
+                - `-8`: Occurs in the getCase function when using methods other than Opt::getSize or Opt::getContentType.
         - **Functions**:
             - **Do**: Base function
                 - Applicable Options:
@@ -243,8 +255,10 @@ inline void neko::autoInit(int argc, char *argv[])
                     - `Opt::postFile`: Not implemented at the time of writing this document
 
                         ```cpp
-                        inline void Do(Opt opt, Args &args) noexcept;
+                        inline static void Do(Opt opt, Args &args) noexcept;
                         ```
+
+                        The T here is useless.
 
             - **get**: Base function
                 - Applicable Options:
@@ -258,7 +272,7 @@ inline void neko::autoInit(int argc, char *argv[])
 
                 - Returns an empty object if an error occurs
 
-            - **getCase**: Encapsulation function
+            - **getCase**: Base function
                 - Applicable Options:
                     - `Opt::getContentType`: Retrieves type from the header
                     - `Opt::getSize`: Retrieves size from the header
@@ -268,6 +282,7 @@ inline void neko::autoInit(int argc, char *argv[])
                         ```
 
                 - Returns an empty object if an error occurs
+                - Note that all return values will be converted to lowercase.
 
             - **getSize**: Encapsulation function
 
@@ -286,6 +301,7 @@ inline void neko::autoInit(int argc, char *argv[])
                     ```
 
             - **getPtr**:
+                - Scope of use: same as `get` function
 
                 ```cpp
                 inline T *getPtr(Opt opt, Args &args) noexcept;
@@ -294,6 +310,7 @@ inline void neko::autoInit(int argc, char *argv[])
                 - Overloaded version supports temporary arguments `(const Args & args)`
 
             - **getShadPtr**:
+                - Scope of use: same as `get` function
 
                 ```cpp
                 inline std::shared_ptr<T> getShadPtr(Opt opt, Args &args) noexcept;
@@ -302,6 +319,7 @@ inline void neko::autoInit(int argc, char *argv[])
                 - Overloaded version supports temporary arguments `(const Args & args)`
 
             - **getUnqePtr**:
+                - Scope of use: same as `get` function
 
                 ```cpp
                 inline std::unique_ptr<T> getUnqePtr(Opt opt, Args &args) noexcept;
@@ -317,7 +335,7 @@ inline void neko::autoInit(int argc, char *argv[])
             - Note: If resume is enabled, HTTP code 416 is also considered as completed.
 
                 ```cpp
-                inline bool autoRetry(Opt opt, autoRetryArgs &ra);
+                inline static bool autoRetry(Opt opt, autoRetryArgs &ra);
                 ```
 
             - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
@@ -337,7 +355,7 @@ inline void neko::autoInit(int argc, char *argv[])
             - Scope of use: same as `Do` function
 
                 ```cpp
-                inline auto nonBlockingDo(Opt opt, Args &args) -> std::future<void>;
+                inline static auto nonBlockingDo(Opt opt, Args &args) -> std::future<void>;
                 ```
 
         - **nonBlockingGet**: Encapsulation function
