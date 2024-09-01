@@ -1,7 +1,7 @@
 # dev
 [module](#module-list)  
 [style guide](#style-guide)  
-[module for example](../test/)  
+[module for example](#module-example)  
 [server](server.md)  
 
 ## Style Guide
@@ -400,3 +400,7 @@ inline void neko::autoInit(int argc, char *argv[])
             ```
 
             - When the user clicks, `m.callback` is invoked with a boolean representing the user's choice (always `true` for a single button).
+
+## Module Example
+
+1. network: You can refer to [test/network/main.cpp](../test/network/main.cpp) It includes usage examples for most scenarios.

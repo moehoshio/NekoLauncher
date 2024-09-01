@@ -29,7 +29,7 @@ The "res" version and the "core" version are separate. In most cases, we use JSO
 
        ```json
        {
-           "core":"v0.0.1",
+           "core":"v0.0.0.1",
            "res":"v0.0.0.1",
            "token":"" // opt
        }
