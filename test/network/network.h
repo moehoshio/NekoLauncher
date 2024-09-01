@@ -7,9 +7,18 @@
 
 #include "err.h"
 #include "exec.h"
-#include "fn.h"
-#include "info.h"
-#include "io.h"
+
+#define FN __FUNCTION__
+
+#define FI __FILE__
+
+#define LI __LINE__
+
+#include "one.h"
+#include <fstream>
+#include <string>
+using oneIof = one::one<std::fstream,std::string>; 
+
 #include "log.h"
 
 namespace neko {
