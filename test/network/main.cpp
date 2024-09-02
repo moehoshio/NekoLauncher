@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
         network net;
         int code = 0;
         decltype(net)::Args args{
-            google, "./getAndImgS1.png", &code};
+            image, "./getAndImgS1.png", &code};
         args.id = "9";
         auto getAndRet = net.getContentAndStorage(args);
         std::ofstream imgOf2("./getAndImgG2.png", std::ios::in | std::ios::binary);
@@ -134,10 +134,11 @@ int main(int argc, char *argv[]) {
         network net;
         int code = 0;
         decltype(net)::Args args{
-            google, "file.zip", &code};
+            file, "file.zip", &code};
         args.writeCallback = networkBase::WriteCallbackFile;
         args.id = "10";
         decltype(net)::MultiArgs margs{args};
+        // margs.approach = margs.Quantity;
         bool isok = net.Multi(Opt::downloadFile, margs);
         nlog::Info(FI,LI,"Multi isok : %s",exec::boolTo<const char *>(isok));
     }();

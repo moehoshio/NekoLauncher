@@ -17,7 +17,7 @@
 #include "one.h"
 #include <fstream>
 #include <string>
-using oneIof = one::one<std::fstream,std::string>; 
+using oneIof = one::one<std::fstream, std::string>;
 
 #include "log.h"
 
@@ -152,7 +152,7 @@ namespace neko {
             nlog::Err(file, line, "%s : %s", formFuncName, msg);
         }
 
-        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName,const char * id, RetHttpCode *ret) {
+        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
             switch (e.type) {
                 case nerr::errType::TheSame:
                 case nerr::errType::TimeOut:
@@ -164,10 +164,10 @@ namespace neko {
             }
         }
 
-        inline static void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName,const char * id, RetHttpCode *ret) {
+        inline static void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
             if (ret)
                 *ret = -3;
-            nlog::Err(file, line, "%s(%s) :%s id: %s", FN, formFuncName, e.what(),id);
+            nlog::Err(file, line, "%s(%s) :%s id: %s", FN, formFuncName, e.what(), id);
         }
 
         inline static void handleFileResume(const char *range, CURL *curl, size_t file_size) {
@@ -195,7 +195,7 @@ namespace neko {
         }
         inline static bool initOpt(CURL *curl, Args &args) {
             if (!curl) {
-                doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string(args.id)).c_str(), FN,args.code, -1);
+                doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string(args.id)).c_str(), FN, args.code, -1);
                 return false;
             }
 
@@ -218,10 +218,10 @@ namespace neko {
                     }
 
                 } catch (const nerr::error &e) {
-                    handleNerr(e, FI, LI, FN, args.id ,args.code);
+                    handleNerr(e, FI, LI, FN, args.id, args.code);
                     return false;
                 } catch (const std::exception &e) {
-                    handleStdError(e, FI, LI, FN,args.id, args.code);
+                    handleStdError(e, FI, LI, FN, args.id, args.code);
                     return false;
                 }
             } // resBreakPoint
@@ -235,8 +235,8 @@ namespace neko {
             return true;
         }
 
-        inline static bool perform(CURL *curl, RetHttpCode *ref,const char * id) {
-            nlog::Info(FI,LI,"%s : Now start perform , id : %s",FN,id);
+        inline static bool perform(CURL *curl, RetHttpCode *ref, const char *id) {
+            nlog::Info(FI, LI, "%s : Now start perform , id : %s", FN, id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
                 std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" id :") + std::string(id)));
@@ -244,14 +244,14 @@ namespace neko {
                 curl_easy_cleanup(curl);
                 return false;
             }
-            nlog::Info(FI,LI,"%s : perform is okay , id : %s",FN,id);
+            nlog::Info(FI, LI, "%s : perform is okay , id : %s", FN, id);
             return true;
         }
 
-        inline static void setRetCodeAndClean(CURL *curl, RetHttpCode *ref,const char * id) {
+        inline static void setRetCodeAndClean(CURL *curl, RetHttpCode *ref, const char *id) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, ref);
             curl_easy_cleanup(curl);
-            nlog::Info(FI, LI, "%s : this ref code : %d , id : %s", FN, *ref,id);
+            nlog::Info(FI, LI, "%s : this ref code : %d , id : %s", FN, *ref, id);
         }
 
     public:
@@ -281,9 +281,9 @@ namespace neko {
                         setRetCodeAndClean(curl, args.code, args.id);
 
                     } catch (const nerr::error &e) {
-                        handleNerr(e, FI, LI, FN, args.id ,args.code);
+                        handleNerr(e, FI, LI, FN, args.id, args.code);
                     } catch (const std::exception &e) {
-                        handleStdError(e, FI, LI, FN, args.id , args.code);
+                        handleStdError(e, FI, LI, FN, args.id, args.code);
                     } catch (...) {
                     }
 
@@ -314,7 +314,7 @@ namespace neko {
             doLog(opt, args);
 
             if (opt != Opt::getSize && opt != Opt::getContentType) {
-                doErr(FI, LI, std::string(std::string("Invalid method! Only Opt::getSize and Opt::getContentType can use this method(getCase)! id : ")+ args.id).c_str(), FN, args.code, -8);
+                doErr(FI, LI, std::string(std::string("Invalid method! Only Opt::getSize and Opt::getContentType can use this method(getCase)! id : ") + args.id).c_str(), FN, args.code, -8);
                 return std::string();
             }
 
@@ -367,9 +367,9 @@ namespace neko {
                 (*file.get()) << res;
                 return res;
             } catch (const nerr::error &e) {
-                handleNerr(e, FI, LI, FN, args.id,args.code);
+                handleNerr(e, FI, LI, FN, args.id, args.code);
             } catch (const std::exception &e) {
-                handleStdError(e, FI, LI, FN,args.id, args.code);
+                handleStdError(e, FI, LI, FN, args.id, args.code);
             }
             return T();
         }
@@ -456,12 +456,12 @@ namespace neko {
             for (auto it : ra.code) {
                 expectCodes.append(std::to_string(it) + std::string(","));
             }
-            nlog::Info(FI, LI, "%s : expect code : %s , sleep : %d , times : %d , id : %s", FN, expectCodes.c_str(), ra.sleep, ra.times,ra.args.id);
+            nlog::Info(FI, LI, "%s : expect code : %s , sleep : %d , times : %d , id : %s", FN, expectCodes.c_str(), ra.sleep, ra.times, ra.args.id);
 
             for (size_t i = 0; i < ra.times; ++i) {
 
                 Do(opt, ra.args);
-                nlog::Info(FI, LI, "%s : this req code : %d , id : %s", FN, *ra.args.code,ra.args.id);
+                nlog::Info(FI, LI, "%s : this req code : %d , id : %s", FN, *ra.args.code, ra.args.id);
                 for (auto it : ra.code) {
                     if (*ra.args.code == it) {
                         return true;
@@ -490,7 +490,7 @@ namespace neko {
             for (auto it : ra.code) {
                 expectCodes.append(std::to_string(it) + std::string(","));
             }
-            nlog::Info(FI, LI, "%s : expect code : %s , sleep : %d , times : %d , id : %s", FN, expectCodes.c_str(), ra.sleep, ra.times,ra.args.id);
+            nlog::Info(FI, LI, "%s : expect code : %s , sleep : %d , times : %d , id : %s", FN, expectCodes.c_str(), ra.sleep, ra.times, ra.args.id);
             RetHttpCode code;
             if (!ra.args.code) {
                 ra.args.code = &code;
@@ -499,7 +499,7 @@ namespace neko {
             for (size_t i = 0; i < ra.times; ++ra.times) {
 
                 T res = get(opt, ra.args);
-                nlog::Info(FI, LI, "%s : this req code : %d , id : %s", FN, *ra.args.code,ra.args.id);
+                nlog::Info(FI, LI, "%s : this req code : %d , id : %s", FN, *ra.args.code, ra.args.id);
                 for (auto it : ra.code) {
                     if (*ra.args.code == it) {
                         return true;
@@ -530,7 +530,7 @@ namespace neko {
             Multi(opt, args);
         }
         inline bool Multi(Opt opt, MultiArgs &ma) {
-            nlog::Info(FI, LI, "%s : Enter , id :%s", FN,ma.args.id);
+            nlog::Info(FI, LI, "%s : Enter , id :%s", FN, ma.args.id);
             constexpr size_t fiveM = (5 * 1024) * 1024;
 
             struct Data {
@@ -543,11 +543,9 @@ namespace neko {
             std::vector<Data> list;
 
             size_t maxSize = getSize(ma.args);
-            if (maxSize == 0 && getSize(ma.args) == 0)
-            {
+            if (maxSize == 0 && getSize(ma.args) == 0) {
                 return false;
             }
-            
 
             size_t numThreads = 0; // fixed size 5MB
             size_t chunkSize = 0;  // fixed quantity 100 files
@@ -574,16 +572,18 @@ namespace neko {
                     break;
             }
             nlog::Info(FI, LI, "%s : approach : %s , used thread nums : %zu , expect codes : %s , id: %s", FN, ((ma.approach == MultiArgs::Auto) ? "Auto" : (ma.approach == MultiArgs::Size) ? "SIze"
-                                                                                                                                                                                    : "Quantity"),
-                       ma.nums, expectCodes.c_str(),ma.args.id);
-            nlog::Info(FI,LI,"%s : maxSize : %zu , numThreads : %zu , chunkSize : %zu , id : %s",FN,maxSize,numThreads,chunkSize,ma.args.id);
+                                                                                                                                                                                             : "Quantity"),
+                       ma.nums, expectCodes.c_str(), ma.args.id);
+            nlog::Info(FI, LI, "%s : maxSize : %zu , numThreads : %zu , chunkSize : %zu , id : %s", FN, maxSize, numThreads, chunkSize, ma.args.id);
             for (size_t i = 0; i < ((numThreads != 0) ? numThreads : 100); ++i) {
                 std::string start;
                 std::string end;
                 if (i != 0) {
-                    start = std::to_string(
-                        i * ((numThreads != 0) ? fiveM : chunkSize ));
+                    int startVal = (i * ((numThreads != 0) ? fiveM : chunkSize)) + 1;
+                    start = std::to_string(startVal);
+                    nlog::Info(FI, LI, "%s : i not 0 , statrt = %s", FN, start.c_str());
                 } else {
+                    nlog::Info(FI, LI, "%s : i == 0 , statrt = 0", FN);
                     start = "0";
                 }
 
@@ -591,68 +591,69 @@ namespace neko {
                     if (i != (numThreads - 1)) {
                         end = std::to_string(
                             (i + 1) * fiveM);
-                            nlog::Info(FI,LI,"%s : nums !=0 , i!= nums , end range : %s  (i + 1) * fiveM) , i : %zu , id : %s",FN,end.c_str(),i,ma.args.id);
+                        nlog::Info(FI, LI, "%s : nums not 0 , i not nums , end range : %s  (i + 1) * fiveM) , i : %zu , id : %s", FN, end.c_str(), i, ma.args.id);
                     } else {
                         end = std::to_string(maxSize);
-                        nlog::Info(FI,LI,"%s : nums !=0 , i is nums (max) , end range : %s  (maxSize) , i : %zu , id : %s",FN,end.c_str(),i,ma.args.id);
+                        nlog::Info(FI, LI, "%s : nums not 0 , i is nums (max) , end range : %s  (maxSize) , i : %zu , id : %s", FN, end.c_str(), i, ma.args.id);
                     }
                 } else {
                     if (i != 99) {
                         end = std::to_string(
                             (i + 1) * chunkSize);
-                            nlog::Info(FI,LI,"%s : chunkSize != 0 , i!= 100 , end range : %s  (i + 1) * chunkSize) , i : %zu , id : %s",FN,end.c_str(),i,ma.args.id);
+                        nlog::Info(FI, LI, "%s : chunkSize != 0 , i!= 100 , end range : %s  (i + 1) * chunkSize) , i : %zu , id : %s", FN, end.c_str(), i, ma.args.id);
                     } else {
                         end = std::to_string(maxSize);
-                        nlog::Info(FI,LI,"%s : chunkSize !=0 , i is 100 , end range : %s  (maxSize) , i : %zu , id : %s",FN,end.c_str(),i,ma.args.id);
+                        nlog::Info(FI, LI, "%s : chunkSize !=0 , i is 100 , end range : %s  (maxSize) , i : %zu , id : %s", FN, end.c_str(), i, ma.args.id);
                     }
                 }
                 std::string range = start + "-" + end;
-                //test
+                // test
                 std::string name("./temp/" + exec::generateRandomString(12) + "-" + std::to_string(i));
-                std::string id(std::string(ma.args.id) + "-"+std::to_string(i));
-
-                Args args{ma.args};
-                args.range = range.c_str();
-                args.fileName = name.c_str();
-                args.id = id.c_str();
+                std::string id(std::string(ma.args.id) + "-" + std::to_string(i));
 
                 list.push_back(
                     Data{
-                        range | exec::move,
-                        name | exec::move,
-                        id | exec::move,
+                        range,
+                        name,
+                        id,
                         exec::getThreadObj().enqueue([=, this] {
+                            Args args{ma.args};
+                            args.range = range.c_str();
+                            args.fileName = name.c_str();
+                            args.id = id.c_str();
                             return autoRetry(opt, autoRetryArgs{args, ma.code});
                         }) //
                     });
             }
-            nlog::Info(FI, LI, "%s : Now check download state , id : %s", FN,ma.args.id);
+            nlog::Info(FI, LI, "%s : Now check download state , id : %s", FN, ma.args.id);
             for (size_t i = 0; i < list.size(); ++i) {
-                Args args{ma.args};
-                args.range = list[i].range.c_str();
-                args.fileName = list[i].name.c_str();
+
                 bool ret = list[i].result.get();
                 if (!ret && !exec::getThreadObj().enqueue([=, this] {
+                                                     Args args{ma.args};
+                                                     args.range = list[i].range.c_str();
+                                                     args.fileName = list[i].name.c_str();
+                                                     args.id = list[i].id.c_str();
                                                      return autoRetry(opt, autoRetryArgs{args, ma.code});
                                                  })
                                  .get()) {
-                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, args.range, args.fileName,args.id);
+                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, args.range, args.fileName, args.id);
                     return false;
                 }
             }
             oneIof file;
             file.init(ma.args.fileName);
-            (*file.get()).open(ma.args.fileName,std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+            (*file.get()).open(ma.args.fileName, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
 
-            if (! (*file.get()).is_open()) {
-                nlog::Info(FI, LI, "%s : fail to open file %s! id : %s", FN, ma.args.fileName,ma.args.id);
+            if (!(*file.get()).is_open()) {
+                nlog::Info(FI, LI, "%s : fail to open file %s! id : %s", FN, ma.args.fileName, ma.args.id);
                 return false;
             }
 
             for (const auto &it : list) {
                 std::ifstream src(it.name, std::ios::binary);
                 if (!src.is_open())
-                    nlog::Err(FI, LI, "%s : fail to open temp file %s ! id : %s", it.name.c_str(),ma.args.id);
+                    nlog::Err(FI, LI, "%s : fail to open temp file %s ! id : %s", it.name.c_str(), ma.args.id);
                 (*file.get()) << src.rdbuf();
                 src.close();
             }
