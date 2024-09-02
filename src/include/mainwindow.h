@@ -341,6 +341,7 @@ namespace ui {
                     });
             }
             void showHint(const hintMsg &m) {
+                this->show();
                 this->title->setText(m.title.c_str());
                 this->msg->setText(m.msg.c_str());
                 if (!m.poster.empty())
@@ -428,7 +429,10 @@ namespace ui {
         // button type 1 : use one button
         void showHint(const hintMsg &m) {
             hintWidget->HintWindow::showHint(m);
+            resizeItem();
         };
+signals:
+        void showHintD(const hintMsg&m);
     };
 
 } // namespace ui

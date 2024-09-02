@@ -84,13 +84,14 @@ else
         - Initialize networkBase
             - Load default proxy configuration
             - Set default user-agent
-            - Configure default host
             - Set TLS settings
+            - Configure default host and Returns a future object indicating whether the test of networkBase::Dconfig.host is complete
+        - Returns the object returned by networkBase::init
 
     Function prototype:
 
 ```cpp
-inline void neko::autoInit(int argc, char *argv[])
+inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
 ```
 
 2. **exec.h**:

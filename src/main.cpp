@@ -12,15 +12,17 @@
 int main(int argc, char *argv[]) {
     try {
         QApplication app(argc, argv);
-        neko::autoInit(argc, argv);
+        auto it = neko::autoInit(argc, argv);
         neko::Config config(exec::getConfigObj());
         ui::MainWindow w(config);
         w.show();
-        
 
-        // neko::core c;
-        
-        exec::getThreadObj().enqueue(neko::autoUpdate,&w);
+        auto hintFunc = [=, &w](const ui::hintMsg &m) { emit w.showHintD(m); };
+        it.get();
+
+        exec::getThreadObj().enqueue([=] {
+            neko::autoUpdate(hintFunc);
+        });
 
         return app.exec();
     } catch (const std::exception &) {

@@ -157,10 +157,10 @@ namespace neko {
             switch (e.type) {
                 case nerr::errType::TheSame:
                 case nerr::errType::TimeOut:
-                    doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret, e.code);
+                    doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret, e.code);
                     break;
                 default:
-                    doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret, e.code);
+                    doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id )).c_str(), (std::string(FN) + formFuncName).c_str(), ret, e.code);
                     break;
             }
         }
@@ -196,7 +196,7 @@ namespace neko {
         }
         inline static bool initOpt(CURL *curl, Args &args) {
             if (!curl) {
-                doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string(args.id)).c_str(), FN, args.code, -1);
+                doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string((args.id == nullptr)?"": args.id )).c_str(), FN, args.code, -1);
                 return false;
             }
 
@@ -240,7 +240,7 @@ namespace neko {
             nlog::Info(FI, LI, "%s : Now start perform , id : %s", FN, id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" id :") + std::string(id)));
+                std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" id :") + ((id == nullptr)?"": std::string(id) )));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;
@@ -304,7 +304,7 @@ namespace neko {
                     break;
                 }
                 default: {
-                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but a function that does not provide a return value was used.) id : ") + args.id).c_str(), FN, args.code, -5);
+                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but a function that does not provide a return value was used.) id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -5);
                     break;
                 }
             }
@@ -315,7 +315,7 @@ namespace neko {
             doLog(opt, args);
 
             if (opt != Opt::getSize && opt != Opt::getContentType) {
-                doErr(FI, LI, std::string(std::string("Invalid method! Only Opt::getSize and Opt::getContentType can use this method(getCase)! id : ") + args.id).c_str(), FN, args.code, -8);
+                doErr(FI, LI, std::string(std::string("Invalid method! Only Opt::getSize and Opt::getContentType can use this method(getCase)! id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -8);
                 return std::string();
             }
 
@@ -354,9 +354,9 @@ namespace neko {
                 std::size_t size = std::stoull(res);
                 return size;
             } catch (const std::invalid_argument &e) {
-                doErr(FI, LI, std::string(std::string("Invalid Content-Length value. id : ") + args.id).c_str(), FN, args.code, -6);
+                doErr(FI, LI, std::string(std::string("Invalid Content-Length value. id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -6);
             } catch (const std::out_of_range &e) {
-                doErr(FI, LI, std::string(std::string("Content-Length value out of range. id :") + args.id).c_str(), FN, args.code, -7);
+                doErr(FI, LI, std::string(std::string("Content-Length value out of range. id :") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -7);
             }
             return 0;
         }
@@ -417,7 +417,7 @@ namespace neko {
                     break;
                 }
                 default: {
-                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but it was used with an option that does not have a return value.) id : ") + args.id).c_str(), FN, args.code, -5);
+                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but it was used with an option that does not have a return value.) id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -5);
                     break;
                 }
             }
@@ -610,7 +610,7 @@ namespace neko {
                 std::string range = start + "-" + end;
                 // test
                 std::string name("./temp/" + exec::generateRandomString(12) + "-" + std::to_string(i));
-                std::string id(std::string(ma.args.id) + "-" + std::to_string(i));
+                std::string id(std::string((ma.args.id==nullptr)? "" :ma.args.id) + "-" + std::to_string(i));
 
                 list.push_back(
                     Data{
@@ -638,7 +638,7 @@ namespace neko {
                                                      return autoRetry(opt, autoRetryArgs{args, ma.code});
                                                  })
                                  .get()) {
-                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, args.range, args.fileName, args.id);
+                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, list[i].range.c_str(), list[i].fileName.c_str(), list[i].id.c_str());
                     return false;
                 }
             }

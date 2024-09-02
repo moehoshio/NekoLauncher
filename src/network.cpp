@@ -47,6 +47,8 @@ namespace neko {
                     url.c_str(),
                     nullptr,
                     &retCode};
+                    
+                    args.id =  it;
 
                 decltype(net)::autoRetryArgs Aargs{args, {200}, 2, 50};
 

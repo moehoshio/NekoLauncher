@@ -351,7 +351,7 @@ namespace ui {
         titleH2->setText(h2);
         text->setText(msg);
         updateProgressBar->setMaximum(max);
-        if (std::string(poster) == "")
+        if (!std::string(poster).empty())
             this->poster->setPixmap(poster);
     }
     void MainWindow::resizeItem() {
@@ -366,6 +366,7 @@ namespace ui {
 
         if (hintWidget->isVisible()) {
             hintWidget->resize(width(),h1);
+            hintWidget->poster->setGeometry(0,0,this->width(),this->height());
             hintWidget->centralWidget->setGeometry(width() * 0.225, h1 * 0.255, width() * 0.55, h1 * 0.49);
         }
 
@@ -813,6 +814,7 @@ namespace ui {
         connect(hintWidget->button, &QPushButton::clicked, [=, this]() {
             hintWidget->hide();
         });
+        connect(this,&MainWindow::showHintD,this,&MainWindow::showHint);
     }
 
     void MainWindow::setupBase(neko::Config config) {

@@ -637,7 +637,7 @@ namespace neko {
                                                      return autoRetry(opt, autoRetryArgs{args, ma.code});
                                                  })
                                  .get()) {
-                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, args.range, args.fileName, args.id);
+                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, list[i].range.c_str(), list[i].fileName.c_str(), list[i].id.c_str());
                     return false;
                 }
             }
