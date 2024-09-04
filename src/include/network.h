@@ -96,6 +96,34 @@ namespace neko {
 
             return T();
         }
+        template<typename T = std::string>
+        constexpr static T errCodeReason(int code){
+            switch (code)
+            {
+            case -1:
+                return T("Failed to initialize libcurl.");
+                break;
+            case -3:
+                return T("Unexpected standard exception occurred");
+                break;
+            case -4:
+                return T("Get network req failed !");
+                break;
+            case -5:
+                return T("The use of an incorrect method/option");
+                break;
+            case -6:
+                return T("Invalid Content-Length value.");
+                break;
+            case -7:
+                return T("Content-Length value out of range");
+            case -8:
+                return T("In getCase use invalid method! ");
+            default:
+                return T("unknown");
+                break;
+            }
+        }
 
         // use std string save ,Can be used in most cases ,binary or text
         static size_t WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata);
@@ -503,7 +531,7 @@ namespace neko {
                 nlog::Info(FI, LI, "%s : this req code : %d , id : %s", FN, *ra.args.code, ra.args.id);
                 for (auto it : ra.code) {
                     if (*ra.args.code == it) {
-                        return true;
+                        return res;
                     }
                 }
                 *ra.args.code = 0;

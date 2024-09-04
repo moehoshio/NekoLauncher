@@ -86,7 +86,7 @@ namespace exec {
         };
     } // namespace hashs
 
-    std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
+    inline std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
         const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
         unsigned char outBuf[SHA256_DIGEST_LENGTH];
         switch (algorithm) {
@@ -112,13 +112,13 @@ namespace exec {
         return ssRes.str();
     }
 
-    std::string hashFile(const std::string &name, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
+    inline std::string hashFile(const std::string &name, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
         std::ifstream file(name, std::ios::binary);
         std::string raw((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         return hashStr(raw, algorithm);
     }
 
-    std::string hash(const std::string &hash, bool isFileName = false, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
+    inline std::string hash(const std::string &hash, bool isFileName = false, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
         return (isFileName) ? hashFile(hash, algorithm) : hashStr(hash, algorithm);
     }
 

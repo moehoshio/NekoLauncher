@@ -9,6 +9,9 @@
 
 // openurl
 #include <QtGui/QDesktopServices>
+
+#include <condition_variable>
+#include <mutex>
 namespace neko {
 
     enum class State {
@@ -20,19 +23,43 @@ namespace neko {
     State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc) {
         nlog::autoLog log{FI, LI, FN};
 
-        network net;
-        auto url = networkBase::buildUrl<std::string>(networkBase::Api::mainenance);
-        int code = 0;
-        decltype(net)::Args args{url.c_str(), nullptr, &code};
-        auto res = net.get(networkBase::Opt::getContent, args);
-        if (code != 200) {
-            nlog::Err(FI, LI, "%s : this req undone(not http code 200) tryAgainLater , code : %d", FN, code);
-            return State::tryAgainLater;
+        std::string res;
+        std::mutex mtx;
+        std::condition_variable condVar;
+
+        for (size_t i = 0; i < 5; ++i) {
+            nlog::autoLog log{FI, LI, "Get maintenance req -" + std::to_string(i)};
+            std::unique_lock<std::mutex> lock(mtx);
+
+            if (i == 4) {
+                hintFunc({"Error", "Retried multiple times but still unable to establish a connection. \nClick to exit.", "", 1, [=](bool) {
+                              nlog::Err(FI, LI, "%s : Retried multiple times but still unable to establish a connection. Exit", FN);
+                              QApplication::quit();
+                          }});
+                condVar.wait(lock);
+            }
+
+            network net;
+            auto url = networkBase::buildUrl<std::string>(networkBase::Api::mainenance);
+            int code = 0;
+            decltype(net)::Args args{url.c_str(), nullptr, &code};
+            auto temp = net.get(networkBase::Opt::getContent, args);
+
+            if (code == 200) {
+                res = temp | exec::move;
+                break;
+            }
+            hintFunc({"Error", "An issue occurred while retrieving maintenance information: " + networkBase::errCodeReason(code), "", 2, [=, &condVar](bool check) {
+                          condVar.notify_one();
+                          if (!check)
+                              QApplication::quit();
+                      }});
+            condVar.wait(lock);
         }
 
         auto jsonData = nlohmann::json::parse(res, nullptr, false);
         bool enable = jsonData["enable"];
-        nlog::Info(FI, LI, "%s : this req code %d , maintenance enable : %s , res : %s ", FN, code, exec::boolTo<const char *>(enable), res.c_str());
+        nlog::Info(FI, LI, "%s : maintenance enable : %s , res : %s ", FN, exec::boolTo<const char *>(enable), res.c_str());
         if (!enable)
             return State::over;
 
@@ -45,10 +72,11 @@ namespace neko {
 
         // download poster
         if (!poster.empty()) {
-
-            decltype(net)::Args args2{poster.c_str(), fileName.c_str(), &code};
-            args2.writeCallback = networkBase::WriteCallbackFile;
-            net.Do(networkBase::Opt::downloadFile, args2);
+            network net;
+            int code = 0;
+            decltype(net)::Args args{poster.c_str(), fileName.c_str(), &code};
+            args.writeCallback = networkBase::WriteCallbackFile;
+            net.Do(networkBase::Opt::downloadFile, args);
         }
 
         auto callBack = [annctLink](auto &&) {
@@ -56,8 +84,8 @@ namespace neko {
             QApplication::quit();
         };
 
-        ui::hintMsg m{"Being maintained", msg, ((poster.empty()) ? "" : fileName), 1, callBack};
-        hintFunc(m);
+        ui::hintMsg hmsg{"Being maintained", msg, ((poster.empty()) ? "" : fileName), 1, callBack};
+        hintFunc(hmsg);
         return State::undone;
     }
 
