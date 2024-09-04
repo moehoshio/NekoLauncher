@@ -7,7 +7,10 @@
 
 #include <QtWidgets/QToolBar>
 
+#include <QtWidgets/QProgressBar>
+
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QGroupBox>
 
@@ -29,6 +32,7 @@
 
 #include <QtWidgets/QFileDialog>
 
+#include <QtGui/QMovie>
 #include <QtGui/QWindow>
 #include <QtGui/QtEvents>
 
@@ -41,7 +45,8 @@
 #include <QtGui/QScreen>
 
 #include "cconfig.h"
-
+// #include "core.h"
+#include "msgtypes.h"
 namespace ui {
 
     class ToolBar : public QToolBar {
@@ -106,10 +111,14 @@ namespace ui {
 
     class MainWindow : public QMainWindow {
         Q_OBJECT
+    public:
         enum class pageState {
             index,
-            setting
+            setting,
+            update
         };
+
+    private:
         struct SettingPageOne : public QWidget {
 
             QGroupBox *accountGroup;
@@ -239,6 +248,8 @@ namespace ui {
             QCheckBox *devOptEnable;
             QCheckBox *devOptDebug;
             QCheckBox *devOptTls;
+            QCheckBox *devOptUpdatePage;
+            QCheckBox *devOptHintPage;
 
             QWidget *devServerInputLayoutWidget;
             QHBoxLayout *devServerInputLayout;
@@ -270,6 +281,23 @@ namespace ui {
             QScrollArea *scrollArea;
             QVBoxLayout *scrollAreaLayout;
         };
+        struct MaintenancePage : public QWidget {
+        };
+        struct UpdateDownloadPage : public QWidget {
+            UpdateDownloadPage(QWidget *parent = nullptr);
+            QProgressBar *updateProgressBar;
+            pixmapWidget *poster;
+            QWidget *textLayoutWidget;
+            QVBoxLayout *textLayout;
+            QLabel *loadingLabel;
+            QMovie *loadingMv;
+            QLabel *titleH1;
+            QLabel *titleH2;
+            QLabel *text;
+            QLabel *process;
+            void onUpdateDownloadPage(const char *h1, const char *h2, const char *msg, int max, const char *poster = nullptr);
+        };
+
         struct HeadBar : public QWidget {
             ToolBar *toolbar;
             QAction *close_;
@@ -277,9 +305,56 @@ namespace ui {
             QAction *maximize;
             QAction *sp1;
             QAction *sp2;
-            QWidget *spacer;
-            QGraphicsBlurEffect *blurEffect;
             HeadBar(QWidget *parent = nullptr);
+        };
+
+        struct HintWindow : public QWidget {
+            QWidget *centralWidget;
+            pixmapWidget *poster;
+            QVBoxLayout *centralWidgetLayout;
+            QFrame *line;
+            QPushButton *button;
+            QDialogButtonBox *dialogButton;
+            QLabel *title;
+            QLabel *msg;
+            HintWindow(QWidget *parent = nullptr);
+            void setupButton(QPushButton *btn, const std::function<void(bool)> &callback) {
+                btn->show();
+                connect(
+                    btn, &QPushButton::clicked, [=, this] {
+                        callback(true);
+                        disconnect(btn);
+                    });
+            }
+
+            void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback) {
+                btnBox->show();
+                connect(
+                    btnBox, &QDialogButtonBox::accepted, [=, this] {
+                        callback(true);
+                        disconnect(btnBox);
+                    });
+                connect(
+                    btnBox, &QDialogButtonBox::rejected, [=, this] {
+                        callback(false);
+                        disconnect(btnBox);
+                    });
+            }
+            void showHint(const hintMsg &m) {
+                this->show();
+                this->title->setText(m.title.c_str());
+                this->msg->setText(m.msg.c_str());
+                if (!m.poster.empty())
+                    this->poster->setPixmap(m.poster.c_str());
+                
+                if (m.buttonType == 1) {
+                    setupButton(button, m.callback);
+                    dialogButton->hide();
+                } else {
+                    button->hide();
+                    setupButton(dialogButton, m.callback);
+                }
+            };
         };
 
     private:
@@ -287,10 +362,11 @@ namespace ui {
 
         pixmapWidget *bgWidget;
         QGraphicsBlurEffect *m_pBlurEffect;
-
+        HintWindow *hintWidget;
         QWidget *widget;
         Index *index;
         Setting *setting;
+        UpdateDownloadPage *update_;
 
         HeadBar *headbar;
 
@@ -340,6 +416,23 @@ namespace ui {
             p_event->acceptProposedAction();
         }
         bool event(QEvent *event);
+
+        void onUpdateDownloadPage(updateMsg m) {
+            update_->onUpdateDownloadPage(m.h1.c_str(), m.h2.c_str(), m.msg.c_str(), m.max, m.poster.c_str());
+        };
+        void setUpdateDownloadVal(unsigned int val) {
+            update_->updateProgressBar->setValue(val);
+        };
+        void setUpdateDownloadNow(const char *msg) {
+            update_->process->setText(msg);
+        };
+        // button type 1 : use one button
+        void showHint(const hintMsg &m) {
+            hintWidget->HintWindow::showHint(m);
+            resizeItem();
+        };
+signals:
+        void showHintD(const hintMsg&m);
     };
 
 } // namespace ui

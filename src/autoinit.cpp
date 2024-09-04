@@ -8,7 +8,7 @@ namespace neko {
         if (!dev)
             return;
 
-        loguru::g_stderr_verbosity = loguru::Verbosity_OFF; // Avoid output to console
+        // loguru::g_stderr_verbosity = loguru::Verbosity_OFF; // Avoid output to console
 
         if (!debug) {
             std::string file_name = exec::sum(std::string("logs/"), exec::getTimeString(), ".log");
@@ -55,7 +55,7 @@ namespace neko {
     }
 
     void setThreadNums() {
-        long threadNums = exec::getConfigObj().GetLongValue("dev", "thread", 0);
+        long threadNums = exec::getConfigObj().GetLongValue("net", "thread", 0);
         if (threadNums > 0)
             exec::getThreadObj().set_pool_size(static_cast<size_t>(threadNums));
         nlog::Info(FI,LI,"%s : End. expect thread nums : %d ",FN,threadNums);
@@ -65,7 +65,7 @@ namespace neko {
         nlog::Info(FI,LI,"%s : config net : thread : %d , proxy : %s",FN,config.net.thread,config.net.proxy);
         nlog::Info(FI,LI,"%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ",FN,config.style.blurHint,config.style.blurValue,config.style.fontPointSize,config.style.fontFamilies);
         nlog::Info(FI,LI,"%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ",FN,exec::boolTo<const char *>(config.dev.enable),exec::boolTo<const char *>(config.dev.debug),config.dev.server,exec::boolTo<const char *>(config.dev.tls));
-        nlog::Info(FI,LI,"%s : config more : temp : %s ",FN,config.more.temp);
+        nlog::Info(FI,LI,"%s : config more : temp : %s , resVersion : %s",FN,config.more.temp,config.more.resVersion);
 
     }
     void currentPathCorrection() {

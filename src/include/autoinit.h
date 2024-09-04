@@ -14,19 +14,19 @@ namespace neko {
     void configInfoPrint(Config config);
     
 
-    inline void autoInit(int argc, char *argv[]) {
+    inline auto autoInit(int argc, char *argv[]) {
 
         currentPathCorrection();
 
         if (exec::getConfigObj().LoadFile("config.ini") < 0)
             oneIof o("loadBad.txt"); // If there is a callback, the user can be notified
-
+        
         info::init();
         setLog(argc, argv);
         setThreadNums();
         setLogThreadName();
         configInfoPrint(exec::getConfigObj());
-        networkBase::init().get();
+        return networkBase::init();
         
     };
 } // namespace neko

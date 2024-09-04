@@ -29,6 +29,7 @@ namespace neko {
         };
         struct More {
             const char *temp;
+            const char *resVersion;
         };
 
         Main main;
@@ -57,7 +58,8 @@ namespace neko {
                 cfg.GetValue("dev", "server", "auto"),
                 cfg.GetBoolValue("dev", "tls", true)};
             more = More{
-                cfg.GetValue("more", "temp", "")};
+                cfg.GetValue("more", "temp", ""),
+                cfg.GetValue("more","resVersion","")};
         }
     static void save(CSimpleIniA &cfg,const char * fileName,Config config){
         cfg.SetValue("main","backgroundType",config.main.bgType);
@@ -80,6 +82,7 @@ namespace neko {
         cfg.SetBoolValue("dev","tls",config.dev.tls);
 
         cfg.SetValue("more","temp",config.more.temp);
+        cfg.SetValue("more","resVersion",config.more.resVersion);
         cfg.SaveFile(fileName);
     };
     };
