@@ -18,9 +18,9 @@ int main(int argc, char *argv[]) {
         w.show();
 
         auto hintFunc = [=, &w](const ui::hintMsg &m) { emit w.showHintD(m); };
-        it.get();
 
-        exec::getThreadObj().enqueue([=] {
+        exec::getThreadObj().enqueue([=,&it]{
+            it.get();
             neko::autoUpdate(hintFunc);
         });
 

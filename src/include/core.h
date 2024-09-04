@@ -9,7 +9,6 @@
 
 // openurl
 #include <QtGui/QDesktopServices>
-
 namespace neko {
 
     enum class State {
@@ -42,9 +41,9 @@ namespace neko {
                     time = jsonData["time"].get<std::string>(),
                     annctLink = jsonData["annctLink"].get<std::string>();
         msg = time + "\n" + msg;
-        auto fileName = info::getTemp() + "/maintained_" + exec::generateRandomString(12) + ".png";
-        
-        //download poster
+        auto fileName = info::getTemp() + "maintained_" + exec::generateRandomString(12) + ".png";
+
+        // download poster
         if (!poster.empty()) {
 
             decltype(net)::Args args2{poster.c_str(), fileName.c_str(), &code};
@@ -64,101 +63,95 @@ namespace neko {
 
     State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc) {
         nlog::autoLog log{FI, LI, FN};
-        checkMaintenance(hintFunc);
+        auto maintenanceState = checkMaintenance(hintFunc);
+        if (maintenanceState != State::over)
+            return maintenanceState;
+
+        network net;
+        auto url = net.buildUrl<std::string>(networkBase::Api::checkUpdates);
+
+        auto data = std::string("{\n") + "\"core\":\"" + info::getVersion() + "\",\n\"res\":\"" + info::getResVersion() + "\"\n}";
+
+        int code = 0;
+        decltype(net)::Args args{url.c_str(), nullptr, &code};
+        args.data = data.c_str();
+
+        auto res = net.get(networkBase::Opt::postText, args);
+        nlog::Info(FI, LI, "%s : res : %s ", FN, res.c_str());
+        if (code == 204)
+            return State::over;
+
+        if (!res.empty() && code == 200) {
+            nlog::autoLog log{FI, LI, " res not empty , code == 200"};
+            auto jsonData = nlohmann::json::parse(res);
+            std::string title = jsonData["title"].get<std::string>(),
+                        msg = jsonData["msg"].get<std::string>(),
+                        poster = jsonData["poster"].get<std::string>(),
+                        time = jsonData["time"].get<std::string>();
+            auto rawUrls = jsonData["url"]["urls"];
+            auto rawNames = jsonData["url"]["names"];
+            auto rawHashs = jsonData["url"]["hashs"];
+            auto rawMultis = jsonData["url"]["multis"];
+            std::vector<std::string> urls = rawUrls.get<std::vector<std::string>>();
+            std::vector<std::string> names = rawNames.get<std::vector<std::string>>();
+            std::vector<std::string> hashs = rawHashs.get<std::vector<std::string>>();
+            std::vector<int> multis = rawMultis.get<std::vector<int>>();
+            std::vector<std::future<neko::State>> result;
+
+            if (urls.size() == 0) {
+                nlog::Err(FI, LI, "%s : urls is 0 !", FN);
+                return State::undone;
+            }
+
+            if (exec::anyTrue(urls.size() != names.size(), names.size() != hashs.size(), hashs.size() != multis.size())) {
+                nlog::Err(FI, LI, "%s : Resources Unexpected : urls : %zu , names : %zu , hashs : %zu ", FN, urls.size(), names.size(), hashs.size());
+                return State::undone;
+            } else {
+                nlog::Info(FI, LI, "%s : vector size not 0 and match", FN);
+            }
+
+            for (size_t i = 0; i < urls.size(); ++i) {
+                nlog::autoLog log{FI, LI, "urls-" + std::to_string(i)};
+                result.push_back(exec::getThreadObj().enqueue([=] {
+                    nlog::autoLog log{FI, LI, "dg-urls-" + std::to_string(i)};
+                    network net;
+                    int code = 0;
+                    decltype(net)::Args args{
+                        urls[i].c_str(),
+                        names[i].c_str(),
+                        &code};
+                    std::string id = std::to_string(i);
+                    args.id = id.c_str();
+                    args.writeCallback = networkBase::WriteCallbackFile;
+                    if (multis[i]) {
+                        if (!net.Multi(networkBase::Opt::downloadFile, {args}))
+                            return State::tryAgainLater;
+                    } else {
+                        if (!net.autoRetry(networkBase::Opt::downloadFile, {args}))
+                            return State::tryAgainLater;
+                    }
+
+                    auto hash = exec::hashFile(names[i]);
+
+                    if (hash != hashs[i]) {
+                        nlog::Err(FI, LI, "%s : Hash Non-matching :  expect hash : %s , real hash : %s", FN, hashs[i].c_str(), hash.c_str());
+                        return State::tryAgainLater;
+                    } else {
+                        nlog::Info(FI, LI, "%s : Everything is OK , hash is matching");
+                        return State::over;
+                    }
+                }));
+            }
+            for (auto &it : result) {
+                if (it.get() != State::over)
+                    return State::undone;
+            }
+        } else {
+            nlog::Warn(FI, LI, "%s : code : %d , res : %s", FN, code, res.c_str());
+            return State::tryAgainLater;
+        }
+
         return State::over;
     }
 
 } // namespace neko
-
-// namespace neko {
-//     class core {
-//     public:
-
-//         enum class State {
-//             over,
-//             undone,
-//             tryAgainLater,
-
-//         };
-//         // over : not maintenance
-//     inline State checkMaintenance(ui::MainWindow *w){
-
-//         nlog::Info(FI,LI,"%s : Enter , w ptr : %p",FN,w);
-//         network net;
-//         auto url = networkBase::buildUrl<std::string>(networkBase::Api::mainenance );
-//         int code = 0;
-//         decltype(net)::Args args{ url.c_str(),nullptr,&code};
-//         auto res = net.get(networkBase::Opt::getContent,args);
-
-//         auto jsonData = nlohmann::json::parse(res,nullptr,false);
-
-//         bool enable = jsonData["enable"];
-//         nlog::Info(FI,LI,"%s : this req code %d , maintenance enable : %s , res : %s ",FN,code,exec::boolTo<const char *>(enable),res.c_str());
-//         if (!enable) return State::over;
-
-//         std::string msg = jsonData["msg"].get<std::string>(),
-//         poster = jsonData["poster"].get<std::string>(),
-//         time = jsonData["time"].get<std::string>(),
-//         annctLink = jsonData["annctLink"].get<std::string>();
-
-//         ui::maintenanceMsg m{msg,poster,time ,annctLink};
-//         w->onMaintenancePage(m);
-
-//         nlog::Info(FI,LI,"%s : Exit",FN);
-//         return State::undone;
-//     }
-//     inline State checkUpdates(ui::MainWindow * w){
-//         network net;
-//         auto url = networkBase::buildUrl<std::string>(networkBase::Api::checkUpdates);
-//         int code = 0;
-//         decltype(net)::Args args{ url.c_str() , nullptr , &code };
-//         auto res = net.get(networkBase::Opt::getContent,args);
-
-//         switch (code)
-//         {
-//         case 200:
-//             break;
-//         case 204:
-//             return State::over;
-//             break;
-//         case 400:
-//         default:
-//             return State::undone;
-//             break;
-//         }
-
-//         auto jsonData = nlohmann::json::parse(res,nullptr,false);
-
-//         std::string
-//         title = jsonData["title"],
-//         msg = jsonData["msg"],
-//         poster = jsonData["poster"],
-//         time = jsonData["time"];
-//         std::vector<std::string> urls;
-//         for ( const auto & it : jsonData["url"])
-//         {
-//             urls.push_back(it);
-//         }
-//         // ui::updateMsg m{title,msg,time};
-//         if (exec::isUrl(poster)){
-//             args.url = poster.c_str();
-//             std::string fileName = info::getTemp() + exec::generateRandomString(16)+ ".png";
-//             net.Do(networkBase::Opt::downloadFile,args);
-//             m.poster = fileName;
-//         }
-//         exec::getThreadObj().enqueue(
-//             [](){}
-//         );
-
-//         // w->onUpdatePage();
-
-//     }
-//     inline State autoUpdate(ui::MainWindow *w){
-//         nlog::Info(FI,LI,"%s : Enter , w ptr: %p ",FN,w);
-//         checkMaintenance(w);
-//         // network net;
-//         return State::over;
-
-//     }
-//     };
-// } // namespace neko

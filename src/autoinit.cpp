@@ -65,7 +65,7 @@ namespace neko {
         nlog::Info(FI,LI,"%s : config net : thread : %d , proxy : %s",FN,config.net.thread,config.net.proxy);
         nlog::Info(FI,LI,"%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ",FN,config.style.blurHint,config.style.blurValue,config.style.fontPointSize,config.style.fontFamilies);
         nlog::Info(FI,LI,"%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ",FN,exec::boolTo<const char *>(config.dev.enable),exec::boolTo<const char *>(config.dev.debug),config.dev.server,exec::boolTo<const char *>(config.dev.tls));
-        nlog::Info(FI,LI,"%s : config more : temp : %s ",FN,config.more.temp);
+        nlog::Info(FI,LI,"%s : config more : temp : %s , resVersion : %s",FN,config.more.temp,config.more.resVersion);
 
     }
     void currentPathCorrection() {

@@ -251,7 +251,7 @@ namespace neko {
         inline static void setRetCodeAndClean(CURL *curl, RetHttpCode *ref, const char *id) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, ref);
             curl_easy_cleanup(curl);
-            nlog::Info(FI, LI, "%s : this ref code : %d , id : %s", FN, *ref, id);
+            nlog::Info(FI, LI, "%s : this ref code : %d (0 is null), id : %s", FN, ((ref)? *ref : 0), id);
         }
 
     public:
@@ -527,7 +527,7 @@ namespace neko {
         // Accepts parameters as rvalue objects, indicating the discarding of the returned HTTP code.
         inline bool Multi(Opt opt, const MultiArgs &ma) {
             MultiArgs args{ma};
-            Multi(opt, args);
+            return Multi(opt, args);
         }
         inline bool Multi(Opt opt, MultiArgs &ma) {
             nlog::Info(FI, LI, "%s : Enter , id :%s", FN, ma.args.id);
@@ -637,7 +637,7 @@ namespace neko {
                                                      return autoRetry(opt, autoRetryArgs{args, ma.code});
                                                  })
                                  .get()) {
-                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, list[i].range.c_str(), list[i].fileName.c_str(), list[i].id.c_str());
+                    nlog::Err(FI, LI, "%s :  i : %d state : fail to twice ! , range : %s , file : %s , id : %s", FN, i, list[i].range.c_str(), list[i].name.c_str(), list[i].id.c_str());
                     return false;
                 }
             }

@@ -9,7 +9,8 @@ namespace neko {
             enum class getType {
             home,
             temp,
-            version
+            version,
+            resVersion
         };
     private:
         struct Data {
@@ -18,6 +19,7 @@ namespace neko {
 #include "../data/version"
                 ;
             static std::string temp;
+            static std::string resVersion;
         };
 
 
@@ -35,6 +37,9 @@ namespace neko {
         inline static std::string getHome(){
             return Data::home;
         }
+        inline static std::string getResVersion(){
+            return Data::resVersion;
+        }
         
         constexpr inline static std::string get(getType o){
             switch (o)
@@ -48,6 +53,8 @@ namespace neko {
             case getType::version :
                 return Data::version;
                 break;
+            case getType::resVersion :
+                return Data::resVersion;
             default:
                 return "unknown";
                 break;
@@ -68,12 +75,17 @@ namespace neko {
             if (path)
                 Data::home = std::string(path);
 
-            if (std::string t = exec::getConfigObj().GetValue("more", "temp", "");
-                std::filesystem::is_directory(t)
+            if (std::string temp = exec::getConfigObj().GetValue("more", "temp", "");
+                std::filesystem::is_directory(temp)
             )
-                Data::temp = t | exec::move;
+                Data::temp = temp | exec::move;
             else
                 Data::temp = std::filesystem::temp_directory_path().string();
+
+            Data::resVersion = exec::getConfigObj().GetValue("more","resVersion","");
+            if (Data::resVersion.empty())            
+                nlog::Err(FI,LI,"%s : resVersion is empty !",FN);
+            
         };
     }; //class info
 

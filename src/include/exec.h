@@ -35,9 +35,16 @@ SOFTWARE.
 #include <regex>
 #include <string>
 
-// NekoL Project Customization
-#include "threadpool.h"
+// NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
+#include "threadpool.h"
+
+//hash
+#include <openssl/sha.h>
+#include <openssl/md5.h>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
 
 namespace neko {
 
@@ -65,11 +72,57 @@ namespace neko {
 
 namespace exec {
 
-    // NekoL Project Customization
+    // NekoLc Project Customization
     neko::ThreadPool &getThreadObj();
 
     CSimpleIniA &getConfigObj();
-    //
+
+    namespace hashs {
+        enum class Algorithm {
+            md5,
+            sha1,
+            sha256,
+            sha512
+        };
+    } // namespace hashs
+
+    std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
+        const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
+        unsigned char outBuf[SHA256_DIGEST_LENGTH];
+        switch (algorithm) {
+            case hashs::Algorithm::sha1:
+                SHA1(unsignedData, str.size(), outBuf);
+                break;
+            case hashs::Algorithm::sha256:
+                SHA256(unsignedData, str.size(), outBuf);
+                break;
+            case hashs::Algorithm::sha512:
+                SHA512(unsignedData, str.size(), outBuf);
+                break;
+            case hashs::Algorithm::md5:
+                MD5(unsignedData, str.size(), outBuf);
+                break;
+            default:
+                break;
+        }
+        std::stringstream ssRes;
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+            ssRes << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(outBuf[i]);
+        }
+        return ssRes.str();
+    }
+
+    std::string hashFile(const std::string &name, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
+        std::ifstream file(name, std::ios::binary);
+        std::string raw((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        return hashStr(raw, algorithm);
+    }
+
+    std::string hash(const std::string &hash, bool isFileName = false, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
+        return (isFileName) ? hashFile(hash, algorithm) : hashStr(hash, algorithm);
+    }
+
+    //Nekolc end
 
     constexpr auto move = [](auto &&val) -> auto && { return std::move(val); };
     constexpr auto make_shared = [](auto &&val) -> decltype(auto) { return std::make_shared<std::remove_reference_t<decltype(val)>>(val); };

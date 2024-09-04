@@ -47,8 +47,8 @@ namespace neko {
                     url.c_str(),
                     nullptr,
                     &retCode};
-                    
-                    args.id =  it;
+                    std::string id = "testing-"s + it;
+                    args.id = id.c_str();
 
                 decltype(net)::autoRetryArgs Aargs{args, {200}, 2, 50};
 
