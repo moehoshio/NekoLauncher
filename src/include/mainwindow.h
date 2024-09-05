@@ -354,6 +354,9 @@ namespace ui {
                     button->hide();
                     setupButton(dialogButton, m.callback);
                 }
+                connect(this, &QWidget::destroyed, [=](QObject *) {
+                    m.callback(false);
+                });
             };
         };
 
@@ -431,8 +434,8 @@ namespace ui {
             hintWidget->HintWindow::showHint(m);
             resizeItem();
         };
-signals:
-        void showHintD(const hintMsg&m);
+    signals:
+        void showHintD(const hintMsg &m);
     };
 
 } // namespace ui

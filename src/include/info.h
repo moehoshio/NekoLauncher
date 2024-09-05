@@ -14,10 +14,14 @@ namespace neko {
         };
     private:
         struct Data {
-            static std::string home;
+            
             constexpr static const char *version =
 #include "../data/version"
                 ;
+            constexpr static const char * website = 
+#include "../data/website"
+            ;
+            static std::string home;
             static std::string temp;
             static std::string resVersion;
         };

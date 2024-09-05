@@ -337,14 +337,16 @@ namespace ui {
         centralWidgetLayout->addWidget(msg);
         centralWidgetLayout->addWidget(button);
         centralWidgetLayout->addWidget(dialogButton);
-        centralWidgetLayout->setStretchFactor(msg, 1.35);
+        centralWidgetLayout->setStretchFactor(msg, 2);
         centralWidget->setLayout(centralWidgetLayout);
         line->setFrameShape(QFrame::HLine);
         line->setFrameShadow(QFrame::Sunken);
+        msg->setWordWrap(true);
         button->hide();
         dialogButton->hide();
         poster->lower();
-        dialogButton->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
+        dialogButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        dialogButton->setStandardButtons(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
     }
     void MainWindow::UpdateDownloadPage::onUpdateDownloadPage(const char *h1, const char *h2, const char *msg, int max, const char *poster) {
         titleH1->setText(h1);
@@ -365,8 +367,8 @@ namespace ui {
             h1 = this->height() - headbar->height();
 
         if (hintWidget->isVisible()) {
-            hintWidget->resize(width(),h1);
-            hintWidget->poster->setGeometry(0,0,this->width(),this->height());
+            hintWidget->resize(width(), h1);
+            hintWidget->poster->setGeometry(0, 0, this->width(), this->height());
             hintWidget->centralWidget->setGeometry(width() * 0.225, h1 * 0.255, width() * 0.55, h1 * 0.49);
         }
 
@@ -436,7 +438,7 @@ namespace ui {
         this->resize(scrSize.width() * 0.45, scrSize.height() * 0.45);
 
         for (auto setSubWindowSize : std::vector<QWidget *>{
-                widget, setting, hintWidget}) {
+                 widget, setting, hintWidget}) {
             setSubWindowSize->setMinimumSize(scrSize.width() * 0.35, scrSize.height() * 0.35);
             setSubWindowSize->setMaximumSize(scrSize);
         }
@@ -449,7 +451,7 @@ namespace ui {
             groupAddSpacing->addSpacing(12);
         }
 
-        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button, hintWidget->dialogButton}) {
+        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
             setMinHeight50->setMinimumHeight(50);
         }
     }
@@ -465,6 +467,8 @@ namespace ui {
         hintWidget->centralWidget->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
         hintWidget->button->setStyleSheet("QPushButton {border: 2px solid white; background-color: rgba(235,235,235,255);}"
                                           "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}");
+        hintWidget->dialogButton->setStyleSheet("QPushButton {width: 80%; height: 40%; border: 2px solid white; background-color: rgba(235,235,235,255);}"
+                                                "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}");
         update_->updateProgressBar->setStyleSheet("QProgressBar {border: 2px solid #fff;border-radius: 10px;text-align: center;}"
                                                   "QProgressBar::chunk {background-color: rgba(120,120,120,188);}");
         update_->textLayoutWidget->setStyleSheet("background-color: rgba(155,155,155,120);border-radius: 22%;");
@@ -506,7 +510,6 @@ namespace ui {
         setupTranslucentBackground();
     }
     void MainWindow::setupTranslucentBackground() {
-        ;
         for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
@@ -806,15 +809,17 @@ namespace ui {
         connect(setting->page3->devOptHintPage, &QCheckBox::toggled, [=, this](bool checkd) {
             if (checkd) {
                 hintWidget->show();
-                hintWidget->button->show();
-                // hintWidget->dialogButton->show();
+                hintWidget->dialogButton->show();
                 resizeItem();
             }
         });
         connect(hintWidget->button, &QPushButton::clicked, [=, this]() {
             hintWidget->hide();
         });
-        connect(this,&MainWindow::showHintD,this,&MainWindow::showHint);
+        connect(hintWidget->dialogButton, &QDialogButtonBox::clicked, [=, this]() {
+            hintWidget->hide();
+        });
+        connect(this, &MainWindow::showHintD, this, &MainWindow::showHint);
     }
 
     void MainWindow::setupBase(neko::Config config) {
