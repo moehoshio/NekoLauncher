@@ -2,12 +2,23 @@
 #include <string>
 #include <functional>
 namespace ui {
-    struct updateMsg {
+    struct loadMsg {
+        enum Type {
+            OnlyRaw,//only loading ico and process text
+            Text,//show onlyraw and test widget
+            Progress,//show onlyraw and progress
+            All
+        };
+        Type type;
+        std::string process = "loading...";
         std::string h1;
         std::string h2;
         std::string msg;
         std::string poster;
-        int max;
+        int speed = 100;
+        int progressVal;
+        int progressMax;
+         
     };
 
     struct hintMsg

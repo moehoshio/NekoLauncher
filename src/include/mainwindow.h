@@ -45,8 +45,8 @@
 #include <QtGui/QScreen>
 
 #include "cconfig.h"
-// #include "core.h"
 #include "msgtypes.h"
+
 namespace ui {
 
     class ToolBar : public QToolBar {
@@ -115,7 +115,7 @@ namespace ui {
         enum class pageState {
             index,
             setting,
-            update
+            loading
         };
 
     private:
@@ -263,6 +263,7 @@ namespace ui {
                 startButton = new QPushButton(this);
                 menuButton = new QPushButton(this);
                 versionText = new QLabel(this);
+                versionText->setWordWrap(true);
             };
 
             QPushButton *startButton;
@@ -281,21 +282,65 @@ namespace ui {
             QScrollArea *scrollArea;
             QVBoxLayout *scrollAreaLayout;
         };
-        struct MaintenancePage : public QWidget {
-        };
-        struct UpdateDownloadPage : public QWidget {
-            UpdateDownloadPage(QWidget *parent = nullptr);
-            QProgressBar *updateProgressBar;
+
+        struct LoadingPage : public QWidget {
+            LoadingPage(QWidget *parent = nullptr);
+            QProgressBar *progressBar;
             pixmapWidget *poster;
             QWidget *textLayoutWidget;
             QVBoxLayout *textLayout;
-            QLabel *loadingLabel;
-            QMovie *loadingMv;
             QLabel *titleH1;
             QLabel *titleH2;
             QLabel *text;
+            QLabel *loadingLabel;
+            QMovie *loadingMv;
             QLabel *process;
-            void onUpdateDownloadPage(const char *h1, const char *h2, const char *msg, int max, const char *poster = nullptr);
+
+            void showLoad(const loadMsg &m) {
+                process->setText(m.process.c_str());
+
+                if (m.type == loadMsg::Type::Text || m.type == loadMsg::Type::All) {
+                    titleH1->setText(m.h1.c_str());
+                    titleH2->setText(m.h2.c_str());
+                    text->setText(m.msg.c_str());
+                }
+
+                if (m.type == loadMsg::Type::Progress || m.type == loadMsg::Type::All) {
+                    progressBar->setMaximum(m.progressMax);
+                    progressBar->setValue(m.progressVal);
+                }
+
+                if (!m.poster.empty()) {
+                    poster->setPixmap(m.poster.c_str());
+                    poster->show();
+                } else {
+                    poster->hide();
+                }
+
+                if (loadingMv->speed() != m.speed)
+                    loadingMv->setSpeed(m.speed);
+
+                switch (m.type) {
+                    case loadMsg::Type::Text:
+                        progressBar->hide();
+                        textLayoutWidget->show();
+                        break;
+                    case loadMsg::Type::Progress:
+                        progressBar->show();
+                        textLayoutWidget->hide();
+                        break;
+                    case loadMsg::Type::OnlyRaw:
+                        progressBar->hide();
+                        textLayoutWidget->hide();
+                        break;
+                    case loadMsg::Type::All:
+                        progressBar->show();
+                        textLayoutWidget->show();
+                        break;
+                    default:
+                        break;
+                }
+            }
         };
 
         struct HeadBar : public QWidget {
@@ -346,7 +391,7 @@ namespace ui {
                 this->msg->setText(m.msg.c_str());
                 if (!m.poster.empty())
                     this->poster->setPixmap(m.poster.c_str());
-                
+
                 if (m.buttonType == 1) {
                     setupButton(button, m.callback);
                     dialogButton->hide();
@@ -369,7 +414,7 @@ namespace ui {
         QWidget *widget;
         Index *index;
         Setting *setting;
-        UpdateDownloadPage *update_;
+        LoadingPage *loading;
 
         HeadBar *headbar;
 
@@ -420,14 +465,23 @@ namespace ui {
         }
         bool event(QEvent *event);
 
-        void onUpdateDownloadPage(updateMsg m) {
-            update_->onUpdateDownloadPage(m.h1.c_str(), m.h2.c_str(), m.msg.c_str(), m.max, m.poster.c_str());
+        void showPage(pageState page) {
+            oldState = state;
+            state = page;
+            updatePage(state, oldState);
+        }
+
+        void showLoad(const loadMsg &m) {
+            loading->showLoad(m);
+            oldState = state;
+            state = pageState::loading;
+            updatePage(state, oldState);
+        }
+        void setLoadingVal(unsigned int val) {
+            loading->progressBar->setValue(val);
         };
-        void setUpdateDownloadVal(unsigned int val) {
-            update_->updateProgressBar->setValue(val);
-        };
-        void setUpdateDownloadNow(const char *msg) {
-            update_->process->setText(msg);
+        void setLoadingNow(const char *msg) {
+            loading->process->setText(msg);
         };
         // button type 1 : use one button
         void showHint(const hintMsg &m) {
@@ -435,6 +489,10 @@ namespace ui {
             resizeItem();
         };
     signals:
+        void showPageD(pageState page);
+        void showLoadD(const loadMsg &m);
+        void setLoadingValD(unsigned int val);
+        void setLoadingNowD(const char *msg);
         void showHintD(const hintMsg &m);
     };
 

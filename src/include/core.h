@@ -20,8 +20,9 @@ namespace neko {
         tryAgainLater,
     };
     // over : not maintenance, undone : in maintenance
-    State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc) {
+    State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc,std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
+        loadFunc({ui::loadMsg::Type::OnlyRaw,"maintenance info req.."});
 
         std::string res;
         std::mutex mtx;
@@ -67,10 +68,15 @@ namespace neko {
         }
 
         nlog::Info(FI, LI, "%s : res : %s", FN, res.c_str());
+        setLoadInfoFunc(0, "maintenance info paese...");
 
         auto jsonData = nlohmann::json::parse(res, nullptr, false);
         if (jsonData.is_discarded()) {
             nlog::Info(FI, LI, "%s : failed to maintenance parse!", FN);
+            hintFunc({"Error", "failed to maintenance parse!", "", 1, [](bool) {
+                          nlog::Err(FI, LI, "%s : click , quit programs", FN);
+                          QApplication::quit();
+                      }});
             return State::tryAgainLater;
         }
 
@@ -88,6 +94,7 @@ namespace neko {
 
         // download poster
         if (!poster.empty()) {
+            setLoadInfoFunc(0, "download maintained poster...");
             network net;
             int code = 0;
             decltype(net)::Args args{poster.c_str(), fileName.c_str(), &code};
@@ -129,27 +136,28 @@ namespace neko {
         }
     }
 
-    State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc) {
+    State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
         std::string res;
 
-        auto maintenanceState = checkMaintenance(hintFunc);
+        auto maintenanceState = checkMaintenance(hintFunc,loadFunc ,setLoadInfoFunc);
         if (maintenanceState != State::over)
             return maintenanceState;
+
+        setLoadInfoFunc(0, "check update..");
 
         auto updateState = checkUpdate(res);
         if (updateState != State::undone)
             return updateState;
 
         nlog::Info(FI, LI, "%s : res : %s ", FN, res.c_str());
-
-        auto jsonData = nlohmann::json::parse(res,nullptr,false);
-        if (jsonData.is_discarded())
-        {
-            nlog::Err(FI,LI,"%s : failed to update parse!",FN);
+        setLoadInfoFunc(0, "update info parse...");
+        auto jsonData = nlohmann::json::parse(res, nullptr, false);
+        if (jsonData.is_discarded()) {
+            nlog::Err(FI, LI, "%s : failed to update parse!", FN);
             return State::tryAgainLater;
         }
-        
+
         std::string title = jsonData["title"].get<std::string>(),
                     msg = jsonData["msg"].get<std::string>(),
                     poster = jsonData["poster"].get<std::string>(),
@@ -175,11 +183,29 @@ namespace neko {
         } else {
             nlog::Info(FI, LI, "%s : vector size not 0 and match", FN);
         }
+        auto fileName = info::getTemp() + "update_" + exec::generateRandomString(10) + ".png";
+        // download poster
+        if (!poster.empty()) {
+            setLoadInfoFunc(0, "download update poster...");
+            network net;
+            int code = 0;
+            
+            decltype(net)::Args args{poster.c_str(), fileName.c_str(), &code};
+            args.writeCallback = networkBase::WriteCallbackFile;
+            net.Do(networkBase::Opt::downloadFile, args);
+            if (code != 200) {
+                fileName.clear();
+                nlog::Warn(FI, LI, "%s : failed to poster download", FN);
+            }
+        }
+        ui::loadMsg lmsg{ui::loadMsg::All, "update download...", title, time, msg, (poster.empty())? "" : fileName, 100, 0, static_cast<int>(urls.size() * 2) };
+        loadFunc(lmsg);
+
+        int progress = 0;
+        bool stop = false;
 
         for (size_t i = 0; i < urls.size(); ++i) {
-            nlog::autoLog log{FI, LI, "urls-" + std::to_string(i)};
-            result.push_back(exec::getThreadObj().enqueue([=] {
-                nlog::autoLog log{FI, LI, "dg-urls-" + std::to_string(i)};
+            result.push_back(exec::getThreadObj().enqueue([=, &progress, &stop] {
                 network net;
                 int code = 0;
                 decltype(net)::Args args{
@@ -189,6 +215,8 @@ namespace neko {
                 std::string id = std::to_string(i);
                 args.id = id.c_str();
                 args.writeCallback = networkBase::WriteCallbackFile;
+                if (stop)
+                    return State::undone;
                 if (multis[i]) {
                     if (!net.Multi(networkBase::Opt::downloadFile, {args}))
                         return State::tryAgainLater;
@@ -196,21 +224,35 @@ namespace neko {
                     if (!net.autoRetry(networkBase::Opt::downloadFile, {args}))
                         return State::tryAgainLater;
                 }
+                ++progress;
+                setLoadInfoFunc(progress, "verify file...");
 
                 auto hash = exec::hashFile(names[i]);
 
+                if (stop)
+                    return State::undone;
                 if (hash != hashs[i]) {
                     nlog::Err(FI, LI, "%s : Hash Non-matching :  expect hash : %s , real hash : %s", FN, hashs[i].c_str(), hash.c_str());
                     return State::tryAgainLater;
                 } else {
                     nlog::Info(FI, LI, "%s : Everything is OK , hash is matching", FN);
+                    ++progress;
+                    setLoadInfoFunc(progress, "update download..");
                     return State::over;
                 }
             }));
         }
+
         for (auto &it : result) {
-            if (it.get() != State::over)
+
+            if (it.get() != State::over) {
+                stop = true;
+                hintFunc({"Error", "failed to update download !\nclick to quit", "", 1, [](bool check) {
+                              nlog::Err(FI, LI, "%s : click , quit programs", FN);
+                              QApplication::quit();
+                          }});
                 return State::undone;
+            }
         }
 
         return State::over;
