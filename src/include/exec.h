@@ -34,17 +34,19 @@ SOFTWARE.
 #include <random>
 #include <regex>
 #include <string>
+#include <filesystem>
 
 // NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
 #include "threadpool.h"
 
-//hash
-#include <openssl/sha.h>
-#include <openssl/md5.h>
-#include <iomanip>
+// hash
 #include <fstream>
+#include <iomanip>
 #include <sstream>
+#include <openssl/md5.h>
+#include <openssl/sha.h>
+
 
 namespace neko {
 
@@ -122,7 +124,13 @@ namespace exec {
         return (isFileName) ? hashFile(hash, algorithm) : hashStr(hash, algorithm);
     }
 
-    //Nekolc end
+    // Nekolc end
+
+    inline void execf(const char *name) {
+        if (!std::filesystem::exists(name))
+            return;
+        std::system(name);
+    }
 
     constexpr auto move = [](auto &&val) -> auto && { return std::move(val); };
     constexpr auto make_shared = [](auto &&val) -> decltype(auto) { return std::make_shared<std::remove_reference_t<decltype(val)>>(val); };

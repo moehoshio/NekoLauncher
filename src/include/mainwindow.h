@@ -363,26 +363,29 @@ namespace ui {
             QLabel *title;
             QLabel *msg;
             HintWindow(QWidget *parent = nullptr);
-            void setupButton(QPushButton *btn, const std::function<void(bool)> &callback) {
+            void setupButton(QPushButton *btn, const std::function<void(bool)> &callback,bool &did) {
                 btn->show();
                 connect(
-                    btn, &QPushButton::clicked, [=, this] {
+                    btn, &QPushButton::clicked, [=, this,&did] {
                         callback(true);
                         disconnect(btn);
+                        did = true;
                     });
             }
 
-            void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback) {
+            void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback,bool & did) {
                 btnBox->show();
                 connect(
-                    btnBox, &QDialogButtonBox::accepted, [=, this] {
+                    btnBox, &QDialogButtonBox::accepted, [=, this,&did] {
                         callback(true);
                         disconnect(btnBox);
+                        did = true;
                     });
                 connect(
-                    btnBox, &QDialogButtonBox::rejected, [=, this] {
+                    btnBox, &QDialogButtonBox::rejected, [=, this,&did] {
                         callback(false);
                         disconnect(btnBox);
+                        did = true;
                     });
             }
             void showHint(const hintMsg &m) {
@@ -391,16 +394,18 @@ namespace ui {
                 this->msg->setText(m.msg.c_str());
                 if (!m.poster.empty())
                     this->poster->setPixmap(m.poster.c_str());
-
+                bool * did = new bool(false);
                 if (m.buttonType == 1) {
-                    setupButton(button, m.callback);
+                    setupButton(button, m.callback,*did);
                     dialogButton->hide();
                 } else {
                     button->hide();
-                    setupButton(dialogButton, m.callback);
+                    setupButton(dialogButton, m.callback,*did);
                 }
                 connect(this, &QWidget::destroyed, [=](QObject *) {
-                    m.callback(false);
+                    if (!(*did))
+                        m.callback(false);
+
                 });
             };
         };
