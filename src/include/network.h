@@ -32,10 +32,10 @@ namespace neko {
             constexpr static const char *hostList[]{
 #include "../data/hostlist"
             };
-            constexpr static const char *mainenance = "/api/maintenance";
-            constexpr static const char *checkUpdates = "/api/checkUpdates";
-            constexpr static const char *testing = "/testing/ping";
-            // constexpr static const char *token = "api/token";
+            constexpr static const char *mainenance = "/v1/api/maintenance";
+            constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
+            constexpr static const char *testing = "/v1/testing/ping";
+            // static std::vector<std::string> dynamicHostList;
         };
 
         static Config Dconfig;

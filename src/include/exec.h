@@ -31,10 +31,10 @@ SOFTWARE.
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <random>
 #include <regex>
 #include <string>
-#include <filesystem>
 
 // NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
@@ -43,10 +43,9 @@ SOFTWARE.
 // hash
 #include <fstream>
 #include <iomanip>
-#include <sstream>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
-
+#include <sstream>
 
 namespace neko {
 
@@ -81,12 +80,36 @@ namespace exec {
 
     namespace hashs {
         enum class Algorithm {
+            none,
             md5,
             sha1,
             sha256,
             sha512
         };
     } // namespace hashs
+    using namespace std::literals;
+    inline std::unordered_map<hashs::Algorithm, std::string> hashAlgorithmMap = {
+        {hashs::Algorithm::md5, "md5"s},
+        {hashs::Algorithm::sha1, "sha1"s},
+        {hashs::Algorithm::sha256, "sha256"s},
+        {hashs::Algorithm::sha512, "sha512"s}};
+
+    inline auto mapAlgorithm(const std::string &str) {
+        for (auto it : hashAlgorithmMap) {
+            if (it.second == str) {
+                return it.first;
+            }
+        }
+        return hashs::Algorithm::none;
+    }
+    inline auto mapAlgorithm(hashs::Algorithm algortihm) {
+        for (auto it : hashAlgorithmMap) {
+            if (it.first == algortihm) {
+                return it.second;
+            }
+        }
+        return std::string("unknown");
+    }
 
     inline std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
         const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
@@ -126,9 +149,17 @@ namespace exec {
 
     // Nekolc end
 
+    inline void execfe(const char *name){
+        if (!std::filesystem::exists(name))
+            return;
+
+        std::system((name + std::filesystem::current_path().string()).c_str());
+    }
+
     inline void execf(const char *name) {
         if (!std::filesystem::exists(name))
             return;
+
         std::system(name);
     }
 

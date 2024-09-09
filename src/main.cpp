@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         exec::getThreadObj().enqueue([=, &it, &w] {
             it.get();
             if (neko::autoUpdate(hintFunc,loadFunc,setLoadInfo) == neko::State::over)
-                emit w.showPageD(ui::MainWindow::pageState::index);
+                {emit w.showPageD(ui::MainWindow::pageState::index);}
         });
 
         return app.exec();

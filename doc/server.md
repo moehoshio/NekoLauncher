@@ -7,17 +7,19 @@ standard error message:
 ```json
 {
     "errType":"",
-    "msg":""
+    "msg":"",
+    "details": "",
+    "traceId": ""
 }
 ```
 
 1. testing
-    - `/testing/ping`
+    - `/v1/testing/ping`
         - Tests connectivity, generally should not have restrictions
         - Custom return content, typically HTTP code 200 indicates success
 2. api
 
-    - `/api/maintenance` : get
+    - `/v1/api/maintenance` : get
 
         - Returns maintenance information
 
@@ -31,7 +33,7 @@ standard error message:
         }
         ```
 
-    - `/api/checkUpdates` : post
+    - `/v1/api/checkUpdates` : post
 
         - post :
 
@@ -54,12 +56,35 @@ standard error message:
             "msg":"",
             "poster":"url",
             "time":"",
-            "url":{
-                "urls":["url1","url2"],
-                "names":["name1","name2"],
-                "hashs":["hash1","hash2"],// generally sha256 , can be customized
-                "multis":[0,1]
-            }
+            "update":[
+                {
+                    "url":"url1",
+                    "name":"name1",
+                    "hash":"hash1",
+                    "meta":{
+                        "hashAlgorithm": "sha256",
+                        "multis":false,// use multis download?
+                        "temp":false,//in temp dir?
+                        "randName":false,//use rand name?
+                        "absoluteUrl":false,// if not absolute url , an use current host.
+                        "isUpdateProgram":false
+                    }
+                },
+                {
+                    "url":"url2",
+                    "name":"",
+                    "hash":"hash2",
+                    "meta":{
+                        "hashAlgorithm": "sha256",
+                        "multis":true,
+                        "temp":false,
+                        "randName":true,
+                        "absoluteUrl":true,
+                        "isUpdateProgram":true
+                    }
+                }
+            ],
+            "mandatory": true
         }
         ```
 

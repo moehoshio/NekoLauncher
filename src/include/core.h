@@ -25,14 +25,34 @@ namespace neko {
             msg,
             poster,
             time;
-        std::vector<std::string> urls,
-            names,
-            hashs;
-        std::vector<int> multis;
+
+        struct urlInfo {
+            std::string url;
+            std::string name;
+            std::string hash;
+            std::string hashAlgorithm;
+            bool multis;
+            bool temp;
+            bool randName;
+            bool absoluteUrl;
+            bool isUpdateProgram;
+            bool empty() {
+                std::vector<bool> vec{
+                    url.empty(), name.empty(), hash.empty()};
+
+                for (auto it : vec) {
+                    if (!it)
+                        return false;
+                    return true;
+                }
+            }
+        };
+
+        std::vector<urlInfo> urls;
 
         bool empty() {
             std::vector<bool> res{
-                title.empty(), msg.empty(), poster.empty(), time.empty(), urls.empty(), names.empty(), hashs.empty(), multis.empty()};
+                title.empty(), msg.empty(), poster.empty(), time.empty(), urls.empty()};
             for (auto it : res) {
                 if (!it) {
                     return false;
@@ -41,7 +61,8 @@ namespace neko {
             return true;
         }
     };
-    //Return a null T value if the download fails.
+
+    // Return file name, if the download fails a null T value.
     template <typename T = std::string>
     T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
         if (!url.empty()) {
@@ -54,7 +75,7 @@ namespace neko {
             net.Do(networkBase::Opt::downloadFile, args);
             if (code != 200) {
                 nlog::Warn(FI, LI, "%s : failed to poster download", FN);
-                hintFunc({"Error", "failed to poster download!", "", 1, [](bool) {}});
+                hintFunc({"Warning", "failed to poster download!", "", 1, [](bool) {}});
                 return T();
             }
             return fileName.c_str();
@@ -135,7 +156,7 @@ namespace neko {
         msg = time + "\n" + msg;
 
         setLoadInfoFunc(0, "download maintained poster...");
-        auto fileName = downloadPoster(hintFunc,poster);
+        auto fileName = downloadPoster(hintFunc, poster);
 
         ui::hintMsg hmsg{"Being maintained", msg, fileName, 1, [annctLink](bool) {
                              QDesktopServices::openUrl(QUrl(annctLink.c_str()));
@@ -169,6 +190,7 @@ namespace neko {
     // If any error occurs, return an empty object (an empty method is provided for checking).
     updateInfo parseUpdate(const std::string &res) {
         nlog::autoLog log{FI, LI, FN};
+
         nlog::Info(FI, LI, "%s : res : %s ", FN, res.c_str());
         auto jsonData = nlohmann::json::parse(res, nullptr, false);
         if (jsonData.is_discarded()) {
@@ -179,22 +201,26 @@ namespace neko {
             jsonData["title"].get<std::string>(),
             jsonData["msg"].get<std::string>(),
             jsonData["poster"].get<std::string>(),
-            jsonData["time"].get<std::string>(),
-            jsonData["url"]["urls"].get<std::vector<std::string>>(),
-            jsonData["url"]["names"].get<std::vector<std::string>>(),
-            jsonData["url"]["hashs"].get<std::vector<std::string>>(),
-            jsonData["url"]["multis"].get<std::vector<int>>()};
+            jsonData["time"].get<std::string>()
+        };
 
-        if (info.urls.size() == 0) {
-            nlog::Err(FI, LI, "%s : urls size is 0 !", FN);
-            return {};
+        for (const auto &it : jsonData["update"]) {
+            info.urls.push_back({
+                it["url"].get<std::string>(),
+                it["name"].get<std::string>(),
+                it["hash"].get<std::string>(),
+                it["meta"]["hashAlgorithm"].get<std::string>(),
+                it["meta"]["multis"].get<bool>(),
+                it["meta"]["temp"].get<bool>(),
+                it["meta"]["randName"].get<bool>(),
+                it["meta"]["absoluteUrl"].get<bool>(),
+                it["meta"]["isUpdateProgram"].get<bool>(),
+            });
         }
 
-        if (exec::anyTrue(info.urls.size() != info.names.size(), info.names.size() != info.hashs.size(), info.hashs.size() != info.multis.size())) {
-            nlog::Err(FI, LI, "%s : Resources Unexpected : urls size : %zu , names size : %zu , hashs size : %zu ", FN, info.urls.size(), info.names.size(), info.hashs.size(), info.multis.size());
+        if (info.urls.empty()) {
+            nlog::Err(FI, LI, "%s : urls is empty!", FN);
             return {};
-        } else {
-            nlog::Info(FI, LI, "%s : vector size not 0 and match", FN);
         }
         return info;
     }
@@ -221,65 +247,115 @@ namespace neko {
         setLoadInfoFunc(0, "download update poster...");
         auto fileName = downloadPoster(hintFunc, data.poster);
 
-        ui::loadMsg lmsg{ui::loadMsg::All, "update download...", data.title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
+        ui::loadMsg lmsg{ui::loadMsg::All, "setting download...", data.title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
         loadFunc(lmsg);
 
         std::vector<std::future<neko::State>> result;
         int progress = 0;
         bool stop = false;
 
+        for (auto &it : data.urls) {
+            if (it.randName)
+                it.name = exec::generateRandomString(16);
+
+            if (it.temp)
+                it.name = info::getTemp() + it.name;
+
+            if (!it.absoluteUrl)
+                it.url = networkBase::buildUrl(it.url);
+        }
+
+        auto downloadTask = [=, &progress, &stop](int id, updateInfo::urlInfo info) {
+            setLoadInfoFunc(progress, "download update..");
+            network net;
+            int code = 0;
+            decltype(net)::Args args{
+                info.url.c_str(),
+                info.name.c_str(),
+                &code};
+            std::string ids = std::to_string(id);
+            args.id = ids.c_str();
+            args.writeCallback = networkBase::WriteCallbackFile;
+            if (stop)
+                return State::undone;
+
+            if (info.multis) {
+                if (!net.Multi(networkBase::Opt::downloadFile, {args}))
+                    return State::tryAgainLater;
+            } else {
+                if (!net.autoRetry(networkBase::Opt::downloadFile, {args}))
+                    return State::tryAgainLater;
+            }
+            ++progress;
+            return State::over;
+        };
+
+        auto checkHash = [=, &progress](const std::string &file, const std::string &exHash, const std::string hashAlgortihm) {
+            setLoadInfoFunc(progress, "verify file...");
+            auto hash = exec::hashFile(file, exec::mapAlgorithm(hashAlgortihm));
+            if (hash == exHash) {
+                nlog::Info(FI, LI, "%s : Everything is OK , file : %s  hash is matching", FN, file.c_str());
+                ++progress;
+                return State::over;
+            } else {
+                nlog::Err(FI, LI, "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", FN, file.c_str(), exHash.c_str(), hash.c_str());
+                return State::tryAgainLater;
+            }
+        };
+
         // push task
         for (size_t i = 0; i < data.urls.size(); ++i) {
-            result.push_back(exec::getThreadObj().enqueue([=, &progress, &stop] {
-                network net;
-                int code = 0;
-                decltype(net)::Args args{
-                    data.urls[i].c_str(),
-                    data.names[i].c_str(),
-                    &code};
-                std::string id = std::to_string(i);
-                args.id = id.c_str();
-                args.writeCallback = networkBase::WriteCallbackFile;
+            result.push_back(exec::getThreadObj().enqueue([=, &stop] {
                 if (stop)
                     return State::undone;
-                if (data.multis[i]) {
-                    if (!net.Multi(networkBase::Opt::downloadFile, {args}))
-                        return State::tryAgainLater;
-                } else {
-                    if (!net.autoRetry(networkBase::Opt::downloadFile, {args}))
-                        return State::tryAgainLater;
-                }
-                ++progress;
-                setLoadInfoFunc(progress, "verify file...");
 
-                auto hash = exec::hashFile(data.names[i]);
+                auto state1 = downloadTask(i, data.urls[i]);
+                if (state1 != State::over)
+                    return state1;
 
-                if (stop)
-                    return State::undone;
-                if (hash != data.hashs[i]) {
-                    nlog::Err(FI, LI, "%s : Hash Non-matching :  expect hash : %s , real hash : %s", FN, data.hashs[i].c_str(), hash.c_str());
-                    return State::tryAgainLater;
-                } else {
-                    nlog::Info(FI, LI, "%s : Everything is OK , hash is matching", FN);
-                    ++progress;
-                    setLoadInfoFunc(progress, "update download..");
-                    return State::over;
-                }
+                return checkHash(data.urls[i].name, data.urls[i].hash, data.urls[i].hashAlgorithm);
             }));
         }
+
         // check result
         for (auto &it : result) {
 
             if (it.get() != State::over) {
                 stop = true;
-                hintFunc({"Error", "failed to update download !", "", 1, [](bool check) {
-                              nlog::Err(FI, LI, "%s : click , quit programs", FN);
-                              QApplication::quit();
+                hintFunc({"Error", "failed to update download !\nclick to reStart update", "", 2, [=](bool check) {
+                              if (check) {
+                                  exec::getThreadObj().enqueue([=] {
+                                      autoUpdate(hintFunc, loadFunc, setLoadInfoFunc);
+                                  });
+                              } else {
+                                  QApplication::quit();
+                              }
                           }});
                 return State::undone;
             }
         }
 
+        nlog::Info(FI, LI, "%s : update is ok", FN);
+        std::mutex mtx;
+        std::condition_variable condVar;
+        std::unique_lock<std::mutex> lock(mtx);
+
+        for (const auto &it : data.urls) {
+            if (it.isUpdateProgram) {
+                auto execUpdate = [=, &condVar](bool) {
+                    nlog::Info(FI, LI, "%s : run the update program : %s", FN, it.name.c_str());
+                    condVar.notify_all();
+                    exec::execfe(it.name.c_str());
+                    QApplication::quit();
+                };
+                hintFunc({"reStart", "The update is ready\nPreparing to restart within 5 seconds.", "", 1, execUpdate});
+                auto resState = condVar.wait_for(lock, std::chrono::seconds(5));
+                if (resState == std::cv_status::timeout) {
+                    QApplication::quit();
+                }
+                break;
+            }
+        }
         return State::over;
     }
 
