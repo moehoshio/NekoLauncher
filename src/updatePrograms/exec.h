@@ -36,17 +36,6 @@ SOFTWARE.
 #include <regex>
 #include <string>
 
-// NekoLc Project Customization
-#include "SimpleIni/SimpleIni.h"
-#include "threadpool.h"
-
-// hash
-#include <fstream>
-#include <iomanip>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <sstream>
-
 namespace neko {
 
     constexpr inline decltype(auto) operator|(auto &&val, auto &&func) {
@@ -72,103 +61,6 @@ namespace neko {
 } // namespace neko
 
 namespace exec {
-
-    // NekoLc Project Customization
-    neko::ThreadPool &getThreadObj();
-
-    CSimpleIniA &getConfigObj();
-
-    namespace hashs {
-        enum class Algorithm {
-            none,
-            md5,
-            sha1,
-            sha256,
-            sha512
-        };
-    } // namespace hashs
-    using namespace std::literals;
-    inline std::unordered_map<hashs::Algorithm, std::string> hashAlgorithmMap = {
-        {hashs::Algorithm::md5, "md5"s},
-        {hashs::Algorithm::sha1, "sha1"s},
-        {hashs::Algorithm::sha256, "sha256"s},
-        {hashs::Algorithm::sha512, "sha512"s}};
-
-    inline auto mapAlgorithm(const std::string &str) {
-        for (auto it : hashAlgorithmMap) {
-            if (it.second == str) {
-                return it.first;
-            }
-        }
-        return hashs::Algorithm::none;
-    }
-    inline auto mapAlgorithm(hashs::Algorithm algortihm) {
-        for (auto it : hashAlgorithmMap) {
-            if (it.first == algortihm) {
-                return it.second;
-            }
-        }
-        return std::string("unknown");
-    }
-
-    inline std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
-        const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
-        unsigned char outBuf[SHA256_DIGEST_LENGTH];
-        switch (algorithm) {
-            case hashs::Algorithm::sha1:
-                SHA1(unsignedData, str.size(), outBuf);
-                break;
-            case hashs::Algorithm::sha256:
-                SHA256(unsignedData, str.size(), outBuf);
-                break;
-            case hashs::Algorithm::sha512:
-                SHA512(unsignedData, str.size(), outBuf);
-                break;
-            case hashs::Algorithm::md5:
-                MD5(unsignedData, str.size(), outBuf);
-                break;
-            default:
-                break;
-        }
-        std::stringstream ssRes;
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-            ssRes << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(outBuf[i]);
-        }
-        return ssRes.str();
-    }
-
-    inline std::string hashFile(const std::string &name, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
-        std::ifstream file(name, std::ios::binary);
-        std::string raw((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        return hashStr(raw, algorithm);
-    }
-
-    inline std::string hash(const std::string &hash, bool isFileName = false, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
-        return (isFileName) ? hashFile(hash, algorithm) : hashStr(hash, algorithm);
-    }
-
-    // Nekolc end
-    void launchNewProcess(const std::string &command);
-    
-    inline void execfs(const std::string &name , auto&&... args){
-        if (!std::filesystem::exists(name))
-            return;
-        std::system((name + (args + ...)).c_str());
-    }
-
-    inline void execfe(const char *name){
-        if (!std::filesystem::exists(name))
-            return;
-
-        std::system((name + std::filesystem::current_path().string()).c_str());
-    }
-
-    inline void execf(const char *name) {
-        if (!std::filesystem::exists(name))
-            return;
-
-        std::system(name);
-    }
 
     constexpr auto move = [](auto &&val) -> auto && { return std::move(val); };
     constexpr auto make_shared = [](auto &&val) -> decltype(auto) { return std::make_shared<std::remove_reference_t<decltype(val)>>(val); };

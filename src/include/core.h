@@ -25,6 +25,7 @@ namespace neko {
             msg,
             poster,
             time;
+        bool mandatory;
 
         struct urlInfo {
             std::string url;
@@ -35,7 +36,6 @@ namespace neko {
             bool temp;
             bool randName;
             bool absoluteUrl;
-            bool isUpdateProgram;
             bool empty() {
                 std::vector<bool> vec{
                     url.empty(), name.empty(), hash.empty()};
@@ -201,21 +201,17 @@ namespace neko {
             jsonData["title"].get<std::string>(),
             jsonData["msg"].get<std::string>(),
             jsonData["poster"].get<std::string>(),
-            jsonData["time"].get<std::string>()
-        };
+            jsonData["time"].get<std::string>()};
 
         for (const auto &it : jsonData["update"]) {
-            info.urls.push_back({
-                it["url"].get<std::string>(),
-                it["name"].get<std::string>(),
-                it["hash"].get<std::string>(),
-                it["meta"]["hashAlgorithm"].get<std::string>(),
-                it["meta"]["multis"].get<bool>(),
-                it["meta"]["temp"].get<bool>(),
-                it["meta"]["randName"].get<bool>(),
-                it["meta"]["absoluteUrl"].get<bool>(),
-                it["meta"]["isUpdateProgram"].get<bool>(),
-            });
+            info.urls.push_back({it["url"].get<std::string>(),
+                                 it["name"].get<std::string>(),
+                                 it["hash"].get<std::string>(),
+                                 it["meta"]["hashAlgorithm"].get<std::string>(),
+                                 it["meta"]["multis"].get<bool>(),
+                                 it["meta"]["temp"].get<bool>(),
+                                 it["meta"]["randName"].get<bool>(),
+                                 it["meta"]["absoluteUrl"].get<bool>()});
         }
 
         if (info.urls.empty()) {
@@ -266,7 +262,6 @@ namespace neko {
         }
 
         auto downloadTask = [=, &progress, &stop](int id, updateInfo::urlInfo info) {
-            setLoadInfoFunc(progress, "download update..");
             network net;
             int code = 0;
             decltype(net)::Args args{
@@ -287,15 +282,16 @@ namespace neko {
                     return State::tryAgainLater;
             }
             ++progress;
+            setLoadInfoFunc(progress, "download update..");
             return State::over;
         };
 
         auto checkHash = [=, &progress](const std::string &file, const std::string &exHash, const std::string hashAlgortihm) {
-            setLoadInfoFunc(progress, "verify file...");
             auto hash = exec::hashFile(file, exec::mapAlgorithm(hashAlgortihm));
             if (hash == exHash) {
                 nlog::Info(FI, LI, "%s : Everything is OK , file : %s  hash is matching", FN, file.c_str());
                 ++progress;
+                setLoadInfoFunc(progress, "download update..");
                 return State::over;
             } else {
                 nlog::Err(FI, LI, "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", FN, file.c_str(), exHash.c_str(), hash.c_str());
@@ -336,26 +332,36 @@ namespace neko {
         }
 
         nlog::Info(FI, LI, "%s : update is ok", FN);
-        std::mutex mtx;
-        std::condition_variable condVar;
-        std::unique_lock<std::mutex> lock(mtx);
+        
+        bool needExecUpdate = false;
+        std::string cmd = std::filesystem::current_path().string()+ "/update.exe " + std::filesystem::current_path().string();
 
         for (const auto &it : data.urls) {
-            if (it.isUpdateProgram) {
-                auto execUpdate = [=, &condVar](bool) {
-                    nlog::Info(FI, LI, "%s : run the update program : %s", FN, it.name.c_str());
-                    condVar.notify_all();
-                    exec::execfe(it.name.c_str());
-                    QApplication::quit();
-                };
-                hintFunc({"reStart", "The update is ready\nPreparing to restart within 5 seconds.", "", 1, execUpdate});
-                auto resState = condVar.wait_for(lock, std::chrono::seconds(5));
-                if (resState == std::cv_status::timeout) {
-                    QApplication::quit();
-                }
-                break;
+            if (it.temp) {
+                needExecUpdate = true;
+                cmd += (" " + it.name);
             }
         }
+        if (needExecUpdate) {
+            nlog::Info(FI,LI,"%s : need exec update",FN);
+            std::mutex mtx;
+            std::condition_variable condVar;
+            std::unique_lock<std::mutex> lock(mtx);
+
+            auto execUpdate = [=, &condVar](bool) {
+                condVar.notify_all();
+                QApplication::quit();
+            };
+
+            hintFunc({"reStart", "The update is ready\nPreparing to restart within 5 seconds.", "", 1, execUpdate});
+            auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
+
+            if (resState == std::cv_status::timeout) {
+                QApplication::quit();
+            }
+            exec::launchNewProcess(cmd);
+        }
+
         return State::over;
     }
 

@@ -62,12 +62,11 @@ standard error message:
                     "name":"name1",
                     "hash":"hash1",
                     "meta":{
-                        "hashAlgorithm": "sha256",
+                        "hashAlgorithm": "sha256",// md5 , sha1 ,sha256 ,sha512
                         "multis":false,// use multis download?
-                        "temp":false,//in temp dir?
-                        "randName":false,//use rand name?
-                        "absoluteUrl":false,// if not absolute url , an use current host.
-                        "isUpdateProgram":false
+                        "temp":false,//in temp dir? Enabling this option will pass the file name to the update program and copy it to the root folder. This usually indicates a core update.
+                        "randName":false,//use rand name? Using this option allows the "name" key value to be an empty string.
+                        "absoluteUrl":false// if not absolute url , an use current host.
                     }
                 },
                 {
@@ -79,8 +78,7 @@ standard error message:
                         "multis":true,
                         "temp":false,
                         "randName":true,
-                        "absoluteUrl":true,
-                        "isUpdateProgram":true
+                        "absoluteUrl":true
                     }
                 }
             ],
