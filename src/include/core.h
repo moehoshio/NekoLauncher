@@ -64,6 +64,7 @@ namespace neko {
             nlog::Err(FI,LI,"%s : Error  Lua or scriptPath not exists !",FN);
 
         std::string luaPath = std::getenv("LUA_PATH");
+        // e.g /apps/lua /apps/workdir/helloLua/helloLua.luac
         std::string command = luaPath + " " + info::getWorkDir() + "/helloLua/helloLua.luac";
         launcherProcess(command,opt);
     }

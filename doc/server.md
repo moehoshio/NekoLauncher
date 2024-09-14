@@ -90,3 +90,78 @@ standard error message:
         - If the main program (i.e., Nekolc core, including libraries) needs to be updated, a separate temporary update program will be downloaded. The main program, update program, and main libraries should be included in the URL. The temporary program is then run, and the main program exits.
         - The temporary update program will update the main program and files by replacing them with the already downloaded versions, and then it will launch the main program.
         - If only resources need to be updated, the update is completed as soon as the download finishes.
+
+The server can be implemented in any language. Below is an example of the above API implemented using PHP:
+- `/v1/api/maintenance` :
+
+    ```php
+    <?php
+    $putData = array(
+        "enable" => false,
+        "msg" => "msg",
+        "poster" => "https://example.com/img/img1.png",
+        "time" => "2024/01/01 00:00(UTC+01) - 2024/12/01 23:59(UTC+01)",
+        "annctLink" => "https://example.com"
+    );
+    $putJsonData = json_encode($putData);
+    header('Content-Type: application/json');
+    if (json_last_error() === JSON_ERROR_NONE) {
+        echo $putJsonData;
+    } else {
+        http_response_code(500);
+    }
+    ?>
+    ```
+
+- `/v1/api/checkUpdates` :
+
+    ```php
+    <?php
+
+    $jsonData = file_get_contents('php://input');
+    $data = json_decode($jsonData, true);
+
+    $putData = array(
+        "title"=>"Release v0.0.0.2",
+        "msg"=>"msg",
+        "poster"=>"https://example.com/img/img2.png",
+        "time"=>"2024-01-01 10:00(UTC+01)",
+        "resVersion"=>"v1.0.0.1",
+        "mandatory"=>true,
+        "update"=>array(
+            array("url"=>"https://data.example.com/download/test","name"=>"temp/test.txt","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>false,"randName"=>false,"absoluteUrl"=>true)
+            ),
+            array("url"=>"/api/getInfo?meta=config","name"=>"config.ini","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>true,"randName"=>false,"absoluteUrl"=>false)
+            ),
+            array("url"=>"https://example.com/100MB.bin","name"=>"","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>true,"temp"=>false,"randName"=>true,"absoluteUrl"=>true)
+            ),
+        )
+        );
+    $putJsonData = json_encode($putData);
+
+    header('Content-Type: application/json;');
+
+    if (json_last_error() === JSON_ERROR_NONE) {
+    $var = $data["core"];
+    switch ($var) {
+        case 'v0.0.0.1':
+            echo $putJsonData;
+            http_response_code(200);
+            break;
+        case 'v0.0.0.2':
+            http_response_code(204);
+            break;
+        default:
+            http_response_code(400);
+            break;
+    }
+
+    } else {
+        http_response_code(400);
+    }
+    ?>
+
+    ```

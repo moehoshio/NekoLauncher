@@ -186,6 +186,13 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
         static T getSysProxy();
         ```
 
+        - **errCodeReason** : Provides a general reason for the error code This. is typically used to inform the user.
+
+        ```cpp
+        template<typename T = std::string>
+        constexpr static T errCodeReason(int code);
+        ```
+
         - **Default Callback Functions**:
 
         ```cpp
@@ -401,6 +408,108 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
             ```
 
             - When the user clicks, `m.callback` is invoked with a boolean representing the user's choice (always `true` for a single button).
+
+5. **core.h**:
+   - All objects are within the project namespace `neko`.
+   - **Defined Classes/Structures**:
+     - **State Enum**:
+       - `over`: Indicates the task is completed, based on specific semantics.
+       - `undone`: Indicates the task is not completed, possibly due to a fatal error such as JSON parsing failure.
+       - `tryAgainLater`: Indicates the task is not completed but can be retried, such as a failed network request.
+     - **updateInfo Struct**:
+       - `title`: std::string
+       - `msg`: std::string
+       - `poster`: std::string
+       - `time`: std::string
+       - `resVersion`: std::string
+       - `mandatory`: bool
+       - **urlInfo**: Information for a single URL
+         - `url`: std::string
+         - `name`: std::string
+         - `hash`: std::string
+         - `hashAlgorithm`: std::string
+         - `multis`: bool
+         - `temp`: bool
+         - `randName`: bool
+         - `absoluteUrl`: bool
+         - **empty func**
+       - `urls`: urlInfo
+       - **empty func**
+     - **launcherOpt Enum**:
+       - `keep`: Indicates maintaining the current window state
+       - `endProcess`: Indicates ending the launcher after starting
+       - `hideProcessAndOverReShow`: Indicates hiding after starting and re-displaying after the process ends.
+   - **Functions**
+     - Contains the main logic and functions of the program:
+       - **downloadPoster**: Downloads the poster and returns the file name. If it fails, returns an empty container and notifies the user of the failure.
+         - `hintFunc`: Function for notifying the user
+         - `url`: Poster URL
+
+         ```cpp
+         template <typename T = std::string>
+         inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url);
+         ```
+
+       - **checkMaintenance**: Checks maintenance information and returns `over` if no maintenance is needed, `undone` if maintenance is ongoing.
+         - `hint`: Function for notifying the user
+         - `loadFunc`: Function for displaying the loading page; the function updates the status to loading (shows the loading page)
+         - `setLoadInfoFunc`: Function for setting the loading status
+
+         ```cpp
+         inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc);
+         ```
+
+       - **checkUpdate**: Checks for update information; returns `over` if no update is available, `undone` if there is an update.
+         - `res`: The returned update information.
+
+         ```cpp
+         inline State checkUpdate(std::string &res);
+         ```
+
+       - **parseUpdate**: Parses update information into `updateInfo`; returns an empty object if an error occurs.
+         - `res`: Content to be parsed.
+
+         ```cpp
+         inline updateInfo parseUpdate(const std::string &res);
+         ```
+
+       - **autoUpdate**: Automatically updates; if an update is available, it will automatically parse and download. Returns `over` if the update is completed (i.e., if there is no update or the update is completed).
+         - `hintFunc`: Function for notifying the user; passed to `checkMaintenance` and used to notify the user upon download failure and update completion.
+         - `loadFunc`: Function for displaying the loading page; passed to `checkMaintenance` and used to show download progress.
+         - `setLoadInfoFunc`: Function for setting loading progress; passed to `checkMaintenance` and used to display download progress during the download.
+
+         ```cpp
+         inline State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc);
+         ```
+
+       - **launchNewProcess**: Launches a new process that can continue running after the main program ends. Typically used when updating the core.
+         - `command`: The command to be executed
+
+         ```cpp
+         void launchNewProcess(const std::string &command);
+         ```
+
+       - **launcherProcess**: Launches a process
+         - `command`: The command to be executed
+         - `opt`: The method for handling the program after launching the process
+         - `winFunc`: If using `launcherOpt::hideProcessAndOverReShow`, this function is required. `false` means hide the window, `true` means show the window.
+
+         ```cpp
+         inline void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = NULL);
+         ```
+
+       - **launcherLuaPreCheck**: A sample for launching Lua, checking for Lua environment variables and whether the target script is exists before launching.
+
+         ```cpp
+         inline bool launcherLuaPreCheck();
+         ```
+
+       - **launcher**: A sample for launching Lua that you can fully customize. Called when the user clicks.
+         - `opt`: The method for handling the program after launching the process
+
+         ```cpp
+         inline void launcher(launcherOpt opt);
+         ```
 
 ## Module Example
 
