@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(NakoL)
+project(NekoLc)
 
 
 list(APPEND SRCFILES
@@ -9,6 +9,7 @@ list(APPEND SRCFILES
     src/info.cpp
     src/network.cpp
     src/autoinit.cpp
+    src/core.cpp
     src/main.cpp
     
 )
@@ -17,6 +18,7 @@ list(APPEND SRCFILES
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
     C:/Qt/6.6.1/msvc2019_64/include
+    C:/ide/VC/Tools/MSVC/14.01/include
 )
 
 
@@ -60,14 +62,14 @@ generate_moc(${HEADER})
 endforeach()
 
 
-add_executable(NekoL ${SRCFILES} ${GENERATED_MOC_FILES})
+add_executable(NekoLc ${SRCFILES} ${GENERATED_MOC_FILES})
 
 
-target_include_directories(NekoL PRIVATE ${INCLUDE_DIRS})
-target_compile_features(NekoL PRIVATE cxx_std_20)
+target_include_directories(NekoLc PRIVATE ${INCLUDE_DIRS})
+target_compile_features(NekoLc PRIVATE cxx_std_20)
 
 
-target_link_libraries(NekoL PRIVATE 
+target_link_libraries(NekoLc PRIVATE 
 Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets Qt6::Gui
 ${LIBRARY_DIRS}/libapps.lib
 ${LIBRARY_DIRS}/openssl.lib
@@ -79,8 +81,8 @@ ${LIBRARY_DIRS}/zlibstatic.lib
 
 
 if(MSVC)
-    set_target_properties(NekoL PROPERTIES WIN32_EXECUTABLE TRUE)
-    # target_sources(t01 PRIVATE icon.rc)
+    # set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+    # target_sources(NekoLc PRIVATE icon.rc)
 endif()
 
 

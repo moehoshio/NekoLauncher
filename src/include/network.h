@@ -32,10 +32,10 @@ namespace neko {
             constexpr static const char *hostList[]{
 #include "../data/hostlist"
             };
-            constexpr static const char *mainenance = "/api/maintenance";
-            constexpr static const char *checkUpdates = "/api/checkUpdates";
-            constexpr static const char *testing = "/testing/ping";
-            // constexpr static const char *token = "api/token";
+            constexpr static const char *mainenance = "/v1/api/maintenance";
+            constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
+            constexpr static const char *testing = "/v1/testing/ping";
+            // static std::vector<std::string> dynamicHostList;
         };
 
         static Config Dconfig;
@@ -95,6 +95,34 @@ namespace neko {
                 return T(proxy);
 
             return T();
+        }
+        template<typename T = std::string>
+        constexpr static T errCodeReason(int code){
+            switch (code)
+            {
+            case -1:
+                return T("Failed to initialize libcurl.");
+                break;
+            case -3:
+                return T("Unexpected standard exception occurred");
+                break;
+            case -4:
+                return T("Get network req failed !");
+                break;
+            case -5:
+                return T("The use of an incorrect method/option");
+                break;
+            case -6:
+                return T("Invalid Content-Length value.");
+                break;
+            case -7:
+                return T("Content-Length value out of range");
+            case -8:
+                return T("In getCase use invalid method! ");
+            default:
+                return T("unknown");
+                break;
+            }
         }
 
         // use std string save ,Can be used in most cases ,binary or text
@@ -240,7 +268,7 @@ namespace neko {
             nlog::Info(FI, LI, "%s : Now start perform , id : %s", FN, id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" id :") + ((id == nullptr)?"": std::string(id) )));
+                std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr)?"": std::string(id) )));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;
@@ -503,7 +531,7 @@ namespace neko {
                 nlog::Info(FI, LI, "%s : this req code : %d , id : %s", FN, *ra.args.code, ra.args.id);
                 for (auto it : ra.code) {
                     if (*ra.args.code == it) {
-                        return true;
+                        return res;
                     }
                 }
                 *ra.args.code = 0;
