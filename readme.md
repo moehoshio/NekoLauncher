@@ -13,7 +13,14 @@ Preview :
 
 ## Become Contributors
 
-If you are interested, feel free to submit issues.
+Since I am not very familiar with the UI, I would greatly appreciate any interest in this area.
+
+Currently, the following aspects are still incomplete:
+
+- **UI**: Transition animations, theme settings/style customization.
+- **Others**: Internationalization (translations), more template examples, and optimization of CMake files.
+
+Of course, I would be very grateful for any help you can provide or any ideas to make the project more robust. If you are interested, feel free to submit issues.
 
 ## Supported Platforms
 
@@ -43,12 +50,14 @@ loguru
 threadpool  
 ...
 
-Clone code to the you host and :  
-
 ```shell
+git clone https://github.com/moehoshio/NekoLauncher.git
 cp CmakeListsCopy.txt CmakeLists.txt
 # Customize your configuration, including the include and library directories. Then continue:
 cmake ./build
+cmake --build ./build --config Release
+#or
+cmake -DCMAKE_BUILD_TYPE=Release ./build
 cmake --build ./build
 ```
 
@@ -69,6 +78,10 @@ list(APPEND LIBRARY_DIRS
 
 CMAKE_PREFIX_PATH : qt path e.g  /user/home/qt/6.6.0  
 QtBin : qt bin path  e.g /user/home/qt/6.6.0/bin  
+
+If you want to use this project, you'll actually need to customize some objects. This is necessary because everyone's goals and the resources they need to manage are different. In short, you need to customize your logic within the `launcher` function in the `src/include/core.h` file, as well as modify the contents in `src/data/`.
+
+After completing these steps, you'll need to deploy your server. A simple example can be found at: [server.md](doc/server.md).
 
 ### Contribution and Customization
 
