@@ -10,7 +10,8 @@ namespace neko {
             home,
             temp,
             version,
-            resVersion
+            resVersion,
+            workDir
         };
     private:
         struct Data {
@@ -24,6 +25,7 @@ namespace neko {
             static std::string home;
             static std::string temp;
             static std::string resVersion;
+            static std::string workDir;
         };
 
 
@@ -44,6 +46,9 @@ namespace neko {
         inline static std::string getResVersion(){
             return Data::resVersion;
         }
+        inline static std::string getWorkDir(){
+            return Data::workDir;
+        }
         
         constexpr inline static std::string get(getType o){
             switch (o)
@@ -59,6 +64,10 @@ namespace neko {
                 break;
             case getType::resVersion :
                 return Data::resVersion;
+                break;
+            case getType::workDir :
+                return Data::workDir;
+                break;
             default:
                 return "unknown";
                 break;
@@ -77,19 +86,20 @@ namespace neko {
             );
 
             if (path)
-                Data::home = std::string(path);
+                Data::home = exec::unifiedThePaths<std::string>(path) ;
 
             if (std::string temp = exec::getConfigObj().GetValue("more", "temp", "");
                 std::filesystem::is_directory(temp)
             )
-                Data::temp = temp | exec::move;
+                Data::temp = temp | exec::unifiedPaths | exec::move;
             else
-                Data::temp = std::filesystem::temp_directory_path().string();
+                Data::temp = std::filesystem::temp_directory_path().string() | exec::unifiedPaths;
 
             Data::resVersion = exec::getConfigObj().GetValue("more","resVersion","");
             if (Data::resVersion.empty())            
                 nlog::Err(FI,LI,"%s : resVersion is empty !",FN);
             
+            Data::workDir = std::filesystem::current_path().string() | exec::unifiedPaths;
         };
     }; //class info
 

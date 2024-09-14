@@ -7,6 +7,7 @@ namespace neko {
             const char *bgType;
             const char *bg;
             const char *windowSize;
+            long launcherMode;
             bool useSysWindowFrame;
             bool barKeepRight;
         };
@@ -42,6 +43,7 @@ namespace neko {
                 cfg.GetValue("main","backgroundType","image"),
                 cfg.GetValue("main", "background", "img/bg.png"),
                 cfg.GetValue("main", "windowSize", ""),
+                cfg.GetLongValue("main","launcherMode",1),
                 cfg.GetBoolValue("main", "useSystemWindowFrame", false),
                 cfg.GetBoolValue("main", "barKeepRight", true)};
             style = Style{
@@ -65,6 +67,7 @@ namespace neko {
         cfg.SetValue("main","backgroundType",config.main.bgType);
         cfg.SetValue("main","background",config.main.bg);
         cfg.SetValue("main","windowSize",config.main.windowSize);
+        cfg.SetLongValue("main","launcherMode",config.main.launcherMode);
         cfg.SetBoolValue("main","useSystemWindowFrame",config.main.useSysWindowFrame);
         cfg.SetBoolValue("main","barKeepRight",config.main.barKeepRight);
 

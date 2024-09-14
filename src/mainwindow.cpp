@@ -2,6 +2,7 @@
 #include "autoinit.h"
 #include "exec.h"
 #include "info.h"
+#include "core.h"
 #include <filesystem>
 namespace ui {
 
@@ -78,6 +79,15 @@ namespace ui {
         winSizeEditTextX = new QLabel(winSizeEditLayoutWidget);
         winSizeEditWidth = new QLineEdit(winSizeEditLayoutWidget);
         winSizeEditHeight = new QLineEdit(winSizeEditLayoutWidget);
+
+        lcGroup = new QGroupBox(scrollContent);
+        lcGroupLayout = new QVBoxLayout(lcGroup);
+
+        lcWindowSetLayoutWidget = new QWidget(lcGroup);
+        lcWindowSetLayout = new QHBoxLayout(lcWindowSetLayoutWidget);
+        lcWindowSetText = new QLabel(lcWindowSetLayoutWidget);
+        lcWindowSetBox = new QComboBox(lcWindowSetLayoutWidget);
+
 
         netGroup = new QGroupBox(scrollContent);
         netGroupLayout = new QVBoxLayout(netGroup);
@@ -163,6 +173,19 @@ namespace ui {
         winSizeEditLayout->addWidget(winSizeEditTextX);
         winSizeEditLayout->addWidget(winSizeEditHeight);
 
+        lcGroup->setLayout(lcGroupLayout);
+
+        lcGroupLayout->addWidget(lcWindowSetLayoutWidget);
+        lcWindowSetLayoutWidget->setLayout(lcWindowSetLayout);
+
+        lcWindowSetLayout->addWidget(lcWindowSetText);
+        lcWindowSetLayout->addWidget(lcWindowSetBox);
+
+        lcWindowSetBox->addItem("");
+        lcWindowSetBox->addItem("");
+        lcWindowSetBox->addItem("");
+
+
         netGroup->setLayout(netGroupLayout);
 
         netGroupLayout->addWidget(netProxyLayoutWidget);
@@ -192,6 +215,7 @@ namespace ui {
         scrollLayout->addWidget(bgGroup);
         scrollLayout->addWidget(styleGroup);
         scrollLayout->addWidget(winGroup);
+        scrollLayout->addWidget(lcGroup);
         scrollLayout->addWidget(netGroup);
         scrollLayout->addWidget(moreGroup);
 
@@ -389,7 +413,7 @@ namespace ui {
                 setting->page2->stylePointSizeEditLine->setMaximumWidth(width() * 0.5);
                 setting->page2->stylePointSizeEditFontBox->setMaximumWidth(width() * 0.32);
 
-                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->moreGroup}) {
+                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->moreGroup , setting->page2->lcGroup }) {
                     setOneTabGroupMMSize->setMinimumHeight(std::max<double>(110, height() * 0.18));
                     setOneTabGroupMMSize->setMaximumHeight(std::max<double>(680, height() * 0.5));
                 }
@@ -401,7 +425,7 @@ namespace ui {
                     setThreeTabGroupMMSize->setMinimumHeight(std::max<double>(330, height() * 0.5));
                     setThreeTabGroupMMSize->setMaximumHeight(std::max<double>(900, height() * 0.9));
                 }
-                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
+                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget ,setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
                     setOptBSize->setBaseSize(width() * 0.7, height() * 0.2);
                 }
 
@@ -442,11 +466,11 @@ namespace ui {
 
         setting->page2->bgInputToolButton->setMinimumSize(30, 30);
         setting->page2->moreTempTool->setMinimumSize(30, 30);
-        for (auto groupAddSpacing : std::vector<QVBoxLayout *>{setting->page2->bgGroupLayout, setting->page2->winGroupLayout, setting->page2->styleGroupLayout, setting->page2->netGroupLayout, setting->page3->devOptGroupLayout}) {
+        for (auto groupAddSpacing : std::vector<QVBoxLayout *>{setting->page2->bgGroupLayout, setting->page2->winGroupLayout, setting->page2->styleGroupLayout,setting->page2->lcGroupLayout, setting->page2->netGroupLayout, setting->page3->devOptGroupLayout}) {
             groupAddSpacing->addSpacing(12);
         }
 
-        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
+        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox ,setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
             setMinHeight50->setMinimumHeight(50);
         }
     }
@@ -493,12 +517,12 @@ namespace ui {
         }
 
         for (auto setGroupBg : std::vector<QWidget *>{
-                 setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup ,setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             setGroupBg->setStyleSheet("QGroupBox { border: transparent; background-color: rgba(255,255,255,0);}");
         }
 
         for (auto setTabOptBg : std::vector<QWidget *>{
-                 setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
+                 setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget,setting->page2->lcWindowSetLayoutWidget , setting->page2->lcWindowSetBox ,setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
             setTabOptBg->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
         }
         setting->page2->styleBlurEffectRadiusSlider->setStyleSheet("QSlider::handle:horizontal {background-color: rgba(140, 199, 255,255);}");
@@ -509,7 +533,7 @@ namespace ui {
         for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
-        for (auto transparentWidgets : std::vector<QWidget *>{headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process}) {
+        for (auto transparentWidgets : std::vector<QWidget *>{headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText,setting->page2->lcWindowSetText , setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process}) {
             transparentWidgets->setStyleSheet("background-color: rgba(255,255,255,0);");
         }
     }
@@ -538,6 +562,7 @@ namespace ui {
         setting->page2->bgGroup->setTitle("background");
         setting->page2->styleGroup->setTitle("style");
         setting->page2->winGroup->setTitle("window");
+        setting->page2->lcGroup->setTitle("launcher");
         setting->page2->netGroup->setTitle("network");
         setting->page2->moreGroup->setTitle("more");
         setting->page3->devOptGroup->setTitle("dev");
@@ -554,6 +579,11 @@ namespace ui {
         setting->page2->styleBlurEffectSelectRadioQuality->setText("Quality");
         setting->page2->styleBlurEffectRadiusText->setText("blurValue");
         setting->page2->stylePointSizeEditText->setText("font");
+
+        setting->page2->lcWindowSetText->setText("launcherMode");
+        setting->page2->lcWindowSetBox->setItemText(1,"keepWindow");
+        setting->page2->lcWindowSetBox->setItemText(2,"endProcess");
+        setting->page2->lcWindowSetBox->setItemText(3,"hideProcessAndOverReShow");
 
         setting->page2->winSizeEditText->setText("size");
         setting->page2->winSizeEditTextX->setText("X");
@@ -594,12 +624,12 @@ namespace ui {
     void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
-                 hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
+                 hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText , setting->page2->lcWindowSetBox ,setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
             normal->setFont(text);
         }
 
         for (auto h2Title : std::vector<QWidget *>{
-                 hintWidget->title, loading->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 hintWidget->title, loading->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup,setting->page2->lcGroup , setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             h2Title->setFont(h2);
         }
 
@@ -619,6 +649,27 @@ namespace ui {
     };
 
     void MainWindow::setupConnect() {
+
+        connect(index->startButton,&QPushButton::clicked,[=,this]{
+            int id = setting->page2->lcWindowSetBox->currentIndex();
+            neko::launcherOpt opt;
+            switch (id)
+            {
+            case 1:
+                opt = neko::launcherOpt::keep;
+                break;
+            case 2:
+                opt = neko::launcherOpt::endProcess;
+                break;
+            case 3:
+                opt = neko::launcherOpt::hideProcessAndOverReShow;
+                break;
+            default:
+                opt = neko::launcherOpt::keep;
+                break;
+            }
+            neko::launcher(opt);
+        });
         connect(index->menuButton, &QPushButton::clicked, [=, this]() {
             if (state != pageState::setting) {
                 oldState = state;
@@ -909,10 +960,10 @@ namespace ui {
             setting->page3->devServerEdit->show();
         }
 
-        state = pageState::loading;
-        oldState = pageState::loading;
+        state = pageState::index;
+        oldState = pageState::index;
 
-        index->hide();
+        loading->hide();
         setting->hide();
         hintWidget->raise();
         hintWidget->hide();
@@ -1003,6 +1054,7 @@ namespace ui {
         };
         std::string windowSize = setting->page2->winSizeEditWidth->text().toStdString() + "x" + setting->page2->winSizeEditHeight->text().toStdString();
         cfg.main.windowSize = windowSize.c_str();
+        cfg.main.launcherMode = setting->page2->lcWindowSetBox->currentIndex();
         cfg.main.useSysWindowFrame = setting->page2->winSysFrameCheckBox->isChecked();
         cfg.main.barKeepRight = setting->page2->winBarKeepRightCheckBox->isChecked();
         cfg.style.blurHint = setting->page2->styleBulrEffectButtonGroup->checkedId();

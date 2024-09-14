@@ -204,6 +204,17 @@ namespace ui {
             QLineEdit *winSizeEditHeight;
             // window group
 
+            //launcher group
+            QGroupBox *lcGroup;
+            QVBoxLayout *lcGroupLayout;
+
+            QWidget *lcWindowSetLayoutWidget;
+            QHBoxLayout *lcWindowSetLayout;
+            QLabel * lcWindowSetText;
+            QComboBox * lcWindowSetBox;
+
+            //launcher group
+
             // network group
             QGroupBox *netGroup;
             QVBoxLayout *netGroupLayout;

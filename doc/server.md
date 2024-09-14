@@ -56,6 +56,7 @@ standard error message:
             "msg":"",
             "poster":"url",
             "time":"",
+            "resVersion":"",//If the version has been updated
             "update":[
                 {
                     "url":"url1",

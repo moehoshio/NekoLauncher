@@ -1,18 +1,72 @@
 #pragma once
 #include "exec.h"
 #include "info.h"
-#include "mainwindow.h"
 #include "msgtypes.h"
 #include "network.h"
 
 #include "nlohmann/json.hpp"
 
+#include <QtCore/QUrl>
+#include <QtWidgets/QApplication>
 // openurl
 #include <QtGui/QDesktopServices>
 
 #include <condition_variable>
+#include <filesystem>
 #include <mutex>
+
 namespace neko {
+
+    void launchNewProcess(const std::string &command);
+
+    enum class launcherOpt {
+        keep,
+        endProcess,
+        hideProcessAndOverReShow
+    };
+
+    inline void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = NULL) {
+        switch (opt) {
+            case launcherOpt::keep:
+                std::system(command.c_str());
+                break;
+            case launcherOpt::endProcess:
+                launchNewProcess(command);
+                QApplication::quit();
+                break;
+            case launcherOpt::hideProcessAndOverReShow:
+                winFunc(false);
+                std::system(command.c_str());
+                winFunc(true);
+                break;
+            default:
+                break;
+        }
+    }
+
+    inline bool launcherLuaPreCheck() {
+        const char * path = std::getenv("LUA_PATH");
+        if (path==nullptr)
+            return false;
+        std::string scriptPath = "/helloLua/helloLua.luac";
+        if (!std::filesystem::exists(scriptPath))
+            return false;
+
+        return true;
+    }
+
+    // Called when the user clicks.
+    inline void launcher(launcherOpt opt) {
+        // It can launch Lua, Java, scripts, executables, or anything else.
+        // includes pre-execution checks; in short, you can fully customize it.
+
+        if (!launcherLuaPreCheck())
+            nlog::Err(FI,LI,"%s : Error  Lua or scriptPath not exists !",FN);
+
+        std::string luaPath = std::getenv("LUA_PATH");
+        std::string command = luaPath + " " + info::getWorkDir() + "/helloLua/helloLua.luac";
+        launcherProcess(command,opt);
+    }
 
     enum class State {
         over,
@@ -25,6 +79,7 @@ namespace neko {
             msg,
             poster,
             time;
+        std::string resVersion;
         bool mandatory;
 
         struct urlInfo {
@@ -36,21 +91,21 @@ namespace neko {
             bool temp;
             bool randName;
             bool absoluteUrl;
-            bool empty() {
+            inline bool empty() {
                 std::vector<bool> vec{
-                    url.empty(), name.empty(), hash.empty()};
+                    url.empty(), name.empty(), hash.empty(), hashAlgorithm.empty()};
 
                 for (auto it : vec) {
                     if (!it)
                         return false;
-                    return true;
                 }
+                return true;
             }
         };
 
         std::vector<urlInfo> urls;
 
-        bool empty() {
+        inline bool empty() {
             std::vector<bool> res{
                 title.empty(), msg.empty(), poster.empty(), time.empty(), urls.empty()};
             for (auto it : res) {
@@ -64,7 +119,7 @@ namespace neko {
 
     // Return file name, if the download fails a null T value.
     template <typename T = std::string>
-    T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
+    inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
         if (!url.empty()) {
             network net;
             auto fileName = info::getTemp() + "update_" + exec::generateRandomString(10) + ".png";
@@ -84,7 +139,7 @@ namespace neko {
     }
 
     // over : not maintenance, undone : in maintenance
-    State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
+    inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
         loadFunc({ui::loadMsg::Type::OnlyRaw, "maintenance info req.."});
 
@@ -166,7 +221,7 @@ namespace neko {
         return State::undone;
     }
     // over : none update , undone : update
-    State checkUpdate(std::string &res) {
+    inline State checkUpdate(std::string &res) {
         nlog::autoLog log{FI, LI, FN};
         network net;
         auto url = net.buildUrl<std::string>(networkBase::Api::checkUpdates);
@@ -188,7 +243,7 @@ namespace neko {
         }
     }
     // If any error occurs, return an empty object (an empty method is provided for checking).
-    updateInfo parseUpdate(const std::string &res) {
+    inline updateInfo parseUpdate(const std::string &res) {
         nlog::autoLog log{FI, LI, FN};
 
         nlog::Info(FI, LI, "%s : res : %s ", FN, res.c_str());
@@ -201,7 +256,10 @@ namespace neko {
             jsonData["title"].get<std::string>(),
             jsonData["msg"].get<std::string>(),
             jsonData["poster"].get<std::string>(),
-            jsonData["time"].get<std::string>()};
+            jsonData["time"].get<std::string>(),
+            jsonData["resVersion"].get<std::string>()};
+
+        info.mandatory = jsonData["mandatory"].get<bool>();
 
         for (const auto &it : jsonData["update"]) {
             info.urls.push_back({it["url"].get<std::string>(),
@@ -221,7 +279,7 @@ namespace neko {
         return info;
     }
 
-    State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
+    inline State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
         std::string res;
 
@@ -242,6 +300,27 @@ namespace neko {
 
         setLoadInfoFunc(0, "download update poster...");
         auto fileName = downloadPoster(hintFunc, data.poster);
+
+        if (!data.mandatory) {
+            std::mutex mtx;
+            std::condition_variable condVar;
+            std::unique_lock<std::mutex> lock(mtx);
+            bool select = true;
+            hintFunc({data.title, (data.time + "\n" + data.msg), "", 2, [&condVar, &select](bool check) {
+                          if (check) {
+                              select = true;
+                          } else {
+                              select = false;
+                          }
+
+                          condVar.notify_one();
+                      }});
+
+            condVar.wait(lock);
+            if (!select) {
+                return State::over;
+            }
+        }
 
         ui::loadMsg lmsg{ui::loadMsg::All, "setting download...", data.title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
         loadFunc(lmsg);
@@ -332,9 +411,9 @@ namespace neko {
         }
 
         nlog::Info(FI, LI, "%s : update is ok", FN);
-        
+
         bool needExecUpdate = false;
-        std::string cmd = std::filesystem::current_path().string()+ "/update.exe " + std::filesystem::current_path().string();
+        std::string cmd = info::getWorkDir() + "/update.exe " + info::getWorkDir();
 
         for (const auto &it : data.urls) {
             if (it.temp) {
@@ -342,8 +421,12 @@ namespace neko {
                 cmd += (" " + it.name);
             }
         }
+        if (!data.resVersion.empty()) {
+            exec::getConfigObj().SetValue("more", "resVersion", data.resVersion.c_str());
+        }
+
         if (needExecUpdate) {
-            nlog::Info(FI,LI,"%s : need exec update",FN);
+            nlog::Info(FI, LI, "%s : need exec update", FN);
             std::mutex mtx;
             std::condition_variable condVar;
             std::unique_lock<std::mutex> lock(mtx);
@@ -359,7 +442,7 @@ namespace neko {
             if (resState == std::cv_status::timeout) {
                 QApplication::quit();
             }
-            exec::launchNewProcess(cmd);
+            launchNewProcess(cmd);
         }
 
         return State::over;

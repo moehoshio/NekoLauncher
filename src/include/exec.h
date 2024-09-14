@@ -35,6 +35,7 @@ SOFTWARE.
 #include <random>
 #include <regex>
 #include <string>
+#include <algorithm>
 
 // NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
@@ -148,7 +149,13 @@ namespace exec {
     }
 
     // Nekolc end
-    void launchNewProcess(const std::string &command);
+
+    template<typename T = std::string>
+    inline T unifiedThePaths(const T & inPath){
+        T res = inPath;
+        std::replace(res.begin(), res.end(), '\\', '/');
+        return res;
+    }
     
     inline void execfs(const std::string &name , auto&&... args){
         if (!std::filesystem::exists(name))
@@ -169,7 +176,7 @@ namespace exec {
 
         std::system(name);
     }
-
+    constexpr auto unifiedPaths = [](auto&&val){ return exec::unifiedThePaths(val); };
     constexpr auto move = [](auto &&val) -> auto && { return std::move(val); };
     constexpr auto make_shared = [](auto &&val) -> decltype(auto) { return std::make_shared<std::remove_reference_t<decltype(val)>>(val); };
 
