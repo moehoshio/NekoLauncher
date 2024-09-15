@@ -74,25 +74,40 @@ Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets Qt6::Gui
 ${LIBRARY_DIRS}/libapps.lib
 ${LIBRARY_DIRS}/openssl.lib
 ${LIBRARY_DIRS}/libcurl_imp.lib
-${LIBRARY_DIRS}/libcrypto_static.lib
 ${LIBRARY_DIRS}/libssl_static.lib
 ${LIBRARY_DIRS}/zlibstatic.lib
 )
 
 
-if(MSVC)
+# if(MSVC)
     # set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
     # target_sources(NekoLc PRIVATE icon.rc)
+# endif()
+
+
+
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+
+file(COPY 
+    ${LIBRARY_DIRS}/libcurl.dll
+    ${LIBRARY_DIRS}/zlib.dll
+    ${LIBRARY_DIRS}/libcrypto-3-x64.dll
+    ${LIBRARY_DIRS}/libssl-3-x64.dll
+    ${QtBin}/Qt6Core.dll
+    ${QtBin}/Qt6Gui.dll
+    ${QtBin}/Qt6Widgets.dll
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
+)
+
+file(COPY
+    ${QtBin}/../plugins/styles/qwindowsvistastyle.dll
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/styles
+)
+
+file(COPY
+    ${QtBin}/../plugins/platforms/qwindows.dll
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/platforms
+)
+
 endif()
-
-
-
-
-# file(COPY 
-#     ${LIBRARY_DIRS}/Debug/libcurl-d.dll
-#     ${LIBRARY_DIRS}/zlib.dll
-#     ${QtBin}/Qt6Cored.dll
-#     ${QtBin}/Qt6Guid.dll
-#     ${QtBin}/Qt6Widgetsd.dll
-#     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
-# )

@@ -16,6 +16,7 @@ namespace neko
 #if _WIN32
     void launchNewProcess(const std::string &command) {
         nlog::autoLog log{FI,LI,FN};
+        nlog::Info(FI,LI,"%s : command : %s",FN,command.c_str());
         STARTUPINFOA si = {sizeof(si)};
         PROCESS_INFORMATION pi;;
         if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, false, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
@@ -26,6 +27,8 @@ namespace neko
     }
 #else
     void launchNewProcess(const std::string &command) {
+        nlog::autoLog log{FI,LI,FN};
+        nlog::Info(FI,LI,"%s : command : %s",FN,command.c_str());
         pid_t pid = fork();
         if (pid == 0) {
             execl("/bin/sh", "sh", "-c", command.c_str(), (char *)0);
