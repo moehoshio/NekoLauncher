@@ -4,7 +4,7 @@ This branch applies to unfinished development, and it may fail to build successf
 
 ## Neko Launcher
 
-Nelc (Neko launcher or NekoLc) is a modern, customizable cross-platform launcher program framework. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
+Nekolc (Neko launcher or NeLc) is a modern, customizable cross-platform launcher program framework. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
 It can launch any object, wrapping around anything, and includes self-updating and automatic software content updates.  
 This is also my first project learning C++ for nearly a year.  
 The project is still in development, and any constructive ideas are welcome.  
@@ -41,6 +41,7 @@ std >= c++20
 qt6  
 cmake  
 libcurl  
+openssl  
 
 Already included in the project dependencies:  
 
@@ -48,18 +49,30 @@ simpleIni
 nlohmann/json  
 loguru  
 threadpool  
-...
+
+After satisfying the prerequisites, continue:
 
 ```shell
 git clone https://github.com/moehoshio/NekoLauncher.git
+cd NekoLauncher && mkdir build
 cp CmakeListsCopy.txt CmakeLists.txt
 # Customize your configuration, including the include and library directories. Then continue:
-cmake ./build
-cmake --build ./build --config Release
+cd build
+cmake ..
+cmake --build ./ --config Release
 #or
-cmake -DCMAKE_BUILD_TYPE=Release ./build
-cmake --build ./build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build ./
 ```
+
+You can also configure the Qt path and include directories using command-line parameters:  
+
+```shell
+cmake .. -DCMAKE_PREFIX_PATH="QtPath" -DQtBin="QtPath+/bin" -DINCLUDE_DIRS="includePaths ; QtPath+/include" -DLIBRARY_DIRS="libPath e.g libcurl path..."
+```
+
+However, it’s still more intuitive to edit the CMake files.  
+You only need to edit the mentioned parts.
 
 Custom include and library path in CMakeList.txt :  
 INCLUDE_DIRS  
@@ -79,9 +92,11 @@ list(APPEND LIBRARY_DIRS
 CMAKE_PREFIX_PATH : qt path e.g  /user/home/qt/6.6.0  
 QtBin : qt bin path  e.g /user/home/qt/6.6.0/bin  
 
-If you want to use this project, you'll actually need to customize some objects. This is necessary because everyone's goals and the resources they need to manage are different. In short, you need to customize your logic within the `launcher` function in the `src/include/core.h` file, as well as modify the contents in `src/data/`.
+If you want to use this project, you'll actually need to customize some objects. This is necessary because everyone's goals and the resources they need to manage are different.  
+In short, you need to customize your logic within the `launcher` function in the `src/include/core.h` file, as well as modify the contents in `src/data/`.
 
-After completing these steps, you'll need to deploy your server. A simple example can be found at: [server.md](doc/server.md).
+After completing these steps, you'll need to deploy your server. A simple example can be found at:  
+[server.md](doc/server.md).
 
 ### Contribution and Customization
 

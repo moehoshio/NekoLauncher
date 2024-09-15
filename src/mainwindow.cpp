@@ -581,9 +581,9 @@ namespace ui {
         setting->page2->stylePointSizeEditText->setText("font");
 
         setting->page2->lcWindowSetText->setText("launcherMode");
-        setting->page2->lcWindowSetBox->setItemText(1,"keepWindow");
-        setting->page2->lcWindowSetBox->setItemText(2,"endProcess");
-        setting->page2->lcWindowSetBox->setItemText(3,"hideProcessAndOverReShow");
+        setting->page2->lcWindowSetBox->setItemText(0,"keepWindow");
+        setting->page2->lcWindowSetBox->setItemText(1,"endProcess");
+        setting->page2->lcWindowSetBox->setItemText(2,"hideAndOverReShow");
 
         setting->page2->winSizeEditText->setText("size");
         setting->page2->winSizeEditTextX->setText("X");
@@ -655,20 +655,32 @@ namespace ui {
             neko::launcherOpt opt;
             switch (id)
             {
-            case 1:
+            case 0:
                 opt = neko::launcherOpt::keep;
                 break;
-            case 2:
+            case 1:
                 opt = neko::launcherOpt::endProcess;
                 break;
-            case 3:
+            case 2:
                 opt = neko::launcherOpt::hideProcessAndOverReShow;
                 break;
             default:
                 opt = neko::launcherOpt::keep;
                 break;
             }
-            neko::launcher(opt);
+            if (id==2)
+            {
+                neko::launcher(opt,[=,this](bool check){
+                    if (check)
+                        this->show();
+                    else
+                        this->hide();
+                });
+            } else {
+                neko::launcher(opt);
+            }
+            
+            
         });
         connect(index->menuButton, &QPushButton::clicked, [=, this]() {
             if (state != pageState::setting) {

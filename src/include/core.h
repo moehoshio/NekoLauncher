@@ -17,15 +17,17 @@
 
 namespace neko {
 
-    void launchNewProcess(const std::string &command);
-
     enum class launcherOpt {
         keep,
         endProcess,
         hideProcessAndOverReShow
     };
 
+    void launchNewProcess(const std::string &command);
+
     inline void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = NULL) {
+        nlog::autoLog log{FI,LI,FN};
+        nlog::Info(FI,LI,"%s : command : %s",FN,command.c_str());
         switch (opt) {
             case launcherOpt::keep:
                 std::system(command.c_str());
@@ -43,30 +45,36 @@ namespace neko {
                 break;
         }
     }
-
+    //example lacunher lua
     inline bool launcherLuaPreCheck() {
         const char * path = std::getenv("LUA_PATH");
-        if (path==nullptr)
+        if (path==nullptr){
+            nlog::Err(FI,LI,"%s : lua path is null!",FN);
             return false;
-        std::string scriptPath = "/helloLua/helloLua.luac";
-        if (!std::filesystem::exists(scriptPath))
+        }
+        std::string scriptPath = "helloLua/helloLua.luac";
+        if (!std::filesystem::exists(scriptPath)){
+            nlog::Err(FI,LI,"%s : script is not exists!",FN);
             return false;
-
+        }
         return true;
     }
 
     // Called when the user clicks.
-    inline void launcher(launcherOpt opt) {
+    inline void launcher(launcherOpt opt,std::function<void(bool)> winFunc = NULL) {
         // It can launch Lua, Java, scripts, executables, or anything else.
         // includes pre-execution checks; in short, you can fully customize it.
 
-        if (!launcherLuaPreCheck())
+        //example lacunher lua
+        if (!launcherLuaPreCheck()){
             nlog::Err(FI,LI,"%s : Error  Lua or scriptPath not exists !",FN);
+            return;
+        }
 
         std::string luaPath = std::getenv("LUA_PATH");
         // e.g /apps/lua /apps/workdir/helloLua/helloLua.luac
         std::string command = luaPath + " " + info::getWorkDir() + "/helloLua/helloLua.luac";
-        launcherProcess(command,opt);
+        launcherProcess(command,opt,winFunc);
     }
 
     enum class State {
