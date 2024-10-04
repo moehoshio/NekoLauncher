@@ -1,9 +1,9 @@
 #pragma once
+#include "cconfig.h"
 #include "exec.h"
 #include "info.h"
 #include "msgtypes.h"
 #include "network.h"
-
 #include "nlohmann/json.hpp"
 
 #include <QtCore/QUrl>
@@ -11,9 +11,14 @@
 // openurl
 #include <QtGui/QDesktopServices>
 
+#include <algorithm>
 #include <condition_variable>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
+#include <string>
+
+#include <iostream>
 
 namespace neko {
 
@@ -26,8 +31,8 @@ namespace neko {
     void launchNewProcess(const std::string &command);
 
     inline void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = NULL) {
-        nlog::autoLog log{FI,LI,FN};
-        nlog::Info(FI,LI,"%s : command : %s",FN,command.c_str());
+        nlog::autoLog log{FI, LI, FN};
+        nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
         switch (opt) {
             case launcherOpt::keep:
                 std::system(command.c_str());
@@ -45,36 +50,323 @@ namespace neko {
                 break;
         }
     }
-    //example lacunher lua
+    // example lacunher lua
     inline bool launcherLuaPreCheck() {
-        const char * path = std::getenv("LUA_PATH");
-        if (path==nullptr){
-            nlog::Err(FI,LI,"%s : lua path is null!",FN);
+        const char *path = std::getenv("LUA_PATH");
+        if (path == nullptr) {
+            nlog::Err(FI, LI, "%s : lua path is null!", FN);
             return false;
         }
         std::string scriptPath = "helloLua/helloLua.luac";
-        if (!std::filesystem::exists(scriptPath)){
-            nlog::Err(FI,LI,"%s : script is not exists!",FN);
+        if (!std::filesystem::exists(scriptPath)) {
+            nlog::Err(FI, LI, "%s : script is not exists!", FN);
             return false;
         }
         return true;
     }
 
-    // Called when the user clicks.
-    inline void launcher(launcherOpt opt,std::function<void(bool)> winFunc = NULL) {
-        // It can launch Lua, Java, scripts, executables, or anything else.
-        // includes pre-execution checks; in short, you can fully customize it.
+    inline bool launcherJavaPreCheck(const std::string &str) {
+        const char *path = std::getenv("JAVA");
+        if (path == nullptr) {
+            nlog::Err(FI, LI, "%s : java env is null!", FN);
+            return false;
+        }
+        return true;
+    }
 
-        //example lacunher lua
-        if (!launcherLuaPreCheck()){
-            nlog::Err(FI,LI,"%s : Error  Lua or scriptPath not exists !",FN);
+    inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(bool)> winFunc = NULL) {
+        nlog::autoLog log{FI, LI, FN};
+
+        std::string osName;
+        std::string minecraftDir;
+
+#if _WIN32
+        osName = "windows";
+        minecraftDir = "/.minecraft";
+#elif __APPLE__
+        osName = "osx";
+        minecraftDir = "/minecraft";
+#elif __linux__
+        osName = "linux";
+        minecraftDir = "/minecraft";
+#else
+        osName = "unknown";
+        minecraftDir = "/minecraft";
+#endif
+
+        std::string osArch =
+#if __x86_64 || _M_X64
+            "x64";
+#else
+            "x86";
+#endif
+
+        bool isDemoUser = false;
+        bool hasCustomResolution = false;
+        // powershell
+        auto psPlusArgs = [](std::vector<std::string> list) {
+            std::string res;
+            for (const auto &it : list) {
+                res += (" '" + it + "'");
+            }
+            return res;
+        };
+
+        // Assume the Minecraft folder is located under the working directory.
+        std::string gameVerDir;
+        std::string gameVerFileStr;
+        std::fstream gameVerFile;
+        for (const auto &it : std::filesystem::directory_iterator(info::getWorkDir() + minecraftDir + "/versions")) {
+            if (it.is_directory()) {
+                gameVerDir = std::filesystem::absolute(it).string() | exec::unifiedPaths;
+                gameVerFileStr = gameVerDir + it.path().filename().string() + ".json";
+                gameVerFile.open(gameVerFileStr);
+                break;
+            }
+        }
+
+        std::string gameVerStr;
+        std::ostringstream gameVerOss;
+
+        gameVerOss << gameVerFile.rdbuf();
+        gameVerStr = gameVerOss.str();
+        nlog::Info(FI, LI, "%s : version file : %s , is open : %s ,gameVerStr len : %zu , cont : %s ", FN, gameVerFileStr.c_str(), exec::boolTo<const char *>(gameVerFile.is_open()), gameVerStr.length(), gameVerStr.c_str());
+
+        auto jsonData = nlohmann::json::parse(gameVerStr);
+        if (jsonData.is_discarded()) {
+            nlog::Err(FI, LI, "%s : faild to json parse! file : %s ", FN, gameVerFileStr.c_str());
             return;
         }
 
-        std::string luaPath = std::getenv("LUA_PATH");
-        // e.g /apps/lua /apps/workdir/helloLua/helloLua.luac
-        std::string command = luaPath + " " + info::getWorkDir() + "/helloLua/helloLua.luac";
-        launcherProcess(command,opt,winFunc);
+        auto baseArgs = jsonData["arguments"];
+        auto jvmArgs = baseArgs["jvm"];
+        auto gameArgs = baseArgs["game"];
+        auto libraries = jsonData["libraries"];
+
+        // jvm
+        std::string
+            javaPath = (info::getWorkDir() + "/java/bin/java"), // Assume built-in Java is distributed with the executable.
+            mainClass = jsonData.value("mainClass", "net.minecraft.client.main.Main"),
+            clientJarPath = gameVerDir + "/" + jsonData.value("jar", "") + ".jar",
+            nativesPath = gameVerDir + "/natives",
+            librariesPath = info::getWorkDir() + minecraftDir + "/libraries",
+            classPath;
+
+        // game
+        std::string
+            gameArgsName = cfg.manage.displayName,
+            gameArgsVerName = "Neko Launcher",
+            gameArgsDir = info::getWorkDir() + minecraftDir,
+            gameArgsAssetsDir = gameArgsDir + "/assets",
+            gameArgsAssetsId = jsonData.value("assets", ""),
+            gameArgsUuid = cfg.manage.uuid,
+            gameArgsToken = cfg.manage.clientToken,
+            gameArgsUserType = "mojang",
+            gameArgsVerType = gameArgsVerName;
+
+        std::vector<std::string> jvmArgsVec;
+        std::vector<std::string> gameArgsVec;
+
+        struct RulesMap {
+            std::string
+                action,
+                osName,
+                osVersion,
+                osArch;
+        };
+
+        auto checkCondition = [=](const RulesMap &rules, const nlohmann::json &features) -> bool {
+            nlog::autoLog log2(FI, LI, FN);
+            if (!features.empty()) {
+                if (features.contains("is_demo_user") && features["is_demo_user"].get<bool>() == isDemoUser)
+                    return true;
+                if (features.contains("has_custom_resolution") && features["has_custom_resolution"].get<bool>() == hasCustomResolution)
+                    return true;
+            }
+
+            if (!rules.osName.empty()) {
+                bool allow = (rules.osName == osName && rules.action == "allow") || (rules.osName != osName && rules.action == "disallow");
+                if (allow)
+                    return true;
+            }
+
+            if (!rules.osArch.empty()) {
+                bool allow = (rules.osArch == osArch && rules.action == "allow") || (rules.osArch != osArch && rules.action == "disallow");
+                if (allow)
+                    return true;
+            }
+
+            return false;
+        };
+
+        auto processArgs = [=](const nlohmann::json &args, std::vector<std::string> &argsVec) {
+            nlog::autoLog log2(FI, LI, FN);
+
+            for (const auto &it : args) {
+                bool allow = false;
+                if (it.is_string()) {
+                    nlog::Info(FI, LI, "%s : is string : ", FN, it.get<std::string>().c_str());
+                    allow = true;
+                } else if (it.is_object()) {
+
+                    for (const auto &ruless : it["rules"]) {
+
+                        auto rules = ruless;
+                        RulesMap rulesMap;
+
+                        rulesMap.action = rules.value("action", "");
+
+                        if (rules.contains("os")) {
+                            auto os = rules["os"];
+                            rulesMap.osName = os.value("name", "");
+                            rulesMap.osVersion = os.value("version", "");
+                            rulesMap.osArch = os.value("arch", "");
+                        }
+
+                        allow = checkCondition(rulesMap, rules["features"]);
+                    }
+
+                } else {
+                    nlog::Info(FI, LI, "%s : not obj and str , type : %s", FN, it.type_name());
+                }
+
+                if (allow) {
+                    if (it.is_string()) {
+                        nlog::Info(FI, LI, "%s : push string : %s", FN, it.get<std::string>().c_str());
+                        argsVec.push_back(it.get<std::string>());
+                    } else {
+                        for (const auto &pushArg : it["value"]) {
+                            nlog::Info(FI, LI, "%s : push arg : %s", FN, pushArg.get<std::string>().c_str());
+                            argsVec.push_back(pushArg.get<std::string>());
+                        }
+                    }
+                }
+            }
+        };
+
+        processArgs(jvmArgs, jvmArgsVec);
+        processArgs(gameArgs, gameArgsVec);
+
+        auto constructPath = [](const std::string &rawName) -> std::string {
+            std::smatch match;
+            if (std::regex_match(rawName, match, std::regex("([^:]+):([^:]+):([^:]+)"))) {
+                std::string package = match[1].str();
+                std::string name = match[2].str();
+                std::string version = match[3].str();
+                std::replace(package.begin(), package.end(), '.', '/');
+                return package + "/" + name + "/" + version + "/" + name + "-" + version + ".jar";
+            }
+            return {};
+        };
+        auto constructClassPath = [](const std::vector<std::string> &paths, const std::string &osName) -> std::string {
+            const std::string separator = (osName == "windows") ? ";" : ":";
+            return std::accumulate(std::next(paths.begin()), paths.end(), paths[0],
+                                   [&](std::string acc, const std::string &path) {
+                                       return acc + separator + path;
+                                   });
+        };
+
+        std::vector<std::string> libPaths;
+        for (const auto &lib : libraries) {
+
+            bool allow = true;
+            nlog::Info(FI, LI, "%s : type : %s", FN, lib.type_name());
+            if (lib.contains("rules") && lib["rules"].is_array()) {
+                for (const auto &ruless : lib["rules"]) {
+
+                    auto rules = ruless;
+                    RulesMap rulesMap;
+                    rulesMap.action = rules.value("action", "");
+                    if (rules.contains("os")) {
+                        auto os = rules["os"];
+                        rulesMap.osName = os.value("name", "");
+                        rulesMap.osVersion = os.value("version", "");
+                        rulesMap.osArch = os.value("arch", "");
+                    }
+
+                    allow = checkCondition(rulesMap, rules["features"]);
+                }
+            }
+
+            if (allow) {
+                std::string path = librariesPath + "/" + constructPath(lib["name"].get<std::string>());
+                nlog::Info(FI, LI, "%s : path : %s", FN, path.c_str());
+
+                libPaths.push_back(path);
+            }
+        }
+
+        classPath = constructClassPath(libPaths, osName) + ";" + clientJarPath;
+
+        // replace placeholders
+        auto replacePlaceholders = [&](std::vector<std::string> &argsVec, const std::map<std::string, std::string> &placeholders) {
+            for (auto &arg : argsVec) {
+                for (const auto &[key, value] : placeholders) {
+                    std::string::size_type pos;
+                    while ((pos = arg.find(key)) != std::string::npos) {
+                        arg.replace(pos, key.length(), value);
+                    }
+                }
+            }
+        };
+
+        // jvm
+        replacePlaceholders(jvmArgsVec, {{"${natives_directory}", nativesPath},
+                                         {"${library_directory}", librariesPath},
+                                         {"${launcher_name}", "Neko Launcher"},
+                                         {"${launcher_version}", info::getVersion()},
+                                         {"${classpath}", classPath}});
+
+        // game
+        replacePlaceholders(gameArgsVec, {{"${auth_player_name}", gameArgsName},
+                                          {"${version_name}", gameArgsVerName},
+                                          {"${game_directory}", gameArgsDir},
+                                          {"${assets_root}", gameArgsAssetsDir},
+                                          {"${assets_index_name}", gameArgsAssetsId},
+                                          {"${auth_uuid}", gameArgsUuid},
+                                          {"${auth_access_token}", gameArgsToken},
+                                          {"${user_type}", gameArgsUserType},
+                                          {"${version_type}", gameArgsVerType}});
+        std::vector<std::string> jvmOptimizeArgs = {
+            "-XX:+UnlockExperimentalVMOptions", "-XX:+UseG1GC", "-XX:G1NewSizePercent=20", "-XX:G1ReservePercent=20", "-XX:MaxGCPauseMillis=50", "-XX:G1HeapRegionSize=16m", "-XX:-UseAdaptiveSizePolicy", "-XX:-OmitStackTraceInFastThrow", "-XX:-DontCompileHugeMethods", "-Xmn128m", "-Xmx10240m", "-Dfml.ignoreInvalidMinecraftCertificates=true", "-Dfml.ignorePatchDiscrepancies=true"};
+
+        // authlib Injector
+        std::string authlibPrefrtched = std::string(cfg.manage.authlibPrefetched);
+        authlibPrefrtched.erase(std::remove(authlibPrefrtched.begin(), authlibPrefrtched.end(), '\\'), authlibPrefrtched.end());
+        std::vector<std::string> authlibInjector = {
+            "-javaagent:" + gameArgsDir + "/authlib-injector.jar=https://example.com/api/yggdrasil/",
+            "-Dauthlibinjector.side=client",
+            "-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefrtched};
+
+        std::string command = "Set-Location -Path " + psPlusArgs({gameArgsDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
+        std::fstream file2("Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
+        file2 << command;
+        file2.close();
+        nlog::Info(FI, LI, "%s : cmd len : %zu , cmd : %s", FN, command.length(), command.c_str());
+        std::string cmd = "cmd /C powershell " + info::getWorkDir() + "/Nekolc.ps1";
+
+        launcherProcess(cmd.c_str(), opt, winFunc);
+    }
+
+    // Called when the user clicks.
+    inline void launcher(launcherOpt opt, std::function<void(bool)> winFunc = NULL) {
+        nlog::autoLog log{FI, LI, FN};
+        // It can launch Lua, Java, scripts, executables, or anything else.
+        // includes pre-execution checks; in short, you can fully customize it.
+
+        // example lacunher lua
+        // if (!launcherLuaPreCheck()) {
+        //     nlog::Err(FI, LI, "%s : Error  Lua or scriptPath not exists !", FN);
+        //     return;
+        // }
+
+        // std::string luaPath = std::getenv("LUA_PATH");
+        // // e.g /apps/lua /apps/workdir/helloLua/helloLua.luac
+        // std::string command = luaPath + " " + info::getWorkDir() + "/helloLua/helloLua.luac";
+        // launcherProcess(command, opt, winFunc);
+        exec::getThreadObj().enqueue([=] {
+            launcherMinecraft(opt, exec::getConfigObj(), winFunc);
+        });
     }
 
     enum class State {

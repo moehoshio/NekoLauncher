@@ -94,7 +94,7 @@ namespace neko {
                 return T(proxy);
 
             return T();
-            
+        }
             template <typename T = std::string>
             constexpr static T errCodeReason(int code) {
                 switch (code) {
@@ -120,7 +120,6 @@ namespace neko {
                     default:
                         return T("unknown");
                         break;
-                }
             }
         }
 

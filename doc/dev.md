@@ -227,6 +227,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
                 - `resBreakPoint`: bool
                 - `range`: cstr range of the file to fetch
                 - `userAgent`: cstr
+                - `header`: cstr Custom request headers, multiple key-value pairs can be separated by `\n`.
                 - `data`: cstr data to be sent when using POST
                 - `id` : cstr
                 - `writeCallback`: `size_t(char*, size_t, size_t, void*)`

@@ -25,14 +25,13 @@ namespace neko {
             static std::string home;
             static std::string temp;
             static std::string resVersion;
-            static std::string workDir;
         };
 
 
     public:
-        inline static void setTemp(const char * tmp){
+        inline static void setTemp(const std::string &tmp){
             if (std::filesystem::is_directory(tmp))
-                Data::temp = tmp;
+                Data::temp = tmp | exec::unifiedPaths;
         }
         constexpr inline static std::string getVersion() {
             return Data::version;
@@ -47,7 +46,7 @@ namespace neko {
             return Data::resVersion;
         }
         inline static std::string getWorkDir(){
-            return Data::workDir;
+            return std::filesystem::current_path().string() | exec::unifiedPaths ;
         }
         
         constexpr inline static std::string get(getType o){
@@ -66,7 +65,7 @@ namespace neko {
                 return Data::resVersion;
                 break;
             case getType::workDir :
-                return Data::workDir;
+                return std::filesystem::current_path().string() | exec::unifiedPaths ;
                 break;
             default:
                 return "unknown";
@@ -99,7 +98,6 @@ namespace neko {
             if (Data::resVersion.empty())            
                 nlog::Err(FI,LI,"%s : resVersion is empty !",FN);
             
-            Data::workDir = std::filesystem::current_path().string() | exec::unifiedPaths;
         };
     }; //class info
 

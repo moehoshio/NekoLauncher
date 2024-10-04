@@ -146,6 +146,7 @@ namespace neko {
             bool resBreakPoint = false;
             const char *range = nullptr;
             const char *userAgent = nullptr;
+            const char *header = nullptr
             const char *data = nullptr;
             const char *id = nullptr;
             size_t (*writeCallback)(char *, size_t, size_t, void *) = &networkBase::WriteCallbackString;
@@ -254,13 +255,17 @@ namespace neko {
                     return false;
                 }
             } // resBreakPoint
+            
+            if (args.header)
+                curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, args.header));
+            if (args.range)
+                curl_easy_setopt(curl, CURLOPT_RANGE, args.range);            
 
             curl_easy_setopt(curl, CURLOPT_USERAGENT, (args.userAgent) ? args.userAgent : args.config.userAgent.c_str());
             curl_easy_setopt(curl, CURLOPT_URL, args.url);
             curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
             curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5L);
-            if (args.range)
-                curl_easy_setopt(curl, CURLOPT_RANGE, args.range);
+
             return true;
         }
 

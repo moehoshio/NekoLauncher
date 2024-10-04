@@ -32,19 +32,27 @@ namespace neko {
             const char *temp;
             const char *resVersion;
         };
+        struct Manage {
+            const char *account;
+            const char *displayName;
+            const char *uuid;
+            const char *clientToken;
+            const char *authlibPrefetched;
+        };
 
         Main main;
         Style style;
         Net net;
         Dev dev;
         More more;
+        Manage manage;
         Config(const CSimpleIniA &cfg) {
             main = Main{
                 cfg.GetValue("main","backgroundType","image"),
                 cfg.GetValue("main", "background", "img/bg.png"),
                 cfg.GetValue("main", "windowSize", ""),
                 cfg.GetLongValue("main","launcherMode",1),
-                cfg.GetBoolValue("main", "useSystemWindowFrame", false),
+                cfg.GetBoolValue("main", "useSystemWindowFrame", true),
                 cfg.GetBoolValue("main", "barKeepRight", true)};
             style = Style{
                 cfg.GetLongValue("style", "blurHint", 1),
@@ -62,6 +70,12 @@ namespace neko {
             more = More{
                 cfg.GetValue("more", "temp", ""),
                 cfg.GetValue("more","resVersion","")};
+            manage = Manage{
+                cfg.GetValue("manage","account",""),
+                cfg.GetValue("manage","displayName",""),
+                cfg.GetValue("manage","uuid",""),
+                cfg.GetValue("manage","clientToken",""),
+                cfg.GetValue("manage","authlibPrefetched","")};
         }
     static void save(CSimpleIniA &cfg,const char * fileName,Config config){
         cfg.SetValue("main","backgroundType",config.main.bgType);
@@ -86,6 +100,13 @@ namespace neko {
 
         cfg.SetValue("more","temp",config.more.temp);
         cfg.SetValue("more","resVersion",config.more.resVersion);
+
+        cfg.SetValue("manage","account",config.manage.account);
+        cfg.SetValue("manage","displayName",config.manage.displayName);
+        cfg.SetValue("manage","uuid",config.manage.uuid);
+        cfg.SetValue("manage","clientToken",config.manage.clientToken);
+        cfg.SetValue("manage","authlibPrefetched",config.manage.authlibPrefetched);
+
         cfg.SaveFile(fileName);
     };
     };

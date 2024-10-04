@@ -149,6 +149,16 @@ namespace exec {
     }
 
     // Nekolc end
+ 
+    template<typename T = std::string>
+    inline T plusSingleQuotes(const T & str){
+        return "'" + str + "'";
+    }
+
+    template<typename T = std::string>
+    inline T plusDoubleQuotes(const T & str){
+        return "\"" + str + "\"";
+    }
 
     template<typename T = std::string>
     inline T unifiedThePaths(const T & inPath){
@@ -176,6 +186,8 @@ namespace exec {
 
         std::system(name);
     }
+    constexpr auto plusDoubleQuote = [](auto&&val){ return exec::plusDoubleQuotes(val); };
+    constexpr auto plusSingleQuote = [](auto&&val){ return exec::plusSingleQuotes(val); };
     constexpr auto unifiedPaths = [](auto&&val){ return exec::unifiedThePaths(val); };
     constexpr auto move = [](auto &&val) -> auto && { return std::move(val); };
     constexpr auto make_shared = [](auto &&val) -> decltype(auto) { return std::make_shared<std::remove_reference_t<decltype(val)>>(val); };
