@@ -146,7 +146,7 @@ namespace neko {
             bool resBreakPoint = false;
             const char *range = nullptr;
             const char *userAgent = nullptr;
-            const char *header = nullptr
+            const char *header = nullptr;
             const char *data = nullptr;
             const char *id = nullptr;
             size_t (*writeCallback)(char *, size_t, size_t, void *) = &networkBase::WriteCallbackString;
@@ -209,8 +209,11 @@ namespace neko {
         }
 
         inline static void doLog(Opt opt, const Args &args) {
+            bool dev = exec::getConfigObj().GetBoolValue("dev","enable",false),
+                debug = exec::getConfigObj().GetBoolValue("dev","debug",false);
             std::string resBreakPointStr = (args.resBreakPoint) ? "true" : "false";
             std::string userAgent = (args.userAgent) ? args.userAgent : args.config.userAgent.c_str();
+            std::string data =  (dev&&debug)? ((args.data)? args.data:"") : "*****";
             std::string optStrT = optStr(opt);
             nlog::Info(FI, LI,
                        "%s : url : %s , opt : %s , fileName : %s , range : %s , resBreakPoint : %s , userAgent : %s , protocol : %s , proxy : %s , system proxy : %s ,data : %s , id : %s",
@@ -220,7 +223,7 @@ namespace neko {
                        args.config.protocol.c_str(),
                        args.config.proxy.c_str(),
                        getSysProxy<const char *>(),
-                       args.data,
+                       data.c_str(),
                        args.id);
         }
         inline static bool initOpt(CURL *curl, Args &args) {

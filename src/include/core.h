@@ -20,6 +20,8 @@
 
 #include <iostream>
 
+constexpr auto launcherMode = "minecraft";
+
 namespace neko {
 
     enum class launcherOpt {
@@ -30,26 +32,8 @@ namespace neko {
 
     void launchNewProcess(const std::string &command);
 
-    inline void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = NULL) {
-        nlog::autoLog log{FI, LI, FN};
-        nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
-        switch (opt) {
-            case launcherOpt::keep:
-                std::system(command.c_str());
-                break;
-            case launcherOpt::endProcess:
-                launchNewProcess(command);
-                QApplication::quit();
-                break;
-            case launcherOpt::hideProcessAndOverReShow:
-                winFunc(false);
-                std::system(command.c_str());
-                winFunc(true);
-                break;
-            default:
-                break;
-        }
-    }
+    void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = nullptr);
+
     // example lacunher lua
     inline bool launcherLuaPreCheck() {
         const char *path = std::getenv("LUA_PATH");
@@ -74,23 +58,89 @@ namespace neko {
         return true;
     }
 
+    inline bool launcherMinecraftTokenValidate(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
+        nlog::autoLog log{FI, LI, FN};
+        network net;
+        auto url = networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/validate", "");
+
+        nlohmann::json json = {{"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}};
+        auto data = json.dump();
+        int code = 0;
+        decltype(net)::Args args{url.c_str(), nullptr, &code};
+        args.data = data.c_str();
+        args.header = "Content-Type: application/json";
+        net.Do(networkBase::Opt::postText, args);
+        if (code != 204) {
+            nlog::Info(FI, LI, "%s : token is not validate", FN);
+            auto refUrl = networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/refresh", "");
+            int refCode = 0;
+            nlohmann::json refJson = {
+                {"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}, {"requestUser", false}};
+            auto refData = refJson.dump();
+            decltype(net)::Args refArgs{refUrl.c_str(), nullptr, &refCode};
+            refArgs.data = refData.c_str();
+            refArgs.header = "Content-Type: application/json";
+            auto res = net.get(networkBase::Opt::postText, refArgs);
+            auto jsonData = nlohmann::json::parse(res, nullptr, false);
+            if (jsonData.is_discarded()) {
+                nlog::Err(FI, LI, "%s : faild to token json parse", FN);
+                return false;
+            }
+            auto error = jsonData.value("error", ""),
+                 errorMsg = jsonData.value("errorMessage", "");
+            if (!error.empty() || !errorMsg.empty()) {
+                hintFunc({error, errorMsg, "", 1});
+                return false;
+            }
+
+            auto accessToken = jsonData["accessToken"].get<std::string>();
+            std::string uuid;
+            std::string name;
+            if (!jsonData["selectedProfile"].empty()) {
+                uuid = jsonData["selectedProfile"].value("id", "");
+                name = jsonData["selectedProfile"].value("name", "");
+
+                exec::getConfigObj().SetValue("manage", "uuid", uuid.c_str());
+                exec::getConfigObj().SetValue("manage", "displayName", name.c_str());
+            }
+            exec::getConfigObj().SetValue("manage", "accessToken", accessToken.c_str());
+        }
+        return true;
+    }
+
+    inline void launcherMinecraftAuthlibInjectorPrefetchedCheck(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
+        nlog::autoLog log{FI, LI, FN};
+        std::string authlibPrefetched = exec::getConfigObj().GetValue("manage", "authlibPrefetched", "");
+        if (!authlibPrefetched.empty())
+            return;
+
+        auto url = networkBase::buildUrl<std::string>("/api/yggdrasil", "");
+        network net;
+        int code = 0;
+        decltype(net)::Args args{url.c_str(), nullptr, &code};
+        auto res = net.get(networkBase::Opt::getContent, args);
+        auto resJson = nlohmann::json::parse(res, nullptr, false);
+        if (resJson.is_discarded()) {
+            hintFunc({"Error", "faild to api mete data parse", "", 1});
+            nlog::Err(FI, LI, "%s : faild to api mete data parse", FN);
+            return;
+        }
+        authlibPrefetched = exec::base64Encode(res);
+        exec::getConfigObj().SetValue("manage", "authlibPrefetched", authlibPrefetched.c_str());
+    }
+
     inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(bool)> winFunc = NULL) {
         nlog::autoLog log{FI, LI, FN};
-
-        std::string osName;
+        // /.minecraft
         std::string minecraftDir;
 
 #if _WIN32
-        osName = "windows";
         minecraftDir = "/.minecraft";
 #elif __APPLE__
-        osName = "osx";
         minecraftDir = "/minecraft";
 #elif __linux__
-        osName = "linux";
         minecraftDir = "/minecraft";
 #else
-        osName = "unknown";
         minecraftDir = "/minecraft";
 #endif
 
@@ -104,10 +154,18 @@ namespace neko {
         bool isDemoUser = false;
         bool hasCustomResolution = false;
         // powershell
-        auto psPlusArgs = [](std::vector<std::string> list) {
+        auto psPlusArgs = [](const std::vector<std::string> &list) {
             std::string res;
             for (const auto &it : list) {
                 res += (" '" + it + "'");
+            }
+            return res;
+        };
+
+        auto plusArgs = [](const std::vector<std::string> &list) {
+            std::string res;
+            for (const auto &it : list) {
+                res += " \"" + it + "\"";
             }
             return res;
         };
@@ -119,7 +177,7 @@ namespace neko {
         for (const auto &it : std::filesystem::directory_iterator(info::getWorkDir() + minecraftDir + "/versions")) {
             if (it.is_directory()) {
                 gameVerDir = std::filesystem::absolute(it).string() | exec::unifiedPaths;
-                gameVerFileStr = gameVerDir + it.path().filename().string() + ".json";
+                gameVerFileStr = gameVerDir + "/" + it.path().filename().string() + ".json";
                 gameVerFile.open(gameVerFileStr);
                 break;
             }
@@ -160,7 +218,7 @@ namespace neko {
             gameArgsAssetsDir = gameArgsDir + "/assets",
             gameArgsAssetsId = jsonData.value("assets", ""),
             gameArgsUuid = cfg.manage.uuid,
-            gameArgsToken = cfg.manage.clientToken,
+            gameArgsToken = cfg.manage.accessToken,
             gameArgsUserType = "mojang",
             gameArgsVerType = gameArgsVerName;
 
@@ -176,7 +234,6 @@ namespace neko {
         };
 
         auto checkCondition = [=](const RulesMap &rules, const nlohmann::json &features) -> bool {
-            nlog::autoLog log2(FI, LI, FN);
             if (!features.empty()) {
                 if (features.contains("is_demo_user") && features["is_demo_user"].get<bool>() == isDemoUser)
                     return true;
@@ -185,7 +242,7 @@ namespace neko {
             }
 
             if (!rules.osName.empty()) {
-                bool allow = (rules.osName == osName && rules.action == "allow") || (rules.osName != osName && rules.action == "disallow");
+                bool allow = (rules.osName == info::getOsName() && rules.action == "allow") || (rules.osName != info::getOsName() && rules.action == "disallow");
                 if (allow)
                     return true;
             }
@@ -200,8 +257,6 @@ namespace neko {
         };
 
         auto processArgs = [=](const nlohmann::json &args, std::vector<std::string> &argsVec) {
-            nlog::autoLog log2(FI, LI, FN);
-
             for (const auto &it : args) {
                 bool allow = false;
                 if (it.is_string()) {
@@ -227,16 +282,16 @@ namespace neko {
                     }
 
                 } else {
-                    nlog::Info(FI, LI, "%s : not obj and str , type : %s", FN, it.type_name());
+                    nlog::Warn(FI, LI, "%s : not obj and str , type : %s", FN, it.type_name());
                 }
 
                 if (allow) {
                     if (it.is_string()) {
-                        nlog::Info(FI, LI, "%s : push string : %s", FN, it.get<std::string>().c_str());
+                        // nlog::Info(FI, LI, "%s : push string : %s", FN, it.get<std::string>().c_str());
                         argsVec.push_back(it.get<std::string>());
                     } else {
                         for (const auto &pushArg : it["value"]) {
-                            nlog::Info(FI, LI, "%s : push arg : %s", FN, pushArg.get<std::string>().c_str());
+                            // nlog::Info(FI, LI, "%s : push arg : %s", FN, pushArg.get<std::string>().c_str());
                             argsVec.push_back(pushArg.get<std::string>());
                         }
                     }
@@ -296,7 +351,7 @@ namespace neko {
             }
         }
 
-        classPath = constructClassPath(libPaths, osName) + ";" + clientJarPath;
+        classPath = constructClassPath(libPaths, info::getOsName()) + ((info::getOsName() == "windows") ? ";" : ":") + clientJarPath;
 
         // replace placeholders
         auto replacePlaceholders = [&](std::vector<std::string> &argsVec, const std::map<std::string, std::string> &placeholders) {
@@ -338,35 +393,46 @@ namespace neko {
             "-Dauthlibinjector.side=client",
             "-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefrtched};
 
-        std::string command = "Set-Location -Path " + psPlusArgs({gameArgsDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
-        std::fstream file2("Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
-        file2 << command;
-        file2.close();
-        nlog::Info(FI, LI, "%s : cmd len : %zu , cmd : %s", FN, command.length(), command.c_str());
-        std::string cmd = "cmd /C powershell " + info::getWorkDir() + "/Nekolc.ps1";
-
-        launcherProcess(cmd.c_str(), opt, winFunc);
+        if constexpr (info::getOsName() == "windows") {
+            std::string command = "Set-Location -Path " + psPlusArgs({gameArgsDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
+            std::fstream file2("Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
+            file2 << command;
+            file2.close();
+            nlog::Info(FI, LI, "%s : cmd len : %zu , cmd : %s", FN, command.length(), command.c_str());
+            std::string cmd = "cmd.exe /C powershell " + info::getWorkDir() + "/Nekolc.ps1";
+            launcherProcess(cmd.c_str(), opt, winFunc);
+        } else {
+            std::filesystem::current_path("." + minecraftDir);
+            std::string command = javaPath + plusArgs(jvmOptimizeArgs) + plusArgs(jvmArgsVec) + plusArgs(authlibInjector) + plusArgs({mainClass}) + plusArgs(gameArgsVec);
+            nlog::Info(FI, LI, "%s : cmd len : %zu , cmd : %s", FN, command.length(), command.c_str());
+            launcherProcess(command.c_str(), opt, winFunc);
+            std::filesystem::current_path(std::filesystem::current_path().parent_path());
+        }
     }
-
     // Called when the user clicks.
-    inline void launcher(launcherOpt opt, std::function<void(bool)> winFunc = NULL) {
+    inline void launcher(launcherOpt opt, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = nullptr) {
         nlog::autoLog log{FI, LI, FN};
         // It can launch Lua, Java, scripts, executables, or anything else.
         // includes pre-execution checks; in short, you can fully customize it.
 
-        // example lacunher lua
-        // if (!launcherLuaPreCheck()) {
-        //     nlog::Err(FI, LI, "%s : Error  Lua or scriptPath not exists !", FN);
-        //     return;
-        // }
-
-        // std::string luaPath = std::getenv("LUA_PATH");
-        // // e.g /apps/lua /apps/workdir/helloLua/helloLua.luac
-        // std::string command = luaPath + " " + info::getWorkDir() + "/helloLua/helloLua.luac";
-        // launcherProcess(command, opt, winFunc);
-        exec::getThreadObj().enqueue([=] {
+        if constexpr (launcherMode == std::string("minecraft")) {
+            launcherMinecraftAuthlibInjectorPrefetchedCheck(hintFunc);
+            if (!launcherMinecraftTokenValidate(hintFunc))
+                return;
             launcherMinecraft(opt, exec::getConfigObj(), winFunc);
-        });
+        }
+
+        if constexpr (launcherMode == std::string("lua")) {
+            if (!launcherLuaPreCheck()) {
+                nlog::Err(FI, LI, "%s : Error  Lua or scriptPath not exists !", FN);
+                return;
+            }
+
+            std::string luaPath = std::getenv("LUA_PATH");
+            // e.g: /apps/lua /apps/workdir/lua/hello.luac
+            std::string command = luaPath + " " + info::getWorkDir() + "/lua/hello.luac";
+            launcherProcess(command, opt, winFunc);
+        }
     }
 
     enum class State {
@@ -526,7 +592,11 @@ namespace neko {
         nlog::autoLog log{FI, LI, FN};
         network net;
         auto url = net.buildUrl<std::string>(networkBase::Api::checkUpdates);
-        auto data = std::string("{\n") + "\"core\":\"" + info::getVersion() + "\",\n\"res\":\"" + info::getResVersion() + "\"\n}";
+        nlohmann::json dataJson = {
+            {"core", info::getVersion()},
+            {"res", info::getResVersion()},
+            {"os", info::getOsName()}};
+        auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
         int code = 0;
         decltype(net)::Args args{url.c_str(), nullptr, &code};
@@ -745,6 +815,54 @@ namespace neko {
             }
             launchNewProcess(cmd);
         }
+
+        return State::over;
+    }
+
+
+    inline State authLogin(const std::vector<std::string> &inData, std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
+        nlog::autoLog log{FI, LI, FN};
+        if (inData.size() < 2)
+            return State::undone;
+
+        nlohmann::json json = {
+            {"username", inData[0]},
+            {"password", inData[1]},
+            {"requestUser", false},
+            {"agent", {{"name", "Minecraft"}, {"version", 1}}}};
+
+        auto data = json.dump();
+        auto url = neko::networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/authenticate", "");
+        neko::network net;
+        int code = 0;
+        decltype(net)::Args args{url.c_str(), nullptr, &code};
+        args.header = "Content-Type: application/json";
+        args.data = data.c_str();
+        auto res = net.get(neko::networkBase::Opt::postText, args);
+        auto resData = nlohmann::json::parse(res, nullptr, false);
+
+        if (resData.is_discarded()) {
+            hintFunc({"Error", "faild to json parse!", "", 1});
+            return State::undone;
+        }
+
+        auto error = resData.value("error", ""),
+             errorMsg = resData.value("errorMessage", "");
+        if (!error.empty() || !errorMsg.empty()) {
+            hintFunc({error, errorMsg, "", 1});
+            return State::tryAgainLater;
+        }
+
+        auto accessToken = resData.value("accessToken", "");
+        auto uuid = resData["selectedProfile"].value("id", "");
+        auto name = resData["selectedProfile"].value("name", "");
+
+        exec::getConfigObj().SetValue("manage", "accessToken", accessToken.c_str());
+        exec::getConfigObj().SetValue("manage", "uuid", uuid.c_str());
+        exec::getConfigObj().SetValue("manage", "account", inData[0].c_str());
+        exec::getConfigObj().SetValue("manage", "displayName", name.c_str());
+
+        callBack(name);
 
         return State::over;
     }

@@ -204,16 +204,16 @@ namespace ui {
             QLineEdit *winSizeEditHeight;
             // window group
 
-            //launcher group
+            // launcher group
             QGroupBox *lcGroup;
             QVBoxLayout *lcGroupLayout;
 
             QWidget *lcWindowSetLayoutWidget;
             QHBoxLayout *lcWindowSetLayout;
-            QLabel * lcWindowSetText;
-            QComboBox * lcWindowSetBox;
+            QLabel *lcWindowSetText;
+            QComboBox *lcWindowSetBox;
 
-            //launcher group
+            // launcher group
 
             // network group
             QGroupBox *netGroup;
@@ -374,26 +374,30 @@ namespace ui {
             QLabel *title;
             QLabel *msg;
             HintWindow(QWidget *parent = nullptr);
-            void setupButton(QPushButton *btn, const std::function<void(bool)> &callback,bool &did) {
+            void setupButton(QPushButton *btn, const std::function<void(bool)> &callback, bool &did) {
                 btn->show();
+                if (!callback)
+                    return;
                 connect(
-                    btn, &QPushButton::clicked, [=, this,&did] {
+                    btn, &QPushButton::clicked, [=, this, &did] {
                         callback(true);
                         disconnect(btn);
                         did = true;
                     });
             }
 
-            void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback,bool & did) {
+            void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback, bool &did) {
                 btnBox->show();
+                if (!callback)
+                    return;
                 connect(
-                    btnBox, &QDialogButtonBox::accepted, [=, this,&did] {
+                    btnBox, &QDialogButtonBox::accepted, [=, this, &did] {
                         callback(true);
                         disconnect(btnBox);
                         did = true;
                     });
                 connect(
-                    btnBox, &QDialogButtonBox::rejected, [=, this,&did] {
+                    btnBox, &QDialogButtonBox::rejected, [=, this, &did] {
                         callback(false);
                         disconnect(btnBox);
                         did = true;
@@ -405,20 +409,119 @@ namespace ui {
                 this->msg->setText(m.msg.c_str());
                 if (!m.poster.empty())
                     this->poster->setPixmap(m.poster.c_str());
-                bool * did = new bool(false);
+                bool *did = new bool(false);
                 if (m.buttonType == 1) {
-                    setupButton(button, m.callback,*did);
+                    setupButton(button, m.callback, *did);
                     dialogButton->hide();
                 } else {
                     button->hide();
-                    setupButton(dialogButton, m.callback,*did);
+                    setupButton(dialogButton, m.callback, *did);
                 }
+                if (!m.callback)
+                    return;
                 connect(this, &QWidget::destroyed, [=](QObject *) {
                     if (!(*did))
                         m.callback(false);
-
                 });
             };
+        };
+
+        struct InputPage : public QWidget {
+            QGridLayout *gridLayout;
+            QWidget *centralWidget;
+            pixmapWidget *poster;
+            QVBoxLayout *centralWidgetLayout;
+            std::vector<QWidget *> lineWidgets;
+            QDialogButtonBox *dialogButton;
+            QLabel *title;
+            QLabel *msg;
+            InputPage(QWidget *parent = nullptr);
+
+            void showInput(const InputMsg &m) {
+                this->show();
+                title->setText(m.title.c_str());
+                msg->setText(m.msg.c_str());
+                if (!m.poster.empty()) {
+                    poster->setPixmap(m.poster.c_str());
+                    poster->show();
+                } else {
+                    poster->hide();
+                }
+
+                setLines(m.lines);
+                bool *did = new bool(false);
+                disconnect(dialogButton);
+                if (!m.callback)
+                    return;
+
+                connect(
+                    dialogButton, &QDialogButtonBox::accepted, [=, this] {
+                        m.callback(true);
+                        disconnect(dialogButton);
+                        *did = true;
+                    });
+                connect(
+                    dialogButton, &QDialogButtonBox::rejected, [=, this] {
+                        m.callback(false);
+                        disconnect(dialogButton);
+                        *did = true;
+                    });
+
+                connect(this, &QWidget::destroyed, [=](QObject *) {
+                    if (!(*did))
+                        m.callback(false);
+                });
+            }
+
+            void setLines(const std::vector<std::string> vec) {
+                std::vector<QWidget *> lines;
+                for (auto &it : vec) {
+                    if (std::filesystem::exists(it)) {
+                        pixmapWidget *line = new pixmapWidget(centralWidget);
+                        line->setMinimumHeight(50);
+                        line->setPixmap(it.c_str());
+                        lines.push_back(line);
+                    } else {
+                        QLineEdit *line = new QLineEdit(centralWidget);
+                        line->setMinimumHeight(50);
+                        line->setPlaceholderText(it.c_str());
+                        if (it == "password") {
+                            line->setEchoMode(QLineEdit::PasswordEchoOnEdit);
+                        }
+                        lines.push_back(line);
+                    }
+                }
+                setLines(lines);
+            }
+
+            void setLines(const std::vector<QWidget *> &placeholder) {
+                for (auto it : lineWidgets) {
+                    centralWidgetLayout->removeWidget(it);
+                    it->hide();
+                    delete it;
+                }
+                lineWidgets.clear();
+
+                for (size_t i = 0; i < placeholder.size(); ++i) {
+                    lineWidgets.push_back(placeholder[i]);
+                    centralWidgetLayout->addWidget(lineWidgets[i]);
+                }
+
+                centralWidgetLayout->addWidget(dialogButton);
+            }
+
+            std::vector<std::string> getLines() {
+                std::vector<std::string> vec;
+                for (auto it : lineWidgets) {
+
+                    if (auto line = dynamic_cast<QLineEdit *>(it)) {
+                        if (!line->text().isEmpty()) {
+                            vec.push_back(line->text().toStdString());
+                        }
+                    }
+                }
+                return vec;
+            }
         };
 
     private:
@@ -431,6 +534,7 @@ namespace ui {
         Index *index;
         Setting *setting;
         LoadingPage *loading;
+        InputPage *input;
 
         HeadBar *headbar;
 
@@ -504,12 +608,33 @@ namespace ui {
             hintWidget->HintWindow::showHint(m);
             resizeItem();
         };
+
+        void showInput(const InputMsg &m) {
+            input->showInput(m);
+            resizeItem();
+        }
+        auto getInput() {
+            return input->getLines();
+        }
+        void hideInput() {
+            input->hide();
+        }
+        void winShowHide(bool check) {
+            if (check)
+                this->show();
+            else
+                this->hide();
+        }
     signals:
         void showPageD(pageState page);
         void showLoadD(const loadMsg &m);
         void setLoadingValD(unsigned int val);
         void setLoadingNowD(const char *msg);
         void showHintD(const hintMsg &m);
+        void showInputD(const InputMsg &m);
+        void hideInputD();
+        void loginStatusChangeD(const std::string &name);
+        void winShowHideD(bool check);
     };
 
 } // namespace ui

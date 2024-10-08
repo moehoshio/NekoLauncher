@@ -36,7 +36,7 @@ namespace neko {
             const char *account;
             const char *displayName;
             const char *uuid;
-            const char *clientToken;
+            const char *accessToken;
             const char *authlibPrefetched;
         };
 
@@ -74,7 +74,7 @@ namespace neko {
                 cfg.GetValue("manage","account",""),
                 cfg.GetValue("manage","displayName",""),
                 cfg.GetValue("manage","uuid",""),
-                cfg.GetValue("manage","clientToken",""),
+                cfg.GetValue("manage","accessToken",""),
                 cfg.GetValue("manage","authlibPrefetched","")};
         }
     static void save(CSimpleIniA &cfg,const char * fileName,Config config){
@@ -104,7 +104,7 @@ namespace neko {
         cfg.SetValue("manage","account",config.manage.account);
         cfg.SetValue("manage","displayName",config.manage.displayName);
         cfg.SetValue("manage","uuid",config.manage.uuid);
-        cfg.SetValue("manage","clientToken",config.manage.clientToken);
+        cfg.SetValue("manage","accessToken",config.manage.accessToken);
         cfg.SetValue("manage","authlibPrefetched",config.manage.authlibPrefetched);
 
         cfg.SaveFile(fileName);

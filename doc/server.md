@@ -6,12 +6,13 @@ standard error message:
 
 ```json
 {
-    "errType":"",
-    "msg":"",
-    "details": "",
-    "traceId": ""
+    To be determined
+    // "errType":"",
+    // "msg":"",
+    // "details": "",
+    // "traceId": ""
 }
-```
+``` 
 
 1. testing
     - `/v1/testing/ping`
@@ -39,8 +40,9 @@ standard error message:
 
         ```json
         {
-            "core":"v0.0.0.1",
-            "res":"v0.0.0.1",
+            "core":"v0.0.1",
+            "res":"v0.0.1",
+            "os":"osx",// windows , osx , linux or custom
             "token":"" // opt
         }
         ```
@@ -147,11 +149,11 @@ The server can be implemented in any language. Below is an example of the above 
     if (json_last_error() === JSON_ERROR_NONE) {
     $var = $data["core"];
     switch ($var) {
-        case 'v0.0.0.1':
+        case 'v0.0.1':
             echo $putJsonData;
             http_response_code(200);
             break;
-        case 'v0.0.0.2':
+        case 'v0.0.2':
             http_response_code(204);
             break;
         default:

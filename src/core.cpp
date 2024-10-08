@@ -9,26 +9,25 @@
 #include <unistd.h>
 #endif
 
-namespace neko
-{
-    
-    
+namespace neko {
+
 #if _WIN32
     void launchNewProcess(const std::string &command) {
-        nlog::autoLog log{FI,LI,FN};
-        nlog::Info(FI,LI,"%s : command : %s",FN,command.c_str());
+        nlog::autoLog log{FI, LI, FN};
+        nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
         STARTUPINFOA si = {sizeof(si)};
-        PROCESS_INFORMATION pi;;
+        PROCESS_INFORMATION pi;
+
         if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, false, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
-            nlog::Err(FI,LI,"%s : Faild to Create process! cmd : %s , in dir : %s ",FN,command.c_str(),info::getWorkDir().c_str());
+            nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::getWorkDir().c_str());
         } else {
-            nlog::Info(FI,LI,"%s : Create process okay , cmd : %s , in dir : %s",FN,command.c_str(),info::getWorkDir().c_str());
+            nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::getWorkDir().c_str());
         }
     }
 #else
     void launchNewProcess(const std::string &command) {
-        nlog::autoLog log{FI,LI,FN};
-        nlog::Info(FI,LI,"%s : command : %s",FN,command.c_str());
+        nlog::autoLog log{FI, LI, FN};
+        nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
         pid_t pid = fork();
         if (pid == 0) {
             execl("/bin/sh", "sh", "-c", command.c_str(), (char *)0);
@@ -36,7 +35,61 @@ namespace neko
         } else if (pid < 0) {
             // fork err
         } else {
-            _exit(EXIT_FAILURE); 
+            _exit(EXIT_FAILURE);
+        }
+    }
+#endif
+
+#if _WIN32
+    void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc) {
+        nlog::autoLog log{FI, LI, FN};
+        nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
+        STARTUPINFOA si = {sizeof(si)};
+        PROCESS_INFORMATION pi;
+        switch (opt) {
+            case launcherOpt::keep:
+                if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, true, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
+                    nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::getWorkDir().c_str());
+                } else {
+                    nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::getWorkDir().c_str());
+                }
+                break;
+            case launcherOpt::endProcess:
+                launchNewProcess(command);
+                QApplication::quit();
+                break;
+            case launcherOpt::hideProcessAndOverReShow:
+                winFunc(false);
+                if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, true, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
+                    nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::getWorkDir().c_str());
+                } else {
+                    nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::getWorkDir().c_str());
+                }
+                winFunc(true);
+                break;
+            default:
+                break;
+        }
+    }
+#else
+void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc {
+        nlog::autoLog log{FI, LI, FN};
+        nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
+        switch (opt) {
+            case launcherOpt::keep:
+                std::system(command.c_str());
+                break;
+            case launcherOpt::endProcess:
+                launchNewProcess(command);
+                QApplication::quit();
+                break;
+            case launcherOpt::hideProcessAndOverReShow:
+                winFunc(false);
+                std::system(command.c_str());
+                winFunc(true);
+                break;
+            default:
+                break;
         }
     }
 #endif
