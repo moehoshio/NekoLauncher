@@ -17,8 +17,9 @@ Since I am not very familiar with the UI, I would greatly appreciate any interes
 
 Currently, the following aspects are still incomplete:
 
-- **UI**: Transition animations, theme settings/style customization.
-- **Others**: Internationalization (translations), more template examples, and optimization of CMake files.
+- **UI**: Transition animations, theme settings/style customization, and better art design.
+
+- **Others**: Internationalization (translations), more template examples, and optimization of CMake files. Considering drag-and-drop mechanism for visual customization of the interface, maybe even adding music playback functionality?
 
 Of course, I would be very grateful for any help you can provide or any ideas to make the project more robust. If you are interested, feel free to submit issues.
 
@@ -60,9 +61,6 @@ cp CmakeListsCopy.txt CmakeLists.txt
 cd build
 cmake ..
 cmake --build ./ --config Release
-#or
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build ./
 ```
 
 You can also configure the Qt path and include directories using command-line parameters:  
@@ -92,8 +90,12 @@ list(APPEND LIBRARY_DIRS
 CMAKE_PREFIX_PATH : qt path e.g  /user/home/qt/6.6.0  
 QtBin : qt bin path  e.g /user/home/qt/6.6.0/bin  
 
-If you want to use this project, you'll actually need to customize some objects. This is necessary because everyone's goals and the resources they need to manage are different.  
-In short, you need to customize your logic within the `launcher` function in the `src/include/core.h` file, as well as modify the contents in `src/data/`.
+If you want to use this project, you need to modify a few things:
+Using our provided template method: modify the launcherMode variable at the top of `src/include/core.h`.
+Or modify the provided template.
+If you want complete custom logic, you can write your own function and call it in the `launcher` function, which is also in core.h.
+Additionally, you need to edit the content in `src/data/`.
+More detailed information can be found in the [Contribution and Customization](#contribution-and-customization) section.
 
 After completing these steps, you'll need to deploy your server. A simple example can be found at:  
 [server.md](doc/server.md).

@@ -23,7 +23,7 @@ namespace neko {
         bool proxyUnexpected = exec::allTrue((proxy != ""), (proxy != "true"), !exec::isProxyAddress(proxy));
         if (proxyUnexpected)
             proxy = ""s;
-        
+
         bool
             dev = exec::getConfigObj().GetBoolValue("dev", "enable", false),
             tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
@@ -40,7 +40,7 @@ namespace neko {
             network net;
             for (auto it : Api::hostList) {
 
-                std::string url = buildUrl<std::string>(Api::testing, it);
+                std::string url = buildUrl(Api::testing, it);
                 RetHttpCode retCode;
 
                 decltype(net)::Args args{

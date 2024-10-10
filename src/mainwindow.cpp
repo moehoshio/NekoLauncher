@@ -510,46 +510,60 @@ namespace ui {
     }
 
     void MainWindow::setupStyle() {
-        this->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255));");
-        headbar->toolbar->setStyleSheet("QToolBar { background-color: rgba(245, 245, 245,230); }"
-                                        "QToolButton {background-color: rgba(245, 245, 245,230);}"
-                                        "QToolButton:hover {background-color: rgba(155, 155, 155,180);}");
+        const QString mainWidgetLinearGradient = "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255));";
+        const QString headToolBar = "QToolBar { background-color: rgba(245, 245, 245,230); }"
+                                    "QToolButton {background-color: rgba(245, 245, 245,230);}"
+                                    "QToolButton:hover {background-color: rgba(155, 155, 155,180);}";
+        const QString backgroundColor = "background-color: rgba(150,150,150,100);";
+        const QString centralWidgetColor = "background-color: rgba(235,235,235,200);border-radius: 22%;";
+        const QString oneButtonStyle = "QPushButton {border: 2px solid white; background-color: rgba(235,235,235,255);}"
+                                       "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}";
+        const QString TwoButtonStyle = "QPushButton {width: 80%; height: 40%; border: 2px solid white; background-color: rgba(235,235,235,255);}"
+                                       "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}";
+        const QString progressBarStyle = "QProgressBar {border: 2px solid #fff;border-radius: 10px;text-align: center;}"
+                                         "QProgressBar::chunk {background-color: rgba(120,120,120,188);}";
+        const QString textWidgetStyle = "background-color: rgba(155,155,155,120);border-radius: 22%;";
+        const QString startButtonStyle = "QPushButton { background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100));  border-radius: 30%;}"
+                                         "QPushButton:hover { color: rgba(245,245,245,235); background-color: rgba(129, 129, 129, 205);}";
+        const QString menuButtonStyle = "QPushButton {background-color: rgba(240, 240, 240, 225); border-radius: 20%;}"
+                                        "QPushButton:hover {background-color: rgba( 255,255,255,238);}"
+                                        "QPushButton:checked {background-color: rgba( 155,155,155,138);}";
+        const QString tabWidgetStyle = "QTabWidget { background-color: rgba(255,255,255,0);}"
+                                       "QTabWidget::pane {border: 1px solid #C2C7CB; position: absolute; top: -0.5em;}"
+                                       "QTabWidget::tab-bar { alignment: center; padding: 10px }"
+                                       "QTabBar::tab { background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E1E1E1, stop: 0.4 #DDDDDD, stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3); border: 2px solid #C4C4C3;border-bottom-color: #C2C7CB; border-top-left-radius: 4px; border-top-right-radius: 4px; min-width: 8ex; padding: 2px;}"
+                                       "QTabBar::tab:selected, QTabBar::tab:hover { background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); }"
+                                       "QTabBar::tab:selected { border-color: #9B9B9B; border-bottom-color: #C2C7CB;  }";
+        const QString closeButtonStyle = "QToolButton {border: 5px; background-color: rgba(255,255,255,0);}"
+                                         "QToolButton::hover {background-color: rgba(150,150,150,200);}";
+        const QString logInOutButtonStyle = "QPushButton {background-color: rgba(235,235,235,215);border-radius: 25%;}"
+                                            "QPushButton:hover {background-color: rgba( 255,255,255,238);}";
+        const QString sliderStyle = "QSlider::handle:horizontal {background-color: rgba(140, 199, 255,255);}";
 
-        loading->setStyleSheet("background-color: rgba(150,150,150,100);");
-        setting->setStyleSheet("background-color: rgba(150,150,150,100);");
-        input->setStyleSheet("background-color: rgba(150,150,150,100);");
-        hintWidget->setStyleSheet("background-color: rgba(150,150,150,100);");
+        this->setStyleSheet(mainWidgetLinearGradient);
+        headbar->toolbar->setStyleSheet(headToolBar);
 
-        hintWidget->centralWidget->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
-        hintWidget->button->setStyleSheet("QPushButton {border: 2px solid white; background-color: rgba(235,235,235,255);}"
-                                          "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}");
-        hintWidget->dialogButton->setStyleSheet("QPushButton {width: 80%; height: 40%; border: 2px solid white; background-color: rgba(235,235,235,255);}"
-                                                "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}");
-        loading->progressBar->setStyleSheet("QProgressBar {border: 2px solid #fff;border-radius: 10px;text-align: center;}"
-                                            "QProgressBar::chunk {background-color: rgba(120,120,120,188);}");
-        loading->textLayoutWidget->setStyleSheet("background-color: rgba(155,155,155,120);border-radius: 22%;");
+        loading->setStyleSheet(backgroundColor);
+        setting->setStyleSheet(backgroundColor);
+        input->setStyleSheet(backgroundColor);
+        hintWidget->setStyleSheet(backgroundColor);
 
-        input->centralWidget->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
-        input->dialogButton->setStyleSheet("QPushButton {width: 80%; height: 40%; border: 2px solid white; background-color: rgba(235,235,235,255);}"
-                                           "QPushButton:hover {border: 2px solid rgba(150,150,150,200); background-color: rgba(180,180,180,210);}");
+        hintWidget->centralWidget->setStyleSheet(centralWidgetColor);
 
-        index->startButton->setStyleSheet("QPushButton { background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100));  border-radius: 30%;}"
-                                          "QPushButton:hover { color: rgba(245,245,245,235); background-color: rgba(129, 129, 129, 205);}");
+        hintWidget->button->setStyleSheet(oneButtonStyle);
+        hintWidget->dialogButton->setStyleSheet(TwoButtonStyle);
+        loading->progressBar->setStyleSheet(progressBarStyle);
+        loading->textLayoutWidget->setStyleSheet(textWidgetStyle);
 
-        index->menuButton->setStyleSheet("QPushButton {background-color: rgba(240, 240, 240, 225); border-radius: 20%;}"
-                                         "QPushButton:hover {background-color: rgba( 255,255,255,238);}"
-                                         "QPushButton:checked {background-color: rgba( 155,155,155,138);}");
-        setting->tabWidget->setStyleSheet(
-            "QTabWidget { background-color: rgba(255,255,255,0)}"
-            "QTabWidget::pane {border: 1px solid #C2C7CB; position: absolute; top: -0.5em;}"
-            "QTabWidget::tab-bar { alignment: center; padding: 10px }"
-            "QTabBar::tab { background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E1E1E1, stop: 0.4 #DDDDDD, stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3); border: 2px solid #C4C4C3;border-bottom-color: #C2C7CB; border-top-left-radius: 4px; border-top-right-radius: 4px; min-width: 8ex; padding: 2px;}"
-            "QTabBar::tab:selected, QTabBar::tab:hover { background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); }"
-            "QTabBar::tab:selected { border-color: #9B9B9B; border-bottom-color: #C2C7CB;  }");
-        setting->closeButton->setStyleSheet("QToolButton {border: 5px; background-color: rgba(255,255,255,0);}"
-                                            "QToolButton::hover {background-color: rgba(150,150,150,200);}");
-        setting->page1->accountLogInOutButton->setStyleSheet("QPushButton {background-color: rgba(235,235,235,215);border-radius: 25%;}"
-                                                             "QPushButton:hover {background-color: rgba( 255,255,255,238);}");
+        input->centralWidget->setStyleSheet(centralWidgetColor);
+        input->dialogButton->setStyleSheet(TwoButtonStyle);
+
+        index->startButton->setStyleSheet(startButtonStyle);
+
+        index->menuButton->setStyleSheet(menuButtonStyle);
+        setting->tabWidget->setStyleSheet(tabWidgetStyle);
+        setting->closeButton->setStyleSheet(closeButtonStyle);
+        setting->page1->accountLogInOutButton->setStyleSheet(logInOutButtonStyle);
 
         for (auto toolButton : std::vector<QWidget *>{
                  setting->page2->bgInputToolButton, setting->page2->moreTempTool}) {
@@ -565,15 +579,15 @@ namespace ui {
                  input->centralWidget, setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->lcWindowSetBox, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
             setTabOptBg->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
         }
-        setting->page2->styleBlurEffectRadiusSlider->setStyleSheet("QSlider::handle:horizontal {background-color: rgba(140, 199, 255,255);}");
+        setting->page2->styleBlurEffectRadiusSlider->setStyleSheet(sliderStyle);
 
         setupTranslucentBackground();
     }
     void MainWindow::setupTranslucentBackground() {
-        for (auto setTranslucentBackground : std::vector<QWidget *>{widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
+        for (auto setTranslucentBackground : std::vector<QWidget *>{input, widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
-        for (auto transparentWidgets : std::vector<QWidget *>{headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->lcWindowSetText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process, input->title, input->msg}) {
+        for (auto transparentWidgets : std::vector<QWidget *>{input, headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->lcWindowSetText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process, input->title, input->msg}) {
             transparentWidgets->setStyleSheet("background-color: rgba(255,255,255,0);");
         }
     }
@@ -582,8 +596,8 @@ namespace ui {
 
         index->startButton->setText("START");
         index->menuButton->setText("MENU");
-        
-        index->versionText->setText(("core: "+ neko::info::getVersion() +"\nres: " + neko::info::getResVersion()).c_str());
+
+        index->versionText->setText(("core: " + neko::info::getVersion() + "\nres: " + neko::info::getResVersion()).c_str());
 
         loading->process->setText("loading...");
         loading->titleH1->setText("TITLE");
@@ -684,9 +698,16 @@ namespace ui {
     };
 
     void MainWindow::setupConnect() {
-        nlog::autoLog log{FI,LI,FN};
+        nlog::autoLog log{FI, LI, FN};
 
         connect(index->startButton, &QPushButton::clicked, [=, this] {
+            // Maybe we should switch the status to loading after the user clicks start?
+
+            if (setting->page1->accountLogInOutButton->text() == "login") {
+                showHint({"Not login", "Please log in to your account first", "", 1});
+                return;
+            }
+
             int id = setting->page2->lcWindowSetBox->currentIndex();
             neko::launcherOpt opt;
             switch (id) {
@@ -703,17 +724,18 @@ namespace ui {
                     opt = neko::launcherOpt::keep;
                     break;
             }
-            auto hintFunc = [=,this](const ui::hintMsg& m){
+            auto hintFunc = [=, this](const ui::hintMsg &m) {
                 emit this->showHintD(m);
             };
-
-            if (id == 2) {
-                neko::launcher(opt,hintFunc, [=, this](bool check) {
-                    emit this->winShowHideD(check);
-                });
-            } else {
-                neko::launcher(opt,hintFunc);
-            }
+            exec::getThreadObj().enqueue([=, this] {
+                if (id == 2) {
+                    neko::launcher(opt, hintFunc, [=, this](bool check) {
+                        emit this->winShowHideD(check);
+                    });
+                } else {
+                    neko::launcher(opt, hintFunc);
+                }
+            });
         });
         connect(index->menuButton, &QPushButton::clicked, [=, this]() {
             oldState = state;
@@ -750,7 +772,7 @@ namespace ui {
                     exec::getConfigObj().SetValue("manage", "account", "");
                     exec::getConfigObj().SetValue("manage", "displayName", "");
 
-                    auto url = neko::networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/invalidate", "");
+                    auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
                     nlohmann::json json = {
                         {"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}};
                     auto data = json.dump();
@@ -767,6 +789,7 @@ namespace ui {
         });
         connect(setting->page2->bgInputLineEdit, &QLineEdit::editingFinished, [=, this]() {
             bgWidget->setPixmap(setting->page2->bgInputLineEdit->text().toStdString().c_str());
+            resizeItem();
         });
         connect(setting->page2->bgInputToolButton, &QPushButton::clicked, [=, this]() {
             auto file = QFileDialog::getOpenFileName(this);
@@ -960,7 +983,7 @@ namespace ui {
             setting->page1->accountLogInOutButton->setText("logout");
             setting->page1->accountLogInOutInfoText->setText(name.c_str());
         });
-        connect(this,&MainWindow::winShowHideD,this,&MainWindow::winShowHide);
+        connect(this, &MainWindow::winShowHideD, this, &MainWindow::winShowHide);
     }
 
     void MainWindow::setupBase(neko::Config config) {
@@ -1052,7 +1075,6 @@ namespace ui {
         if (!std::string(config.manage.account).empty() && !std::string(config.manage.displayName).empty()) {
             setting->page1->accountLogInOutInfoText->setText(config.manage.displayName);
             setting->page1->accountLogInOutButton->setText("logout");
-            nlog::Info(FI, LI, "%s : login is ok", FN);
         } else {
             setting->page1->accountLogInOutButton->setText("login");
             setting->page1->accountLogInOutInfoText->setText("未登入");
@@ -1216,6 +1238,10 @@ namespace ui {
                 break;
             }
             case QEvent::MouseButtonPress: {
+                auto currentFocus = focusWidget();
+                if (currentFocus) {
+                    currentFocus->clearFocus();
+                }
                 auto p = dynamic_cast<QMouseEvent *>(event)->pos();
                 bool pointXGreaterWidthBorder = (p.x() > width() - border);
                 bool pointXLessWidthBorder = (p.x() < border);

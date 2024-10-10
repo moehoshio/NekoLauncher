@@ -275,6 +275,8 @@ namespace ui {
                 menuButton = new QPushButton(this);
                 versionText = new QLabel(this);
                 versionText->setWordWrap(true);
+                startButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
+                menuButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
             };
 
             QPushButton *startButton;
@@ -426,6 +428,11 @@ namespace ui {
             };
         };
 
+        // struct ChoicePage : public QWidget
+        // {
+        // Assessing the necessity, is used to display the user's choice.
+        // };
+
         struct InputPage : public QWidget {
             QGridLayout *gridLayout;
             QWidget *centralWidget;
@@ -544,9 +551,45 @@ namespace ui {
         pageState state;
         pageState oldState;
 
-    public:
-        void resizeEvent(QResizeEvent *event);
+    protected:
+        void closeEvent(QCloseEvent *event) override;
 
+        void dragEnterEvent(QDragEnterEvent *p_event) override {
+
+            p_event->acceptProposedAction();
+        }
+
+        void dragMoveEvent(QDragMoveEvent *p_event) override {
+
+            p_event->acceptProposedAction();
+        }
+
+        void dropEvent(QDropEvent *p_event) override {
+            p_event->acceptProposedAction();
+        }
+
+        void keyPressEvent(QKeyEvent *event) override {
+            QWidget *currentFocus = focusWidget();
+
+            switch (event->key()) {
+                case Qt::Key_Return:
+                    if (auto checkBox = dynamic_cast<QCheckBox *>(currentFocus)) {
+                        emit checkBox->clicked(!checkBox->isChecked());
+                    } else if (auto button = dynamic_cast<QPushButton *>(currentFocus)) {
+                        emit button->clicked(true);
+                    }
+
+                    break;
+                default:
+                    QWidget::keyPressEvent(event);
+            }
+        }
+
+
+        bool event(QEvent *event) override;
+        void resizeEvent(QResizeEvent *event) override;
+
+    public:
         void resizeItem();
 
         void setupSize();
@@ -568,23 +611,7 @@ namespace ui {
 
         void updatePage(pageState state, pageState oldState);
 
-        void closeEvent(QCloseEvent *event);
-
-        void dragEnterEvent(QDragEnterEvent *p_event) {
-
-            p_event->acceptProposedAction();
-        }
-
-        void dragMoveEvent(QDragMoveEvent *p_event) {
-
-            p_event->acceptProposedAction();
-        }
-
-        void dropEvent(QDropEvent *p_event) {
-            p_event->acceptProposedAction();
-        }
-        bool event(QEvent *event);
-
+    public:
         void showPage(pageState page) {
             oldState = state;
             state = page;

@@ -36,10 +36,29 @@ namespace neko {
             constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
             constexpr static const char *testing = "/v1/testing/ping";
             // static std::vector<std::string> dynamicHostList;
+            struct Authlib
+            {
+                constexpr static const char * host = "skin.example.org";
+                constexpr static const char * root = "/api/yggdrasil";
+                constexpr static const char * authenticate = "/api/yggdrasil/authserver/authenticate";
+                constexpr static const char * refresh = "/api/yggdrasil/authserver/refresh";
+                constexpr static const char * validate = "/api/yggdrasil/authserver/validate";
+                constexpr static const char * invalidate = "/api/yggdrasil/authserver/invalidate";
+                constexpr static const char * signout = "/api/yggdrasil/authserver/signout";
+                struct Injector{
+                    constexpr static const char * downloadHost = "authlib-injector.yushi.moe";
+                    constexpr static const char * getVersionsList = "/artifacts.json";
+                    constexpr static const char * latest = "/artifact/latest.json";
+                    constexpr static const char * baseRoot = "/artifact";// + {build_number}.json
+                };
+                Injector injector;
+            };
+            Authlib authlib;
         };
 
         static Config Dconfig;
         constexpr static Api api;
+        // constexpr static Authlib authlib;
 
         enum class Opt {
             none,
@@ -75,8 +94,7 @@ namespace neko {
 
         /// @param path starts with /
         /// @param host should only contain the domain name.
-        template <typename T = std::string>
-        constexpr static T buildUrl(const T &path, const T &host = Dconfig.host, const T &protocol = Dconfig.protocol) {
+        constexpr static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol) {
             return exec::sum(protocol, host, path);
         }
 

@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-constexpr auto launcherMode = "minecraft";
+constexpr auto launcherMode = "minecraft";//lua or minecraft
 
 namespace neko {
 
@@ -61,7 +61,7 @@ namespace neko {
     inline bool launcherMinecraftTokenValidate(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
         nlog::autoLog log{FI, LI, FN};
         network net;
-        auto url = networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/validate", "");
+        auto url = networkBase::buildUrl(neko::networkBase::Api::Authlib::validate, neko::networkBase::Api::Authlib::host);
 
         nlohmann::json json = {{"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}};
         auto data = json.dump();
@@ -72,7 +72,7 @@ namespace neko {
         net.Do(networkBase::Opt::postText, args);
         if (code != 204) {
             nlog::Info(FI, LI, "%s : token is not validate", FN);
-            auto refUrl = networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/refresh", "");
+            auto refUrl = networkBase::buildUrl(neko::networkBase::Api::Authlib::refresh, neko::networkBase::Api::Authlib::host);
             int refCode = 0;
             nlohmann::json refJson = {
                 {"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}, {"requestUser", false}};
@@ -83,6 +83,7 @@ namespace neko {
             auto res = net.get(networkBase::Opt::postText, refArgs);
             auto jsonData = nlohmann::json::parse(res, nullptr, false);
             if (jsonData.is_discarded()) {
+                hintFunc({"Error","faild to token json parse","",1});
                 nlog::Err(FI, LI, "%s : faild to token json parse", FN);
                 return false;
             }
@@ -114,7 +115,7 @@ namespace neko {
         if (!authlibPrefetched.empty())
             return;
 
-        auto url = networkBase::buildUrl<std::string>("/api/yggdrasil", "");
+        auto url = networkBase::buildUrl(neko::networkBase::Api::Authlib::root, neko::networkBase::Api::Authlib::host);
         network net;
         int code = 0;
         decltype(net)::Args args{url.c_str(), nullptr, &code};
@@ -129,7 +130,7 @@ namespace neko {
         exec::getConfigObj().SetValue("manage", "authlibPrefetched", authlibPrefetched.c_str());
     }
 
-    inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(bool)> winFunc = NULL) {
+    inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = NULL) {
         nlog::autoLog log{FI, LI, FN};
         // /.minecraft
         std::string minecraftDir;
@@ -171,7 +172,10 @@ namespace neko {
         };
 
         // Assume the Minecraft folder is located under the working directory.
+
+        // ./.minecraft/version
         std::string gameVerDir;
+        // ./.minecraft/version/name/name.json
         std::string gameVerFileStr;
         std::fstream gameVerFile;
         for (const auto &it : std::filesystem::directory_iterator(info::getWorkDir() + minecraftDir + "/versions")) {
@@ -182,45 +186,55 @@ namespace neko {
                 break;
             }
         }
-
+        //transition to verJsonData
         std::string gameVerStr;
+        //file stream transition to gameVerStr
         std::ostringstream gameVerOss;
 
         gameVerOss << gameVerFile.rdbuf();
         gameVerStr = gameVerOss.str();
         nlog::Info(FI, LI, "%s : version file : %s , is open : %s ,gameVerStr len : %zu , cont : %s ", FN, gameVerFileStr.c_str(), exec::boolTo<const char *>(gameVerFile.is_open()), gameVerStr.length(), gameVerStr.c_str());
 
-        auto jsonData = nlohmann::json::parse(gameVerStr);
-        if (jsonData.is_discarded()) {
+        if (gameVerStr.empty())
+        {
+            nlog::Err(FI,LI,"%s : game version string is empty!",FN);
+            hintFunc({"Error","game version string is empty!"});
+            return;
+        }
+        
+
+        auto verJsonData = nlohmann::json::parse(gameVerStr);
+        if (verJsonData.is_discarded()) {
             nlog::Err(FI, LI, "%s : faild to json parse! file : %s ", FN, gameVerFileStr.c_str());
+            hintFunc({"Error","faild to json parse! \nThe file may be damaged"});
             return;
         }
 
-        auto baseArgs = jsonData["arguments"];
+        auto baseArgs = verJsonData["arguments"];
         auto jvmArgs = baseArgs["jvm"];
         auto gameArgs = baseArgs["game"];
-        auto libraries = jsonData["libraries"];
+        auto libraries = verJsonData["libraries"];
 
         // jvm
         std::string
             javaPath = (info::getWorkDir() + "/java/bin/java"), // Assume built-in Java is distributed with the executable.
-            mainClass = jsonData.value("mainClass", "net.minecraft.client.main.Main"),
-            clientJarPath = gameVerDir + "/" + jsonData.value("jar", "") + ".jar",
-            nativesPath = gameVerDir + "/natives",
-            librariesPath = info::getWorkDir() + minecraftDir + "/libraries",
+            gameDir = info::getWorkDir() + minecraftDir,// work dir + ./minecraft
+            mainClass = verJsonData.value("mainClass", "net.minecraft.client.main.Main"),
+            clientJarPath = gameVerDir + "/" + verJsonData.value("jar", "") + ".jar",// ./ game ver dir + name.jar
+            nativesPath = gameVerDir + "/natives",// game ver dir + /natives
+            librariesPath = gameDir + "/libraries",// game dir + /libraries
             classPath;
 
         // game
         std::string
-            gameArgsName = cfg.manage.displayName,
+            gameArgsName = cfg.manage.displayName,// player name
             gameArgsVerName = "Neko Launcher",
-            gameArgsDir = info::getWorkDir() + minecraftDir,
-            gameArgsAssetsDir = gameArgsDir + "/assets",
-            gameArgsAssetsId = jsonData.value("assets", ""),
+            gameArgsAssetsDir = gameDir + "/assets",// game dir + /assets
+            gameArgsAssetsId = verJsonData.value("assets", ""),// assets id , e.g 1.16
             gameArgsUuid = cfg.manage.uuid,
             gameArgsToken = cfg.manage.accessToken,
             gameArgsUserType = "mojang",
-            gameArgsVerType = gameArgsVerName;
+            gameArgsVerType = gameArgsVerName;//Nekolc
 
         std::vector<std::string> jvmArgsVec;
         std::vector<std::string> gameArgsVec;
@@ -231,6 +245,39 @@ namespace neko {
                 osName,
                 osVersion,
                 osArch;
+        };
+
+        struct ArtifactMap {
+            std::string
+                path,
+                url,
+                sha1,
+                natives;
+            size_t size;
+            struct Classifiers {
+                std::string
+                    path,
+                    url,
+                    sha1;
+                size_t size;
+                bool empty() {
+                    for (auto it : std::vector<bool>{path.empty(), url.empty(), sha1.empty()}) {
+                        if (!it) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            };
+            Classifiers classifiers;
+            bool empty() {
+                for (auto it : std::vector<bool>{path.empty(), url.empty(), sha1.empty(), natives.empty(), classifiers.empty()}) {
+                    if (!it) {
+                        return false;
+                    }
+                }
+                return true;
+            };
         };
 
         auto checkCondition = [=](const RulesMap &rules, const nlohmann::json &features) -> bool {
@@ -313,12 +360,72 @@ namespace neko {
             }
             return {};
         };
+
         auto constructClassPath = [](const std::vector<std::string> &paths, const std::string &osName) -> std::string {
             const std::string separator = (osName == "windows") ? ";" : ":";
             return std::accumulate(std::next(paths.begin()), paths.end(), paths[0],
                                    [&](std::string acc, const std::string &path) {
                                        return acc + separator + path;
                                    });
+        };
+
+        auto checkArchives = [=](const ArtifactMap &artifact) {
+            struct Single {
+                std::string
+                    path,
+                    url,
+                    sha1;
+                size_t size;
+            };
+            std::vector<Single> vec;
+
+            if (!artifact.natives.empty()) {
+                vec.push_back({artifact.classifiers.path,
+                               artifact.classifiers.url,
+                               artifact.classifiers.sha1,
+                               artifact.classifiers.size});
+            }
+            vec.push_back({artifact.path,
+                           artifact.url,
+                           artifact.sha1,
+                           artifact.size});
+
+            auto downloadTask = [=](const Single &single) {
+                network net;
+                int code = 0;
+                decltype(net)::Args args{
+                    single.url.c_str(), nullptr, &code};
+                args.writeCallback = networkBase::WriteCallbackFile;
+                net.Do(networkBase::Opt::downloadFile, args);
+                if (code != 200) {
+                    hintFunc({"Error", "faild to archives patch download", "", 1});
+                    nlog::Err(FI, LI, "%s : faild to archives patch download , file : %s , url : %s ", FN, single.path.c_str(), single.url.c_str());
+                    return false;
+                }
+                auto hash = exec::hashFile(single.path, exec::hashs::Algorithm::sha1);
+                if (hash != single.sha1) {
+                    hintFunc({"Error", "download the archives patch hash not match", "", 1});
+                    nlog::Err(FI, LI, "%s : faild to archives patch download , file : %s , ex sha1 : %s , sha1 : %s , size : %zu , url : %s", FN, single.path.c_str(), hash.c_str(), single.sha1.c_str(), single.size, single.url.c_str());
+                    return false;
+                }
+                return true;
+            };
+
+            for (const auto &it : vec) {
+                if (std::filesystem::exists(it.path)) {
+                    auto hash = exec::hashFile(it.path, exec::hashs::Algorithm::sha1);
+                    if (hash != it.sha1) {
+                        nlog::Info(FI, LI, "%s : archives exists but hash not match , ex sha1 : %s , sha1 : %s ", FN, it.sha1.c_str(), hash.c_str());
+                        if (!downloadTask(it))
+                            return false;
+                    }
+                } else {
+                    nlog::Info(FI, LI, "%s : archives not exists , path : %s , ready to download", FN, it.path.c_str());
+                    if (!downloadTask(it))
+                        return false;
+                }
+            }
+            return true;
         };
 
         std::vector<std::string> libPaths;
@@ -344,6 +451,30 @@ namespace neko {
             }
 
             if (allow) {
+
+                // check and patch archives
+                if (lib.contains("downloads") && lib["downloads"].contains("artifact")) {
+                    ArtifactMap artifact;
+                    artifact.path = librariesPath + "/" + lib["downloads"]["artifact"]["path"].get<std::string>();
+                    artifact.url = lib["downloads"]["artifact"]["url"].get<std::string>();
+                    artifact.sha1 = lib["downloads"]["artifact"]["sha1"].get<std::string>();
+                    artifact.size = lib["downloads"]["artifact"]["size"].get<size_t>();
+
+                    if (lib.contains("natives")) {
+                        for (auto natives : lib["natives"].items()) {
+                            if (natives.key() == info::getOsName()) {
+                                artifact.natives = natives.value();
+                                artifact.classifiers.path = librariesPath + "/" + lib["downloads"]["classifiers"][artifact.natives]["path"].get<std::string>();
+                                artifact.classifiers.url = lib["downloads"]["classifiers"][artifact.natives]["url"].get<std::string>();
+                                artifact.classifiers.sha1 = lib["downloads"]["classifiers"][artifact.natives]["sha1"].get<std::string>();
+                                artifact.classifiers.size = lib["downloads"]["classifiers"][artifact.natives]["size"].get<size_t>();
+                            }
+                        }
+                    }
+                    if (!checkArchives(artifact)) // in func already keep a log
+                        return;
+                }
+
                 std::string path = librariesPath + "/" + constructPath(lib["name"].get<std::string>());
                 nlog::Info(FI, LI, "%s : path : %s", FN, path.c_str());
 
@@ -375,7 +506,7 @@ namespace neko {
         // game
         replacePlaceholders(gameArgsVec, {{"${auth_player_name}", gameArgsName},
                                           {"${version_name}", gameArgsVerName},
-                                          {"${game_directory}", gameArgsDir},
+                                          {"${game_directory}", gameDir},
                                           {"${assets_root}", gameArgsAssetsDir},
                                           {"${assets_index_name}", gameArgsAssetsId},
                                           {"${auth_uuid}", gameArgsUuid},
@@ -388,23 +519,40 @@ namespace neko {
         // authlib Injector
         std::string authlibPrefrtched = std::string(cfg.manage.authlibPrefetched);
         authlibPrefrtched.erase(std::remove(authlibPrefrtched.begin(), authlibPrefrtched.end(), '\\'), authlibPrefrtched.end());
+        std::string authlibPath = gameDir + "/authlib-injector.jar";
+
+        if (!std::filesystem::exists(authlibPath)) {
+            network net;
+            auto url = networkBase::buildUrl(networkBase::Api::Authlib::Injector::latest, networkBase::Api::Authlib::Injector::downloadHost);
+            int code = 0;
+            decltype(net)::Args args{url.c_str(), authlibPath.c_str(), &code};
+            args.writeCallback = &networkBase::WriteCallbackFile;
+
+            net.Do(networkBase::Opt::downloadFile, args);
+            if (code != 200) {
+                hintFunc({"Error", "faild to authlib Injector download!", "", 1});
+                nlog::Err(FI, LI, "%s : faild to authlib Injector download!", FN);
+                return;
+            }
+        }
+
         std::vector<std::string> authlibInjector = {
-            "-javaagent:" + gameArgsDir + "/authlib-injector.jar=https://example.com/api/yggdrasil/",
+            "-javaagent:" + authlibPath + "=" + networkBase::buildUrl(networkBase::Api::Authlib::root, networkBase::Api::Authlib::host),
             "-Dauthlibinjector.side=client",
             "-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefrtched};
 
         if constexpr (info::getOsName() == "windows") {
-            std::string command = "Set-Location -Path " + psPlusArgs({gameArgsDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
+            std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
             std::fstream file2("Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
             file2 << command;
             file2.close();
-            nlog::Info(FI, LI, "%s : cmd len : %zu , cmd : %s", FN, command.length(), command.c_str());
+            nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
             std::string cmd = "cmd.exe /C powershell " + info::getWorkDir() + "/Nekolc.ps1";
             launcherProcess(cmd.c_str(), opt, winFunc);
         } else {
             std::filesystem::current_path("." + minecraftDir);
-            std::string command = javaPath + plusArgs(jvmOptimizeArgs) + plusArgs(jvmArgsVec) + plusArgs(authlibInjector) + plusArgs({mainClass}) + plusArgs(gameArgsVec);
-            nlog::Info(FI, LI, "%s : cmd len : %zu , cmd : %s", FN, command.length(), command.c_str());
+            std::string command = "\"" + javaPath + "\"" + plusArgs(jvmOptimizeArgs) + plusArgs(jvmArgsVec) + plusArgs(authlibInjector) + plusArgs({mainClass}) + plusArgs(gameArgsVec);
+            nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
             launcherProcess(command.c_str(), opt, winFunc);
             std::filesystem::current_path(std::filesystem::current_path().parent_path());
         }
@@ -419,7 +567,7 @@ namespace neko {
             launcherMinecraftAuthlibInjectorPrefetchedCheck(hintFunc);
             if (!launcherMinecraftTokenValidate(hintFunc))
                 return;
-            launcherMinecraft(opt, exec::getConfigObj(), winFunc);
+            launcherMinecraft(opt, exec::getConfigObj(), hintFunc, winFunc);
         }
 
         if constexpr (launcherMode == std::string("lua")) {
@@ -520,7 +668,7 @@ namespace neko {
             std::unique_lock<std::mutex> lock(mtx);
 
             network net;
-            auto url = networkBase::buildUrl<std::string>(networkBase::Api::mainenance);
+            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsName());
             int code = 0;
             decltype(net)::Args args{url.c_str(), nullptr, &code};
             auto temp = net.get(networkBase::Opt::getContent, args);
@@ -591,7 +739,7 @@ namespace neko {
     inline State checkUpdate(std::string &res) {
         nlog::autoLog log{FI, LI, FN};
         network net;
-        auto url = net.buildUrl<std::string>(networkBase::Api::checkUpdates);
+        auto url = net.buildUrl(networkBase::Api::checkUpdates);
         nlohmann::json dataJson = {
             {"core", info::getVersion()},
             {"res", info::getResVersion()},
@@ -784,7 +932,7 @@ namespace neko {
         nlog::Info(FI, LI, "%s : update is ok", FN);
 
         bool needExecUpdate = false;
-        std::string cmd = info::getWorkDir() + "/update.exe " + info::getWorkDir();
+        std::string cmd = info::getWorkDir() + "/update " + info::getWorkDir();
 
         for (const auto &it : data.urls) {
             if (it.temp) {
@@ -819,7 +967,6 @@ namespace neko {
         return State::over;
     }
 
-
     inline State authLogin(const std::vector<std::string> &inData, std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
         nlog::autoLog log{FI, LI, FN};
         if (inData.size() < 2)
@@ -832,7 +979,7 @@ namespace neko {
             {"agent", {{"name", "Minecraft"}, {"version", 1}}}};
 
         auto data = json.dump();
-        auto url = neko::networkBase::buildUrl<std::string>("/api/yggdrasil/authserver/authenticate", "");
+        auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::authenticate, neko::networkBase::Api::Authlib::host);
         neko::network net;
         int code = 0;
         decltype(net)::Args args{url.c_str(), nullptr, &code};

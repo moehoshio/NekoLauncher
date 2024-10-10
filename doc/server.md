@@ -20,8 +20,9 @@ standard error message:
         - Custom return content, typically HTTP code 200 indicates success
 2. api
 
-    - `/v1/api/maintenance` : get
+    - `/v1/api/maintenance?os=osName` : get
 
+        - os : windows, osx, linux or custom
         - Returns maintenance information
 
         ```json

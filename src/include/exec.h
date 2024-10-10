@@ -114,25 +114,30 @@ namespace exec {
 
     inline std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
         const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
-        unsigned char outBuf[SHA256_DIGEST_LENGTH];
+        unsigned char outBuf[128];
+        int condLen = 0;
         switch (algorithm) {
             case hashs::Algorithm::sha1:
                 SHA1(unsignedData, str.size(), outBuf);
+                condLen =SHA_DIGEST_LENGTH;
                 break;
             case hashs::Algorithm::sha256:
                 SHA256(unsignedData, str.size(), outBuf);
+                condLen = SHA256_DIGEST_LENGTH;
                 break;
             case hashs::Algorithm::sha512:
                 SHA512(unsignedData, str.size(), outBuf);
+                condLen = SHA512_DIGEST_LENGTH;
                 break;
             case hashs::Algorithm::md5:
                 MD5(unsignedData, str.size(), outBuf);
+                condLen = MD5_DIGEST_LENGTH;
                 break;
             default:
                 break;
         }
         std::stringstream ssRes;
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        for (int i = 0; i < condLen; ++i) {
             ssRes << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(outBuf[i]);
         }
         return ssRes.str();

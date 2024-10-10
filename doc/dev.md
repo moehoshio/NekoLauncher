@@ -168,8 +168,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
         - **buildUrl**: Constructs a complete URL from a fixed or pre-concatenated path
 
         ```cpp
-        template <typename T = std::string>
-        constexpr static T buildUrl(const T &path, const T &host = Dconfig.host, const T &protocol = Dconfig.protocol);
+        constexpr static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol);
         ```
 
         - **buildUrlP**: Constructs a complete URL with an indefinite number of path segments; protocol and host need to be manually specified.

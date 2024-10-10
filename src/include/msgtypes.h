@@ -14,7 +14,7 @@ namespace ui {
 
     struct loadMsg {
         enum Type {
-            OnlyRaw,//only loading ico and process text
+            OnlyRaw,//only show loading ico and process text
             Text,//show onlyraw and text widget
             Progress,//show onlyraw and progress
             All
