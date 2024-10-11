@@ -239,7 +239,7 @@ namespace ui {
         devOptEnable = new QCheckBox(devOptCheckLayoutWidget);
         devOptDebug = new QCheckBox(devOptCheckLayoutWidget);
         devOptTls = new QCheckBox(devOptCheckLayoutWidget);
-        devOptUpdatePage = new QCheckBox(devOptCheckLayoutWidget);
+        devOptLoadingPage = new QCheckBox(devOptCheckLayoutWidget);
         devOptHintPage = new QCheckBox(devOptCheckLayoutWidget);
 
         devServerInputLayoutWidget = new QWidget(devOptGroup);
@@ -250,7 +250,7 @@ namespace ui {
         devOptCheckLayout->addWidget(devOptEnable);
         devOptCheckLayout->addWidget(devOptDebug);
         devOptCheckLayout->addWidget(devOptTls);
-        devOptCheckLayout->addWidget(devOptUpdatePage);
+        devOptCheckLayout->addWidget(devOptLoadingPage);
         devOptCheckLayout->addWidget(devOptHintPage);
         devOptCheckLayoutWidget->setLayout(devOptCheckLayout);
 
@@ -269,6 +269,9 @@ namespace ui {
         pageScrollArea->setWidgetResizable(true);
         pageScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+        devOptLoadingPage->hide();
+        devOptHintPage->hide();
     };
 
     MainWindow::Setting::Setting(QWidget *parent) : QWidget(parent) {
@@ -604,7 +607,7 @@ namespace ui {
         loading->titleH2->setText("H2");
         loading->process->setText("loading..");
         loading->progressBar->setFormat("%v/%m");
-        setting->page3->devOptUpdatePage->setText("update");
+        setting->page3->devOptLoadingPage->setText("update");
         setting->page3->devOptHintPage->setText("hint");
         hintWidget->button->setText("ok");
 
@@ -961,7 +964,7 @@ namespace ui {
         connect(headbar->minimize, &QAction::triggered,
                 [=, this]() { setWindowState(Qt::WindowMinimized); });
 
-        connect(setting->page3->devOptUpdatePage, &QCheckBox::toggled, [=, this](bool checkd) {
+        connect(setting->page3->devOptLoadingPage, &QCheckBox::toggled, [=, this](bool checkd) {
             if (checkd) {
                 oldState = state;
                 state = pageState::loading;
