@@ -750,8 +750,17 @@ namespace ui {
         });
         connect(setting->page1->accountLogInOutButton, &QPushButton::clicked, [=, this] {
             if (setting->page1->accountLogInOutButton->text() == "login") {
-                showInput({"login", "", "", {"name", "password"}, [=, this](bool ch2) {
+                showInput({"login", "", "", {"username", "password"}, [=, this](bool check) {
+                               if (!check) {
+                                   hideInput();
+                                   return;
+                               }
+
                                auto inData = getInput();
+                               if (inData.size() != 2) {
+                                   showHint({"Not enough parameters", "Not enough parameters\n please fill in all the fields", "", 1});
+                                   return;
+                               }
                                auto hintFunc = [=, this](const ui::hintMsg &m) {
                                    emit this->showHintD(m);
                                };

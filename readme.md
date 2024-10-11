@@ -90,11 +90,11 @@ list(APPEND LIBRARY_DIRS
 CMAKE_PREFIX_PATH : qt path e.g  /user/home/qt/6.6.0  
 QtBin : qt bin path  e.g /user/home/qt/6.6.0/bin  
 
-If you want to use this project, you need to modify a few things:
-Using our provided template method: modify the launcherMode variable at the top of `src/include/core.h`.
-Or modify the provided template.
-If you want complete custom logic, you can write your own function and call it in the `launcher` function, which is also in core.h.
-Additionally, you need to edit the content in `src/data/`.
+If you want to use this project, you need to modify a few things:  
+Using our provided template method: modify the launcherMode variable at the top of `src/include/core.h`.  
+Or modify the provided template.  
+If you want complete custom logic, you can write your own function and call it in the `launcher` function, which is also in core.h.  
+Additionally, you need to edit the content in `src/data/`.  
 More detailed information can be found in the [Contribution and Customization](#contribution-and-customization) section.
 
 After completing these steps, you'll need to deploy your server. A simple example can be found at:  

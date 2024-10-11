@@ -31,7 +31,7 @@ standard error message:
             "msg": "",
             "poster": "url",
             "time": "",
-            "annctLink": "url"
+            "link": "url"
         }
         ```
 
@@ -99,19 +99,33 @@ The server can be implemented in any language. Below is an example of the above 
 
     ```php
     <?php
+
+    $os = $_GET["os"];
+
     $putData = array(
         "enable" => false,
         "msg" => "msg",
         "poster" => "https://example.com/img/img1.png",
         "time" => "2024/01/01 00:00(UTC+01) - 2024/12/01 23:59(UTC+01)",
-        "annctLink" => "https://example.com"
+        "link" => "https://example.com/news"
     );
-    $putJsonData = json_encode($putData);
+
     header('Content-Type: application/json');
-    if (json_last_error() === JSON_ERROR_NONE) {
-        echo $putJsonData;
-    } else {
-        http_response_code(500);
+
+    switch ($os) {
+        case 'windows':
+            echo json_encode($putData);
+            break;
+        case 'osx':
+            $putData["enable"] = true;
+            echo json_encode($putData);
+            break;
+        case 'linux':
+            echo json_encode($putData);
+            break;
+        default:
+            http_response_code(400);
+            break;
     }
     ?>
     ```
@@ -123,48 +137,78 @@ The server can be implemented in any language. Below is an example of the above 
 
     $jsonData = file_get_contents('php://input');
     $data = json_decode($jsonData, true);
-
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(400);
+        exit;
+    }
     $putData = array(
-        "title"=>"Release v0.0.0.2",
+        "title"=>"Release v0.0.2",
         "msg"=>"msg",
         "poster"=>"https://example.com/img/img2.png",
         "time"=>"2024-01-01 10:00(UTC+01)",
-        "resVersion"=>"v1.0.0.1",
+        "resVersion"=>"v1.0.1",
         "mandatory"=>true,
-        "update"=>array(
-            array("url"=>"https://data.example.com/download/test","name"=>"temp/test.txt","hash"=>"","meta"=>
-                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>false,"randName"=>false,"absoluteUrl"=>true)
-            ),
-            array("url"=>"/api/getInfo?meta=config","name"=>"config.ini","hash"=>"","meta"=>
-                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>true,"randName"=>false,"absoluteUrl"=>false)
-            ),
-            array("url"=>"https://example.com/100MB.bin","name"=>"","hash"=>"","meta"=>
-                array("hashAlgorithm"=>"sha256","multis"=>true,"temp"=>false,"randName"=>true,"absoluteUrl"=>true)
-            ),
-        )
-        );
-    $putJsonData = json_encode($putData);
+        "update"=>array()
+    );
 
     header('Content-Type: application/json;');
 
-    if (json_last_error() === JSON_ERROR_NONE) {
-    $var = $data["core"];
-    switch ($var) {
+    $core = $data["core"];
+    $res = $data["res"];
+    $os = $data["os"];
+    $urls = array();
+
+    if($os ==="windows"){
+    switch ($core) {
         case 'v0.0.1':
-            echo $putJsonData;
-            http_response_code(200);
+            $urls[] = array("url"=>"https://data.example.com/download/test","name"=>"temp/test.txt","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>false,"randName"=>false,"absoluteUrl"=>true)
+            );
+            $urls[]  = array("url"=>"/api/getInfo?meta=config","name"=>"config.ini","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>true,"randName"=>false,"absoluteUrl"=>false)
+            );
+            //...
             break;
         case 'v0.0.2':
-            http_response_code(204);
             break;
         default:
-            http_response_code(400);
+            $urls[] = array("url"=>"https://data.example.com/download/test","name"=>"temp/test.txt","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>false,"temp"=>false,"randName"=>false,"absoluteUrl"=>true)
+            );
+            //You can download it completely here or trigger a client error.
             break;
     }
 
-    } else {
-        http_response_code(400);
+    switch ($res) {
+        case 'v1.0.0':
+            $urls[] = array("url"=>"https://example.com/100MB.bin","name"=>"","hash"=>"","meta"=>
+                array("hashAlgorithm"=>"sha256","multis"=>true,"temp"=>false,"randName"=>true,"absoluteUrl"=>true)
+            );
+            break;
+        case 'v1.0.1':
+            break;
+        default:
+            break;
     }
+    }
+    if($os ==="osx"){}
+    if($os ==="linux"){}
+    //...
+
+    if (empty($urls)) {
+        http_response_code(204);
+        exit;
+    }
+
+    $putData["update"] = $urls;
+    $putJsonData = json_encode($putData);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(500);
+        exit;
+    }
+    http_response_code(200);
+    echo $putJsonData;
+
     ?>
 
     ```

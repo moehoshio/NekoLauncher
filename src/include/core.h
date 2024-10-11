@@ -130,7 +130,7 @@ namespace neko {
         exec::getConfigObj().SetValue("manage", "authlibPrefetched", authlibPrefetched.c_str());
     }
 
-    inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = NULL) {
+    inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = nullptr) {
         nlog::autoLog log{FI, LI, FN};
         // /.minecraft
         std::string minecraftDir;
@@ -193,7 +193,7 @@ namespace neko {
 
         gameVerOss << gameVerFile.rdbuf();
         gameVerStr = gameVerOss.str();
-        nlog::Info(FI, LI, "%s : version file : %s , is open : %s ,gameVerStr len : %zu , cont : %s ", FN, gameVerFileStr.c_str(), exec::boolTo<const char *>(gameVerFile.is_open()), gameVerStr.length(), gameVerStr.c_str());
+        nlog::Info(FI, LI, "%s : version file : %s , is open : %s ,gameVerStr len : %zu", FN, gameVerFileStr.c_str(), exec::boolTo<const char *>(gameVerFile.is_open()), gameVerStr.length());
 
         if (gameVerStr.empty())
         {
@@ -307,7 +307,7 @@ namespace neko {
             for (const auto &it : args) {
                 bool allow = false;
                 if (it.is_string()) {
-                    nlog::Info(FI, LI, "%s : is string : ", FN, it.get<std::string>().c_str());
+                    nlog::Info(FI, LI, "%s : is string : %s", FN, it.get<std::string>().c_str());
                     allow = true;
                 } else if (it.is_object()) {
 
@@ -329,16 +329,16 @@ namespace neko {
                     }
 
                 } else {
-                    nlog::Warn(FI, LI, "%s : not obj and str , type : %s", FN, it.type_name());
+                    nlog::Warn(FI, LI, "%s : Unexpected not obj and str , type : %s", FN, it.type_name());
                 }
 
                 if (allow) {
                     if (it.is_string()) {
-                        // nlog::Info(FI, LI, "%s : push string : %s", FN, it.get<std::string>().c_str());
                         argsVec.push_back(it.get<std::string>());
                     } else {
                         for (const auto &pushArg : it["value"]) {
-                            // nlog::Info(FI, LI, "%s : push arg : %s", FN, pushArg.get<std::string>().c_str());
+                            if (cfg.dev.enable && cfg.dev.debug)
+                                nlog::Info(FI, LI, "%s : push arg : %s", FN, pushArg.get<std::string>().c_str());
                             argsVec.push_back(pushArg.get<std::string>());
                         }
                     }
@@ -432,7 +432,7 @@ namespace neko {
         for (const auto &lib : libraries) {
 
             bool allow = true;
-            nlog::Info(FI, LI, "%s : type : %s", FN, lib.type_name());
+            nlog::Info(FI, LI, "%s : lib type : %s", FN, lib.type_name());
             if (lib.contains("rules") && lib["rules"].is_array()) {
                 for (const auto &ruless : lib["rules"]) {
 
@@ -476,7 +476,8 @@ namespace neko {
                 }
 
                 std::string path = librariesPath + "/" + constructPath(lib["name"].get<std::string>());
-                nlog::Info(FI, LI, "%s : path : %s", FN, path.c_str());
+                if (cfg.dev.enable && cfg.dev.debug)
+                    nlog::Info(FI, LI, "%s : push path : %s", FN, path.c_str());
 
                 libPaths.push_back(path);
             }
@@ -525,16 +526,40 @@ namespace neko {
             network net;
             auto url = networkBase::buildUrl(networkBase::Api::Authlib::Injector::latest, networkBase::Api::Authlib::Injector::downloadHost);
             int code = 0;
-            decltype(net)::Args args{url.c_str(), authlibPath.c_str(), &code};
-            args.writeCallback = &networkBase::WriteCallbackFile;
+            decltype(net)::Args args{url.c_str(),nullptr, &code};
 
-            net.Do(networkBase::Opt::downloadFile, args);
+            auto authlibVersionInfo = net.get(networkBase::Opt::getContent, args);
+            auto authlibVersionData = nlohmann::json::parse(authlibVersionInfo,nullptr,false);
             if (code != 200) {
-                hintFunc({"Error", "faild to authlib Injector download!", "", 1});
-                nlog::Err(FI, LI, "%s : faild to authlib Injector download!", FN);
+                hintFunc({"Error", "in download authlib injector \nfaild to get authlib Injector version info", "", 1});
+                nlog::Err(FI, LI, "%s : in download authlib injector ,faild to get authlib Injector version info", FN);
                 return;
             }
-        }
+            if (authlibVersionData.is_discarded()){
+                hintFunc({"Error", "in download authlib injector \nfaild to parse authlib Injector version info", "", 1});
+                nlog::Err(FI, LI, "%s : in download authlib injector ,faild to parse authlib Injector version info", FN);
+                return;
+            }
+
+            auto downloadUrl = authlibVersionData["download_url"].get<std::string>();
+            args.url = downloadUrl.c_str();
+            args.fileName =authlibPath.c_str();
+            args.writeCallback = networkBase::WriteCallbackFile;
+
+            net.Do(networkBase::Opt::downloadFile,args);
+            if (code != 200) {
+                hintFunc({"Error", "in download authlib injector \nfaild to download authlib Injector archive", "", 1});
+                nlog::Err(FI, LI, "%s : in download authlib injector ,faild to download authlib Injector archive", FN);
+                return;
+            }
+            auto hash = exec::hashFile(authlibPath);
+            auto exHash = authlibVersionData["checksums"].value("sha256","");
+            if(hash != exHash){
+                hintFunc({"Error", "in download authlib injector \ndownload is ok but hash not match", "", 1});
+                nlog::Err(FI, LI, "%s : in download authlib injector , download is ok but hash not match , path : %s ,ex hash : %s , hash : %s ", FN,authlibPath.c_str(),exHash.c_str(),hash.c_str());
+                return;
+            }
+        }//authlib injector download
 
         std::vector<std::string> authlibInjector = {
             "-javaagent:" + authlibPath + "=" + networkBase::buildUrl(networkBase::Api::Authlib::root, networkBase::Api::Authlib::host),
@@ -543,7 +568,7 @@ namespace neko {
 
         if constexpr (info::getOsName() == "windows") {
             std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
-            std::fstream file2("Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
+            std::fstream file2(info::getWorkDir() + "/Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
             file2 << command;
             file2.close();
             nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
@@ -722,14 +747,14 @@ namespace neko {
         std::string msg = jsonData["msg"].get<std::string>(),
                     poster = jsonData["poster"].get<std::string>(),
                     time = jsonData["time"].get<std::string>(),
-                    annctLink = jsonData["annctLink"].get<std::string>();
+                    link = jsonData["link"].get<std::string>();
         msg = time + "\n" + msg;
 
         setLoadInfoFunc(0, "download maintained poster...");
         auto fileName = downloadPoster(hintFunc, poster);
 
-        ui::hintMsg hmsg{"Being maintained", msg, fileName, 1, [annctLink](bool) {
-                             QDesktopServices::openUrl(QUrl(annctLink.c_str()));
+        ui::hintMsg hmsg{"Being maintained", msg, fileName, 1, [link](bool) {
+                             QDesktopServices::openUrl(QUrl(link.c_str()));
                              QApplication::quit();
                          }};
         hintFunc(hmsg);
