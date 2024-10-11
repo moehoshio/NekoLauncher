@@ -30,12 +30,12 @@ SOFTWARE.
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <random>
 #include <regex>
 #include <string>
-#include <algorithm>
 
 // NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
@@ -114,25 +114,30 @@ namespace exec {
 
     inline std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
         const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
-        unsigned char outBuf[SHA256_DIGEST_LENGTH];
+        unsigned char outBuf[128];
+        int condLen = 0;
         switch (algorithm) {
             case hashs::Algorithm::sha1:
                 SHA1(unsignedData, str.size(), outBuf);
+                condLen =SHA_DIGEST_LENGTH;
                 break;
             case hashs::Algorithm::sha256:
                 SHA256(unsignedData, str.size(), outBuf);
+                condLen = SHA256_DIGEST_LENGTH;
                 break;
             case hashs::Algorithm::sha512:
                 SHA512(unsignedData, str.size(), outBuf);
+                condLen = SHA512_DIGEST_LENGTH;
                 break;
             case hashs::Algorithm::md5:
                 MD5(unsignedData, str.size(), outBuf);
+                condLen = MD5_DIGEST_LENGTH;
                 break;
             default:
                 break;
         }
         std::stringstream ssRes;
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        for (int i = 0; i < condLen; ++i) {
             ssRes << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(outBuf[i]);
         }
         return ssRes.str();
@@ -150,20 +155,85 @@ namespace exec {
 
     // Nekolc end
 
-    template<typename T = std::string>
-    inline T unifiedThePaths(const T & inPath){
+    inline std::string base64Chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+
+    inline std::string base64Encode(const std::string &input) {
+        std::string encodedString;
+        int val = 0;
+        int bits = -6;
+        const unsigned int b63 = 0x3F;
+
+        for (unsigned char c : input) {
+            val = (val << 8) + c;
+            bits += 8;
+            while (bits >= 0) {
+                encodedString.push_back(base64Chars[(val >> bits) & b63]);
+                bits -= 6;
+            }
+        }
+
+        if (bits > -6) {
+            encodedString.push_back(base64Chars[((val << 8) >> (bits + 8)) & b63]);
+        }
+
+        while (encodedString.size() % 4) {
+            encodedString.push_back('=');
+        }
+
+        return encodedString;
+    }
+
+    inline std::string base64Decode(const std::string &input) {
+        std::string decodedString;
+        std::vector<int> base64Index(256, -1);
+        for (int i = 0; i < 64; i++) {
+            base64Index[base64Chars[i]] = i;
+        }
+
+        int val = 0;
+        int bits = -8;
+        for (unsigned char c : input) {
+            if (base64Index[c] == -1)
+                break;
+            val = (val << 6) + base64Index[c];
+            bits += 6;
+
+            if (bits >= 0) {
+                decodedString.push_back(char((val >> bits) & 0xFF));
+                bits -= 8;
+            }
+        }
+
+        return decodedString;
+    }
+
+    template <typename T = std::string>
+    inline T plusSingleQuotes(const T &str) {
+        return "'" + str + "'";
+    }
+
+    template <typename T = std::string>
+    inline T plusDoubleQuotes(const T &str) {
+        return "\"" + str + "\"";
+    }
+
+    template <typename T = std::string>
+    inline T unifiedThePaths(const T &inPath) {
         T res = inPath;
         std::replace(res.begin(), res.end(), '\\', '/');
         return res;
     }
-    
-    inline void execfs(const std::string &name , auto&&... args){
+
+    inline void execfs(const std::string &name, auto &&...args) {
         if (!std::filesystem::exists(name))
             return;
         std::system((name + (args + ...)).c_str());
     }
 
-    inline void execfe(const char *name){
+    inline void execfe(const char *name) {
         if (!std::filesystem::exists(name))
             return;
 
@@ -176,7 +246,9 @@ namespace exec {
 
         std::system(name);
     }
-    constexpr auto unifiedPaths = [](auto&&val){ return exec::unifiedThePaths(val); };
+    constexpr auto plusDoubleQuote = [](auto &&val) { return exec::plusDoubleQuotes(val); };
+    constexpr auto plusSingleQuote = [](auto &&val) { return exec::plusSingleQuotes(val); };
+    constexpr auto unifiedPaths = [](auto &&val) { return exec::unifiedThePaths(val); };
     constexpr auto move = [](auto &&val) -> auto && { return std::move(val); };
     constexpr auto make_shared = [](auto &&val) -> decltype(auto) { return std::make_shared<std::remove_reference_t<decltype(val)>>(val); };
 

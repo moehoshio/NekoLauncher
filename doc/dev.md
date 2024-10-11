@@ -168,8 +168,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
         - **buildUrl**: Constructs a complete URL from a fixed or pre-concatenated path
 
         ```cpp
-        template <typename T = std::string>
-        constexpr static T buildUrl(const T &path, const T &host = Dconfig.host, const T &protocol = Dconfig.protocol);
+        constexpr static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol);
         ```
 
         - **buildUrlP**: Constructs a complete URL with an indefinite number of path segments; protocol and host need to be manually specified.
@@ -227,6 +226,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
                 - `resBreakPoint`: bool
                 - `range`: cstr range of the file to fetch
                 - `userAgent`: cstr
+                - `header`: cstr Custom request headers, multiple key-value pairs can be separated by `\n`.
                 - `data`: cstr data to be sent when using POST
                 - `id` : cstr
                 - `writeCallback`: `size_t(char*, size_t, size_t, void*)`

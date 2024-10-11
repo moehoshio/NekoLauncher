@@ -23,7 +23,7 @@ namespace nlog {
         std::string name;
         std::string startMsg;
         std::string endMsg;
-        autoLog(const char *file, unsigned int line, std::string name, std::string startMsg = "Enter ,up", std::string endMsg = "End , down") : file(file), line(line), name(name), startMsg(startMsg), endMsg(endMsg) {
+        autoLog(const char *file, unsigned int line, std::string name, std::string startMsg = "Enter", std::string endMsg = "End") : file(file), line(line), name(name), startMsg(startMsg), endMsg(endMsg) {
             Info(file, line, "%s : %s", this->name.c_str(), this->startMsg.c_str());
         }
         ~autoLog() {

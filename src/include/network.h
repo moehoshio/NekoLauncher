@@ -36,10 +36,29 @@ namespace neko {
             constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
             constexpr static const char *testing = "/v1/testing/ping";
             // static std::vector<std::string> dynamicHostList;
+            struct Authlib
+            {
+                constexpr static const char * host = "skin.example.org";
+                constexpr static const char * root = "/api/yggdrasil";
+                constexpr static const char * authenticate = "/api/yggdrasil/authserver/authenticate";
+                constexpr static const char * refresh = "/api/yggdrasil/authserver/refresh";
+                constexpr static const char * validate = "/api/yggdrasil/authserver/validate";
+                constexpr static const char * invalidate = "/api/yggdrasil/authserver/invalidate";
+                constexpr static const char * signout = "/api/yggdrasil/authserver/signout";
+                struct Injector{
+                    constexpr static const char * downloadHost = "authlib-injector.yushi.moe";
+                    constexpr static const char * getVersionsList = "/artifacts.json";
+                    constexpr static const char * latest = "/artifact/latest.json";
+                    constexpr static const char * baseRoot = "/artifact";// + {build_number}.json
+                };
+                Injector injector;
+            };
+            Authlib authlib;
         };
 
         static Config Dconfig;
         constexpr static Api api;
+        // constexpr static Authlib authlib;
 
         enum class Opt {
             none,
@@ -75,8 +94,7 @@ namespace neko {
 
         /// @param path starts with /
         /// @param host should only contain the domain name.
-        template <typename T = std::string>
-        constexpr static T buildUrl(const T &path, const T &host = Dconfig.host, const T &protocol = Dconfig.protocol) {
+        constexpr static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol) {
             return exec::sum(protocol, host, path);
         }
 
@@ -146,6 +164,7 @@ namespace neko {
             bool resBreakPoint = false;
             const char *range = nullptr;
             const char *userAgent = nullptr;
+            const char *header = nullptr;
             const char *data = nullptr;
             const char *id = nullptr;
             size_t (*writeCallback)(char *, size_t, size_t, void *) = &networkBase::WriteCallbackString;
@@ -208,8 +227,11 @@ namespace neko {
         }
 
         inline static void doLog(Opt opt, const Args &args) {
+            bool dev = exec::getConfigObj().GetBoolValue("dev","enable",false),
+                debug = exec::getConfigObj().GetBoolValue("dev","debug",false);
             std::string resBreakPointStr = (args.resBreakPoint) ? "true" : "false";
             std::string userAgent = (args.userAgent) ? args.userAgent : args.config.userAgent.c_str();
+            std::string data =  (dev&&debug)? ((args.data)? args.data:"") : "*****";
             std::string optStrT = optStr(opt);
             nlog::Info(FI, LI,
                        "%s : url : %s , opt : %s , fileName : %s , range : %s , resBreakPoint : %s , userAgent : %s , protocol : %s , proxy : %s , system proxy : %s ,data : %s , id : %s",
@@ -219,7 +241,7 @@ namespace neko {
                        args.config.protocol.c_str(),
                        args.config.proxy.c_str(),
                        getSysProxy<const char *>(),
-                       args.data,
+                       data.c_str(),
                        args.id);
         }
         inline static bool initOpt(CURL *curl, Args &args) {
@@ -254,13 +276,17 @@ namespace neko {
                     return false;
                 }
             } // resBreakPoint
+            
+            if (args.header)
+                curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, args.header));
+            if (args.range)
+                curl_easy_setopt(curl, CURLOPT_RANGE, args.range);            
 
             curl_easy_setopt(curl, CURLOPT_USERAGENT, (args.userAgent) ? args.userAgent : args.config.userAgent.c_str());
             curl_easy_setopt(curl, CURLOPT_URL, args.url);
             curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
             curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5L);
-            if (args.range)
-                curl_easy_setopt(curl, CURLOPT_RANGE, args.range);
+
             return true;
         }
 
