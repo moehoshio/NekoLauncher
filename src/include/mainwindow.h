@@ -259,7 +259,7 @@ namespace ui {
             QCheckBox *devOptEnable;
             QCheckBox *devOptDebug;
             QCheckBox *devOptTls;
-            QCheckBox *devOptUpdatePage;
+            QCheckBox *devOptLoadingPage;
             QCheckBox *devOptHintPage;
 
             QWidget *devServerInputLayoutWidget;
