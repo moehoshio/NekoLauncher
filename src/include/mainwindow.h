@@ -139,6 +139,17 @@ namespace ui {
             QWidget *scrollContent;
             QVBoxLayout *scrollLayout;
 
+            //general group
+            QGroupBox *generalGroup;
+            QVBoxLayout *generalGroupLayout;
+
+            //lang select
+            QWidget *langSelectLayoutWidget;
+            QHBoxLayout *langSelectLayout;
+            QLabel *langSelectText;
+            QComboBox *langSelectBox;
+            //general group
+
             // bg group
             QGroupBox *bgGroup;
             QVBoxLayout *bgGroupLayout;

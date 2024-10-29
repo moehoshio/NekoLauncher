@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
         neko::Config config(exec::getConfigObj());
         ui::MainWindow w(config);
         w.showLoad({ui::loadMsg::OnlyRaw,
-                    "testing network connect..."});
+                    neko::info::translations(neko::info::lang.network.testtingNetwork)});
         w.show();
-
+        
         auto hintFunc = [=, &w](const ui::hintMsg &m) { emit w.showHintD(m); };
         auto loadFunc = [=, &w](const ui::loadMsg &m) { emit w.showLoadD(m); };
         auto setLoadInfo = [=, &w](unsigned int val, const char *msg) {

@@ -36,12 +36,12 @@ namespace neko {
 
         nlog::Info(FI, LI, "%s :  proxy : %s , dev: %s , tls : %s , protocol : %s , dUseragent : %s ", FN, Dconfig.proxy.c_str(),exec::boolTo<const char *>(dev), exec::boolTo<const char *>(tls), Dconfig.protocol.c_str() ,Dconfig.userAgent.c_str());
 
-        return exec::getThreadObj().enqueue( []() {
+        return exec::getThreadObj().enqueue( []{
             network net;
             for (auto it : Api::hostList) {
 
                 std::string url = buildUrl(Api::testing, it);
-                RetHttpCode retCode;
+                int retCode;
 
                 decltype(net)::Args args{
                     url.c_str(),
@@ -50,19 +50,18 @@ namespace neko {
                     std::string id = "testing-"s + it;
                     args.id = id.c_str();
 
-                decltype(net)::autoRetryArgs Aargs{args, {200}, 2, 50};
+                decltype(net)::autoRetryArgs Aargs{args, std::vector<int>{200}, 2, 50};
 
-                bool res = net.autoRetry(Opt::onlyRequest, Aargs);
-
-                if (res) {
+                if (net.autoRetry(Opt::onlyRequest, Aargs)) {
                     nlog::Info(FI, LI, "%s : testing okay , host : %s , retCode : %d", FN, it, retCode);
-                    Dconfig.host = it;
+                    neko::networkBase::Dconfig.host = std::string(it);
                     return;
+                } else {
+                    nlog::Warn(FI,LI,"%s : faild to testing , now try to the next",FN);
                 }
-
             };
             nlog::Err(FI, LI, "%s : Test: No available hosts!", FN);
-            Dconfig.host = Api::hostList[0];
+            return;
         });
     }
 

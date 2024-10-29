@@ -6,13 +6,23 @@ standard error message:
 
 ```json
 {
-    To be determined
-    // "errType":"",
-    // "msg":"",
-    // "details": "",
-    // "traceId": ""
+    "error":{
+        "type":"",
+        "message":"",//Note Messages return translations corresponding to the preferred language.
+        "details":[
+        {
+            "field": "username",
+            "issue": "Username is required."
+        },
+        {
+            "field": "email",
+            "issue": "Email format is invalid."
+        }
+        //...
+        ]
+    }
 }
-``` 
+```
 
 1. testing
     - `/v1/testing/ping`
@@ -20,9 +30,10 @@ standard error message:
         - Custom return content, typically HTTP code 200 indicates success
 2. api
 
-    - `/v1/api/maintenance?os=osName` : get
+    - `/v1/api/maintenance?os=osName&lang=en` : get
 
         - os : windows, osx, linux or custom
+        - lang : preferred language
         - Returns maintenance information
 
         ```json
@@ -44,7 +55,7 @@ standard error message:
             "core":"v0.0.1",
             "res":"v0.0.1",
             "os":"osx",// windows , osx , linux or custom
-            "token":"" // opt
+            "lang":"en"
         }
         ```
 

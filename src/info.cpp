@@ -1,8 +1,14 @@
 #include "info.h"
 
-namespace neko
-{
-    std::string info::Data::home = "";
-    std::string info::Data::temp = "";
-    
+namespace neko {
+    info::LanguageKey info::lang;
+
+    std::string info::language(const std::string &lang) {
+        static std::string preferredLanguage = "en";
+
+        if (!lang.empty())
+            preferredLanguage = lang;
+
+        return preferredLanguage;
+    }
 } // namespace neko

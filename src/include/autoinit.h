@@ -21,11 +21,11 @@ namespace neko {
         if (exec::getConfigObj().LoadFile("config.ini") < 0)
             oneIof o("loadBad.txt"); // If there is a callback, the user can be notified
         
-        info::init();
         setLog(argc, argv);
         setThreadNums();
         setLogThreadName();
         configInfoPrint(exec::getConfigObj());
+        info::language(exec::getConfigObj().GetValue("main","language","en"));
         return networkBase::init();
         
     };

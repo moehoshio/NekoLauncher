@@ -4,6 +4,7 @@
 namespace neko {
     struct Config {
         struct Main {
+            const char *lang;
             const char *bgType;
             const char *bg;
             const char *windowSize;
@@ -48,6 +49,7 @@ namespace neko {
         Manage manage;
         Config(const CSimpleIniA &cfg) {
             main = Main{
+                cfg.GetValue("main","language","en"),
                 cfg.GetValue("main","backgroundType","image"),
                 cfg.GetValue("main", "background", "img/bg.png"),
                 cfg.GetValue("main", "windowSize", ""),
@@ -78,6 +80,7 @@ namespace neko {
                 cfg.GetValue("manage","authlibPrefetched","")};
         }
     static void save(CSimpleIniA &cfg,const char * fileName,Config config){
+        cfg.SetValue("main","language",config.main.lang);
         cfg.SetValue("main","backgroundType",config.main.bgType);
         cfg.SetValue("main","background",config.main.bg);
         cfg.SetValue("main","windowSize",config.main.windowSize);

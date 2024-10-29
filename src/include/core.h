@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-constexpr auto launcherMode = "minecraft";//lua or minecraft
+constexpr const char * launcherMode = "minecraft";//lua or minecraft
 
 namespace neko {
 
@@ -83,7 +83,7 @@ namespace neko {
             auto res = net.get(networkBase::Opt::postText, refArgs);
             auto jsonData = nlohmann::json::parse(res, nullptr, false);
             if (jsonData.is_discarded()) {
-                hintFunc({"Error","faild to token json parse","",1});
+                hintFunc({info::translations(info::lang.title.error),info::translations(info::lang.error.tokenJsonParse),"",1});
                 nlog::Err(FI, LI, "%s : faild to token json parse", FN);
                 return false;
             }
@@ -122,7 +122,7 @@ namespace neko {
         auto res = net.get(networkBase::Opt::getContent, args);
         auto resJson = nlohmann::json::parse(res, nullptr, false);
         if (resJson.is_discarded()) {
-            hintFunc({"Error", "faild to api mete data parse", "", 1});
+            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.apiMetaParse), "", 1});
             nlog::Err(FI, LI, "%s : faild to api mete data parse", FN);
             return;
         }
@@ -178,7 +178,7 @@ namespace neko {
         // ./.minecraft/version/name/name.json
         std::string gameVerFileStr;
         std::fstream gameVerFile;
-        for (const auto &it : std::filesystem::directory_iterator(info::getWorkDir() + minecraftDir + "/versions")) {
+        for (const auto &it : std::filesystem::directory_iterator(info::workPath() + minecraftDir + "/versions")) {
             if (it.is_directory()) {
                 gameVerDir = std::filesystem::absolute(it).string() | exec::unifiedPaths;
                 gameVerFileStr = gameVerDir + "/" + it.path().filename().string() + ".json";
@@ -198,7 +198,7 @@ namespace neko {
         if (gameVerStr.empty())
         {
             nlog::Err(FI,LI,"%s : game version string is empty!",FN);
-            hintFunc({"Error","game version string is empty!"});
+            hintFunc({info::translations(info::lang.title.error),info::translations(info::lang.error.minecraftVersionEmpty)});
             return;
         }
         
@@ -206,7 +206,7 @@ namespace neko {
         auto verJsonData = nlohmann::json::parse(gameVerStr);
         if (verJsonData.is_discarded()) {
             nlog::Err(FI, LI, "%s : faild to json parse! file : %s ", FN, gameVerFileStr.c_str());
-            hintFunc({"Error","faild to json parse! \nThe file may be damaged"});
+            hintFunc({info::translations(info::lang.title.error),info::translations(info::lang.error.minecraftVersionParse)});
             return;
         }
 
@@ -217,8 +217,8 @@ namespace neko {
 
         // jvm
         std::string
-            javaPath = (info::getWorkDir() + "/java/bin/java"), // Assume built-in Java is distributed with the executable.
-            gameDir = info::getWorkDir() + minecraftDir,// work dir + ./minecraft
+            javaPath = (info::workPath() + "/java/bin/java"), // Assume built-in Java is distributed with the executable.
+            gameDir = info::workPath() + minecraftDir,// work dir + ./minecraft
             mainClass = verJsonData.value("mainClass", "net.minecraft.client.main.Main"),
             clientJarPath = gameVerDir + "/" + verJsonData.value("jar", "") + ".jar",// ./ game ver dir + name.jar
             nativesPath = gameVerDir + "/natives",// game ver dir + /natives
@@ -398,13 +398,13 @@ namespace neko {
                 args.writeCallback = networkBase::WriteCallbackFile;
                 net.Do(networkBase::Opt::downloadFile, args);
                 if (code != 200) {
-                    hintFunc({"Error", "faild to archives patch download", "", 1});
+                    hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftPatchDownload), "", 1});
                     nlog::Err(FI, LI, "%s : faild to archives patch download , file : %s , url : %s ", FN, single.path.c_str(), single.url.c_str());
                     return false;
                 }
                 auto hash = exec::hashFile(single.path, exec::hashs::Algorithm::sha1);
                 if (hash != single.sha1) {
-                    hintFunc({"Error", "download the archives patch hash not match", "", 1});
+                    hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftPatchDownloadHash), "", 1});
                     nlog::Err(FI, LI, "%s : faild to archives patch download , file : %s , ex sha1 : %s , sha1 : %s , size : %zu , url : %s", FN, single.path.c_str(), hash.c_str(), single.sha1.c_str(), single.size, single.url.c_str());
                     return false;
                 }
@@ -531,12 +531,12 @@ namespace neko {
             auto authlibVersionInfo = net.get(networkBase::Opt::getContent, args);
             auto authlibVersionData = nlohmann::json::parse(authlibVersionInfo,nullptr,false);
             if (code != 200) {
-                hintFunc({"Error", "in download authlib injector \nfaild to get authlib Injector version info", "", 1});
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftGetAuthlibVersion), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector ,faild to get authlib Injector version info", FN);
                 return;
             }
             if (authlibVersionData.is_discarded()){
-                hintFunc({"Error", "in download authlib injector \nfaild to parse authlib Injector version info", "", 1});
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibJsonParse), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector ,faild to parse authlib Injector version info", FN);
                 return;
             }
@@ -548,14 +548,14 @@ namespace neko {
 
             net.Do(networkBase::Opt::downloadFile,args);
             if (code != 200) {
-                hintFunc({"Error", "in download authlib injector \nfaild to download authlib Injector archive", "", 1});
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibDownload), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector ,faild to download authlib Injector archive", FN);
                 return;
             }
             auto hash = exec::hashFile(authlibPath);
             auto exHash = authlibVersionData["checksums"].value("sha256","");
             if(hash != exHash){
-                hintFunc({"Error", "in download authlib injector \ndownload is ok but hash not match", "", 1});
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibDownloadHash), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector , download is ok but hash not match , path : %s ,ex hash : %s , hash : %s ", FN,authlibPath.c_str(),exHash.c_str(),hash.c_str());
                 return;
             }
@@ -568,11 +568,11 @@ namespace neko {
 
         if constexpr (info::getOsName() == "windows") {
             std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
-            std::fstream file2(info::getWorkDir() + "/Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
+            std::fstream file2(info::workPath() + "/Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
             file2 << command;
             file2.close();
             nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
-            std::string cmd = "cmd.exe /C powershell " + info::getWorkDir() + "/Nekolc.ps1";
+            std::string cmd = "cmd.exe /C powershell " + info::workPath() + "/Nekolc.ps1";
             launcherProcess(cmd.c_str(), opt, winFunc);
         } else {
             std::filesystem::current_path("." + minecraftDir);
@@ -588,14 +588,14 @@ namespace neko {
         // It can launch Lua, Java, scripts, executables, or anything else.
         // includes pre-execution checks; in short, you can fully customize it.
 
-        if constexpr (launcherMode == std::string("minecraft")) {
+        if constexpr (std::string("minecraft") == launcherMode ) {
             launcherMinecraftAuthlibInjectorPrefetchedCheck(hintFunc);
             if (!launcherMinecraftTokenValidate(hintFunc))
                 return;
             launcherMinecraft(opt, exec::getConfigObj(), hintFunc, winFunc);
         }
 
-        if constexpr (launcherMode == std::string("lua")) {
+        if constexpr (std::string("lua") == launcherMode) {
             if (!launcherLuaPreCheck()) {
                 nlog::Err(FI, LI, "%s : Error  Lua or scriptPath not exists !", FN);
                 return;
@@ -603,7 +603,7 @@ namespace neko {
 
             std::string luaPath = std::getenv("LUA_PATH");
             // e.g: /apps/lua /apps/workdir/lua/hello.luac
-            std::string command = luaPath + " " + info::getWorkDir() + "/lua/hello.luac";
+            std::string command = luaPath + " " + info::workPath() + "/lua/hello.luac";
             launcherProcess(command, opt, winFunc);
         }
     }
@@ -662,7 +662,7 @@ namespace neko {
     inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
         if (!url.empty()) {
             network net;
-            auto fileName = info::getTemp() + "update_" + exec::generateRandomString(10) + ".png";
+            auto fileName = info::temp() + "update_" + exec::generateRandomString(10) + ".png";
             int code = 0;
 
             network<std::string>::Args args{url.c_str(), fileName.c_str(), &code};
@@ -670,7 +670,7 @@ namespace neko {
             net.Do(networkBase::Opt::downloadFile, args);
             if (code != 200) {
                 nlog::Warn(FI, LI, "%s : failed to poster download", FN);
-                hintFunc({"Warning", "failed to poster download!", "", 1, [](bool) {}});
+                hintFunc({info::translations(info::lang.title.warning), info::translations(info::lang.error.downloadPoster), "", 1, [](bool) {}});
                 return T();
             }
             return fileName.c_str();
@@ -681,7 +681,8 @@ namespace neko {
     // over : not maintenance, undone : in maintenance
     inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
-        loadFunc({ui::loadMsg::Type::OnlyRaw, "maintenance info req.."});
+        
+        loadFunc({ui::loadMsg::Type::OnlyRaw, info::translations(info::lang.loading.maintenanceInfoReq )});
 
         std::string res;
         std::mutex mtx;
@@ -693,7 +694,7 @@ namespace neko {
             std::unique_lock<std::mutex> lock(mtx);
 
             network net;
-            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsName());
+            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsName()+"&lang=" + info::language());
             int code = 0;
             decltype(net)::Args args{url.c_str(), nullptr, &code};
             auto temp = net.get(networkBase::Opt::getContent, args);
@@ -702,14 +703,20 @@ namespace neko {
                 res = temp | exec::move;
                 break;
             }
+            // if (code ==400)
+            // {
+            //     hintFunc({"Error","","",1});
+            // }
+            
             if (i == 4) {
-                hintFunc({"Error", "Retried multiple times but still unable to establish a connection.", "", 1, [](bool) {
+                
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.networkConnectionRetryMax), "", 1, [](bool) {
                               nlog::Err(FI, LI, "%s : Retried multiple times but still unable to establish a connection. Exit", FN);
                               QApplication::quit();
                           }});
                 return State::undone;
             } else {
-                hintFunc({"Error", "An issue occurred while retrieving maintenance information: " + networkBase::errCodeReason(code), "", 2, [=, &condVar, &stop](bool check) {
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.maintenanceInfoReq) + networkBase::errCodeReason(code), "", 2, [=, &condVar, &stop](bool check) {
                               if (!check) {
                                   stop = true;
                                   condVar.notify_one();
@@ -727,12 +734,12 @@ namespace neko {
         }
 
         nlog::Info(FI, LI, "%s : res : %s", FN, res.c_str());
-        setLoadInfoFunc(0, "maintenance info paese...");
+        setLoadInfoFunc(0, info::translations(info::lang.loading.maintenanceInfoParse).c_str());
 
         auto jsonData = nlohmann::json::parse(res, nullptr, false);
         if (jsonData.is_discarded()) {
             nlog::Info(FI, LI, "%s : failed to maintenance parse!", FN);
-            hintFunc({"Error", "failed to maintenance parse!", "", 1, [](bool) {
+            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.maintenanceInfoParse), "", 1, [](bool) {
                           nlog::Err(FI, LI, "%s : click , quit programs", FN);
                           QApplication::quit();
                       }});
@@ -750,10 +757,10 @@ namespace neko {
                     link = jsonData["link"].get<std::string>();
         msg = time + "\n" + msg;
 
-        setLoadInfoFunc(0, "download maintained poster...");
+        setLoadInfoFunc(0, info::translations(info::lang.loading.downloadMaintenancePoster).c_str());
         auto fileName = downloadPoster(hintFunc, poster);
 
-        ui::hintMsg hmsg{"Being maintained", msg, fileName, 1, [link](bool) {
+        ui::hintMsg hmsg{info::translations(info::lang.title.maintenance), msg, fileName, 1, [link](bool) {
                              QDesktopServices::openUrl(QUrl(link.c_str()));
                              QApplication::quit();
                          }};
@@ -768,7 +775,8 @@ namespace neko {
         nlohmann::json dataJson = {
             {"core", info::getVersion()},
             {"res", info::getResVersion()},
-            {"os", info::getOsName()}};
+            {"os", info::getOsName()},
+            {"lang",info::language()}};
         auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
         int code = 0;
@@ -830,19 +838,19 @@ namespace neko {
         auto maintenanceState = checkMaintenance(hintFunc, loadFunc, setLoadInfoFunc);
         if (maintenanceState != State::over)
             return maintenanceState;
-
-        setLoadInfoFunc(0, "check update..");
+        
+        setLoadInfoFunc(0, info::translations(info::lang.loading.checkUpdate).c_str());
 
         auto updateState = checkUpdate(res);
         if (updateState != State::undone)
             return updateState;
 
-        setLoadInfoFunc(0, "update info parse...");
+        setLoadInfoFunc(0, info::translations(info::lang.loading.updateInfoParse).c_str());
         auto data = parseUpdate(res);
         if (data.empty())
             return State::undone;
 
-        setLoadInfoFunc(0, "download update poster...");
+        setLoadInfoFunc(0, info::translations(info::lang.loading.downloadUpdatePoster).c_str());
         auto fileName = downloadPoster(hintFunc, data.poster);
 
         if (!data.mandatory) {
@@ -866,7 +874,7 @@ namespace neko {
             }
         }
 
-        ui::loadMsg lmsg{ui::loadMsg::All, "setting download...", data.title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
+        ui::loadMsg lmsg{ui::loadMsg::All, info::translations(info::lang.loading.settingDownload), data.title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
         loadFunc(lmsg);
 
         std::vector<std::future<neko::State>> result;
@@ -878,7 +886,7 @@ namespace neko {
                 it.name = exec::generateRandomString(16);
 
             if (it.temp)
-                it.name = info::getTemp() + it.name;
+                it.name = info::temp() + it.name;
 
             if (!it.absoluteUrl)
                 it.url = networkBase::buildUrl(it.url);
@@ -891,7 +899,7 @@ namespace neko {
                 info.url.c_str(),
                 info.name.c_str(),
                 &code};
-            std::string ids = std::to_string(id);
+            std::string ids = "update-" + std::to_string(id);
             args.id = ids.c_str();
             args.writeCallback = networkBase::WriteCallbackFile;
             if (stop)
@@ -905,7 +913,7 @@ namespace neko {
                     return State::tryAgainLater;
             }
             ++progress;
-            setLoadInfoFunc(progress, "download update..");
+            setLoadInfoFunc(progress, info::translations(info::lang.loading.downloadUpdate).c_str());
             return State::over;
         };
 
@@ -914,7 +922,7 @@ namespace neko {
             if (hash == exHash) {
                 nlog::Info(FI, LI, "%s : Everything is OK , file : %s  hash is matching", FN, file.c_str());
                 ++progress;
-                setLoadInfoFunc(progress, "download update..");
+                setLoadInfoFunc(progress, info::translations(info::lang.loading.downloadUpdate).c_str());
                 return State::over;
             } else {
                 nlog::Err(FI, LI, "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", FN, file.c_str(), exHash.c_str(), hash.c_str());
@@ -941,7 +949,7 @@ namespace neko {
 
             if (it.get() != State::over) {
                 stop = true;
-                hintFunc({"Error", "failed to update download !\nclick to reStart update", "", 2, [=](bool check) {
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.downloadUpdate), "", 2, [=](bool check) {
                               if (check) {
                                   exec::getThreadObj().enqueue([=] {
                                       autoUpdate(hintFunc, loadFunc, setLoadInfoFunc);
@@ -957,7 +965,7 @@ namespace neko {
         nlog::Info(FI, LI, "%s : update is ok", FN);
 
         bool needExecUpdate = false;
-        std::string cmd = info::getWorkDir() + "/update " + info::getWorkDir();
+        std::string cmd = info::workPath() + "/update " + info::workPath();
 
         for (const auto &it : data.urls) {
             if (it.temp) {
@@ -980,7 +988,7 @@ namespace neko {
                 QApplication::quit();
             };
 
-            hintFunc({"reStart", "The update is ready\nPreparing to restart within 5 seconds.", "", 1, execUpdate});
+            hintFunc({info::translations(info::lang.title.reStart), info::translations(info::lang.general.updateOverReStart), "", 1, execUpdate});
             auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
 
             if (resState == std::cv_status::timeout) {
@@ -1014,7 +1022,7 @@ namespace neko {
         auto resData = nlohmann::json::parse(res, nullptr, false);
 
         if (resData.is_discarded()) {
-            hintFunc({"Error", "faild to json parse!", "", 1});
+            hintFunc({info::translations(info::lang.title.error) , info::translations(info::lang.error.jsonParse), "", 1});
             return State::undone;
         }
 
