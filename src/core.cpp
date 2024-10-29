@@ -18,10 +18,10 @@ namespace neko {
         STARTUPINFOA si = {sizeof(si)};
         PROCESS_INFORMATION pi;
 
-        if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, false, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
-            nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::getWorkDir().c_str());
+        if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, false, NULL, NULL, info::workPath().c_str(), &si, &pi)) {
+            nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::workPath().c_str());
         } else {
-            nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::getWorkDir().c_str());
+            nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::workPath().c_str());
         }
     }
 #else
@@ -48,10 +48,10 @@ namespace neko {
         PROCESS_INFORMATION pi;
         switch (opt) {
             case launcherOpt::keep:
-                if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, true, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
-                    nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::getWorkDir().c_str());
+                if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, true, NULL, NULL, info::workPath().c_str(), &si, &pi)) {
+                    nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::workPath().c_str());
                 } else {
-                    nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::getWorkDir().c_str());
+                    nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::workPath().c_str());
                 }
                 break;
             case launcherOpt::endProcess:
@@ -60,10 +60,10 @@ namespace neko {
                 break;
             case launcherOpt::hideProcessAndOverReShow:
                 winFunc(false);
-                if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, true, NULL, NULL, info::getWorkDir().c_str(), &si, &pi)) {
-                    nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::getWorkDir().c_str());
+                if (!CreateProcessA(NULL, const_cast<char *>(command.c_str()), NULL, NULL, true, NULL, NULL, info::workPath().c_str(), &si, &pi)) {
+                    nlog::Err(FI, LI, "%s : Faild to Create process! cmd : %s , in dir : %s ", FN, command.c_str(), info::workPath().c_str());
                 } else {
-                    nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::getWorkDir().c_str());
+                    nlog::Info(FI, LI, "%s : Create process okay , cmd : %s , in dir : %s", FN, command.c_str(), info::workPath().c_str());
                 }
                 winFunc(true);
                 break;

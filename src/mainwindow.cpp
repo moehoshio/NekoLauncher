@@ -26,6 +26,14 @@ namespace ui {
         pageScrollArea = new QScrollArea(this);
         scrollLayout = new QVBoxLayout(scrollContent);
 
+        generalGroup = new QGroupBox(scrollContent);
+        generalGroupLayout = new QVBoxLayout(generalGroup);
+
+        langSelectLayoutWidget = new QWidget(generalGroup);
+        langSelectLayout = new QHBoxLayout(langSelectLayoutWidget);
+        langSelectText = new QLabel(langSelectLayoutWidget);
+        langSelectBox = new QComboBox(langSelectLayoutWidget);
+
         bgGroup = new QGroupBox(scrollContent);
         bgGroupLayout = new QVBoxLayout(bgGroup);
 
@@ -111,6 +119,19 @@ namespace ui {
         moreTempText = new QLabel(moreTempLayoutWidget);
         moreTempEdit = new QLineEdit(moreTempLayoutWidget);
         moreTempTool = new QToolButton(moreTempLayoutWidget);
+
+        for (const auto &it : neko::info::getLanguages())
+        {
+            langSelectBox->addItem(it.c_str());
+        }
+        langSelectLayout->addWidget(langSelectText);
+        langSelectLayout->addWidget(langSelectBox);
+
+        langSelectLayoutWidget->setLayout(langSelectLayout);
+
+        generalGroupLayout->addWidget(langSelectLayoutWidget);
+
+        generalGroup->setLayout(generalGroupLayout);
 
         bgSelectButtonGroup->addButton(bgSelectRadioNone, 1);
         bgSelectButtonGroup->addButton(bgSelectRadioImage, 2);
@@ -211,6 +232,7 @@ namespace ui {
         moreTempLayout->addWidget(moreTempEdit);
         moreTempLayout->addWidget(moreTempTool);
 
+        scrollLayout->addWidget(generalGroup);
         scrollLayout->addWidget(bgGroup);
         scrollLayout->addWidget(styleGroup);
         scrollLayout->addWidget(winGroup);
@@ -289,9 +311,9 @@ namespace ui {
         scrollArea->setWidgetResizable(true);
         scrollAreaLayout->addWidget(scrollArea);
 
-        tabWidget->addTab(page1, "帳號");
+        tabWidget->addTab(page1, neko::info::translations(neko::info::lang.general.account).c_str());
 
-        tabWidget->addTab(page2, "一般");
+        tabWidget->addTab(page2, neko::info::translations(neko::info::lang.general.general).c_str());
 
         tabWidget->addTab(page3, "more");
 
@@ -341,11 +363,11 @@ namespace ui {
     MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
 
         toolbar = new ToolBar(this);
-        close_ = new QAction(QIcon::fromTheme("window-close"), "close", toolbar);
+        close_ = new QAction(QIcon::fromTheme("window-close"), neko::info::translations(neko::info::lang.general.close).c_str(), toolbar);
 
-        minimize = new QAction(QIcon::fromTheme("window-minimize"), "minimize", toolbar);
+        minimize = new QAction(QIcon::fromTheme("window-minimize"), neko::info::translations(neko::info::lang.general.minimize).c_str(), toolbar);
 
-        maximize = new QAction(QIcon::fromTheme("window-maximize"), "maximize", toolbar);
+        maximize = new QAction(QIcon::fromTheme("window-maximize"), neko::info::translations(neko::info::lang.general.maximize).c_str(), toolbar);
 
         sp1 = toolbar->addSeparator();
         sp2 = toolbar->addSeparator();
@@ -450,7 +472,7 @@ namespace ui {
                 setting->page2->stylePointSizeEditLine->setMaximumWidth(width() * 0.5);
                 setting->page2->stylePointSizeEditFontBox->setMaximumWidth(width() * 0.32);
 
-                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->moreGroup, setting->page2->lcGroup}) {
+                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->generalGroup,setting->page2->moreGroup, setting->page2->lcGroup}) {
                     setOneTabGroupMMSize->setMinimumHeight(std::max<double>(110, height() * 0.18));
                     setOneTabGroupMMSize->setMaximumHeight(std::max<double>(680, height() * 0.5));
                 }
@@ -462,7 +484,7 @@ namespace ui {
                     setThreeTabGroupMMSize->setMinimumHeight(std::max<double>(330, height() * 0.5));
                     setThreeTabGroupMMSize->setMaximumHeight(std::max<double>(900, height() * 0.9));
                 }
-                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
+                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->langSelectLayoutWidget,setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
                     setOptBSize->setBaseSize(width() * 0.7, height() * 0.2);
                 }
 
@@ -503,11 +525,11 @@ namespace ui {
 
         setting->page2->bgInputToolButton->setMinimumSize(30, 30);
         setting->page2->moreTempTool->setMinimumSize(30, 30);
-        for (auto groupAddSpacing : std::vector<QVBoxLayout *>{setting->page2->bgGroupLayout, setting->page2->winGroupLayout, setting->page2->styleGroupLayout, setting->page2->lcGroupLayout, setting->page2->netGroupLayout, setting->page3->devOptGroupLayout}) {
+        for (auto groupAddSpacing : std::vector<QVBoxLayout *>{setting->page2->generalGroupLayout, setting->page2->bgGroupLayout, setting->page2->winGroupLayout, setting->page2->styleGroupLayout, setting->page2->lcGroupLayout, setting->page2->netGroupLayout, setting->page3->devOptGroupLayout}) {
             groupAddSpacing->addSpacing(12);
         }
 
-        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
+        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->langSelectBox,setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
             setMinHeight50->setMinimumHeight(50);
         }
     }
@@ -574,12 +596,12 @@ namespace ui {
         }
 
         for (auto setGroupBg : std::vector<QWidget *>{
-                 setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 setting->page2->generalGroup,setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             setGroupBg->setStyleSheet("QGroupBox { border: transparent; background-color: rgba(255,255,255,0);}");
         }
 
         for (auto setTabOptBg : std::vector<QWidget *>{
-                 input->centralWidget, setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->lcWindowSetBox, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
+                 input->centralWidget, setting->page2->langSelectLayoutWidget,setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->lcWindowSetBox, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
             setTabOptBg->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
         }
         setting->page2->styleBlurEffectRadiusSlider->setStyleSheet(sliderStyle);
@@ -590,62 +612,62 @@ namespace ui {
         for (auto setTranslucentBackground : std::vector<QWidget *>{input, widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
-        for (auto transparentWidgets : std::vector<QWidget *>{input, headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->lcWindowSetText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process, input->title, input->msg}) {
+        for (auto transparentWidgets : std::vector<QWidget *>{input, headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->langSelectText,setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->lcWindowSetText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process, input->title, input->msg}) {
             transparentWidgets->setStyleSheet("background-color: rgba(255,255,255,0);");
         }
     }
 
     void MainWindow::setupText() {
 
-        index->startButton->setText("START");
-        index->menuButton->setText("MENU");
+        index->startButton->setText(neko::info::translations(neko::info::lang.general.start).c_str());
+        index->menuButton->setText(neko::info::translations(neko::info::lang.general.menu).c_str());
 
         index->versionText->setText(("core: " + neko::info::getVersion() + "\nres: " + neko::info::getResVersion()).c_str());
 
-        loading->process->setText("loading...");
-        loading->titleH1->setText("TITLE");
-        loading->titleH2->setText("H2");
-        loading->process->setText("loading..");
         loading->progressBar->setFormat("%v/%m");
         setting->page3->devOptLoadingPage->setText("update");
         setting->page3->devOptHintPage->setText("hint");
-        hintWidget->button->setText("ok");
+        
+        hintWidget->button->setText(neko::info::translations(neko::info::lang.general.ok).c_str());
 
-        setting->page2->bgGroup->setTitle("background");
-        setting->page2->styleGroup->setTitle("style");
-        setting->page2->winGroup->setTitle("window");
-        setting->page2->lcGroup->setTitle("launcher");
-        setting->page2->netGroup->setTitle("network");
-        setting->page2->moreGroup->setTitle("more");
+        setting->page2->generalGroup->setTitle(neko::info::translations(neko::info::lang.general.general).c_str());
+        setting->page2->bgGroup->setTitle(neko::info::translations(neko::info::lang.general.background).c_str());
+        setting->page2->styleGroup->setTitle(neko::info::translations(neko::info::lang.general.style).c_str());
+        setting->page2->winGroup->setTitle(neko::info::translations(neko::info::lang.general.window).c_str());
+        setting->page2->lcGroup->setTitle(neko::info::translations(neko::info::lang.general.launcher).c_str());
+        setting->page2->netGroup->setTitle(neko::info::translations(neko::info::lang.general.network).c_str());
+        setting->page2->moreGroup->setTitle(neko::info::translations(neko::info::lang.general.more).c_str());
         setting->page3->devOptGroup->setTitle("dev");
 
-        setting->page2->bgSelectRadioNone->setText("none");
-        setting->page2->bgSelectRadioImage->setText("image");
-        setting->page2->bgSelectText->setText("type");
-        setting->page2->bgInputText->setText("setting");
+        setting->page2->langSelectText->setText(neko::info::translations(neko::info::lang.general.lang).c_str());
+    
+        setting->page2->bgSelectRadioNone->setText(neko::info::translations(neko::info::lang.general.none).c_str());
+        setting->page2->bgSelectRadioImage->setText(neko::info::translations(neko::info::lang.general.image).c_str());
+        setting->page2->bgSelectText->setText(neko::info::translations(neko::info::lang.general.type).c_str());
+        setting->page2->bgInputText->setText(neko::info::translations(neko::info::lang.general.setting).c_str());
         setting->page2->bgInputToolButton->setText("...");
 
-        setting->page2->styleBlurEffectSelectText->setText("blurHint");
-        setting->page2->styleBlurEffectSelectRadioAnimation->setText("Animation");
-        setting->page2->styleBlurEffectSelectRadioPerformance->setText("Performance");
-        setting->page2->styleBlurEffectSelectRadioQuality->setText("Quality");
-        setting->page2->styleBlurEffectRadiusText->setText("blurValue");
-        setting->page2->stylePointSizeEditText->setText("font");
+        setting->page2->styleBlurEffectSelectText->setText(neko::info::translations(neko::info::lang.general.blurHint).c_str());
+        setting->page2->styleBlurEffectSelectRadioAnimation->setText(neko::info::translations(neko::info::lang.general.animation).c_str());
+        setting->page2->styleBlurEffectSelectRadioPerformance->setText(neko::info::translations(neko::info::lang.general.performance).c_str());
+        setting->page2->styleBlurEffectSelectRadioQuality->setText(neko::info::translations(neko::info::lang.general.quality).c_str());
+        setting->page2->styleBlurEffectRadiusText->setText(neko::info::translations(neko::info::lang.general.blurValue).c_str());
+        setting->page2->stylePointSizeEditText->setText(neko::info::translations(neko::info::lang.general.font).c_str());
 
-        setting->page2->lcWindowSetText->setText("launcherMode");
-        setting->page2->lcWindowSetBox->setItemText(0, "keepWindow");
-        setting->page2->lcWindowSetBox->setItemText(1, "endProcess");
-        setting->page2->lcWindowSetBox->setItemText(2, "hideAndOverReShow");
+        setting->page2->lcWindowSetText->setText(neko::info::translations(neko::info::lang.general.launcherMode).c_str());
+        setting->page2->lcWindowSetBox->setItemText(0, neko::info::translations(neko::info::lang.general.keepWindow).c_str());
+        setting->page2->lcWindowSetBox->setItemText(1, neko::info::translations(neko::info::lang.general.endProcess).c_str());
+        setting->page2->lcWindowSetBox->setItemText(2, neko::info::translations(neko::info::lang.general.hideAndOverReShow).c_str());
 
-        setting->page2->winSizeEditText->setText("size");
+        setting->page2->winSizeEditText->setText(neko::info::translations(neko::info::lang.general.size).c_str());
         setting->page2->winSizeEditTextX->setText("X");
-        setting->page2->winSysFrameCheckBox->setText("useSystemWindowFrame");
-        setting->page2->winBarKeepRightCheckBox->setText("barKeepRight");
+        setting->page2->winSysFrameCheckBox->setText(neko::info::translations(neko::info::lang.general.useSystemWindowFrame).c_str());
+        setting->page2->winBarKeepRightCheckBox->setText(neko::info::translations(neko::info::lang.general.barKeepRight).c_str());
 
-        setting->page2->netProxyEnable->setText("proxy");
-        setting->page2->netThreadNotAutoEnable->setText("notAutoSetThreadNums");
+        setting->page2->netProxyEnable->setText(neko::info::translations(neko::info::lang.general.proxy).c_str());
+        setting->page2->netThreadNotAutoEnable->setText(neko::info::translations(neko::info::lang.general.notAutoSetThreadNums).c_str());
 
-        setting->page2->moreTempText->setText("customTempDir");
+        setting->page2->moreTempText->setText(neko::info::translations(neko::info::lang.general.customTempDir).c_str());
         setting->page2->moreTempTool->setText("...");
 
         setting->page3->devOptEnable->setText("enable");
@@ -654,13 +676,13 @@ namespace ui {
         setting->page3->devServerAuto->setText("autoServer");
 
         setting->page2->bgInputLineEdit->setPlaceholderText("img/bg.png");
-        setting->page2->stylePointSizeEditLine->setPlaceholderText("point size");
-        setting->page2->winSizeEditWidth->setPlaceholderText("width");
-        setting->page2->winSizeEditHeight->setPlaceholderText("height");
-        setting->page2->netProxyEdit->setPlaceholderText("default use System proxy ,e.g http://127.0.0.1:1089 ");
-        setting->page2->moreTempEdit->setPlaceholderText("temp");
+        setting->page2->stylePointSizeEditLine->setPlaceholderText(neko::info::translations(neko::info::lang.general.pointSize).c_str());
+        setting->page2->winSizeEditWidth->setPlaceholderText(neko::info::translations(neko::info::lang.general.width).c_str());
+        setting->page2->winSizeEditHeight->setPlaceholderText(neko::info::translations(neko::info::lang.general.height).c_str());
+        setting->page2->netProxyEdit->setPlaceholderText(neko::info::translations(neko::info::lang.general.proxyPlaceholder).c_str());
+        setting->page2->moreTempEdit->setPlaceholderText(neko::info::translations(neko::info::lang.general.tempDir).c_str());
 
-        setting->closeButton->setToolTip("close");
+        setting->closeButton->setToolTip(neko::info::translations(neko::info::lang.general.close).c_str());
     }
 
     void MainWindow::setupFont(neko::Config config) {
@@ -676,12 +698,12 @@ namespace ui {
     void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
-                 input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
+                 input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton,setting->page2->langSelectText,setting->page2->langSelectBox, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
             normal->setFont(text);
         }
 
         for (auto h2Title : std::vector<QWidget *>{
-                 input->title, hintWidget->title, loading->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 input->title, hintWidget->title, loading->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->generalGroup,setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             h2Title->setFont(h2);
         }
 
@@ -706,8 +728,8 @@ namespace ui {
         connect(index->startButton, &QPushButton::clicked, [=, this] {
             // Maybe we should switch the status to loading after the user clicks start?
 
-            if (setting->page1->accountLogInOutButton->text() == "login") {
-                showHint({"Not login", "Please log in to your account first", "", 1});
+            if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str()) {
+                showHint({neko::info::translations(neko::info::lang.title.notLogin) , neko::info::translations(neko::info::lang.general.needLogin), "", 1});
                 return;
             }
 
@@ -752,8 +774,8 @@ namespace ui {
             updatePage(state, oldState);
         });
         connect(setting->page1->accountLogInOutButton, &QPushButton::clicked, [=, this] {
-            if (setting->page1->accountLogInOutButton->text() == "login") {
-                showInput({"login", "", "", {"username", "password"}, [=, this](bool check) {
+            if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str() ) {
+                showInput({neko::info::translations(neko::info::lang.title.inputLogin), "", "", {neko::info::translations(neko::info::lang.general.username), neko::info::translations(neko::info::lang.general.password)}, [=, this](bool check) {
                                if (!check) {
                                    hideInput();
                                    return;
@@ -761,7 +783,7 @@ namespace ui {
 
                                auto inData = getInput();
                                if (inData.size() != 2) {
-                                   showHint({"Not enough parameters", "Not enough parameters\n please fill in all the fields", "", 1});
+                                   showHint({neko::info::translations(neko::info::lang.title.inputNotEnoughParameters), neko::info::translations(neko::info::lang.general.notEnoughParameters), "", 1});
                                    return;
                                }
                                auto hintFunc = [=, this](const ui::hintMsg &m) {
@@ -795,9 +817,15 @@ namespace ui {
                     args.header = "Content-Type: application/json";
                     net.Do(neko::networkBase::Opt::postText, args);
                 });
-                setting->page1->accountLogInOutButton->setText("login");
-                setting->page1->accountLogInOutInfoText->setText("未登入");
+                setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
+                setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
             }
+        });
+
+        connect(setting->page2->langSelectBox,&QComboBox::currentTextChanged,[=,this](const QString& text){
+            neko::info::language(text.toStdString());
+            exec::getConfigObj().SetValue("main","language",text.toStdString().c_str());
+            showHint({neko::info::translations(neko::info::lang.title.incomplete) ,neko::info::translations(neko::info::lang.general.incompleteApplied),"", 1,[](bool){}});
         });
         connect(setting->page2->bgInputLineEdit, &QLineEdit::editingFinished, [=, this]() {
             bgWidget->setPixmap(setting->page2->bgInputLineEdit->text().toStdString().c_str());
@@ -812,7 +840,7 @@ namespace ui {
         });
         connect(
             setting->page2->moreTempEdit, &QLineEdit::editingFinished, [=, this]() {
-                neko::info::setTemp(setting->page2->moreTempEdit->text().toStdString().c_str());
+                neko::info::temp(setting->page2->moreTempEdit->text().toStdString().c_str());
             });
         connect(
             setting->page2->moreTempTool, &QPushButton::clicked, [=, this]() {
@@ -829,11 +857,14 @@ namespace ui {
             switch (id) {
                 case 1:
                     bgWidget->hide();
+                    setting->page2->bgInputLineEdit->setDisabled(true);
+                    setting->page2->bgInputToolButton->setDisabled(true);
                     break;
                 case 2:
                     bgWidget->show();
                     bgWidget->setPixmap(setting->page2->bgInputLineEdit->text());
-
+                    setting->page2->bgInputLineEdit->setDisabled(false);
+                    setting->page2->bgInputToolButton->setDisabled(false);
                     break;
                 default:
                     break;
@@ -992,7 +1023,7 @@ namespace ui {
         connect(this, &MainWindow::setLoadingNowD, this, &MainWindow::setLoadingNow);
         connect(this, &MainWindow::setLoadingValD, this, &MainWindow::setLoadingVal);
         connect(this, &MainWindow::loginStatusChangeD, [=, this](const std::string &name) {
-            setting->page1->accountLogInOutButton->setText("logout");
+            setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.logout).c_str());
             setting->page1->accountLogInOutInfoText->setText(name.c_str());
         });
         connect(this, &MainWindow::winShowHideD, this, &MainWindow::winShowHide);
@@ -1017,6 +1048,7 @@ namespace ui {
         QIcon icon;
         icon.addFile(QString::fromUtf8("img/ico.png"), QSize(256, 256), QIcon::Normal, QIcon::Off);
         this->setWindowIcon(icon);
+        setting->page2->langSelectBox->setCurrentText(config.main.lang);
         if (std::string("none") == config.main.bgType) {
             setting->page2->bgSelectRadioNone->setChecked(true);
         } else {
@@ -1086,10 +1118,10 @@ namespace ui {
 
         if (!std::string(config.manage.account).empty() && !std::string(config.manage.displayName).empty()) {
             setting->page1->accountLogInOutInfoText->setText(config.manage.displayName);
-            setting->page1->accountLogInOutButton->setText("logout");
+            setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.logout).c_str());
         } else {
-            setting->page1->accountLogInOutButton->setText("login");
-            setting->page1->accountLogInOutInfoText->setText("未登入");
+            setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
+            setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
         }
 
         state = pageState::index;

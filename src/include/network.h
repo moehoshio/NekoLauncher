@@ -294,7 +294,7 @@ namespace neko {
             nlog::Info(FI, LI, "%s : Now start perform , id : %s", FN, id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg(std::string("get network req failed ! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr)?"": std::string(id) )));
+                std::string msg(std::string("faild to get network req! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr)?"": std::string(id) )));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;
@@ -662,7 +662,7 @@ namespace neko {
                     }
                 }
                 std::string range = start + "-" + end;
-                std::string name( info::getTemp() + exec::generateRandomString(12) + "-" + std::to_string(i));
+                std::string name( info::temp() + exec::generateRandomString(12) + "-" + std::to_string(i));
                 std::string id(std::string((ma.args.id==nullptr)? "" :ma.args.id) + "-" + std::to_string(i));
 
                 list.push_back(
