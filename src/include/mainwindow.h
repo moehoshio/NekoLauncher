@@ -46,6 +46,7 @@
 
 #include "cconfig.h"
 #include "msgtypes.h"
+#include "info.h"
 
 namespace ui {
 
@@ -450,10 +451,19 @@ namespace ui {
             pixmapWidget *poster;
             QVBoxLayout *centralWidgetLayout;
             std::vector<QWidget *> lineWidgets;
+            std::vector<QMetaObject::Connection> conns;
             QDialogButtonBox *dialogButton;
             QLabel *title;
             QLabel *msg;
             InputPage(QWidget *parent = nullptr);
+
+            void hideInput(){
+                this->hide();
+                for (const auto & it : conns)
+                {
+                    disconnect(it);    
+                }
+            }
 
             void showInput(const InputMsg &m) {
                 this->show();
@@ -468,46 +478,38 @@ namespace ui {
 
                 setLines(m.lines);
                 bool *did = new bool(false);
-                disconnect(dialogButton);
                 if (!m.callback)
                     return;
 
-                connect(
+                conns.push_back(connect(
                     dialogButton, &QDialogButtonBox::accepted, [=, this] {
                         m.callback(true);
                         disconnect(dialogButton);
                         *did = true;
-                    });
-                connect(
+                    }));
+                conns.push_back(connect(
                     dialogButton, &QDialogButtonBox::rejected, [=, this] {
                         m.callback(false);
                         disconnect(dialogButton);
                         *did = true;
-                    });
+                    }));
 
-                connect(this, &QWidget::destroyed, [=](QObject *) {
+                conns.push_back(connect(this, &QWidget::destroyed, [=](QObject *) {
                     if (!(*did))
                         m.callback(false);
-                });
+                }));
             }
 
             void setLines(const std::vector<std::string> vec) {
                 std::vector<QWidget *> lines;
                 for (auto &it : vec) {
-                    if (std::filesystem::exists(it)) {
-                        pixmapWidget *line = new pixmapWidget(centralWidget);
-                        line->setMinimumHeight(50);
-                        line->setPixmap(it.c_str());
-                        lines.push_back(line);
-                    } else {
                         QLineEdit *line = new QLineEdit(centralWidget);
                         line->setMinimumHeight(50);
                         line->setPlaceholderText(it.c_str());
-                        if (it == "password") {
+                        if (it == neko::info::translations(neko::info::lang.general.password)) {
                             line->setEchoMode(QLineEdit::PasswordEchoOnEdit);
                         }
                         lines.push_back(line);
-                    }
                 }
                 setLines(lines);
             }
@@ -655,7 +657,7 @@ namespace ui {
             return input->getLines();
         }
         void hideInput() {
-            input->hide();
+            input->InputPage::hideInput();
         }
         void winShowHide(bool check) {
             if (check)

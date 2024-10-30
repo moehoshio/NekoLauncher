@@ -112,25 +112,32 @@ The server can be implemented in any language. Below is an example of the above 
     <?php
 
     $os = $_GET["os"];
+    $lang = $_GET["lang"];
 
     $putData = array(
         "enable" => false,
-        "msg" => "msg",
+        "msg" => "",
         "poster" => "https://example.com/img/img1.png",
         "time" => "2024/01/01 00:00(UTC+01) - 2024/12/01 23:59(UTC+01)",
         "link" => "https://example.com/news"
     );
 
+    switch ($lang) {
+        case 'zh_tw':
+            $putData["msg"] = "訊息\n訊息2";
+            break;
+        case 'en':
+        default:
+            $putData["msg"] = "msg\nmsg2";
+            break;
+    }
+
     header('Content-Type: application/json');
 
     switch ($os) {
-        case 'windows':
-            echo json_encode($putData);
-            break;
         case 'osx':
             $putData["enable"] = true;
-            echo json_encode($putData);
-            break;
+        case 'windows':
         case 'linux':
             echo json_encode($putData);
             break;
@@ -153,14 +160,27 @@ The server can be implemented in any language. Below is an example of the above 
         exit;
     }
     $putData = array(
-        "title"=>"Release v0.0.2",
-        "msg"=>"msg",
+        "title"=>"",
+        "msg"=>"",
         "poster"=>"https://example.com/img/img2.png",
         "time"=>"2024-01-01 10:00(UTC+01)",
         "resVersion"=>"v1.0.1",
         "mandatory"=>true,
         "update"=>array()
     );
+    
+    $lang = $data["lang"];
+    switch ($lang) {
+        case 'zh_tw':
+            $putData["title"] = "版本發佈 v0.0.2";
+            $putData["msg"] = "訊息";
+            break;
+        case 'en' :
+        default:
+            $putData["title"] = "Release v0.0.2";
+            $putData["msg"] = "msg";
+            break;
+    }
 
     header('Content-Type: application/json;');
 
