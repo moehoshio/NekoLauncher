@@ -231,7 +231,7 @@ namespace neko {
                 debug = exec::getConfigObj().GetBoolValue("dev","debug",false);
             std::string resBreakPointStr = (args.resBreakPoint) ? "true" : "false";
             std::string userAgent = (args.userAgent) ? args.userAgent : args.config.userAgent.c_str();
-            std::string data =  (dev&&debug)? ((args.data)? args.data:"") : "*****";
+            std::string data =  (dev&&debug)? ((args.data)? args.data:"null") : "*****";
             std::string optStrT = optStr(opt);
             nlog::Info(FI, LI,
                        "%s : url : %s , opt : %s , fileName : %s , range : %s , resBreakPoint : %s , userAgent : %s , protocol : %s , proxy : %s , system proxy : %s ,data : %s , id : %s",
@@ -249,6 +249,7 @@ namespace neko {
                 doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string((args.id == nullptr)?"": args.id )).c_str(), FN, args.code, -1);
                 return false;
             }
+            curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");// https://curl.se/ca/cacert.pem
 
             if (args.config.proxy == "true")
                 curl_easy_setopt(curl, CURLOPT_PROXY, getSysProxy<const char *>());
@@ -294,12 +295,12 @@ namespace neko {
             nlog::Info(FI, LI, "%s : Now start perform , id : %s", FN, id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg(std::string("faild to get network req! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr)?"": std::string(id) )));
+                std::string msg(std::string("Faild to get network req! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr)?"": std::string(id) )));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;
             }
-            nlog::Info(FI, LI, "%s : perform is okay , id : %s", FN, id);
+            nlog::Info(FI, LI, "%s : Perform is okay , id : %s", FN, id);
             return true;
         }
 
