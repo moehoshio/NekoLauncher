@@ -176,6 +176,7 @@ namespace neko {
                     downloadUpdate = "error_downloadUpdate",
                     minecraftVersionEmpty = "error_minecraftVersionEmpty",
                     minecraftVersionParse = "error_minecraftVersionParse",
+                    minecraftAuthlibConnection = "error_minecraftAuthlibConnection",
                     minecraftPatchDownload = "error_minecraftPatchDownload",
                     minecraftPatchDownloadHash = "error_minecraftPatchDownloadHash",
                     minecraftGetAuthlibVersion = "error_minecraftGetAuthlibVersion",

@@ -85,6 +85,7 @@
 
     "error_minecraftVersionEmpty":"遊戲版本字串是空的！",
     "error_minecraftVersionParse":"解析json失敗！\n檔案可能損壞",
+    "error_minecraftAuthlibConnection":"連接authlib伺服器失敗！",
     "error_minecraftPatchDownload":"檔案修復下載失敗！",
     "error_minecraftPatchDownloadHash":"下載的檔案與期望雜湊值不匹配！",
 

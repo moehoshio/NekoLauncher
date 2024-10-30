@@ -86,6 +86,7 @@
 
     "error_minecraftVersionEmpty":"Game version string is empty!",
     "error_minecraftVersionParse":"Faild to json parse! \nThe file may be damaged",
+    "error_minecraftAuthlibConnection":"Faild to connection authlib server!",
     "error_minecraftPatchDownload":"Faild to archives patch download!",
     "error_minecraftPatchDownloadHash":"Download the archives patch hash not match",
 

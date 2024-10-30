@@ -40,7 +40,7 @@ namespace ui {
         int buttonType;
         // Callback function after clicking the button.
         // If using a radio button, the returned boolean value can be ignored.
-        std::function<void(bool)> callback = nullptr;
+        std::function<void(bool)> callback = [](bool){};
         // hintMsg(const std::string & title,const std::string &msg,const std::string &poster,int buttonType,std::function<void(bool)> callback) : title(title),msg(msg),poster(poster),buttonType(buttonType),callback(callback){};
     };
     

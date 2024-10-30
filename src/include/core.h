@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-constexpr const char * launcherMode = "minecraft";//lua or minecraft
+constexpr const char *launcherMode = "minecraft"; // lua or minecraft
 
 namespace neko {
 
@@ -83,7 +83,7 @@ namespace neko {
             auto res = net.get(networkBase::Opt::postText, refArgs);
             auto jsonData = nlohmann::json::parse(res, nullptr, false);
             if (jsonData.is_discarded()) {
-                hintFunc({info::translations(info::lang.title.error),info::translations(info::lang.error.tokenJsonParse),"",1});
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.tokenJsonParse), "", 1});
                 nlog::Err(FI, LI, "%s : faild to token json parse", FN);
                 return false;
             }
@@ -109,7 +109,7 @@ namespace neko {
         return true;
     }
 
-    inline void launcherMinecraftAuthlibInjectorPrefetchedCheck(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
+    inline void launcherMinecraftAuthlibAndPrefetchedCheck(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
         nlog::autoLog log{FI, LI, FN};
         std::string authlibPrefetched = exec::getConfigObj().GetValue("manage", "authlibPrefetched", "");
         if (!authlibPrefetched.empty())
@@ -119,7 +119,14 @@ namespace neko {
         network net;
         int code = 0;
         decltype(net)::Args args{url.c_str(), nullptr, &code};
-        auto res = net.get(networkBase::Opt::getContent, args);
+        auto res = net.autoRetryGet(networkBase::Opt::getContent, {args});
+
+        if (res.empty()) {
+            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibConnection), "", 1});
+            nlog::Err(FI, LI, "%s : faild to connection authlib server!", FN);
+            return;
+        }
+
         auto resJson = nlohmann::json::parse(res, nullptr, false);
         if (resJson.is_discarded()) {
             hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.apiMetaParse), "", 1});
@@ -186,27 +193,25 @@ namespace neko {
                 break;
             }
         }
-        //transition to verJsonData
+        // transition to verJsonData
         std::string gameVerStr;
-        //file stream transition to gameVerStr
+        // file stream transition to gameVerStr
         std::ostringstream gameVerOss;
 
         gameVerOss << gameVerFile.rdbuf();
         gameVerStr = gameVerOss.str();
         nlog::Info(FI, LI, "%s : version file : %s , is open : %s ,gameVerStr len : %zu", FN, gameVerFileStr.c_str(), exec::boolTo<const char *>(gameVerFile.is_open()), gameVerStr.length());
 
-        if (gameVerStr.empty())
-        {
-            nlog::Err(FI,LI,"%s : game version string is empty!",FN);
-            hintFunc({info::translations(info::lang.title.error),info::translations(info::lang.error.minecraftVersionEmpty)});
+        if (gameVerStr.empty()) {
+            nlog::Err(FI, LI, "%s : game version string is empty!", FN);
+            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftVersionEmpty)});
             return;
         }
-        
 
         auto verJsonData = nlohmann::json::parse(gameVerStr);
         if (verJsonData.is_discarded()) {
             nlog::Err(FI, LI, "%s : faild to json parse! file : %s ", FN, gameVerFileStr.c_str());
-            hintFunc({info::translations(info::lang.title.error),info::translations(info::lang.error.minecraftVersionParse)});
+            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftVersionParse)});
             return;
         }
 
@@ -218,23 +223,23 @@ namespace neko {
         // jvm
         std::string
             javaPath = (info::workPath() + "/java/bin/java"), // Assume built-in Java is distributed with the executable.
-            gameDir = info::workPath() + minecraftDir,// work dir + ./minecraft
+            gameDir = info::workPath() + minecraftDir,        // work dir + ./minecraft
             mainClass = verJsonData.value("mainClass", "net.minecraft.client.main.Main"),
-            clientJarPath = gameVerDir + "/" + verJsonData.value("jar", "") + ".jar",// ./ game ver dir + name.jar
-            nativesPath = gameVerDir + "/natives",// game ver dir + /natives
-            librariesPath = gameDir + "/libraries",// game dir + /libraries
+            clientJarPath = gameVerDir + "/" + verJsonData.value("jar", "") + ".jar", // ./ game ver dir + name.jar
+            nativesPath = gameVerDir + "/natives",                                    // game ver dir + /natives
+            librariesPath = gameDir + "/libraries",                                   // game dir + /libraries
             classPath;
 
         // game
         std::string
-            gameArgsName = cfg.manage.displayName,// player name
+            gameArgsName = cfg.manage.displayName, // player name
             gameArgsVerName = "Neko Launcher",
-            gameArgsAssetsDir = gameDir + "/assets",// game dir + /assets
-            gameArgsAssetsId = verJsonData.value("assets", ""),// assets id , e.g 1.16
+            gameArgsAssetsDir = gameDir + "/assets",            // game dir + /assets
+            gameArgsAssetsId = verJsonData.value("assets", ""), // assets id , e.g 1.16
             gameArgsUuid = cfg.manage.uuid,
             gameArgsToken = cfg.manage.accessToken,
             gameArgsUserType = "mojang",
-            gameArgsVerType = gameArgsVerName;//Nekolc
+            gameArgsVerType = gameArgsVerName; // Nekolc
 
         std::vector<std::string> jvmArgsVec;
         std::vector<std::string> gameArgsVec;
@@ -526,16 +531,16 @@ namespace neko {
             network net;
             auto url = networkBase::buildUrl(networkBase::Api::Authlib::Injector::latest, networkBase::Api::Authlib::Injector::downloadHost);
             int code = 0;
-            decltype(net)::Args args{url.c_str(),nullptr, &code};
+            decltype(net)::Args args{url.c_str(), nullptr, &code};
 
             auto authlibVersionInfo = net.get(networkBase::Opt::getContent, args);
-            auto authlibVersionData = nlohmann::json::parse(authlibVersionInfo,nullptr,false);
+            auto authlibVersionData = nlohmann::json::parse(authlibVersionInfo, nullptr, false);
             if (code != 200) {
                 hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftGetAuthlibVersion), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector ,faild to get authlib Injector version info", FN);
                 return;
             }
-            if (authlibVersionData.is_discarded()){
+            if (authlibVersionData.is_discarded()) {
                 hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibJsonParse), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector ,faild to parse authlib Injector version info", FN);
                 return;
@@ -543,23 +548,23 @@ namespace neko {
 
             auto downloadUrl = authlibVersionData["download_url"].get<std::string>();
             args.url = downloadUrl.c_str();
-            args.fileName =authlibPath.c_str();
+            args.fileName = authlibPath.c_str();
             args.writeCallback = networkBase::WriteCallbackFile;
 
-            net.Do(networkBase::Opt::downloadFile,args);
+            net.Do(networkBase::Opt::downloadFile, args);
             if (code != 200) {
                 hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibDownload), "", 1});
                 nlog::Err(FI, LI, "%s : in download authlib injector ,faild to download authlib Injector archive", FN);
                 return;
             }
             auto hash = exec::hashFile(authlibPath);
-            auto exHash = authlibVersionData["checksums"].value("sha256","");
-            if(hash != exHash){
+            auto exHash = authlibVersionData["checksums"].value("sha256", "");
+            if (hash != exHash) {
                 hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibDownloadHash), "", 1});
-                nlog::Err(FI, LI, "%s : in download authlib injector , download is ok but hash not match , path : %s ,ex hash : %s , hash : %s ", FN,authlibPath.c_str(),exHash.c_str(),hash.c_str());
+                nlog::Err(FI, LI, "%s : in download authlib injector , download is ok but hash not match , path : %s ,ex hash : %s , hash : %s ", FN, authlibPath.c_str(), exHash.c_str(), hash.c_str());
                 return;
             }
-        }//authlib injector download
+        } // authlib injector download
 
         std::vector<std::string> authlibInjector = {
             "-javaagent:" + authlibPath + "=" + networkBase::buildUrl(networkBase::Api::Authlib::root, networkBase::Api::Authlib::host),
@@ -588,8 +593,8 @@ namespace neko {
         // It can launch Lua, Java, scripts, executables, or anything else.
         // includes pre-execution checks; in short, you can fully customize it.
 
-        if constexpr (std::string("minecraft") == launcherMode ) {
-            launcherMinecraftAuthlibInjectorPrefetchedCheck(hintFunc);
+        if constexpr (std::string("minecraft") == launcherMode) {
+            launcherMinecraftAuthlibAndPrefetchedCheck(hintFunc);
             if (!launcherMinecraftTokenValidate(hintFunc))
                 return;
             launcherMinecraft(opt, exec::getConfigObj(), hintFunc, winFunc);
@@ -681,8 +686,8 @@ namespace neko {
     // over : not maintenance, undone : in maintenance
     inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
-        
-        loadFunc({ui::loadMsg::Type::OnlyRaw, info::translations(info::lang.loading.maintenanceInfoReq )});
+
+        loadFunc({ui::loadMsg::Type::OnlyRaw, info::translations(info::lang.loading.maintenanceInfoReq)});
 
         std::string res;
         std::mutex mtx;
@@ -694,7 +699,7 @@ namespace neko {
             std::unique_lock<std::mutex> lock(mtx);
 
             network net;
-            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsName()+"&lang=" + info::language());
+            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsName() + "&lang=" + info::language());
             int code = 0;
             decltype(net)::Args args{url.c_str(), nullptr, &code};
             auto temp = net.get(networkBase::Opt::getContent, args);
@@ -707,9 +712,9 @@ namespace neko {
             // {
             //     hintFunc({"Error","","",1});
             // }
-            
+
             if (i == 4) {
-                
+
                 hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.networkConnectionRetryMax), "", 1, [](bool) {
                               nlog::Err(FI, LI, "%s : Retried multiple times but still unable to establish a connection. Exit", FN);
                               QApplication::quit();
@@ -776,7 +781,7 @@ namespace neko {
             {"core", info::getVersion()},
             {"res", info::getResVersion()},
             {"os", info::getOsName()},
-            {"lang",info::language()}};
+            {"lang", info::language()}};
         auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
         int code = 0;
@@ -838,7 +843,7 @@ namespace neko {
         auto maintenanceState = checkMaintenance(hintFunc, loadFunc, setLoadInfoFunc);
         if (maintenanceState != State::over)
             return maintenanceState;
-        
+
         setLoadInfoFunc(0, info::translations(info::lang.loading.checkUpdate).c_str());
 
         auto updateState = checkUpdate(res);
@@ -1022,7 +1027,7 @@ namespace neko {
         auto resData = nlohmann::json::parse(res, nullptr, false);
 
         if (resData.is_discarded()) {
-            hintFunc({info::translations(info::lang.title.error) , info::translations(info::lang.error.jsonParse), "", 1});
+            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.jsonParse), "", 1});
             return State::undone;
         }
 
