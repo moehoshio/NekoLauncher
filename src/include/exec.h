@@ -36,7 +36,6 @@ SOFTWARE.
 #include <random>
 #include <regex>
 #include <string>
-
 // NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
 #include "threadpool.h"
@@ -47,6 +46,7 @@ SOFTWARE.
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <sstream>
+#include <unordered_map>
 
 namespace neko {
 
@@ -58,17 +58,6 @@ namespace neko {
     constexpr inline decltype(auto) operator|(const std::initializer_list<T> &val, F &&func) {
         return func(std::forward<std::initializer_list<T>>(val));
     }
-    namespace range {
-
-        template <typename T>
-        concept Range = std::ranges::range<T>;
-        constexpr inline decltype(auto) operator|(Range auto &&val, auto &&func) {
-            for (const auto &it : val) {
-                func(val);
-            }
-            return val;
-        }
-    } // namespace range
 
 } // namespace neko
 

@@ -94,7 +94,7 @@ namespace neko {
 
         /// @param path starts with /
         /// @param host should only contain the domain name.
-        constexpr static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol) {
+        static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol) {
             return exec::sum(protocol, host, path);
         }
 
@@ -256,7 +256,7 @@ namespace neko {
             else if (exec::isProxyAddress(args.config.proxy))
                 curl_easy_setopt(curl, CURLOPT_PROXY, args.config.proxy.c_str());
             else
-                curl_easy_setopt(curl, CURLOPT_NOPROXY);
+                curl_easy_setopt(curl, CURLOPT_PROXY,"");
 
             if (args.resBreakPoint) {
                 try {
@@ -569,15 +569,15 @@ namespace neko {
 
         inline auto nonBlockingDo(Opt opt, Args &args) -> std::future<void> {
             return exec::getThreadObj().enqueue(
-                [] { Do(opt, args); });
+                [=,this] { Do(opt, args); });
         }
         inline auto nonBlockingGet(Opt opt, Args &args) -> std::future<T> {
             return exec::getThreadObj().enqueue(
-                [] { return get(opt, args); });
+                [=,this] { return get(opt, args); });
         }
         inline auto nonBlockingGetPtr(Opt opt, Args &args) -> std::future<T *> {
             return exec::getThreadObj().enqueue(
-                [] { return getPtr(opt, args); });
+                [=,this] { return getPtr(opt, args); });
         }
 
         // Accepts parameters as rvalue objects, indicating the discarding of the returned HTTP code.
