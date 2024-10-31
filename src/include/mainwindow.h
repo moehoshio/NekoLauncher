@@ -61,17 +61,17 @@ namespace ui {
 
             setContextMenuPolicy(Qt::PreventContextMenu);
         }
-        bool event(QEvent *event) {
+        inline bool event(QEvent *event)override {
             if (event->type() == QEvent::MouseButtonPress)
                 emit request_move_window();
 
             return QToolBar::event(event);
         }
-        void dragEnterEvent(QDragEnterEvent *event) {
+        inline void dragEnterEvent(QDragEnterEvent *event)override {
             event->acceptProposedAction();
         }
 
-        void dragMoveEvent(QDragMoveEvent *p_event) {
+        inline void dragMoveEvent(QDragMoveEvent *p_event)override {
             p_event->acceptProposedAction();
         }
     signals:
@@ -87,18 +87,18 @@ namespace ui {
             setPixmap(pixmap);
         }
 
-        void setPixmap(const QPixmap &pix) {
+        inline void setPixmap(const QPixmap &pix) {
             if (pix.isNull())
                 return;
             bg = pix;
         }
-        void setPixmap(const char *fileName) {
+        inline void setPixmap(const char *fileName) {
             if (std::string(fileName) == "")
                 return;
 
             bg.load(fileName);
         }
-        void paintEvent(QPaintEvent *event) {
+        inline void paintEvent(QPaintEvent *event) override{
             QPainter painter(this);
 
             painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
@@ -321,7 +321,7 @@ namespace ui {
             QMovie *loadingMv;
             QLabel *process;
 
-            void showLoad(const loadMsg &m) {
+            inline void showLoad(const loadMsg &m) {
                 process->setText(m.process.c_str());
 
                 if (m.type == loadMsg::Type::Text || m.type == loadMsg::Type::All) {
@@ -388,7 +388,7 @@ namespace ui {
             QLabel *title;
             QLabel *msg;
             HintWindow(QWidget *parent = nullptr);
-            void setupButton(QPushButton *btn, const std::function<void(bool)> &callback, bool &did) {
+            inline void setupButton(QPushButton *btn, const std::function<void(bool)> &callback, bool &did) {
                 btn->show();
                 if (!callback)
                     return;
@@ -400,7 +400,7 @@ namespace ui {
                     });
             }
 
-            void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback, bool &did) {
+            inline void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback, bool &did) {
                 btnBox->show();
                 if (!callback)
                     return;
@@ -417,7 +417,7 @@ namespace ui {
                         did = true;
                     });
             }
-            void showHint(const hintMsg &m) {
+            inline void showHint(const hintMsg &m) {
                 this->show();
                 this->title->setText(m.title.c_str());
                 this->msg->setText(m.msg.c_str());
@@ -457,7 +457,7 @@ namespace ui {
             QLabel *msg;
             InputPage(QWidget *parent = nullptr);
 
-            void hideInput(){
+            inline void hideInput(){
                 this->hide();
                 for (const auto & it : conns)
                 {
@@ -465,7 +465,7 @@ namespace ui {
                 }
             }
 
-            void showInput(const InputMsg &m) {
+            inline void showInput(const InputMsg &m) {
                 this->show();
                 title->setText(m.title.c_str());
                 msg->setText(m.msg.c_str());
@@ -500,7 +500,7 @@ namespace ui {
                 }));
             }
 
-            void setLines(const std::vector<std::string> vec) {
+            inline void setLines(const std::vector<std::string> vec) {
                 std::vector<QWidget *> lines;
                 for (auto &it : vec) {
                         QLineEdit *line = new QLineEdit(centralWidget);
@@ -514,7 +514,7 @@ namespace ui {
                 setLines(lines);
             }
 
-            void setLines(const std::vector<QWidget *> &placeholder) {
+            inline void setLines(const std::vector<QWidget *> &placeholder) {
                 for (auto it : lineWidgets) {
                     centralWidgetLayout->removeWidget(it);
                     it->hide();
@@ -530,7 +530,7 @@ namespace ui {
                 centralWidgetLayout->addWidget(dialogButton);
             }
 
-            std::vector<std::string> getLines() {
+            inline std::vector<std::string> getLines() {
                 std::vector<std::string> vec;
                 for (auto it : lineWidgets) {
 
@@ -567,21 +567,21 @@ namespace ui {
     protected:
         void closeEvent(QCloseEvent *event) override;
 
-        void dragEnterEvent(QDragEnterEvent *p_event) override {
+        inline void dragEnterEvent(QDragEnterEvent *p_event) override {
 
             p_event->acceptProposedAction();
         }
 
-        void dragMoveEvent(QDragMoveEvent *p_event) override {
+        inline void dragMoveEvent(QDragMoveEvent *p_event) override {
 
             p_event->acceptProposedAction();
         }
 
-        void dropEvent(QDropEvent *p_event) override {
+        inline void dropEvent(QDropEvent *p_event) override {
             p_event->acceptProposedAction();
         }
 
-        void keyPressEvent(QKeyEvent *event) override {
+        inline void keyPressEvent(QKeyEvent *event) override {
             QWidget *currentFocus = focusWidget();
 
             switch (event->key()) {
@@ -625,41 +625,41 @@ namespace ui {
         void updatePage(pageState state, pageState oldState);
 
     public:
-        void showPage(pageState page) {
+        inline void showPage(pageState page) {
             oldState = state;
             state = page;
             updatePage(state, oldState);
         }
 
-        void showLoad(const loadMsg &m) {
+        inline void showLoad(const loadMsg &m) {
             loading->showLoad(m);
             oldState = state;
             state = pageState::loading;
             updatePage(state, oldState);
         }
-        void setLoadingVal(unsigned int val) {
+        inline void setLoadingVal(unsigned int val) {
             loading->progressBar->setValue(val);
         };
-        void setLoadingNow(const char *msg) {
+        inline void setLoadingNow(const char *msg) {
             loading->process->setText(msg);
         };
         // button type 1 : use one button
-        void showHint(const hintMsg &m) {
+        inline void showHint(const hintMsg &m) {
             hintWidget->HintWindow::showHint(m);
             resizeItem();
         };
 
-        void showInput(const InputMsg &m) {
+        inline void showInput(const InputMsg &m) {
             input->showInput(m);
             resizeItem();
         }
-        auto getInput() {
+        inline auto getInput() {
             return input->getLines();
         }
-        void hideInput() {
+        inline void hideInput() {
             input->InputPage::hideInput();
         }
-        void winShowHide(bool check) {
+        inline void winShowHide(bool check) {
             if (check)
                 this->show();
             else

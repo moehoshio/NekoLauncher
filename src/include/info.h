@@ -72,7 +72,7 @@ namespace neko {
             return std::string();
         }
 
-        constexpr inline static std::string getVersion() {
+        inline static std::string getVersion() {
             return Data::version;
         };
 
@@ -80,7 +80,11 @@ namespace neko {
             return exec::getConfigObj().GetValue("more", "resVersion", "");
         }
 
-        constexpr inline static std::string getOsName() {
+        constexpr inline static auto getOsName() {
+            return Data::osName;
+        }
+
+        inline static std::string getOsNameS() {
             return Data::osName;
         }
 

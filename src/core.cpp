@@ -72,7 +72,7 @@ namespace neko {
         }
     }
 #else
-void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc {
+void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc) {
         nlog::autoLog log{FI, LI, FN};
         nlog::Info(FI, LI, "%s : command : %s", FN, command.c_str());
         switch (opt) {

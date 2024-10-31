@@ -17,6 +17,7 @@
 #include <fstream>
 #include <mutex>
 #include <string>
+#include <string_view>
 
 #include <iostream>
 
@@ -294,7 +295,7 @@ namespace neko {
             }
 
             if (!rules.osName.empty()) {
-                bool allow = (rules.osName == info::getOsName() && rules.action == "allow") || (rules.osName != info::getOsName() && rules.action == "disallow");
+                bool allow = (rules.osName == info::getOsNameS() && rules.action == "allow") || (rules.osName != info::getOsNameS() && rules.action == "disallow");
                 if (allow)
                     return true;
             }
@@ -467,7 +468,7 @@ namespace neko {
 
                     if (lib.contains("natives")) {
                         for (auto natives : lib["natives"].items()) {
-                            if (natives.key() == info::getOsName()) {
+                            if (natives.key() == info::getOsNameS()) {
                                 artifact.natives = natives.value();
                                 artifact.classifiers.path = librariesPath + "/" + lib["downloads"]["classifiers"][artifact.natives]["path"].get<std::string>();
                                 artifact.classifiers.url = lib["downloads"]["classifiers"][artifact.natives]["url"].get<std::string>();
@@ -488,7 +489,7 @@ namespace neko {
             }
         }
 
-        classPath = constructClassPath(libPaths, info::getOsName()) + ((info::getOsName() == "windows") ? ";" : ":") + clientJarPath;
+        classPath = constructClassPath(libPaths, info::getOsNameS()) + ((info::getOsNameS() == "windows") ? ";" : ":") + clientJarPath;
 
         // replace placeholders
         auto replacePlaceholders = [&](std::vector<std::string> &argsVec, const std::map<std::string, std::string> &placeholders) {
@@ -571,7 +572,7 @@ namespace neko {
             "-Dauthlibinjector.side=client",
             "-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefrtched};
 
-        if constexpr (info::getOsName() == "windows") {
+        if constexpr (info::getOsName() == std::string_view("windows")) {
             std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
             std::fstream file2(info::workPath() + "/Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
             file2 << command;
@@ -593,14 +594,14 @@ namespace neko {
         // It can launch Lua, Java, scripts, executables, or anything else.
         // includes pre-execution checks; in short, you can fully customize it.
 
-        if constexpr (std::string("minecraft") == launcherMode) {
+        if constexpr (std::string_view("minecraft")  == launcherMode) {
             launcherMinecraftAuthlibAndPrefetchedCheck(hintFunc);
             if (!launcherMinecraftTokenValidate(hintFunc))
                 return;
             launcherMinecraft(opt, exec::getConfigObj(), hintFunc, winFunc);
         }
 
-        if constexpr (std::string("lua") == launcherMode) {
+        if constexpr (std::string_view("lua") == launcherMode) {
             if (!launcherLuaPreCheck()) {
                 nlog::Err(FI, LI, "%s : Error  Lua or scriptPath not exists !", FN);
                 return;
@@ -699,7 +700,7 @@ namespace neko {
             std::unique_lock<std::mutex> lock(mtx);
 
             network net;
-            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsName() + "&lang=" + info::language());
+            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsNameS() + "&lang=" + info::language());
             int code = 0;
             decltype(net)::Args args{url.c_str(), nullptr, &code};
             auto temp = net.get(networkBase::Opt::getContent, args);
