@@ -16,7 +16,7 @@ jobs:
         
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@latest
     
     - name: Set up CMake
       uses: lukka/get-cmake@latest
@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         if [[ ${{ matrix.os }} == 'macos-latest' ]]; then
-          brew install qt libcurl openssl
+          brew install qt curl openssl
         fi
 
     - name: Configure CMake
