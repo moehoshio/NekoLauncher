@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
         arch: [x64, arm64]
         
     steps:
@@ -23,9 +23,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        if [[ ${{ matrix.os }} == 'ubuntu-latest' ]]; then
-          sudo apt-get install -y qt5-default libcurl4-openssl-dev
-        elif [[ ${{ matrix.os }} == 'macos-latest' ]]; then
+        if [[ ${{ matrix.os }} == 'macos-latest' ]]; then
           brew install qt libcurl openssl
         fi
 
