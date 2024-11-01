@@ -25,10 +25,23 @@ jobs:
       run: |
         if [[ ${{ matrix.os }} == 'macos-latest' ]]; then
           brew install qt curl openssl
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix qt):$(brew --prefix openssl):$(brew --prefix curl)" >> $GITHUB_ENV
         fi
 
+    - name: Verify dependencies
+      run: |
+        if [[ ${{ matrix.os }} == 'macos-latest' ]]; then
+          brew list qt && brew list curl && brew list openssl
+        fi
+      
+    - name: Cp Cmake file
+      run: cp CmakeListsCopy.txt CmakeLists.txt
+
+    - name: Set build dir
+      run: mkdir build && cd build
+
     - name: Configure CMake
-      run: cmake . -Bbuild
+      run: cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
 
     - name: Build
-      run: cmake --build build --config Release
+      run: cmake --build . --config Release
