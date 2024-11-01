@@ -37,16 +37,13 @@ jobs:
     - name: Cp Cmake file
       run: cp CmakeListsCopy.txt CmakeLists.txt
 
-    - name: Verify Files And Path
-      run: |
-        pwd
-        ls
-
     - name: Set build dir
-      run: mkdir build && cd build && pwd
+      run: mkdir build
 
     - name: Configure CMake
+      working-directory: build
       run: cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
 
     - name: Build
+      working-directory: build
       run: cmake --build . --config Release
