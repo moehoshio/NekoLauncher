@@ -36,6 +36,12 @@ jobs:
         rm -f src/data/hostlist && echo "api.example.com">> src/data/hostlist
         sed -i '' 's/skin\.example\.org/skin\.example\.com/g' src/include/network.h
 
+    - name: Test Compiler
+      run: |
+        echo "#include <iostream> int main(){std::cout<<"hello world\n";}">> test.cpp
+        clang -o test test.cpp
+        ./test
+
     - name: Cp Cmake file
       run: cp CmakeListsAutoMoc.txt CmakeLists.txt
 
