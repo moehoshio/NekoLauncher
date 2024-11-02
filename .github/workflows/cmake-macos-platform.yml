@@ -34,7 +34,7 @@ jobs:
     - name: Sed hosts
       run: |
         rm -f src/data/hostlist && echo "api.example.com">> src/data/hostlist
-        sed -i 's/skin.example.org/skin.example.com' src/include/network.h
+        sed -i '' 's/skin\.example\.org/skin\.example\.com/g' src/include/network.h
 
     - name: Cp Cmake file
       run: cp CmakeListsAutoMoc.txt CmakeLists.txt
