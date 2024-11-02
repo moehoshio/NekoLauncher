@@ -38,7 +38,7 @@ jobs:
 
     - name: Test Compiler
       run: |
-        echo "#include <iostream> int main(){std::cout<<"hello world\n";}">> test.cpp
+        echo "#include <iostream> \nint main(){std::cout<<"hello world\n";}">> test.cpp
         clang -o test test.cpp
         ./test
 
