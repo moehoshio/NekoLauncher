@@ -1,0 +1,70 @@
+cmake_minimum_required(VERSION 3.20)
+project(NekoLc)
+
+
+list(APPEND SRCFILES
+    src/mainwindow.cpp    
+    src/loguru.cpp
+    src/exec.cpp
+    src/info.cpp
+    src/network.cpp
+    src/autoinit.cpp
+    src/core.cpp
+    src/main.cpp
+)
+
+
+list(APPEND INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/src/include
+)
+
+
+list(APPEND LIBRARY_DIRS
+
+)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+find_package(CURL REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets MultimediaWidgets REQUIRED)
+
+add_executable(NekoLc ${SRCFILES})
+
+target_include_directories(NekoLc PRIVATE ${INCLUDE_DIRS})
+target_compile_features(NekoLc PRIVATE cxx_std_20)
+
+
+target_link_libraries(NekoLc PRIVATE 
+Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets Qt6::Gui OpenSSL::SSL OpenSSL::Crypto CURL::libcurl
+)
+
+if(APPLE)
+
+set(MACOSX_BUNDLE_BUNDLE_NAME "NekoLauncher")
+set(MACOSX_BUNDLE_BUNDLE_VERSION "0.0.1")
+set(MACOSX_BUNDLE_ICON_FILE "img/icon.icns")
+
+set_target_properties(NekoLc PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/os/mac/Info.plist"
+    MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLanuch"
+)
+add_custom_command(TARGET NekoLc POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/os/mac/Resources"
+    "$<TARGET_BUNDLE_DIR:MyApp>/Contents/Resources"
+)
+add_custom_command(TARGET NekoLc POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/src/lang"
+    "$<TARGET_BUNDLE_DIR:MyApp>/Contents/MacOS/lang"
+)
+endif()
+
+if(MSVC)
+    set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+    target_sources(Nekolc PRIVATE os/windows/icon.rc)
+endif()

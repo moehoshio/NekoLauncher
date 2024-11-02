@@ -76,6 +76,7 @@ namespace neko {
         for (auto it : mPath) {
             if (std::filesystem::current_path().string().find(it) != std::string::npos) {
                 std::filesystem::current_path(std::filesystem::current_path().parent_path().parent_path().parent_path());
+                nlog::Info(FI,LI,"%s : Correction path , work now : %s ",FN,std::filesystem::current_path().string().c_str());
                 break;
             }
         }

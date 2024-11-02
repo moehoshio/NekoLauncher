@@ -1,4 +1,4 @@
-name: Build for Multiple Platforms
+name: Build for MacOS Platforms
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest]
-        arch: [x64, arm64]
+        arch: [arm64]
         
     steps:
     - name: Checkout code
@@ -28,22 +28,30 @@ jobs:
           echo "CMAKE_PREFIX_PATH=$(brew --prefix qt):$(brew --prefix openssl):$(brew --prefix curl)" >> $GITHUB_ENV
         fi
 
-    - name: Verify dependencies
+    - name: Correction Moc
+      run: echo "#include "mainwindow_moc.cpp"">> src/mainwindow.cpp
+
+    - name: Sed hosts
       run: |
-        if [[ ${{ matrix.os }} == 'macos-latest' ]]; then
-          brew list qt && brew list curl && brew list openssl
-        fi
-      
+        rm -f src/data/hostlist && echo "api.example.com">> src/data/hostlist
+        sed -i 's/skin.example.org/skin.example.com' src/include/network.h
+
     - name: Cp Cmake file
-      run: cp CmakeListsCopy.txt CmakeLists.txt
+      run: cp CmakeListsAutoMoc.txt CmakeLists.txt
 
     - name: Set build dir
       run: mkdir build
 
     - name: Configure CMake
       working-directory: build
-      run: cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
+      run: cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" -DCMAKE_OSX_BUNDLE=ON
 
     - name: Build
       working-directory: build
       run: cmake --build . --config Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: build/
