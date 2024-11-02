@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(NekoLc)
 
+set(CMAKE_C_COMPILER_WORKS TRUE CACHE BOOL "C compiler works")
 
 list(APPEND SRCFILES
     src/mainwindow.cpp    
