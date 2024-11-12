@@ -375,6 +375,7 @@ namespace ui {
             QAction *maximize;
             QAction *sp1;
             QAction *sp2;
+            QWidget *spacer;
             HeadBar(QWidget *parent = nullptr);
         };
 
@@ -461,8 +462,9 @@ namespace ui {
                 this->hide();
                 for (const auto & it : conns)
                 {
-                    disconnect(it);    
+                    disconnect(it);
                 }
+                conns.clear();
             }
 
             inline void showInput(const InputMsg &m) {

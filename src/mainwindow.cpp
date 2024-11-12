@@ -363,14 +363,16 @@ namespace ui {
     MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
 
         toolbar = new ToolBar(this);
-        close_ = new QAction(QIcon::fromTheme("window-close"), neko::info::translations(neko::info::lang.general.close).c_str(), toolbar);
-
-        minimize = new QAction(QIcon::fromTheme("window-minimize"), neko::info::translations(neko::info::lang.general.minimize).c_str(), toolbar);
-
-        maximize = new QAction(QIcon::fromTheme("window-maximize"), neko::info::translations(neko::info::lang.general.maximize).c_str(), toolbar);
+        spacer = new QWidget(toolbar);
+        close_ = new QAction(toolbar);
+        minimize = new QAction(toolbar);
+        maximize = new QAction(toolbar);
 
         sp1 = toolbar->addSeparator();
         sp2 = toolbar->addSeparator();
+
+        spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
+        spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
     MainWindow::HintWindow::HintWindow(QWidget *parent) : QWidget(parent) {
         poster = new pixmapWidget(this);
@@ -627,7 +629,11 @@ namespace ui {
         loading->progressBar->setFormat("%v/%m");
         setting->page3->devOptLoadingPage->setText("update");
         setting->page3->devOptHintPage->setText("hint");
-        
+
+        headbar->close_->setText(neko::info::translations(neko::info::lang.general.close).c_str());
+        headbar->minimize->setText(neko::info::translations(neko::info::lang.general.minimize).c_str());
+        headbar->maximize->setText(neko::info::translations(neko::info::lang.general.maximize).c_str());
+
         hintWidget->button->setText(neko::info::translations(neko::info::lang.general.ok).c_str());
 
         setting->page2->generalGroup->setTitle(neko::info::translations(neko::info::lang.general.general).c_str());
@@ -825,6 +831,7 @@ namespace ui {
         connect(setting->page2->langSelectBox,&QComboBox::currentTextChanged,[=,this](const QString& text){
             neko::info::language(text.toStdString());
             exec::getConfigObj().SetValue("main","language",text.toStdString().c_str());
+            setupText();
             showHint({neko::info::translations(neko::info::lang.title.incomplete) ,neko::info::translations(neko::info::lang.general.incompleteApplied),"", 1,[](bool){}});
         });
         connect(setting->page2->bgInputLineEdit, &QLineEdit::editingFinished, [=, this]() {
@@ -937,10 +944,7 @@ namespace ui {
         connect(setting->page2->winBarKeepRightCheckBox, &QCheckBox::toggled, [=, this](bool checkd) {
             headbar->toolbar->clear();
             if (checkd) {
-                QWidget *spacer = new QWidget(headbar->toolbar);
-                spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
-                spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-                headbar->toolbar->addWidget(spacer);
+                headbar->toolbar->addWidget(headbar->spacer);
                 headbar->toolbar->addActions(
                     {headbar->minimize, headbar->sp1, headbar->maximize, headbar->sp2, headbar->close_});
             } else {
@@ -955,7 +959,7 @@ namespace ui {
                 return;
 
             unsigned int val = text.toUInt();
-            if (val != 0) {
+            if (val > 0) {
                 this->resize(val, size().height());
                 this->resizeItem();
             }
@@ -966,7 +970,7 @@ namespace ui {
                 return;
 
             unsigned int val = text.toUInt();
-            if (val != 0) {
+            if (val > 0) {
                 this->resize(size().width(), val);
                 this->resizeItem();
             }
