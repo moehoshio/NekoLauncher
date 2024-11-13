@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(NekoLc)
 
-
 list(APPEND SRCFILES
     src/mainwindow.cpp    
     src/loguru.cpp
@@ -10,59 +9,28 @@ list(APPEND SRCFILES
     src/network.cpp
     src/autoinit.cpp
     src/core.cpp
-    src/main.cpp
-    
+    src/main.cpp   
 )
-
 
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
-    C:/Qt/6.6.1/msvc2019_64/include
-    C:/ide/VC/Tools/MSVC/14.01/include
 )
 
-
-list(APPEND LIBRARY_DIRS
-
-)
-
-
-set(CMAKE_PREFIX_PATH "C:/Qt/6.6.1/msvc2019_64")
-
-set(QtBin C:/Qt/6.6.1/msvc2019_64/bin)
-
+# package and qt path
+set(CMAKE_PREFIX_PATH "C:/dev/vcpkg/installed/x64-windows")
+# package path
+set(LIBRARY_DIRS "C:/dev/vcpkg/installed/x64-windows")
+# qt path
+set(Qt6 "C:/Qt/qt6/msvc2019_64/")
+# Debug or Release
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets MultimediaWidgets REQUIRED)
-
-
-function(generate_moc SOURCE_HEADER)
-get_filename_component(SOURCE_NAME ${SOURCE_HEADER} NAME_WE)
-set(MOC_FILE ${CMAKE_SOURCE_DIR}/src/${SOURCE_NAME}_moc.cpp)
-
-add_custom_command(
-    OUTPUT ${MOC_FILE}
-    COMMAND ${QtBin}/moc ${SOURCE_HEADER} -o ${MOC_FILE}
-    DEPENDS ${SOURCE_HEADER}
-    COMMENT "Generating MOC file for ${SOURCE_HEADER}"
-)
-
-set(GENERATED_MOC_FILES ${GENERATED_MOC_FILES} ${MOC_FILE} PARENT_SCOPE)
-endfunction()
-
-set(HEADERS
-${CMAKE_SOURCE_DIR}/src/include/mainwindow.h
-)
-
-foreach(HEADER ${HEADERS})
-generate_moc(${HEADER})
-endforeach()
-
-
-add_executable(NekoLc ${SRCFILES} ${GENERATED_MOC_FILES})
+add_executable(NekoLc ${SRCFILES})
 
 
 target_include_directories(NekoLc PRIVATE ${INCLUDE_DIRS})
@@ -70,44 +38,43 @@ target_compile_features(NekoLc PRIVATE cxx_std_20)
 
 
 target_link_libraries(NekoLc PRIVATE 
-Qt6::Core Qt6::Widgets Qt6::MultimediaWidgets Qt6::Gui
-${LIBRARY_DIRS}/libapps.lib
-${LIBRARY_DIRS}/openssl.lib
-${LIBRARY_DIRS}/libcurl_imp.lib
-${LIBRARY_DIRS}/libssl_static.lib
-${LIBRARY_DIRS}/zlibstatic.lib
+# qt
+Qt6::Core Qt6::Widgets Qt6::Gui
+# openssl
+OpenSSL::SSL OpenSSL::Crypto
+# libcurl
+CURL::libcurl
 )
 
 
-# if(MSVC)
-    # set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-    # target_sources(NekoLc PRIVATE icon.rc)
-# endif()
-
-
+function(copy_dlls TARGET_NAME DLL_LIST)
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        foreach(DLL ${DLL_LIST})
+            add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${LIBRARY_DIRS}/bin/${DLL}"
+                $<TARGET_FILE_DIR:${TARGET_NAME}>)
+        endforeach()
+    elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        foreach(DLL ${DLL_LIST})
+            add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${LIBRARY_DIRS}/debug/bin/${DLL}"
+                $<TARGET_FILE_DIR:${TARGET_NAME}>)
+        endforeach()
+    endif()
+endfunction()
 
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+        target_sources(NekoLc PRIVATE res/win/icon.rc)
+        set(DLL_LIST "libcrypto-3-x64.dll" "libssl-3-x64.dll" "zlib1.dll" "libcurl.dll")
+    else()
+        set(DLL_LIST "libcrypto-3-x64.dll" "libssl-3-x64.dll" "zlibd1.dll" "libcurl-d.dll")
+    endif()
+endif() # os win
 
-file(COPY 
-    ${LIBRARY_DIRS}/libcurl.dll
-    ${LIBRARY_DIRS}/zlib.dll
-    ${LIBRARY_DIRS}/libcrypto-3-x64.dll
-    ${LIBRARY_DIRS}/libssl-3-x64.dll
-    ${QtBin}/Qt6Core.dll
-    ${QtBin}/Qt6Gui.dll
-    ${QtBin}/Qt6Widgets.dll
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
-)
 
-file(COPY
-    ${QtBin}/../plugins/styles/qwindowsvistastyle.dll
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/styles
-)
-
-file(COPY
-    ${QtBin}/../plugins/platforms/qwindows.dll
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/platforms
-)
-
-endif()
+copy_dlls(NekoLc "${DLL_LIST}")
