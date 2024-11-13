@@ -7,7 +7,6 @@ list(APPEND SRCFILES
     src/exec.cpp
     src/info.cpp
     src/network.cpp
-    src/autoinit.cpp
     src/core.cpp
     src/main.cpp   
 )

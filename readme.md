@@ -9,7 +9,7 @@ It can launch any object, wrapping around anything, and includes self-updating a
 This is also my first project learning C++ for nearly a year.  
 The project is still in development, and any constructive ideas are welcome.  
 Preview :  
-![img](img/img1.png)
+![img](res/img/img1.png)
 
 ## Become Contributors
 

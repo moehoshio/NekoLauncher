@@ -25,12 +25,12 @@ int main(int argc, char *argv[]) {
 
     for (auto it : std::filesystem::directory_iterator(argv[1])) {
         if (it.is_regular_file()) {
-            oldVersionFiles.push_back({it.path().filename().string(), hashFile(it.path().string())});
+            oldVersionFiles.push_back({it.path().filename().string(), exec::hashFile(it.path().string())});
         }
     }
     for (auto it : std::filesystem::directory_iterator(argv[2])) {
         if (it.is_regular_file()) {
-            newVersionFiles.push_back({it.path().filename().string(), hashFile(it.path().string())});
+            newVersionFiles.push_back({it.path().filename().string(), exec::hashFile(it.path().string())});
         }
     }
 }

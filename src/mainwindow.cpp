@@ -1313,6 +1313,7 @@ namespace ui {
         return QMainWindow::event(event);
     }
 
-#include "mainwindow_moc.cpp"
 
 } // namespace ui
+
+#include "moc_mainwindow.cpp"
