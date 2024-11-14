@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.20)
+project(exportJson)
+
+set(CMAKE_PREFIX_PATH "C:/dev/vcpkg/installed/x64-windows")
+
+find_package(OpenSSL REQUIRED)
+
+add_executable(exportJson main.cpp)
+
+target_compile_features(exportJson PRIVATE cxx_std_20)
+target_link_libraries(exportJson PRIVATE OpenSSL::SSL OpenSSL::Crypto)
