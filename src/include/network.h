@@ -56,8 +56,8 @@ namespace neko {
             Authlib authlib;
         };
 
-        static Config Dconfig;
-        constexpr static Api api;
+        inline static Config Dconfig;
+        constexpr inline static Api api;
         // constexpr static Authlib authlib;
 
         enum class Opt {
@@ -73,12 +73,12 @@ namespace neko {
 
         };
 
-        static std::unordered_map<Opt, std::string> optMap;
+        static std::unordered_map<Opt, std::string_view> optMap;
 
-        inline static auto optStr(Opt opt) {
+        inline static std::string optStr(Opt opt) {
             for (const auto &it : optMap) {
                 if (it.first == opt) {
-                    return it.second;
+                    return std::string(it.second);
                 }
             }
             return std::string("unknown");

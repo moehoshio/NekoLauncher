@@ -196,16 +196,23 @@ namespace neko {
             Network network;
             Error error;
         };
-        static LanguageKey lang;
+        inline static LanguageKey lang;
 
-        static std::string language(const std::string &lang = "");
+        inline static std::string language(const std::string &lang = "") {
+            static std::string preferredLanguage = "en";
+
+            if (!lang.empty())
+                preferredLanguage = lang;
+
+            return preferredLanguage;
+        }
 
         inline static std::vector<std::string> getLanguages() {
             std::vector<std::string> res;
             for (const auto &it : std::filesystem::directory_iterator(info::workPath() + "/lang/")) {
                 if (it.is_regular_file() && exec::matchExtName(it.path().string(), "json")) {
                     std::string fileName = it.path().stem().string();
-                    nlog::Info(FI,LI,"%s : lang file push : %s",FN,fileName.c_str());
+                    nlog::Info(FI, LI, "%s : lang file push : %s", FN, fileName.c_str());
                     res.push_back(fileName | exec::move);
                 }
             }

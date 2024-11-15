@@ -3,10 +3,8 @@
 namespace neko {
 
     using namespace std::literals;
-    networkBase::Config networkBase::Dconfig{};
-    constexpr networkBase::Api networkBase::api;
 
-    std::unordered_map<networkBase::Opt, std::string> networkBase::optMap = {
+    std::unordered_map<networkBase::Opt, std::string_view> networkBase::optMap = {
         {networkBase::Opt::downloadFile, "downloadFile"s},
         {networkBase::Opt::onlyRequest, "onlyRequest"s},
         {networkBase::Opt::postText, "postText"s},
@@ -57,10 +55,10 @@ namespace neko {
                     neko::networkBase::Dconfig.host = std::string(it);
                     return;
                 } else {
-                    nlog::Warn(FI,LI,"%s : faild to testing , now try to the next",FN);
+                    nlog::Warn(FI,LI,"%s : faild to testing host : %s , now try to the next",FN,it);
                 }
             };
-            nlog::Err(FI, LI, "%s : Test: No available hosts!", FN);
+            nlog::Err(FI, LI, "%s : Test: No available hosts! End to network test", FN);
             return;
         });
     }

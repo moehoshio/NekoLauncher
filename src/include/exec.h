@@ -64,9 +64,15 @@ namespace neko {
 namespace exec {
 
     // NekoLc Project Customization
-    neko::ThreadPool &getThreadObj();
+    inline neko::ThreadPool &getThreadObj() {
+        static neko::ThreadPool obj;
+        return obj;
+    };
 
-    CSimpleIniA &getConfigObj();
+    inline CSimpleIniA &getConfigObj() {
+        static CSimpleIniA obj;
+        return obj;
+    }
 
     namespace hashs {
         enum class Algorithm {

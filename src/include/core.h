@@ -18,7 +18,6 @@
 #include <mutex>
 #include <string>
 #include <string_view>
-
 #include <iostream>
 
 constexpr const char *launcherMode = "minecraft"; // lua or minecraft

@@ -6,33 +6,16 @@
 
 ## Style Guide
 
-1. Clang Formatting
-
-```json
-"C_Cpp.clang_format_fallbackStyle": "{ 
-    BasedOnStyle: LLVM, 
-    UseTab: Never, 
-    IndentWidth: 4, 
-    TabWidth: 4, 
-    BreakBeforeBraces: Attach, 
-    AllowShortIfStatementsOnASingleLine: false, 
-    IndentCaseLabels: true, 
-    ColumnLimit: 0, 
-    AccessModifierOffset: -4, 
-    NamespaceIndentation: All, 
-    FixNamespaceComments: true }"
-```
-
-2. **CamelCase** should be used for naming. Specifically:
+1. **CamelCase** should be used for naming. Specifically:
 
 ```cpp
 std::string myName;
 void func();
 ```
 
-3. Use **4-space** indentation per level. Source files should use **UTF-8 encoding** with **LF** line endings (not strictly enforced).
+2. Use **4-space** indentation per level. Source files should use **UTF-8 encoding** with **LF** line endings (not strictly enforced).
 
-4. Organize `#include` statements into categories, such as:
+3. Organize `#include` statements into categories, such as:
 
 ```cpp
 // Custom Headers
@@ -56,9 +39,9 @@ void func();
 #include <curl/curl.h>
 ```
 
-5. Use `#pragma once` at the top of header files. Avoid introducing `using namespace` in the global scope within header files. Scoping should be applied most of the time.
+4. Use `#pragma once` at the top of header files. Avoid introducing `using namespace` in the global scope within header files. Scoping should be applied most of the time.
 
-6. For simple single-line `if` statements, it's recommended to omit extra braces for brevity:
+5. For simple single-line `if` statements, it's recommended to omit extra braces for brevity:
 
 ```cpp
 if (true)
@@ -67,6 +50,8 @@ else
     return false;
 ```
 
+6. Always include curly braces `{}` for `for` or `while` loops.
+
 ### Module List
 
 1. **Auto-init Function**:
@@ -74,13 +59,11 @@ else
     - Specifically, it will:
         - Correct the working directory
         - Load configuration
-        - Initialize the info class
-            - Read the user folder
-            - Obtain a temporary folder
         - Set the log
         - Set thread numbers
         - Set thread names
         - Print configuration
+        - Set language
         - Initialize networkBase
             - Load default proxy configuration
             - Set default user-agent
@@ -120,7 +103,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
             Usage example:
 
             ```cpp
-                auto debug = exec::getConfigObj().GetValue("Section","key","default");
+                const char * debug = exec::getConfigObj().GetValue("Section","key","default");
             ```
 
     - utility func
@@ -130,7 +113,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
     - **networkBase**:
         - Initialization function
         - Defines classes/structures:
-            - **Config**: Configuration information
+            - **Config**: Network Configuration information
                 - User-Agent (ua)
                 - Proxy
                 - Host
@@ -139,6 +122,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
                         - `static Dconfig`
             - **Api**: APIs, detailed in [server.md](server.md)
                 - Members are `constexpr static const char *`
+                - Minecraft Authlib Apis for [authlib-injector](https://github.com/yushijinhun/authlib-injector/wiki/)
                 - Includes a default configuration object:
                     - `constexpr static api`
         - **Opt Enum**: Enumeration for download options
@@ -154,21 +138,21 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
         - **optMap Object** and Functions:
 
         ```cpp
-        static std::unordered_map<Opt, std::string> optMap;
+        static std::unordered_map<Opt, std::string_view> optMap;
         ```
 
         ```cpp
-        inline static auto optStr(Opt opt);
+        inline static std::string optStr(Opt opt);
         ```
 
         ```cpp
-        inline static auto strOpt(const std::string_view str);
+        inline static Opt strOpt(const std::string_view str);
         ```
 
         - **buildUrl**: Constructs a complete URL from a fixed or pre-concatenated path
 
         ```cpp
-        constexpr static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol);
+        static std::string buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol);
         ```
 
         - **buildUrlP**: Constructs a complete URL with an indefinite number of path segments; protocol and host need to be manually specified.
@@ -178,7 +162,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
         constexpr static T buildUrlP(const T &protocol, const T &host, Paths &&...paths);
         ```
 
-        - **getSysProxy**: Retrieves system proxy information
+        - **getSysProxy**: Retrieves system proxy information (only unix)
 
         ```cpp
         template <typename T = std::string>
@@ -231,7 +215,7 @@ inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
                 - `id` : cstr
                 - `writeCallback`: `size_t(char*, size_t, size_t, void*)`
                 - `headerCallback`: `size_t(char*, size_t, size_t, void*)`
-                - `config`: Config
+                - `config`: Network Config
             - **autoRetryArgs**: Parameters for using the `autoRetry` function
                 - `args`: Args
                 - `code`: vector list int expected HTTP code, retries if not met
