@@ -325,7 +325,7 @@ namespace ui {
     MainWindow::LoadingPage::LoadingPage(QWidget *parent) : QWidget(parent) {
         textLayoutWidget = new QWidget(this);
         textLayout = new QVBoxLayout(textLayoutWidget);
-        poster = new pixmapWidget(this);
+        poster = new PixmapWidget(this);
         process = new QLabel(this);
         progressBar = new QProgressBar(this);
         loadingLabel = new QLabel(this);
@@ -375,7 +375,7 @@ namespace ui {
         spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
     MainWindow::HintWindow::HintWindow(QWidget *parent) : QWidget(parent) {
-        poster = new pixmapWidget(this);
+        poster = new PixmapWidget(this);
         centralWidget = new QWidget(this);
         centralWidgetLayout = new QVBoxLayout(centralWidget);
         title = new QLabel(centralWidget);
@@ -403,7 +403,7 @@ namespace ui {
 
     MainWindow::InputPage::InputPage(QWidget *parent) : QWidget(parent) {
         gridLayout = new QGridLayout();
-        poster = new pixmapWidget(this);
+        poster = new PixmapWidget(this);
         centralWidget = new QWidget();
         centralWidgetLayout = new QVBoxLayout(centralWidget);
         dialogButton = new QDialogButtonBox(centralWidget);
@@ -1145,7 +1145,7 @@ namespace ui {
 
         headbar = new HeadBar(this);
         hintWidget = new HintWindow(this);
-        bgWidget = new pixmapWidget(this);
+        bgWidget = new PixmapWidget(this);
         m_pBlurEffect = new QGraphicsBlurEffect;
         input = new InputPage(this);
         widget = new QWidget(this);

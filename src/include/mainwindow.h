@@ -78,12 +78,12 @@ namespace ui {
         void request_move_window();
     };
 
-    class pixmapWidget : public QWidget {
+    class PixmapWidget : public QWidget {
         QPixmap bg;
 
     public:
-        pixmapWidget(QWidget *parent = nullptr) : QWidget(parent){};
-        pixmapWidget(const QPixmap &pixmap, QWidget *parent = nullptr) : QWidget(parent) {
+        PixmapWidget(QWidget *parent = nullptr) : QWidget(parent){};
+        PixmapWidget(const QPixmap &pixmap, QWidget *parent = nullptr) : QWidget(parent) {
             setPixmap(pixmap);
         }
 
@@ -311,7 +311,7 @@ namespace ui {
         struct LoadingPage : public QWidget {
             LoadingPage(QWidget *parent = nullptr);
             QProgressBar *progressBar;
-            pixmapWidget *poster;
+            PixmapWidget *poster;
             QWidget *textLayoutWidget;
             QVBoxLayout *textLayout;
             QLabel *titleH1;
@@ -381,7 +381,7 @@ namespace ui {
 
         struct HintWindow : public QWidget {
             QWidget *centralWidget;
-            pixmapWidget *poster;
+            PixmapWidget *poster;
             QVBoxLayout *centralWidgetLayout;
             QFrame *line;
             QPushButton *button;
@@ -449,7 +449,7 @@ namespace ui {
         struct InputPage : public QWidget {
             QGridLayout *gridLayout;
             QWidget *centralWidget;
-            pixmapWidget *poster;
+            PixmapWidget *poster;
             QVBoxLayout *centralWidgetLayout;
             std::vector<QWidget *> lineWidgets;
             std::vector<QMetaObject::Connection> conns;
@@ -549,7 +549,7 @@ namespace ui {
     private:
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
 
-        pixmapWidget *bgWidget;
+        PixmapWidget *bgWidget;
         QGraphicsBlurEffect *m_pBlurEffect;
         HintWindow *hintWidget;
         QWidget *widget;

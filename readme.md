@@ -1,7 +1,9 @@
 # Neko Launcher
 
-NekoLc (Neko launcher or NeLc) is a modern, customizable cross-platform launcher program. It aims to lower the software usage barrier, making it user-friendly and straightforward to operate.  
-It can launch any object, wrapping around anything, and includes self-updating and automatic software content updates.  
+Neko Launcher (NekoLc or NeLC) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
+It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
+It includes automatic content updates and self-updates (both your content and Neko Core itself).  
+If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions, issues hard to track...), then try it.
 This is also my first project learning C++ for nearly a year.  
 The project is still in development, and any constructive ideas are welcome.  
 Preview :  
@@ -52,7 +54,7 @@ git clone https://github.com/moehoshio/NekoLauncher.git && cd NekoLauncher
 cp CmakeListsCopy.txt CmakeLists.txt
 
 # fill path for your
-cmake . -B./build -DCMAKE_PREFIX_PATH="package and qt path Use ';' or ':' to separate" -DLIBRARY_DIRS="package path this a opt" -DQt6="qt path" -DCMAKE_BUILD_TYPE="Debug or Release"
+cmake . -B./build -DCMAKE_PREFIX_PATH="package and qt path" -DLIBRARY_DIRS="package path this a opt" -DQt6="qt path" -DCMAKE_BUILD_TYPE="Debug or Release"
 
 cmake --build ./build
 ```

@@ -1,3 +1,4 @@
+// client config class
 #pragma once
 #include "SimpleIni/SimpleIni.h"
 
