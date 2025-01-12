@@ -105,6 +105,23 @@ standard error message:
         - The temporary update program will update the main program and files by replacing them with the already downloaded versions, and then it will launch the main program.
         - If only resources need to be updated, the update is completed as soon as the download finishes.
 
+    - `/v1/api/feedbacklog` : post
+
+        - post:
+
+        ```json
+        {
+            "core": "v0.0.1",
+            "res": "v0.0.1",
+            "os": "osx",
+            "time": "timestamp",
+            "log": "feedback content"
+        }
+        ```
+
+        - Return 204 for success, 400 for client error, 500 for server error.
+        - For example, if either the core or res version is a non-existent version, including if the submission time is too short, return a client error.
+
 The server can be implemented in any language. Below is an example of the above API implemented using PHP:
 - `/v1/api/maintenance` :
 
