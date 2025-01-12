@@ -220,10 +220,15 @@ namespace neko {
         }
 
         inline static nlohmann::json loadTranslations(const std::string &lang = language()) {
-            std::ifstream i("lang/" + lang + ".json");
-            auto j = nlohmann::json::parse(i, nullptr, false);
-            nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<const char *>(i.is_open()), exec::boolTo<const char *>(j.is_discarded()));
-            return j;
+            std::string fileName = "lang/" + lang + ".json";
+            std::ifstream i;
+            if (std::filesystem::exists(fileName) && [&i,&fileName]{i.open(fileName); return i.is_open();}() )
+            {
+                auto j = nlohmann::json::parse(i, nullptr, false);
+                nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<const char *>(i.is_open()), exec::boolTo<const char *>(j.is_discarded()));
+                return j;
+            }
+            return nlohmann::json::object();
         }
 
         inline static std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
@@ -231,21 +236,21 @@ namespace neko {
             auto check = [&key](const nlohmann::json &obj) -> std::string {
                 if (obj.is_discarded() || !obj.contains(key)) {
                     nlog::Warn(FI, LI, "%s : faild to load translations(include faild to json parse ) or not contains key : %s , try to load defauld file", FN, key.c_str());
-                    return "";
+                    return "Null";
                 }
-                auto res = obj[key].get<std::string>();
+                auto res = obj.value(key,"Null");
                 nlog::Info(FI, LI, "%s : key : %s , res : %s", FN, key.c_str(), res.c_str());
                 return res;
             };
 
-            if (auto res = check(langFile); !res.empty()) {
+            if (auto res = check(langFile); res != "Null") {
                 return res;
             } else {
                 nlog::Warn(FI, LI, "%s : try to load default file", FN);
                 return check(loadTranslations("en"));
             }
 
-            return "";
+            return "null";
         }
 
     }; // class info

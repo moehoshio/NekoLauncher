@@ -3,7 +3,7 @@
 Neko Launcher (NekoLc or NeLC) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
 It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
 It includes automatic content updates and self-updates (both your content and Neko Core itself).  
-If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions, issues hard to track...), then try it.
+If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions, issues hard to track...), then try it.  
 This is also my first project learning C++ for nearly a year.  
 The project is still in development, and any constructive ideas are welcome.  
 Preview :  
