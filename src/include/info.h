@@ -196,7 +196,7 @@ namespace neko {
             Network network;
             Error error;
         };
-        inline static LanguageKey lang;
+        static LanguageKey lang;
 
         inline static std::string language(const std::string &lang = "") {
             static std::string preferredLanguage = "en";
