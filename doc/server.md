@@ -120,7 +120,7 @@ standard error message:
         ```
 
         - Return 204 for success, 400 for client error, 500 for server error.
-        - For example, if either the core or res version is a non-existent version, including if the submission time is too short, return a client error.
+        - For example, if either the core or res version is a non-existent version, return a client error.
 
 The server can be implemented in any language. Below is an example of the above API implemented using PHP:
 - `/v1/api/maintenance` :
@@ -260,3 +260,101 @@ The server can be implemented in any language. Below is an example of the above 
     ?>
 
     ```
+
+- `/v1/api/feedbacklog` : 
+
+```php
+<?php
+$userIP = $_SERVER['REMOTE_ADDR'];
+$rateLimitFile = "logs/ratelimit/$userIP.json";
+$rateLimitDuration = 10; // second
+
+createDirectoryIfNotExists("logs/ratelimit/");
+
+
+function createDirectoryIfNotExists($directory) {
+    if (!file_exists($directory)) {
+        mkdir($directory, 0777, true);
+    }
+}
+
+function checkCoreVersion($version){
+    switch ($version) {
+        case 'v0.0.1':
+        case 'v0.0.2':
+            return true;
+        default:
+            return false;
+    }
+}
+
+function checkResVersion($version){
+    switch ($version) {
+        case 'v0.0.1':
+        case 'v0.0.2':
+            return true;
+        default:
+            return false;
+    }
+}
+
+function checkOs($osName){
+    switch ($osName) {
+        case 'osx':
+        case 'windows':
+        case 'linux':
+            return true;
+        default:
+            return false;
+    }
+}
+
+function handleRateLimiting($rateLimitFile, $rateLimitDuration) {
+    if (file_exists($rateLimitFile)) {
+        $rateLimitData = json_decode(file_get_contents($rateLimitFile), true);
+        if (time() - $rateLimitData['lastRequest'] < $rateLimitDuration) {
+            return true;
+        }
+    }
+    file_put_contents($rateLimitFile, json_encode(['lastRequest' => time()]));
+    return false;
+}
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (handleRateLimiting($rateLimitFile, $rateLimitDuration)){
+        http_response_code(429); // Too Many Requests
+        exit;
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    $core = $data['core'];
+    $resVersion = $data['res'];
+    $os = $data['os'];
+    $time = $data['time'];
+    $log = $data['log'];
+    
+    if (!checkOs($os) || !checkCoreVersion($core) || !checkResVersion($resVersion)) {
+        http_response_code(400);
+        exit;
+    }
+    
+    $date = date('Y-m-d', $time);
+    $logDirectory = "logs/nekolc/$core-res_$resVersion/$date";
+    
+    createDirectoryIfNotExists($logDirectory);
+    
+    $logFile = "$logDirectory/$userIP.json"; 
+    if (file_exists($logFile)) { 
+        $logData = json_decode(file_get_contents($logFile), true); 
+    } else { 
+        $logData = []; 
+    } 
+    $logData[$time] = $log;
+    
+    file_put_contents($logFile, json_encode($logData));
+    http_response_code(204);
+    }
+    ?>
+
+```
