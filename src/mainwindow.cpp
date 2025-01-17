@@ -15,9 +15,12 @@ namespace ui {
         accountLogInOutLayout = new QHBoxLayout(accountLogInOutLayoutWidget);
         accountLogInOutInfoText = new QLabel(accountLogInOutLayoutWidget);
         accountLogInOutButton = new QPushButton(accountLogInOutLayoutWidget);
+        accountRegisterButton = new QPushButton(accountLogInOutLayoutWidget);
 
         accountLogInOutLayout->addWidget(accountLogInOutInfoText);
         accountLogInOutLayout->addWidget(accountLogInOutButton);
+        accountLogInOutLayout->addWidget(accountRegisterButton);
+        
         accountLogInOutLayoutWidget->setLayout(accountLogInOutLayout);
     };
 
@@ -531,7 +534,7 @@ namespace ui {
             groupAddSpacing->addSpacing(12);
         }
 
-        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->langSelectBox,setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
+        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page1->accountRegisterButton, setting->page2->langSelectBox,setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
             setMinHeight50->setMinimumHeight(50);
         }
     }
@@ -591,6 +594,7 @@ namespace ui {
         setting->tabWidget->setStyleSheet(tabWidgetStyle);
         setting->closeButton->setStyleSheet(closeButtonStyle);
         setting->page1->accountLogInOutButton->setStyleSheet(logInOutButtonStyle);
+        setting->page1->accountRegisterButton->setStyleSheet(logInOutButtonStyle);
 
         for (auto toolButton : std::vector<QWidget *>{
                  setting->page2->bgInputToolButton, setting->page2->moreTempTool}) {
@@ -635,6 +639,8 @@ namespace ui {
         headbar->maximize->setText(neko::info::translations(neko::info::lang.general.maximize).c_str());
 
         hintWidget->button->setText(neko::info::translations(neko::info::lang.general.ok).c_str());
+
+        setting->page1->accountRegisterButton->setText(neko::info::translations(neko::info::lang.general.registers).c_str());
 
         setting->page2->generalGroup->setTitle(neko::info::translations(neko::info::lang.general.general).c_str());
         setting->page2->bgGroup->setTitle(neko::info::translations(neko::info::lang.general.background).c_str());
@@ -704,7 +710,7 @@ namespace ui {
     void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
-                 input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton,setting->page2->langSelectText,setting->page2->langSelectBox, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
+                 input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton,setting->page1->accountRegisterButton,setting->page2->langSelectText,setting->page2->langSelectBox, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
             normal->setFont(text);
         }
 
@@ -828,6 +834,18 @@ namespace ui {
             }
         });
 
+        connect(setting->page1->accountRegisterButton,&QPushButton::clicked,[=,this]{ 
+            neko::launcherMinecraftAuthlibAndPrefetchedCheck([=,this](const ui::hintMsg &m){
+                    emit this->showHintD(m);
+            });
+            neko::Config cfg(exec::getConfigObj());
+            nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.manage.authlibPrefetched));
+            
+            if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
+                std::string url = authlibData["meta"]["links"]["register"];
+                QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
+            }
+            });
         connect(setting->page2->langSelectBox,&QComboBox::currentTextChanged,[=,this](const QString& text){
             neko::info::language(text.toStdString());
             exec::getConfigObj().SetValue("main","language",text.toStdString().c_str());

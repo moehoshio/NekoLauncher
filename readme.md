@@ -35,10 +35,10 @@ You can also forgo the GUI; its core should still run properly.
 
 prerequisites:  
 std >= c++20  
-qt6  
-cmake  
-libcurl  
-openssl  
+qt6.0.0  (6.6 is the tested version)  
+cmake3.20 (3.29 is the tested version)  
+libcurl 7.0.0  (8.1 is the tested version)  
+openssl 3.0.0  (3.4 is the tested version)  
 
 Already included in the project dependencies:  
 

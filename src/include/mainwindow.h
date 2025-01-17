@@ -130,6 +130,7 @@ namespace ui {
             QHBoxLayout *accountLogInOutLayout;
             QLabel *accountLogInOutInfoText;
             QPushButton *accountLogInOutButton;
+            QPushButton *accountRegisterButton;
 
             SettingPageOne(QWidget *parent = nullptr);
         };

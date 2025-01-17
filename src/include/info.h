@@ -96,6 +96,7 @@ namespace neko {
                     start = "general_start",
                     ok = "general_ok",
                     setting = "general_setting",
+                    registers = "general_register",
                     lang = "genreal_lang",
                     close = "general_close",
                     maximize = "general_maximize",
