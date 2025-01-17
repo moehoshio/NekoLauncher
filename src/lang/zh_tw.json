@@ -9,13 +9,13 @@
     "title_notLogin":"未登入",
     "title_inputLogin":"登入",
     "title_inputNotEnoughParameters":"參數不夠",
+    "title_loginOrRegister":"您有賬戶嗎?",
 
     "general_general":"一般",
     "general_menu":"MENU",
     "general_start":"START",
     "general_ok":"確認",
     "general_setting":"設定",
-    "general_register":"註冊",
     "genreal_lang":"語言",
     "general_close":"關閉",
     "general_maximize":"最大化",
@@ -60,6 +60,7 @@
     "general_needLogin":"請先登入",
     "general_notEnoughParameters":"請填寫所有項目",
     "general_incompleteApplied":"更改將在重新啟動後套用",
+    "general_loginOrRegister":"OK: 登入. \nCancel: 註冊",
     
     
     "loading_maintenanceInfoReq": "請求維護資訊..",

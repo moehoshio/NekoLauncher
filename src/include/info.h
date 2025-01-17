@@ -96,7 +96,6 @@ namespace neko {
                     start = "general_start",
                     ok = "general_ok",
                     setting = "general_setting",
-                    registers = "general_register",
                     lang = "genreal_lang",
                     close = "general_close",
                     maximize = "general_maximize",
@@ -140,7 +139,9 @@ namespace neko {
                     updateOverReStart = "general_updateOverReStart",
                     needLogin = "general_needLogin",
                     notEnoughParameters = "general_notEnoughParameters",
-                    incompleteApplied = "general_incompleteApplied";
+                    incompleteApplied = "general_incompleteApplied",
+                    loginOrRegister = "general_loginOrRegister";
+                    
             };
             struct Title {
                 std::string
@@ -151,7 +152,8 @@ namespace neko {
                     incomplete = "title_incomplete",
                     notLogin = "title_notLogin",
                     inputLogin = "title_inputLogin",
-                    inputNotEnoughParameters = "title_inputNotEnoughParameters";
+                    inputNotEnoughParameters = "title_inputNotEnoughParameters",
+                    loginOrRegister = "title_loginOrRegister";
             };
 
             struct Loading {

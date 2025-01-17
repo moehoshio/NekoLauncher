@@ -9,13 +9,13 @@
     "title_notLogin":"Not login",
     "title_inputLogin":"Login",
     "title_inputNotEnoughParameters":"Not enough parameters",
+    "title_loginOrRegister":"Do you have an account?",
 
     "general_general":"general",
     "general_menu":"MENU",
     "general_start":"START",
     "general_ok":"ok",
     "general_setting":"setting",
-    "general_register":"register",
     "genreal_lang":"language",
     "general_close":"close",
     "general_maximize":"maximize",
@@ -60,6 +60,7 @@
     "general_needLogin":"Please log in to your account first",
     "general_notEnoughParameters":"Please fill in all the fields",
     "general_incompleteApplied":"Changes will be applied after restarting.",
+    "general_loginOrRegister":"OK: Log in. \nCancel: Register",
 
     
     

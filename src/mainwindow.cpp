@@ -15,12 +15,10 @@ namespace ui {
         accountLogInOutLayout = new QHBoxLayout(accountLogInOutLayoutWidget);
         accountLogInOutInfoText = new QLabel(accountLogInOutLayoutWidget);
         accountLogInOutButton = new QPushButton(accountLogInOutLayoutWidget);
-        accountRegisterButton = new QPushButton(accountLogInOutLayoutWidget);
 
         accountLogInOutLayout->addWidget(accountLogInOutInfoText);
         accountLogInOutLayout->addWidget(accountLogInOutButton);
-        accountLogInOutLayout->addWidget(accountRegisterButton);
-        
+
         accountLogInOutLayoutWidget->setLayout(accountLogInOutLayout);
     };
 
@@ -123,8 +121,7 @@ namespace ui {
         moreTempEdit = new QLineEdit(moreTempLayoutWidget);
         moreTempTool = new QToolButton(moreTempLayoutWidget);
 
-        for (const auto &it : neko::info::getLanguages())
-        {
+        for (const auto &it : neko::info::getLanguages()) {
             langSelectBox->addItem(it.c_str());
         }
         langSelectLayout->addWidget(langSelectText);
@@ -477,7 +474,7 @@ namespace ui {
                 setting->page2->stylePointSizeEditLine->setMaximumWidth(width() * 0.5);
                 setting->page2->stylePointSizeEditFontBox->setMaximumWidth(width() * 0.32);
 
-                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->generalGroup,setting->page2->moreGroup, setting->page2->lcGroup}) {
+                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->generalGroup, setting->page2->moreGroup, setting->page2->lcGroup}) {
                     setOneTabGroupMMSize->setMinimumHeight(std::max<double>(110, height() * 0.18));
                     setOneTabGroupMMSize->setMaximumHeight(std::max<double>(680, height() * 0.5));
                 }
@@ -489,7 +486,7 @@ namespace ui {
                     setThreeTabGroupMMSize->setMinimumHeight(std::max<double>(330, height() * 0.5));
                     setThreeTabGroupMMSize->setMaximumHeight(std::max<double>(900, height() * 0.9));
                 }
-                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->langSelectLayoutWidget,setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
+                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->langSelectLayoutWidget, setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
                     setOptBSize->setBaseSize(width() * 0.7, height() * 0.2);
                 }
 
@@ -534,7 +531,7 @@ namespace ui {
             groupAddSpacing->addSpacing(12);
         }
 
-        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page1->accountRegisterButton, setting->page2->langSelectBox,setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
+        for (auto setMinHeight50 : std::vector<QWidget *>{setting->page1->accountLogInOutButton, setting->page2->langSelectBox, setting->page2->bgInputLineEdit, setting->page2->winSizeEditWidth, setting->page2->winSizeEditHeight, setting->page2->styleBlurEffectRadiusSlider, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->lcWindowSetBox, setting->page2->netProxyEdit, setting->page2->netThreadSetNums, setting->page2->moreTempEdit, setting->page3->devServerEdit, hintWidget->button}) {
             setMinHeight50->setMinimumHeight(50);
         }
     }
@@ -594,7 +591,6 @@ namespace ui {
         setting->tabWidget->setStyleSheet(tabWidgetStyle);
         setting->closeButton->setStyleSheet(closeButtonStyle);
         setting->page1->accountLogInOutButton->setStyleSheet(logInOutButtonStyle);
-        setting->page1->accountRegisterButton->setStyleSheet(logInOutButtonStyle);
 
         for (auto toolButton : std::vector<QWidget *>{
                  setting->page2->bgInputToolButton, setting->page2->moreTempTool}) {
@@ -602,12 +598,12 @@ namespace ui {
         }
 
         for (auto setGroupBg : std::vector<QWidget *>{
-                 setting->page2->generalGroup,setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 setting->page2->generalGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             setGroupBg->setStyleSheet("QGroupBox { border: transparent; background-color: rgba(255,255,255,0);}");
         }
 
         for (auto setTabOptBg : std::vector<QWidget *>{
-                 input->centralWidget, setting->page2->langSelectLayoutWidget,setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->lcWindowSetBox, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
+                 input->centralWidget, setting->page2->langSelectLayoutWidget, setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->lcWindowSetBox, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
             setTabOptBg->setStyleSheet("background-color: rgba(235,235,235,200);border-radius: 22%;");
         }
         setting->page2->styleBlurEffectRadiusSlider->setStyleSheet(sliderStyle);
@@ -618,7 +614,7 @@ namespace ui {
         for (auto setTranslucentBackground : std::vector<QWidget *>{input, widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
-        for (auto transparentWidgets : std::vector<QWidget *>{input, headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->langSelectText,setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->lcWindowSetText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process, input->title, input->msg}) {
+        for (auto transparentWidgets : std::vector<QWidget *>{input, headbar, loading, widget, index, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page2->langSelectText, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->winBarKeepRightCheckBox, setting->page2->winSysFrameCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditTextX, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->lcWindowSetText, setting->page2->netProxyEnable, setting->page2->netThreadNotAutoEnable, setting->page2->styleBlurEffectRadiusSpacing, setting->page2->stylePointSizeEditText, setting->page2->moreTempText, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, loading->titleH1, loading->titleH2, loading->text, loading->process, hintWidget->title, hintWidget->msg, loading->process, input->title, input->msg}) {
             transparentWidgets->setStyleSheet("background-color: rgba(255,255,255,0);");
         }
     }
@@ -640,8 +636,6 @@ namespace ui {
 
         hintWidget->button->setText(neko::info::translations(neko::info::lang.general.ok).c_str());
 
-        setting->page1->accountRegisterButton->setText(neko::info::translations(neko::info::lang.general.registers).c_str());
-
         setting->page2->generalGroup->setTitle(neko::info::translations(neko::info::lang.general.general).c_str());
         setting->page2->bgGroup->setTitle(neko::info::translations(neko::info::lang.general.background).c_str());
         setting->page2->styleGroup->setTitle(neko::info::translations(neko::info::lang.general.style).c_str());
@@ -652,7 +646,7 @@ namespace ui {
         setting->page3->devOptGroup->setTitle("dev");
 
         setting->page2->langSelectText->setText(neko::info::translations(neko::info::lang.general.lang).c_str());
-    
+
         setting->page2->bgSelectRadioNone->setText(neko::info::translations(neko::info::lang.general.none).c_str());
         setting->page2->bgSelectRadioImage->setText(neko::info::translations(neko::info::lang.general.image).c_str());
         setting->page2->bgSelectText->setText(neko::info::translations(neko::info::lang.general.type).c_str());
@@ -710,12 +704,12 @@ namespace ui {
     void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
-                 input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton,setting->page1->accountRegisterButton,setting->page2->langSelectText,setting->page2->langSelectBox, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
+                 input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->langSelectText, setting->page2->langSelectBox, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
             normal->setFont(text);
         }
 
         for (auto h2Title : std::vector<QWidget *>{
-                 input->title, hintWidget->title, loading->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->generalGroup,setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
+                 input->title, hintWidget->title, loading->titleH2, index->menuButton, setting->page1->accountGroup, setting->page2->generalGroup, setting->page2->bgGroup, setting->page2->styleGroup, setting->page2->winGroup, setting->page2->lcGroup, setting->page2->netGroup, setting->page2->moreGroup, setting->page3->devOptGroup}) {
             h2Title->setFont(h2);
         }
 
@@ -741,7 +735,7 @@ namespace ui {
             // Maybe we should switch the status to loading after the user clicks start?
 
             if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str()) {
-                showHint({neko::info::translations(neko::info::lang.title.notLogin) , neko::info::translations(neko::info::lang.general.needLogin), "", 1});
+                showHint({neko::info::translations(neko::info::lang.title.notLogin), neko::info::translations(neko::info::lang.general.needLogin), "", 1});
                 return;
             }
 
@@ -786,71 +780,79 @@ namespace ui {
             updatePage(state, oldState);
         });
         connect(setting->page1->accountLogInOutButton, &QPushButton::clicked, [=, this] {
-            if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str() ) {
-                showInput({neko::info::translations(neko::info::lang.title.inputLogin), "", "", {neko::info::translations(neko::info::lang.general.username), neko::info::translations(neko::info::lang.general.password)}, [=, this](bool check) {
-                               if (!check) {
-                                   hideInput();
-                                   return;
-                               }
+            showHint({neko::info::translations(neko::info::lang.title.loginOrRegister),
+                      neko::info::translations(neko::info::lang.general.loginOrRegister),
+                      "",
+                      2,
+                      [=, this](bool checkOpt1) {
+                          if (!checkOpt1) {
+                              neko::launcherMinecraftAuthlibAndPrefetchedCheck([=, this](const ui::hintMsg &m) {
+                                  emit this->showHintD(m);
+                              });
+                              neko::Config cfg(exec::getConfigObj());
+                              nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.manage.authlibPrefetched));
 
-                               auto inData = getInput();
-                               if (inData.size() != 2) {
-                                   showHint({neko::info::translations(neko::info::lang.title.inputNotEnoughParameters), neko::info::translations(neko::info::lang.general.notEnoughParameters), "", 1});
-                                   return;
-                               }
-                               auto hintFunc = [=, this](const ui::hintMsg &m) {
-                                   emit this->showHintD(m);
-                               };
-                               auto callBack = [=, this](const std::string &name) {
-                                   emit this->loginStatusChangeD(name);
-                               };
-                               exec::getThreadObj().enqueue([=, this] {
-                                   if (neko::authLogin(inData, hintFunc, callBack) == neko::State::over) {
-                                       emit this->hideInputD();
-                                   }
-                               });
-                           }});
+                              if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
+                                  std::string url = authlibData["meta"]["links"]["register"];
+                                  QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
+                              }
+                              return;
+                          }
 
-            } else {
-                exec::getThreadObj().enqueue([] {
-                    exec::getConfigObj().SetValue("manage", "accessToken", "");
-                    exec::getConfigObj().SetValue("manage", "uuid", "");
-                    exec::getConfigObj().SetValue("manage", "account", "");
-                    exec::getConfigObj().SetValue("manage", "displayName", "");
+                          if (setting->page1->accountLogInOutButton->text() != neko::info::translations(neko::info::lang.general.login).c_str()) {
+                              exec::getThreadObj().enqueue([] {
+                                  exec::getConfigObj().SetValue("manage", "accessToken", "");
+                                  exec::getConfigObj().SetValue("manage", "uuid", "");
+                                  exec::getConfigObj().SetValue("manage", "account", "");
+                                  exec::getConfigObj().SetValue("manage", "displayName", "");
 
-                    auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
-                    nlohmann::json json = {
-                        {"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}};
-                    auto data = json.dump();
-                    neko::network net;
-                    int code = 0;
-                    decltype(net)::Args args{url.c_str(), nullptr, &code};
-                    args.data = data.c_str();
-                    args.header = "Content-Type: application/json";
-                    net.Do(neko::networkBase::Opt::postText, args);
-                });
-                setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
-                setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
-            }
+                                  auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
+                                  nlohmann::json json = {
+                                      {"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}};
+                                  auto data = json.dump();
+                                  neko::network net;
+                                  int code = 0;
+                                  decltype(net)::Args args{url.c_str(), nullptr, &code};
+                                  args.data = data.c_str();
+                                  args.header = "Content-Type: application/json";
+                                  net.Do(neko::networkBase::Opt::postText, args);
+                              });
+                              setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
+                              setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
+                              return;
+                          }
+
+                          showInput({neko::info::translations(neko::info::lang.title.inputLogin), "", "", {neko::info::translations(neko::info::lang.general.username), neko::info::translations(neko::info::lang.general.password)}, [=, this](bool check) {
+                                         if (!check) {
+                                             hideInput();
+                                             return;
+                                         }
+
+                                         auto inData = getInput();
+                                         if (inData.size() != 2) {
+                                             showHint({neko::info::translations(neko::info::lang.title.inputNotEnoughParameters), neko::info::translations(neko::info::lang.general.notEnoughParameters), "", 1});
+                                             return;
+                                         }
+                                         auto hintFunc = [=, this](const ui::hintMsg &m) {
+                                             emit this->showHintD(m);
+                                         };
+                                         auto callBack = [=, this](const std::string &name) {
+                                             emit this->loginStatusChangeD(name);
+                                         };
+                                         exec::getThreadObj().enqueue([=, this] {
+                                             if (neko::authLogin(inData, hintFunc, callBack) == neko::State::over) {
+                                                 emit this->hideInputD();
+                                             }
+                                         });
+                                     }});
+                      }});
         });
 
-        connect(setting->page1->accountRegisterButton,&QPushButton::clicked,[=,this]{ 
-            neko::launcherMinecraftAuthlibAndPrefetchedCheck([=,this](const ui::hintMsg &m){
-                    emit this->showHintD(m);
-            });
-            neko::Config cfg(exec::getConfigObj());
-            nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.manage.authlibPrefetched));
-            
-            if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
-                std::string url = authlibData["meta"]["links"]["register"];
-                QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
-            }
-            });
-        connect(setting->page2->langSelectBox,&QComboBox::currentTextChanged,[=,this](const QString& text){
+        connect(setting->page2->langSelectBox, &QComboBox::currentTextChanged, [=, this](const QString &text) {
             neko::info::language(text.toStdString());
-            exec::getConfigObj().SetValue("main","language",text.toStdString().c_str());
+            exec::getConfigObj().SetValue("main", "language", text.toStdString().c_str());
             setupText();
-            showHint({neko::info::translations(neko::info::lang.title.incomplete) ,neko::info::translations(neko::info::lang.general.incompleteApplied),"", 1,[](bool){}});
+            showHint({neko::info::translations(neko::info::lang.title.incomplete), neko::info::translations(neko::info::lang.general.incompleteApplied), "", 1, [](bool) {}});
         });
         connect(setting->page2->bgInputLineEdit, &QLineEdit::editingFinished, [=, this]() {
             bgWidget->setPixmap(setting->page2->bgInputLineEdit->text().toStdString().c_str());
@@ -1330,7 +1332,6 @@ namespace ui {
 
         return QMainWindow::event(event);
     }
-
 
 } // namespace ui
 
