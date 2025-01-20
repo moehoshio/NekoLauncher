@@ -1,8 +1,12 @@
 #pragma once
-#include "exec.h"
+#include "exec.hpp"
+#include "log.hpp"
+#include "fn.hpp"
 #include "nlohmann/json.hpp"
 #include <filesystem>
 #include <string>
+
+
 namespace neko {
 
     class info {

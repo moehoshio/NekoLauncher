@@ -44,9 +44,9 @@
 
 #include <QtGui/QScreen>
 
-#include "cconfig.h"
-#include "msgtypes.h"
-#include "info.h"
+#include "cconfig.hpp"
+#include "msgtypes.hpp"
+#include "info.hpp"
 
 namespace ui {
 

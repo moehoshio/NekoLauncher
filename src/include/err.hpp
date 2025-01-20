@@ -6,7 +6,7 @@ namespace nerr {
 #define nerrImpLoggerMode true
 
 #if nerrImpLoggerMode
-#include "log.h"
+#include "log.hpp"
 #endif
 
     using uint = unsigned int;

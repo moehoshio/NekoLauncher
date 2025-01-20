@@ -1,8 +1,8 @@
-#include "mainwindow.h"
-#include "autoinit.h"
-#include "core.h"
-#include "exec.h"
-#include "info.h"
+#include "mainwindow.hpp"
+#include "autoinit.hpp"
+#include "core.hpp"
+#include "exec.hpp"
+#include "info.hpp"
 #include "nlohmann/json.hpp"
 #include <filesystem>
 namespace ui {

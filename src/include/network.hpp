@@ -5,12 +5,12 @@
 #include <future>
 #include <string>
 
-#include "err.h"
-#include "exec.h"
-#include "fn.h"
-#include "info.h"
-#include "io.h"
-#include "log.h"
+#include "err.hpp"
+#include "exec.hpp"
+#include "fn.hpp"
+#include "info.hpp"
+#include "io.hpp"
+#include "log.hpp"
 
 namespace neko {
 
@@ -58,7 +58,6 @@ namespace neko {
 
         inline static Config Dconfig;
         constexpr inline static Api api;
-        // constexpr static Authlib authlib;
 
         enum class Opt {
             none,
@@ -94,7 +93,7 @@ namespace neko {
 
         /// @param path starts with /
         /// @param host should only contain the domain name.
-        static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol) {
+        inline static auto buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol) {
             return exec::sum(protocol, host, path);
         }
 
@@ -194,22 +193,14 @@ namespace neko {
         };
 
     private:
-        inline static void doErr(const char *file, unsigned int line, const char *msg, const char *formFuncName, RetHttpCode *ref, int val) {
+        inline static void doErr(const char *file, unsigned int line, const char *msg, const char *formFuncName, RetHttpCode *ref,int val) {
             if (ref)
                 *ref = val;
             nlog::Err(file, line, "%s : %s", formFuncName, msg);
         }
 
-        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
-            switch (e.type) {
-                case nerr::errType::TheSame:
-                case nerr::errType::TimeOut:
-                    doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret, e.code);
-                    break;
-                default:
-                    doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id )).c_str(), (std::string(FN) + formFuncName).c_str(), ret, e.code);
-                    break;
-            }
+        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret,int val) {
+            doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret,val);
         }
 
         inline static void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
@@ -337,7 +328,7 @@ namespace neko {
                         setRetCodeAndClean(curl, args.code, args.id);
 
                     } catch (const nerr::error &e) {
-                        handleNerr(e, FI, LI, FN, args.id, args.code);
+                        handleNerr(e, FI, LI, FN, args.id, args.code, -2);
                     } catch (const std::exception &e) {
                         handleStdError(e, FI, LI, FN, args.id, args.code);
                     } catch (...) {

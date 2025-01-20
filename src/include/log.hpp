@@ -30,4 +30,5 @@ namespace nlog {
             Info(file, line, "%s : %s", this->name.c_str(), this->endMsg.c_str());
         }
     };
+    
 } // namespace nlog

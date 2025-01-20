@@ -30,7 +30,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "err.h"// NekoL Project Customization
+#include "err.hpp"// NekoL Project Customization
 
 #include <algorithm>
 #include <chrono>
@@ -141,10 +141,10 @@ namespace one {
 
             // if need Guaranteed not to be modified during traversal ,Just get the lock first(Need Unlock before throwing)
             if (this->verified(std::forward<Args...>(condition...)))
-                throw nerr::error(nerr::errCode(1001), "There is the same", nerr::errType::TheSame);
+                throw nerr::error("There is the same");
 
             if (!this->mtx.try_lock_for(t))
-                throw nerr::error(nerr::errCode(1002), "Get lock the time out", nerr::errType::TimeOut);
+                throw nerr::error("Get lock the time out");
 
             this->add(std::forward<Args...>(condition...));
             data = std::make_tuple(std::forward<Args...>(condition...));
@@ -273,10 +273,10 @@ namespace one {
         inline void entrust(std::chrono::milliseconds t, Args&&... args) {
             // if need Guaranteed not to be modified during traversal ,Just get the lock first(Need Unlock before throwing)
             if (this->verified(std::forward<Args...>(args...)))
-                throw nerr::error(nerr::errCode(1001), "There is the same", nerr::errType::TheSame);
+                throw nerr::error("There is the same");
 
             if (!this->mtx.try_lock_for(t))
-                throw nerr::error(nerr::errCode(1002), "Get lock the time out", nerr::errType::TimeOut);
+                throw nerr::error("Get lock the time out");
 
             this->add(std::forward<Args...>(args...));
             data = std::make_tuple(std::forward<Args...>(args...));

@@ -1,4 +1,4 @@
-#include "network.h"
+#include "network.hpp"
 #include <QtCore/QByteArray>
 namespace neko {
 

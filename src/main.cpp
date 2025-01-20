@@ -1,6 +1,6 @@
-#include "autoinit.h"
-#include "core.h"
-#include "mainwindow.h"
+#include "autoinit.hpp"
+#include "core.hpp"
+#include "mainwindow.hpp"
 #include <iostream>
 
 #include <QtWidgets/QApplication>

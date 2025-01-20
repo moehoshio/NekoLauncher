@@ -38,7 +38,7 @@ SOFTWARE.
 #include <string>
 // NekoLc Project Customization
 #include "SimpleIni/SimpleIni.h"
-#include "threadpool.h"
+#include "threadpool.hpp"
 
 // hash
 #include <fstream>

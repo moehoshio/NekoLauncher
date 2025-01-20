@@ -1,8 +1,10 @@
 #pragma once
-#include "cconfig.h"
-#include "io.h"
-#include "network.h"
+#include "log.hpp"
+#include "cconfig.hpp"
+#include "io.hpp"
+#include "network.hpp"
 #include <filesystem>
+#include "fn.hpp"
 namespace neko {
 
     inline void setLog(int argc, char *argv[], Config cfg) {

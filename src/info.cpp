@@ -1,4 +1,4 @@
-#include "info.h"
+#include "info.hpp"
 
 namespace neko
 {
