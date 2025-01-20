@@ -1,9 +1,12 @@
 #include "mainwindow.hpp"
+
 #include "autoinit.hpp"
 #include "core.hpp"
 #include "exec.hpp"
 #include "info.hpp"
+
 #include "nlohmann/json.hpp"
+
 #include <filesystem>
 namespace ui {
 
@@ -691,7 +694,7 @@ namespace ui {
         setting->closeButton->setToolTip(neko::info::translations(neko::info::lang.general.close).c_str());
     }
 
-    void MainWindow::setupFont(neko::Config config) {
+    void MainWindow::setupFont(neko::ClientConfig config) {
 
         f.setPointSize(config.style.fontPointSize);
         setting->page2->stylePointSizeEditLine->setText(QString::number(config.style.fontPointSize));
@@ -729,7 +732,6 @@ namespace ui {
     };
 
     void MainWindow::setupConnect() {
-        nlog::autoLog log{FI, LI, FN};
 
         connect(index->startButton, &QPushButton::clicked, [=, this] {
             // Maybe we should switch the status to loading after the user clicks start?
@@ -789,7 +791,7 @@ namespace ui {
                               neko::launcherMinecraftAuthlibAndPrefetchedCheck([=, this](const ui::hintMsg &m) {
                                   emit this->showHintD(m);
                               });
-                              neko::Config cfg(exec::getConfigObj());
+                              neko::ClientConfig cfg(exec::getConfigObj());
                               nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.manage.authlibPrefetched));
 
                               if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
@@ -1053,7 +1055,7 @@ namespace ui {
         connect(this, &MainWindow::winShowHideD, this, &MainWindow::winShowHide);
     }
 
-    void MainWindow::setupBase(neko::Config config) {
+    void MainWindow::setupBase(neko::ClientConfig config) {
 
         this->setCentralWidget(widget);
         this->setAcceptDrops(true);
@@ -1161,7 +1163,7 @@ namespace ui {
         bgWidget->lower();
     }
 
-    MainWindow::MainWindow(neko::Config config) {
+    MainWindow::MainWindow(neko::ClientConfig config) {
 
         headbar = new HeadBar(this);
         hintWidget = new HintWindow(this);
@@ -1229,7 +1231,7 @@ namespace ui {
         }
     }
     void MainWindow::closeEvent(QCloseEvent *event) {
-        neko::Config cfg(exec::getConfigObj());
+        neko::ClientConfig cfg(exec::getConfigObj());
         std::string bgText = setting->page2->bgInputLineEdit->text().toStdString();
         switch (setting->page2->bgSelectButtonGroup->checkedId()) {
             case 1:
@@ -1277,7 +1279,7 @@ namespace ui {
 
         neko::configInfoPrint(cfg);
 
-        neko::Config::save(exec::getConfigObj(), "config.ini", cfg);
+        neko::ClientConfig::save(exec::getConfigObj(), "config.ini", cfg);
     }
     bool MainWindow::event(QEvent *event) {
         constexpr qreal border = 11;

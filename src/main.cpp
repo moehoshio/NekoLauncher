@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     try {
         QApplication app(argc, argv);
         auto it = neko::autoInit(argc, argv);
-        neko::Config config(exec::getConfigObj());
+        neko::ClientConfig config(exec::getConfigObj());
         ui::MainWindow w(config);
         w.showLoad({ui::loadMsg::OnlyRaw,
                     neko::info::translations(neko::info::lang.network.testtingNetwork)});

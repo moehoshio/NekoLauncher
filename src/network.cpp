@@ -1,5 +1,7 @@
 #include "network.hpp"
+
 #include <QtCore/QByteArray>
+
 namespace neko {
 
     using namespace std::literals;

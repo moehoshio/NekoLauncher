@@ -1,11 +1,12 @@
 #pragma once
+
 #include "exec.hpp"
-#include "log.hpp"
-#include "fn.hpp"
+#include "nlog.hpp"
+
 #include "nlohmann/json.hpp"
+
 #include <filesystem>
 #include <string>
-
 
 namespace neko {
 
@@ -16,18 +17,29 @@ namespace neko {
             constexpr static const char *version =
 #include "../data/version"
                 ;
-            //             constexpr static const char *website =
-            // #include "../data/website"
-            //                 ;
+
             constexpr static const char *osName =
-#if _WIN32
+#if defined(_WIN32)
                 "windows";
-#elif __APPLE__
+#elif defined(__APPLE__)
                 "osx";
-#elif __linux__
+#elif defined(__linux__)
                 "linux";
 #else
                 "unknown";
+#endif
+
+            constexpr static const char *osArch =
+#if defined(__x86_64__) || defined(_M_X64)
+                "x64";
+#elif defined(__i386__) || defined(_M_IX86)
+                "x86";
+#elif defined(__aarch64__) || defined(_M_ARM64)
+                "arm64";
+#elif defined(__arm__) || defined(_M_ARM)
+                "arm";
+#else
+                    "unknown";
 #endif
         };
 
@@ -76,10 +88,13 @@ namespace neko {
             return std::string();
         }
 
-        inline static std::string getVersion() {
+        constexpr inline static auto getVersion() {
             return Data::version;
         };
 
+        inline static std::string getVersionS() {
+            return Data::version;
+        };
         inline static std::string getResVersion() {
             return exec::getConfigObj().GetValue("more", "resVersion", "");
         }
@@ -87,9 +102,15 @@ namespace neko {
         constexpr inline static auto getOsName() {
             return Data::osName;
         }
-
         inline static std::string getOsNameS() {
             return Data::osName;
+        }
+
+        constexpr inline static auto getOsArch() {
+            return Data::osArch;
+        }
+        inline static std::string getOsArchS() {
+            return Data::osArch;
         }
 
         struct LanguageKey {
@@ -145,7 +166,6 @@ namespace neko {
                     notEnoughParameters = "general_notEnoughParameters",
                     incompleteApplied = "general_incompleteApplied",
                     loginOrRegister = "general_loginOrRegister";
-                    
             };
             struct Title {
                 std::string
@@ -214,9 +234,9 @@ namespace neko {
             return preferredLanguage;
         }
 
-        inline static std::vector<std::string> getLanguages() {
+        inline static std::vector<std::string> getLanguages(const std::string &langPath = info::workPath() + "/lang/") {
             std::vector<std::string> res;
-            for (const auto &it : std::filesystem::directory_iterator(info::workPath() + "/lang/")) {
+            for (const auto &it : std::filesystem::directory_iterator(langPath)) {
                 if (it.is_regular_file() && exec::matchExtName(it.path().string(), "json")) {
                     std::string fileName = it.path().stem().string();
                     nlog::Info(FI, LI, "%s : lang file push : %s", FN, fileName.c_str());
@@ -226,11 +246,10 @@ namespace neko {
             return res;
         }
 
-        inline static nlohmann::json loadTranslations(const std::string &lang = language()) {
-            std::string fileName = "lang/" + lang + ".json";
+        inline static nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langPath = info::workPath() + "/lang/") {
+            std::string fileName = langPath + lang + ".json";
             std::ifstream i;
-            if (std::filesystem::exists(fileName) && [&i,&fileName]{i.open(fileName); return i.is_open();}() )
-            {
+            if (std::filesystem::exists(fileName) && [&i, &fileName] {i.open(fileName); return i.is_open(); }()) {
                 auto j = nlohmann::json::parse(i, nullptr, false);
                 nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<const char *>(i.is_open()), exec::boolTo<const char *>(j.is_discarded()));
                 return j;
@@ -239,25 +258,21 @@ namespace neko {
         }
 
         inline static std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
-            nlog::autoLog log{FI, LI, FN, "Enter , key : " + key};
             auto check = [&key](const nlohmann::json &obj) -> std::string {
-                if (obj.is_discarded() || !obj.contains(key)) {
-                    nlog::Warn(FI, LI, "%s : faild to load translations(include faild to json parse ) or not contains key : %s , try to load defauld file", FN, key.c_str());
+                if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
                     return "Null";
                 }
-                auto res = obj.value(key,"Null");
-                nlog::Info(FI, LI, "%s : key : %s , res : %s", FN, key.c_str(), res.c_str());
-                return res;
+                return obj.value(key, "Null");
             };
 
-            if (auto res = check(langFile); res != "Null") {
-                return res;
-            } else {
-                nlog::Warn(FI, LI, "%s : try to load default file", FN);
+            auto res = check(langFile);
+
+            if ( res == "Null") {
+                nlog::Warn(FI, LI, "%s : faild to load key : %s for : %s , try to load default file", FN,key.c_str(), langFile.value("language", "Null").c_str());
                 return check(loadTranslations("en"));
             }
 
-            return "null";
+            return res;
         }
 
     }; // class info

@@ -1,15 +1,14 @@
 #pragma once
+#include "nekodefine.hpp"
+
 #include <exception>
+
 // neko error
 namespace nerr {
 
-#define nerrImpLoggerMode true
-
-#if nerrImpLoggerMode
+#if defined(nerrImpLoggerMode)
 #include "log.hpp"
 #endif
-
-    using uint = unsigned int;
 
     struct error : public std::exception {
 
@@ -21,13 +20,13 @@ namespace nerr {
         const char *funcName;
 
         error(const char *Msg, const char *fileName, uint line, const char *funcName, bool logger = enableLogger) noexcept : msg(Msg), fileName(fileName), line(line), funcName(funcName) {
-            #if nerrImpLoggerMode
+            #if defined(nerrImpLoggerMode)
                 if (logger)
                     nlog::Err(fileName, line, "%s : %s", funcName, msg);
             #endif
         };
         error(const char *Msg, bool logger = enableLogger) noexcept : msg(Msg) {
-            #if nerrImpLoggerMode
+            #if defined(nerrImpLoggerMode)
                 if (logger)
                     nlog::Err(fileName, line, "%s : %s", funcName, msg);
             #endif

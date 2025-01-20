@@ -1,16 +1,17 @@
 #pragma once
+
 #include <curl/curl.h>
 
 #include <algorithm>
 #include <future>
 #include <string>
 
-#include "err.hpp"
+#include "nerr.hpp"
+
 #include "exec.hpp"
-#include "fn.hpp"
 #include "info.hpp"
-#include "io.hpp"
-#include "log.hpp"
+
+#include "nlog.hpp"
 
 namespace neko {
 

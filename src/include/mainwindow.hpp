@@ -44,7 +44,7 @@
 
 #include <QtGui/QScreen>
 
-#include "cconfig.hpp"
+#include "clientconfig.hpp"
 #include "msgtypes.hpp"
 #include "info.hpp"
 
@@ -425,7 +425,7 @@ namespace ui {
                 if (!m.poster.empty())
                     this->poster->setPixmap(m.poster.c_str());
                 bool *did = new bool(false);
-                if (m.buttonType == 1) {
+                if (m.buttonNum == 1) {
                     setupButton(button, m.callback, *did);
                     dialogButton->hide();
                 } else {
@@ -613,16 +613,16 @@ namespace ui {
         void setupTranslucentBackground();
 
         void setupText();
-        void setupFont(neko::Config config);
+        void setupFont(neko::ClientConfig config);
 
-        void setupBase(neko::Config config);
+        void setupBase(neko::ClientConfig config);
 
         void autoSetText(QFont text);
         void setTextFont(QFont text, QFont h2, QFont h1);
 
         void setupConnect();
 
-        MainWindow(neko::Config config);
+        MainWindow(neko::ClientConfig config);
 
         void updatePage(pageState state, pageState oldState);
 

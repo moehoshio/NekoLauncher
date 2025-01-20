@@ -23,7 +23,7 @@
 // Modified for log4cplus, copyright (c) 2014-2015 Václav Zeman.
 
 // Original source: https://github.com/log4cplus/ThreadPool
-// In our project, this was modified
+// In nekolc project, this was modified
 #pragma once
 
 #include <vector>

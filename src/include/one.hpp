@@ -30,7 +30,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "err.hpp"// NekoL Project Customization
+#include "nerr.hpp"// NekoL Project Customization
 
 #include <algorithm>
 #include <chrono>
@@ -38,10 +38,19 @@ SOFTWARE.
 #include <tuple>
 #include <vector>
 
+#include <fstream>
+#include <string>
+
+namespace neko
+{
+    using oneIof = one::one<std::fstream,std::string>; 
+} // namespace neko
+
+
 namespace one {
 
-    // Already customized in the entrust function
-    // using exception_ = std::runtime_error;
+    using theSameException = nerr::TheSame;
+    using timeOutException = nerr::TimeOut;
     
     
     inline namespace Opt {
@@ -141,10 +150,10 @@ namespace one {
 
             // if need Guaranteed not to be modified during traversal ,Just get the lock first(Need Unlock before throwing)
             if (this->verified(std::forward<Args...>(condition...)))
-                throw nerr::error("There is the same");
+                throw theSameException("There is the same");
 
             if (!this->mtx.try_lock_for(t))
-                throw nerr::error("Get lock the time out");
+                throw timeOutException("Get lock the time out");
 
             this->add(std::forward<Args...>(condition...));
             data = std::make_tuple(std::forward<Args...>(condition...));
@@ -272,11 +281,11 @@ namespace one {
         template <typename... Args>
         inline void entrust(std::chrono::milliseconds t, Args&&... args) {
             // if need Guaranteed not to be modified during traversal ,Just get the lock first(Need Unlock before throwing)
-            if (this->verified(std::forward<Args...>(args...)))
-                throw nerr::error("There is the same");
+            if (this->verified(std::forward<Args...>(condition...)))
+                throw theSameException("There is the same");
 
             if (!this->mtx.try_lock_for(t))
-                throw nerr::error("Get lock the time out");
+                throw timeOutException("Get lock the time out");
 
             this->add(std::forward<Args...>(args...));
             data = std::make_tuple(std::forward<Args...>(args...));

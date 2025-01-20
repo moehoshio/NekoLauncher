@@ -1,12 +1,14 @@
 #pragma once
-#include <string>
+
 #include "loguru.hpp"
+#include <string>
+
 // neko log
 namespace nlog {
     
 
     // Use formatting strings, for example: ("main.cpp",1,"%s : %s , v%d","func" ,"hello", 1,1)
-    // Out the :  ... "func : hello , v1.1"
+    // Out the :  main.cpp line 1 : "func : hello , v1.1"
     constexpr inline void Info(const char *file, unsigned int line, const char *format, const auto &...args) {
         loguru::log(loguru::Verbosity_INFO, file, line, format, args...);
     }

@@ -1,13 +1,15 @@
 #pragma once
-#include "log.hpp"
-#include "cconfig.hpp"
-#include "io.hpp"
+
+#include "clientconfig.hpp"
+#include "nlog.hpp"
+
 #include "network.hpp"
+
 #include <filesystem>
-#include "fn.hpp"
+
 namespace neko {
 
-    inline void setLog(int argc, char *argv[], Config cfg) {
+    inline void setLog(int argc, char *argv[], ClientConfig cfg) {
         bool
             dev = cfg.dev.enable,
             debug = cfg.dev.debug;
@@ -58,13 +60,13 @@ namespace neko {
         }
     }
 
-    inline void setThreadNums(Config cfg) {
+    inline void setThreadNums(ClientConfig cfg) {
         if (cfg.net.thread > 0)
             exec::getThreadObj().set_pool_size(static_cast<size_t>(cfg.net.thread));
         nlog::Info(FI, LI, "%s : End. expect thread nums : %d ", FN, cfg.net.thread);
     }
 
-    inline void configInfoPrint(Config config) {
+    inline void configInfoPrint(ClientConfig config) {
         nlog::Info(FI, LI, "%s : config main : lang : %s , bgType : %s , bg : %s , windowSize : %s , launcherMode : %d ,  useSysWinodwFrame: %s , barKeepRight : %s ", FN, config.main.lang, config.main.bgType, config.main.bg, config.main.windowSize, config.main.launcherMode, exec::boolTo<const char *>(config.main.useSysWindowFrame), exec::boolTo<const char *>(config.main.barKeepRight));
         nlog::Info(FI, LI, "%s : config net : thread : %d , proxy : %s", FN, config.net.thread, config.net.proxy);
         nlog::Info(FI, LI, "%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ", FN, config.style.blurHint, config.style.blurValue, config.style.fontPointSize, config.style.fontFamilies);
@@ -73,27 +75,12 @@ namespace neko {
         nlog::Info(FI, LI, "%s : config more : temp : %s , resVersion : %s", FN, config.more.temp, config.more.resVersion);
     }
 
-    inline void currentPathCorrection() {
-
-#if defined(__APPLE__) // if using the macOS package need ?
-        const char *mPath[]{".app/Contents/MacOS", ".app\\Contents\\MacOS"};
-        for (auto it : mPath) {
-            if (std::filesystem::current_path().string().find(it) != std::string::npos) {
-                std::filesystem::current_path(std::filesystem::current_path().parent_path().parent_path().parent_path());
-                break;
-            }
-        }
-#endif
-    }
-
     inline auto autoInit(int argc, char *argv[]) {
-
-        currentPathCorrection();
 
         if (exec::getConfigObj().LoadFile("config.ini") < 0)
             oneIof o("loadBad.txt"); // If there is a callback, the user can be notified
 
-        Config cfg(exec::getConfigObj());
+        ClientConfig cfg(exec::getConfigObj());
 
         setLog(argc, argv, cfg);
         setThreadNums(cfg);

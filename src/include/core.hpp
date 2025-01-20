@@ -1,9 +1,15 @@
 #pragma once
-#include "cconfig.hpp"
+
+#include "clientconfig.hpp"
+
+#include "nekodefine.hpp"
+
 #include "exec.hpp"
 #include "info.hpp"
+
 #include "msgtypes.hpp"
 #include "network.hpp"
+
 #include "nlohmann/json.hpp"
 
 #include <QtCore/QUrl>
@@ -20,8 +26,6 @@
 #include <string>
 #include <string_view>
 
-constexpr const char *launcherMode = "minecraft"; // lua or minecraft
-
 namespace neko {
 
     enum class launcherOpt {
@@ -30,54 +34,33 @@ namespace neko {
         hideProcessAndOverReShow
     };
 
+    // Using WinAPI, defined in .cpp to avoid pollution
+
     void launchNewProcess(const std::string &command);
 
     void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = nullptr);
 
-    // example lacunher lua
-    inline bool launcherLuaPreCheck() {
-        const char *path = std::getenv("LUA_PATH");
-        if (path == nullptr) {
-            nlog::Err(FI, LI, "%s : lua path is null!", FN);
-            return false;
-        }
-        std::string scriptPath = "helloLua/helloLua.luac";
-        if (!std::filesystem::exists(scriptPath)) {
-            nlog::Err(FI, LI, "%s : script is not exists!", FN);
-            return false;
-        }
-        return true;
-    }
-
-    inline bool launcherJavaPreCheck(const std::string &str) {
-        const char *path = std::getenv("JAVA");
-        if (path == nullptr) {
-            nlog::Err(FI, LI, "%s : java env is null!", FN);
-            return false;
-        }
-        return true;
-    }
     enum class DownloadSource {
         Official,
         BMCLAPI
     };
 
-    std::map<DownloadSource, std::string> downloadSourceMap = {
+    inline std::map<DownloadSource, std::string_view> downloadSourceMap = {
         {DownloadSource::Official, "Official"},
         {DownloadSource::BMCLAPI, "BMCLAPI"}};
 
     inline std::string getMinecraftListUrl(DownloadSource downloadSource = DownloadSource::Official) {
         nlog::autoLog log{FI, LI, FN};
 
-        static const std::map<DownloadSource, std::string> urlMap = {
+        static const std::map<DownloadSource, std::string_view> urlMap = {
             {DownloadSource::Official, "https://piston-meta.mojang.com/mc/game/version_manifest.json"},
             {DownloadSource::BMCLAPI, "https://bmclapi2.bangbang93.com/mc/game/version_manifest.json"}};
 
         auto it = urlMap.find(downloadSource);
         if (it != urlMap.end()) {
-            return it->second;
+            return std::string(it->second);
         }
-        return urlMap.at(DownloadSource::Official);
+        return std::string(urlMap.at(DownloadSource::Official));
     }
 
     inline std::string replaceWithBMCLAPI(const std::string &url) {
@@ -196,7 +179,7 @@ namespace neko {
     }
 
     inline void installMinecraft(DownloadSource downloadSource = DownloadSource::Official, const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5") {
-        std::string EnterMsg = std::string("Enter , downloadSource : ") + downloadSourceMap.at(downloadSource) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
+        std::string EnterMsg = std::string("Enter , downloadSource : ") + std::string(downloadSourceMap.at(downloadSource)) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
         nlog::autoLog log{FI, LI, FN, EnterMsg};
 
         network net;
@@ -313,7 +296,7 @@ namespace neko {
         exec::getConfigObj().SetValue("manage", "authlibPrefetched", authlibPrefetched.c_str());
     }
 
-    inline void launcherMinecraft(launcherOpt opt, Config cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = nullptr) {
+    inline void launcherMinecraft(launcherOpt opt, ClientConfig cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = nullptr) {
         nlog::autoLog log{FI, LI, FN};
         // /.minecraft
         std::string minecraftDir;
@@ -326,13 +309,6 @@ namespace neko {
         minecraftDir = "/minecraft";
 #else
         minecraftDir = "/minecraft";
-#endif
-
-        std::string osArch =
-#if __x86_64 || _M_X64
-            "x64";
-#else
-            "x86";
 #endif
 
         bool isDemoUser = false;
@@ -476,7 +452,7 @@ namespace neko {
             }
 
             if (!rules.osArch.empty()) {
-                bool allow = (rules.osArch == osArch && rules.action == "allow") || (rules.osArch != osArch && rules.action == "disallow");
+                bool allow = (rules.osArch == info::getOsArchS() && rules.action == "allow") || (rules.osArch != info::getOsArchS() && rules.action == "disallow");
                 if (allow)
                     return true;
             }

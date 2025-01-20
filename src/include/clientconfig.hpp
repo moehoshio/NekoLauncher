@@ -3,7 +3,7 @@
 #include "SimpleIni/SimpleIni.h"
 
 namespace neko {
-    struct Config {
+    struct ClientConfig {
         struct Main {
             const char *lang;
             const char *bgType;
@@ -48,7 +48,7 @@ namespace neko {
         Dev dev;
         More more;
         Manage manage;
-        Config(const CSimpleIniA &cfg) {
+        ClientConfig(const CSimpleIniA &cfg) {
             main = Main{
                 cfg.GetValue("main","language","en"),
                 cfg.GetValue("main","backgroundType","image"),
@@ -80,7 +80,7 @@ namespace neko {
                 cfg.GetValue("manage","accessToken",""),
                 cfg.GetValue("manage","authlibPrefetched","")};
         }
-    static void save(CSimpleIniA &cfg,const char * fileName,Config config){
+    static void save(CSimpleIniA &cfg,const char * fileName,ClientConfig config){
         cfg.SetValue("main","language",config.main.lang);
         cfg.SetValue("main","backgroundType",config.main.bgType);
         cfg.SetValue("main","background",config.main.bg);
