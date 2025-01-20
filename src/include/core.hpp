@@ -1,9 +1,9 @@
 #pragma once
-#include "cconfig.h"
-#include "exec.h"
-#include "info.h"
-#include "msgtypes.h"
-#include "network.h"
+#include "cconfig.hpp"
+#include "exec.hpp"
+#include "info.hpp"
+#include "msgtypes.hpp"
+#include "network.hpp"
 #include "nlohmann/json.hpp"
 
 #include <QtCore/QUrl>
@@ -15,10 +15,10 @@
 #include <condition_variable>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <mutex>
 #include <string>
 #include <string_view>
-#include <iostream>
 
 constexpr const char *launcherMode = "minecraft"; // lua or minecraft
 
@@ -56,6 +56,182 @@ namespace neko {
             return false;
         }
         return true;
+    }
+    enum class DownloadSource {
+        Official,
+        BMCLAPI
+    };
+
+    std::map<DownloadSource, std::string> downloadSourceMap = {
+        {DownloadSource::Official, "Official"},
+        {DownloadSource::BMCLAPI, "BMCLAPI"}};
+
+    inline std::string getMinecraftListUrl(DownloadSource downloadSource = DownloadSource::Official) {
+        nlog::autoLog log{FI, LI, FN};
+
+        static const std::map<DownloadSource, std::string> urlMap = {
+            {DownloadSource::Official, "https://piston-meta.mojang.com/mc/game/version_manifest.json"},
+            {DownloadSource::BMCLAPI, "https://bmclapi2.bangbang93.com/mc/game/version_manifest.json"}};
+
+        auto it = urlMap.find(downloadSource);
+        if (it != urlMap.end()) {
+            return it->second;
+        }
+        return urlMap.at(DownloadSource::Official);
+    }
+
+    inline std::string replaceWithBMCLAPI(const std::string &url) {
+        std::string newUrl = url;
+        const std::vector<std::pair<std::string, std::string>> mojangUrls = {
+            {"https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com"},
+            {"https://launchermeta.mojang.com", "https://bmclapi2.bangbang93.com"},
+            {"https://launcher.mojang.com", "https://bmclapi2.bangbang93.com"},
+            {"https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/maven"},
+            {"https://resources.download.minecraft.net", "https://bmclapi2.bangbang93.com/assets"},
+            {"https://files.minecraftforge.net", "https://bmclapi2.bangbang93.com/maven"},
+            {"https://maven.minecraftforge.net", "https://bmclapi2.bangbang93.com/maven"},
+            {"https://launchermeta.mojang.com/v1/products/java-runtime", "https://bmclapi2.bangbang93.com/v1/products/java-runtime"},
+            {"http://dl.liteloader.com/versions/versions.json", "https://bmclapi.bangbang93.com/maven/com/mumfrey/liteloader/versions.json"}};
+
+        for (const auto &oldUrl : mojangUrls) {
+            size_t pos = newUrl.find(oldUrl.first);
+            if (pos != std::string::npos) {
+                newUrl.replace(pos, oldUrl.first.length(), oldUrl.second);
+            }
+        }
+
+        return newUrl;
+    }
+
+    inline void installMinecraftDownloads(DownloadSource downloadSource, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
+        nlog::autoLog log{FI, LI, FN};
+
+        auto ensureDirectoryExists = [](const std::string &path) {
+            if (!std::filesystem::exists(path)) {
+                std::filesystem::create_directories(path);
+            }
+        };
+
+        auto downloadLibrary = [=](const nlohmann::json &library) {
+            std::string libraryUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(library["downloads"]["artifact"]["url"]) : library["downloads"]["artifact"].value("url", "");
+            std::string libraryPath = installPath + "/libraries/" + library["downloads"]["artifact"]["path"].get<std::string>();
+            ensureDirectoryExists(libraryPath.substr(0, libraryPath.find_last_of('/')));
+
+            network net;
+            int code = 0;
+            decltype(net)::Args args{libraryUrl.c_str(), libraryPath.c_str(), &code};
+            args.writeCallback = networkBase::WriteCallbackFile;
+            nlog::Info(FI, LI, "%s : Downloading library: %s", FN, libraryUrl.c_str());
+            if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
+                throw nerr::error("Failed to download library!", FI, LI, FN);
+            }
+        };
+
+        auto downloadClient = [=]() {
+            ensureDirectoryExists(installPath);
+            ensureDirectoryExists(installPath + "/versions/NekoServer/");
+
+            std::string clientJarPath = installPath + "/versions/NekoServer/NekoServer.jar";
+            std::string clientJarUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(versionJson["downloads"]["client"]["url"]) : versionJson["downloads"]["client"].value("url", "");
+
+            network net;
+            int code = 0;
+            decltype(net)::Args args{clientJarUrl.c_str(), clientJarPath.c_str(), &code};
+            args.writeCallback = networkBase::WriteCallbackFile;
+            nlog::Info(FI, LI, "%s : Downloading client jar: %s", FN, clientJarUrl.c_str());
+            if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
+                throw nerr::error("Failed to download client jar!",FI, LI, FN);
+            }
+        };
+
+        auto downloadAssetIndex = [=]() {
+            std::string assetIndexUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(versionJson["assetIndex"]["url"]) : versionJson["assetIndex"].value("url", "");
+            std::string assetIndexPath = installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json";
+            ensureDirectoryExists(installPath + "/assets/indexes");
+
+            network net;
+            int code = 0;
+            decltype(net)::Args args{assetIndexUrl.c_str(), assetIndexPath.c_str(), &code};
+            args.writeCallback = networkBase::WriteCallbackFile;
+            nlog::Info(FI, LI, "%s : Downloading asset index: %s", FN, assetIndexUrl.c_str());
+            if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
+                throw nerr::error("Failed to download asset index!", FI, LI, FN);
+            }
+        };
+
+        auto downloadAsset = [=](const nlohmann::json &asset) {
+            network net;
+            int code = 0;
+            std::string assetHash = asset.value("hash", " ");
+            std::string assetUrl = ((downloadSource == DownloadSource::BMCLAPI) ? "https://bmclapi2.bangbang93.com/assets/" : "https://resources.download.minecraft.net/") + assetHash.substr(0, 2) + "/" + assetHash;
+
+            std::string assetPath = installPath + "/assets/objects/" + assetHash.substr(0, 2) + "/" + assetHash;
+            ensureDirectoryExists(assetPath.substr(0, assetPath.find_last_of('/')));
+
+            decltype(net)::Args args{assetUrl.c_str(), assetPath.c_str(), &code};
+            args.writeCallback = &networkBase::WriteCallbackFile;
+            nlog::Info(FI, LI, "%s : Downloading asset: %s", FN, assetUrl.c_str());
+            if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
+                throw nerr::error("Failed to download asset!", FI, LI, FN);
+            }
+        };
+
+        for (const auto &library : versionJson["libraries"]) {
+            exec::getThreadObj().enqueue([=]() {
+                downloadLibrary(library);
+            });
+        }
+
+        downloadClient();
+
+        downloadAssetIndex();
+
+        auto assetIndexJson = nlohmann::json::parse(std::ifstream(installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json"), nullptr, false);
+
+        for (const auto &asset : assetIndexJson["objects"].items()) {
+            exec::getThreadObj().enqueue([=]() {
+                downloadAsset(asset.value());
+            });
+        }
+    }
+
+    inline void installMinecraft(DownloadSource downloadSource = DownloadSource::Official, const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5") {
+        std::string EnterMsg = std::string("Enter , downloadSource : ") + downloadSourceMap.at(downloadSource) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
+        nlog::autoLog log{FI, LI, FN, EnterMsg};
+
+        network net;
+
+        auto url = getMinecraftListUrl(downloadSource);
+        int code = 0;
+        decltype(net)::Args args{url.c_str(), nullptr, &code};
+        auto versionList = net.autoRetryGet(networkBase::Opt::getContent, {args});
+        if (versionList.empty()) {
+            throw nerr::error("Failed to get version list!", FI, LI, FN);
+        }
+
+        nlohmann::json versionListJson = nlohmann::json::parse(versionList, nullptr, false);
+
+        auto versions = versionListJson["versions"];
+        auto it = std::find_if(versions.begin(), versions.end(), [&](const auto &version) {
+            return version["type"] == "release" && version["id"] == targetVersion;
+        });
+
+        if (it == versions.end()) {
+            throw nerr::error("Failed to find target version!", FI, LI, FN);
+        }
+
+        std::string targetVersionUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI((*it).value("url", "")) : (*it).value("url", "");
+
+        args.url = targetVersionUrl.c_str();
+        auto targetVersionJson = net.autoRetryGet(networkBase::Opt::getContent, {args});
+
+        if (targetVersionJson.empty()) {
+            throw nerr::error("Failed to download target version json!", FI, LI, FN);
+        }
+
+        nlohmann::json versionJson = nlohmann::json::parse(targetVersionJson, nullptr, false);
+
+        installMinecraftDownloads(downloadSource, versionJson, installPath);
     }
 
     inline bool launcherMinecraftTokenValidate(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
@@ -593,7 +769,7 @@ namespace neko {
         // It can launch Lua, Java, scripts, executables, or anything else.
         // includes pre-execution checks; in short, you can fully customize it.
 
-        if constexpr (std::string_view("minecraft")  == launcherMode) {
+        if constexpr (std::string_view("minecraft") == launcherMode) {
             launcherMinecraftAuthlibAndPrefetchedCheck(hintFunc);
             if (!launcherMinecraftTokenValidate(hintFunc))
                 return;
