@@ -1,5 +1,7 @@
 #pragma once
 
+#include "nlog.hpp"
+
 #include <curl/curl.h>
 
 #include <algorithm>
@@ -11,7 +13,8 @@
 #include "exec.hpp"
 #include "info.hpp"
 
-#include "nlog.hpp"
+#include "nekodefine.hpp"
+#include "one.hpp"
 
 namespace neko {
 
@@ -121,6 +124,9 @@ namespace neko {
             case -1:
                 return T("Failed to initialize libcurl.");
                 break;
+            case -2:
+                return T("Failed to open file.");
+                break;
             case -3:
                 return T("Unexpected standard exception occurred");
                 break;
@@ -200,8 +206,8 @@ namespace neko {
             nlog::Err(file, line, "%s : %s", formFuncName, msg);
         }
 
-        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret,int val) {
-            doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret,val);
+        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
+            doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret,-2);
         }
 
         inline static void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
@@ -329,7 +335,7 @@ namespace neko {
                         setRetCodeAndClean(curl, args.code, args.id);
 
                     } catch (const nerr::error &e) {
-                        handleNerr(e, FI, LI, FN, args.id, args.code, -2);
+                        handleNerr(e, FI, LI, FN, args.id, args.code);
                     } catch (const std::exception &e) {
                         handleStdError(e, FI, LI, FN, args.id, args.code);
                     } catch (...) {

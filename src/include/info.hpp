@@ -2,6 +2,7 @@
 
 #include "exec.hpp"
 #include "nlog.hpp"
+#include "nekodefine.hpp"
 
 #include "nlohmann/json.hpp"
 

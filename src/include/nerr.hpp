@@ -7,7 +7,7 @@
 namespace nerr {
 
 #if defined(nerrImpLoggerMode)
-#include "log.hpp"
+#include "nlog.hpp"
 #endif
 
     struct error : public std::exception {

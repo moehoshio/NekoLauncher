@@ -627,7 +627,7 @@ namespace ui {
         index->startButton->setText(neko::info::translations(neko::info::lang.general.start).c_str());
         index->menuButton->setText(neko::info::translations(neko::info::lang.general.menu).c_str());
 
-        index->versionText->setText(("core: " + neko::info::getVersion() + "\nres: " + neko::info::getResVersion()).c_str());
+        index->versionText->setText(("core: " + neko::info::getVersionS() + "\nres: " + neko::info::getResVersion()).c_str());
 
         loading->progressBar->setFormat("%v/%m");
         setting->page3->devOptLoadingPage->setText("update");

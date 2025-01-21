@@ -41,10 +41,6 @@ SOFTWARE.
 #include <fstream>
 #include <string>
 
-namespace neko
-{
-    using oneIof = one::one<std::fstream,std::string>; 
-} // namespace neko
 
 
 namespace one {
@@ -281,7 +277,7 @@ namespace one {
         template <typename... Args>
         inline void entrust(std::chrono::milliseconds t, Args&&... args) {
             // if need Guaranteed not to be modified during traversal ,Just get the lock first(Need Unlock before throwing)
-            if (this->verified(std::forward<Args...>(condition...)))
+            if (this->verified(std::forward<Args...>(args...)))
                 throw theSameException("There is the same");
 
             if (!this->mtx.try_lock_for(t))
@@ -332,3 +328,8 @@ namespace one {
     };
 
 } // namespace one
+
+namespace neko
+{
+    using oneIof = one::one<std::fstream,std::string>; 
+} // namespace neko

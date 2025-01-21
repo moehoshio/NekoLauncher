@@ -752,17 +752,6 @@ namespace neko {
             launcherMinecraft(opt, exec::getConfigObj(), hintFunc, winFunc);
         }
 
-        if constexpr (std::string_view("lua") == launcherMode) {
-            if (!launcherLuaPreCheck()) {
-                nlog::Err(FI, LI, "%s : Error  Lua or scriptPath not exists !", FN);
-                return;
-            }
-
-            std::string luaPath = std::getenv("LUA_PATH");
-            // e.g: /apps/lua /apps/workdir/lua/hello.luac
-            std::string command = luaPath + " " + info::workPath() + "/lua/hello.luac";
-            launcherProcess(command, opt, winFunc);
-        }
     }
 
     enum class State {
