@@ -85,8 +85,9 @@ namespace neko {
 
         return newUrl;
     }
-
-    inline void installMinecraftDownloads(DownloadSource downloadSource, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
+    
+    // Should not be called from the main thread, as it will block the incoming thread until completion.
+    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string & versionId,const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
         nlog::autoLog log{FI, LI, FN};
 
         auto ensureDirectoryExists = [](const std::string &path) {
@@ -112,9 +113,9 @@ namespace neko {
 
         auto downloadClient = [=]() {
             ensureDirectoryExists(installPath);
-            ensureDirectoryExists(installPath + "/versions/NekoServer/");
+            ensureDirectoryExists(installPath + "/versions/NekoServer_" + versionId);
 
-            std::string clientJarPath = installPath + "/versions/NekoServer/NekoServer.jar";
+            std::string clientJarPath = installPath + "/versions/NekoServer_" + versionId + "/NekoServer_" + versionId + ".jar";
             std::string clientJarUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(versionJson["downloads"]["client"]["url"]) : versionJson["downloads"]["client"].value("url", "");
 
             network net;
@@ -171,14 +172,24 @@ namespace neko {
 
         auto assetIndexJson = nlohmann::json::parse(std::ifstream(installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json"), nullptr, false);
 
-        for (const auto &asset : assetIndexJson["objects"].items()) {
+        for (const auto &asset : assetIndexJson["objects"]) {
             exec::getThreadObj().enqueue([=]() {
-                downloadAsset(asset.value());
+                nlog::Warn(FI, LI, "%s : Downloading asset: %s", FN, asset["hash"].get<std::string>().c_str());
+                downloadAsset(asset);
             });
         }
+        auto saveJson = versionJson;
+        saveJson["id"] = "NekoServer_" + versionId;
+        saveJson["jar"] = saveJson.value("id","") + ".jar";
+        
+        std::ofstream saveFile(installPath + "/versions/NekoServer_" + versionId + "/NekoServer_" + versionId + ".json");
+        saveFile << saveJson.dump(4);
+        saveFile.close();
+        exec::getThreadObj().wait_until_nothing_in_flight();
+        
     }
-
-    inline void installMinecraft(DownloadSource downloadSource = DownloadSource::Official, const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5") {
+    // Should not be called from the main thread, as it will block the incoming thread until completion.
+    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5",DownloadSource downloadSource = DownloadSource::Official) {
         std::string EnterMsg = std::string("Enter , downloadSource : ") + std::string(downloadSourceMap.at(downloadSource)) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
         nlog::autoLog log{FI, LI, FN, EnterMsg};
 
