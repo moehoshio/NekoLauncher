@@ -80,38 +80,38 @@ namespace neko {
                 cfg.GetValue("manage","accessToken",""),
                 cfg.GetValue("manage","authlibPrefetched","")};
         }
-    static void save(CSimpleIniA &cfg,const char * fileName,ClientConfig config){
-        cfg.SetValue("main","language",config.main.lang);
-        cfg.SetValue("main","backgroundType",config.main.bgType);
-        cfg.SetValue("main","background",config.main.bg);
-        cfg.SetValue("main","windowSize",config.main.windowSize);
-        cfg.SetLongValue("main","launcherMode",config.main.launcherMode);
-        cfg.SetBoolValue("main","useSystemWindowFrame",config.main.useSysWindowFrame);
-        cfg.SetBoolValue("main","barKeepRight",config.main.barKeepRight);
+    static void save(CSimpleIniA &saveCfg,const char * fileName,ClientConfig nowConfig){
+        saveCfg.SetValue("main","language",nowConfig.main.lang);
+        saveCfg.SetValue("main","backgroundType",nowConfig.main.bgType);
+        saveCfg.SetValue("main","background",nowConfig.main.bg);
+        saveCfg.SetValue("main","windowSize",nowConfig.main.windowSize);
+        saveCfg.SetLongValue("main","launcherMode",nowConfig.main.launcherMode);
+        saveCfg.SetBoolValue("main","useSystemWindowFrame",nowConfig.main.useSysWindowFrame);
+        saveCfg.SetBoolValue("main","barKeepRight",nowConfig.main.barKeepRight);
 
-        cfg.SetLongValue("style","blurHint",config.style.blurHint);
-        cfg.SetLongValue("style","blurValue",config.style.blurValue);
-        cfg.SetLongValue("style","fontPointSize",config.style.fontPointSize);
-        cfg.SetValue("style","fontFamilies",config.style.fontFamilies);
+        saveCfg.SetLongValue("style","blurHint",nowConfig.style.blurHint);
+        saveCfg.SetLongValue("style","blurValue",nowConfig.style.blurValue);
+        saveCfg.SetLongValue("style","fontPointSize",nowConfig.style.fontPointSize);
+        saveCfg.SetValue("style","fontFamilies",nowConfig.style.fontFamilies);
 
-        cfg.SetLongValue("net","thread",config.net.thread);
-        cfg.SetValue("net","proxy",config.net.proxy);
+        saveCfg.SetLongValue("net","thread",nowConfig.net.thread);
+        saveCfg.SetValue("net","proxy",nowConfig.net.proxy);
 
-        cfg.SetBoolValue("dev","enable",config.dev.enable);
-        cfg.SetBoolValue("dev","debug",config.dev.debug);
-        cfg.SetValue("dev","server",config.dev.server);
-        cfg.SetBoolValue("dev","tls",config.dev.tls);
+        saveCfg.SetBoolValue("dev","enable",nowConfig.dev.enable);
+        saveCfg.SetBoolValue("dev","debug",nowConfig.dev.debug);
+        saveCfg.SetValue("dev","server",nowConfig.dev.server);
+        saveCfg.SetBoolValue("dev","tls",nowConfig.dev.tls);
 
-        cfg.SetValue("more","temp",config.more.temp);
-        cfg.SetValue("more","resVersion",config.more.resVersion);
+        saveCfg.SetValue("more","temp",nowConfig.more.temp);
+        saveCfg.SetValue("more","resVersion",nowConfig.more.resVersion);
 
-        cfg.SetValue("manage","account",config.manage.account);
-        cfg.SetValue("manage","displayName",config.manage.displayName);
-        cfg.SetValue("manage","uuid",config.manage.uuid);
-        cfg.SetValue("manage","accessToken",config.manage.accessToken);
-        cfg.SetValue("manage","authlibPrefetched",config.manage.authlibPrefetched);
+        saveCfg.SetValue("manage","account",nowConfig.manage.account);
+        saveCfg.SetValue("manage","displayName",nowConfig.manage.displayName);
+        saveCfg.SetValue("manage","uuid",nowConfig.manage.uuid);
+        saveCfg.SetValue("manage","accessToken",nowConfig.manage.accessToken);
+        saveCfg.SetValue("manage","authlibPrefetched",nowConfig.manage.authlibPrefetched);
 
-        cfg.SaveFile(fileName);
+        saveCfg.SaveFile(fileName);
     };
     };
 } // namespace neko

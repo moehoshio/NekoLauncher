@@ -85,7 +85,7 @@ namespace neko {
 
         return newUrl;
     }
-    
+
     // Should not be called from the main thread, as it will block the incoming thread until completion.
     inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string & versionId,const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
         nlog::autoLog log{FI, LI, FN};
@@ -185,7 +185,7 @@ namespace neko {
         std::ofstream saveFile(installPath + "/versions/NekoServer_" + versionId + "/NekoServer_" + versionId + ".json");
         saveFile << saveJson.dump(4);
         saveFile.close();
-        exec::getThreadObj().wait_until_nothing_in_flight();
+        exec::getThreadObj().wait_until_empty();
         
     }
     // Should not be called from the main thread, as it will block the incoming thread until completion.
@@ -225,7 +225,17 @@ namespace neko {
 
         nlohmann::json versionJson = nlohmann::json::parse(targetVersionJson, nullptr, false);
 
-        installMinecraftDownloads(downloadSource, versionJson, installPath);
+        installMinecraftDownloads(downloadSource,targetVersion, versionJson, installPath);
+    }
+
+    inline void checkAndAutoInstall(ClientConfig cfg){
+        std::string resVer = (cfg.more.resVersion)? std::string(cfg.more.resVersion) : std::string();
+        if (resVer.empty()){
+            // Customize your installation logic, resource version needs to be stored after installation
+            installMinecraft("./.minecraft", "1.16.5", DownloadSource::BMCLAPI);
+            cfg.more.resVersion = "v1.0.0";
+            cfg.save(exec::getConfigObj(),"config.ini",cfg);
+        } 
     }
 
     inline bool launcherMinecraftTokenValidate(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
