@@ -868,12 +868,12 @@ namespace neko {
                 res = temp | exec::move;
                 break;
             }
-            auto quitHint = [](bool) {
+            auto quitHint = std::function<void(bool)>([](bool) {
                 nlog::Err(FI, LI, "%s : Retried multiple times but still unable to establish a connection. Exit", FN);
                 QApplication::quit();
-            };
+            });
 
-            auto retryHint = [&condVar, &stop](bool check) {
+            auto retryHint = std::function<void(bool)>([&condVar, &stop](bool check) {
                 if (!check) {
                     stop = true;
                     condVar.notify_one();
@@ -881,10 +881,10 @@ namespace neko {
                 } else {
                     condVar.notify_one();
                 }
-            };
+            });
 
             std::string msg = info::translations((i == 4) ? info::lang.error.networkConnectionRetryMax : info::lang.error.maintenanceInfoReq) + networkBase::errCodeReason(code) + "\n" + info::translations((i==4)? info::lang.error.clickToQuit : info::lang.error.clickToRetry );
-             
+
             hintFunc({info::translations(info::lang.title.error), msg, "", (i == 4)? 1 : 2, ((i == 4) ? quitHint : retryHint)});
 
             if(i==4)
