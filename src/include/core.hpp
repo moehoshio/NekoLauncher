@@ -1164,6 +1164,28 @@ namespace neko {
         return State::over;
     }
 
+    inline void feedbackLog(const std::string & feedback) {
+        nlog::autoLog log{FI, LI, FN};
+        network net;
+        auto url = net.buildUrl(networkBase::Api::feedback);
+        nlohmann::json dataJson = {
+            {"core", info::getVersion()},
+            {"res", info::getResVersion()},
+            {"os", info::getOsName()},
+            {"lang", info::language()},
+            {"log", feedback}};
+        auto data = dataJson.dump();
+        auto id = std::string(FN) + "-" + exec::generateRandomString(6);
+        int code = 0;
+        decltype(net)::Args args{url.c_str(), nullptr, &code};
+        args.data = data.c_str();
+        args.id = id.c_str();
+        net.Do(networkBase::Opt::postText, args);
+        if (code != 204){
+            throw nerr::Error( "Failed to feedback log , code : " + std::to_string(code) ,FI, LI, FN);    
+        }
+    }
+
     inline State authLogin(const std::vector<std::string> &inData, std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
         nlog::autoLog log{FI, LI, FN};
         if (inData.size() < 2)
