@@ -124,7 +124,6 @@ namespace neko {
         static T getSysProxy() {
             auto proxy = std::getenv("http_proxy");
             auto tlsProxy = std::getenv("https_proxy");
-            T res;
             #if defined(_WIN32)
             if (!proxy) {
                 HKEY hKey;
@@ -136,8 +135,7 @@ namespace neko {
                     if (dwSize > 0) {
                         char *proxyServer = new char[dwSize];
                         RegQueryValueExA(hKey, "ProxyServer", 0, &dwType, (LPBYTE)proxyServer, &dwSize);
-                        res = T(proxyServer);
-                        delete[] proxyServer;
+                        return T(proxyServer);
                     }
                     RegCloseKey(hKey);
                 }
@@ -145,11 +143,11 @@ namespace neko {
             #endif
 
             if (tlsProxy)
-                res = T(tlsProxy);
+                return T(tlsProxy);
             else if (proxy)
-                res = T(proxy);
+                return T(proxy);
 
-            return res;
+            return T();
         }
         template <typename T = std::string>
         constexpr static T errCodeReason(int code) {
