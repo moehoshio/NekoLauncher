@@ -28,27 +28,26 @@ int main(int argc, char *argv[]) {
         };
 
         exec::getThreadObj().enqueue([=, &it, &w] {
+
+            // check and auto install , if auto install faild , show hint and retry
             for (size_t i = 0; i < 5; ++i) {
                 try {
                     neko::checkAndAutoInstall(config);
                     break;
                 } catch (const nerr::error &e) {
-                    if (i == 4) {
-                        hintFunc({neko::info::translations(neko::info::lang.title.error), e.msg, "", 1, [](bool) {
-                                      QApplication::quit();
-                                  }});
-                    } else {
-                        hintFunc({neko::info::translations(neko::info::lang.title.error), e.msg, "", 2, [](bool check) {
-                                      if (!check) {
-                                          QApplication::quit();
-                                      }
-                                  }});
-                    }
+
+                    auto quitHint = [](bool) { QApplication::quit(); };
+                    auto retryHint = [](bool check) { if (!check) QApplication::quit(); };
+                    std::string msg = std::string(e.msg) + "\n" + neko::info::translations((i == 4)? neko::info::lang.error.clickToQuit : neko::info::lang.error.clickToRetry);
+                    hintFunc({neko::info::translations(neko::info::lang.title.error), msg, "", (i == 4) ? 2 : 1, ((i == 4) ? quitHint : retryHint)});
                 }
             }
+            // wait for testing host
             it.get();
             if (neko::autoUpdate(hintFunc, loadFunc, setLoadInfo) == neko::State::over) {
                 emit w.showPageD(ui::MainWindow::pageState::index);
+            } else {
+                QApplication::quit();
             }
         });
 

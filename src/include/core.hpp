@@ -87,7 +87,7 @@ namespace neko {
     }
 
     // Should not be called from the main thread, as it will block the incoming thread until completion.
-    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string & versionId,const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
+    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string &versionId, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
         nlog::autoLog log{FI, LI, FN};
 
         auto ensureDirectoryExists = [](const std::string &path) {
@@ -124,7 +124,7 @@ namespace neko {
             args.writeCallback = networkBase::WriteCallbackFile;
             nlog::Info(FI, LI, "%s : Downloading client jar: %s", FN, clientJarUrl.c_str());
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
-                throw nerr::error("Failed to download client jar!",FI, LI, FN);
+                throw nerr::error("Failed to download client jar!", FI, LI, FN);
             }
         };
 
@@ -180,16 +180,15 @@ namespace neko {
         }
         auto saveJson = versionJson;
         saveJson["id"] = "NekoServer_" + versionId;
-        saveJson["jar"] = saveJson.value("id","") + ".jar";
-        
+        saveJson["jar"] = saveJson.value("id", "") + ".jar";
+
         std::ofstream saveFile(installPath + "/versions/NekoServer_" + versionId + "/NekoServer_" + versionId + ".json");
         saveFile << saveJson.dump(4);
         saveFile.close();
         exec::getThreadObj().wait_until_empty();
-        
     }
     // Should not be called from the main thread, as it will block the incoming thread until completion.
-    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5",DownloadSource downloadSource = DownloadSource::Official) {
+    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official) {
         std::string EnterMsg = std::string("Enter , downloadSource : ") + std::string(downloadSourceMap.at(downloadSource)) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
         nlog::autoLog log{FI, LI, FN, EnterMsg};
 
@@ -225,17 +224,17 @@ namespace neko {
 
         nlohmann::json versionJson = nlohmann::json::parse(targetVersionJson, nullptr, false);
 
-        installMinecraftDownloads(downloadSource,targetVersion, versionJson, installPath);
+        installMinecraftDownloads(downloadSource, targetVersion, versionJson, installPath);
     }
 
-    inline void checkAndAutoInstall(ClientConfig cfg){
-        std::string resVer = (cfg.more.resVersion)? std::string(cfg.more.resVersion) : std::string();
-        if (resVer.empty()){
+    inline void checkAndAutoInstall(ClientConfig cfg) {
+        std::string resVer = (cfg.more.resVersion) ? std::string(cfg.more.resVersion) : std::string();
+        if (resVer.empty()) {
             // Customize your installation logic, resource version needs to be stored after installation
             installMinecraft("./.minecraft", "1.16.5", DownloadSource::BMCLAPI);
             cfg.more.resVersion = "v1.0.0";
-            cfg.save(exec::getConfigObj(),"config.ini",cfg);
-        } 
+            cfg.save(exec::getConfigObj(), "config.ini", cfg);
+        }
     }
 
     inline bool launcherMinecraftTokenValidate(std::function<void(const ui::hintMsg &)> hintFunc = nullptr) {
@@ -772,7 +771,6 @@ namespace neko {
                 return;
             launcherMinecraft(opt, exec::getConfigObj(), hintFunc, winFunc);
         }
-
     }
 
     enum class State {
@@ -870,31 +868,30 @@ namespace neko {
                 res = temp | exec::move;
                 break;
             }
-            // if (code ==400)
-            // {
-            //     hintFunc({"Error","","",1});
-            // }
+            auto quitHint = [](bool) {
+                nlog::Err(FI, LI, "%s : Retried multiple times but still unable to establish a connection. Exit", FN);
+                QApplication::quit();
+            };
 
-            if (i == 4) {
+            auto retryHint = [&condVar, &stop](bool check) {
+                if (!check) {
+                    stop = true;
+                    condVar.notify_one();
+                    QApplication::quit();
+                } else {
+                    condVar.notify_one();
+                }
+            };
 
-                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.networkConnectionRetryMax), "", 1, [](bool) {
-                              nlog::Err(FI, LI, "%s : Retried multiple times but still unable to establish a connection. Exit", FN);
-                              QApplication::quit();
-                          }});
+            std::string msg = info::translations((i == 4) ? info::lang.error.networkConnectionRetryMax : info::lang.error.maintenanceInfoReq) + networkBase::errCodeReason(code) + "\n" + info::translations((i==4)? info::lang.error.clickToQuit : info::lang.error.clickToRetry );
+             
+            hintFunc({info::translations(info::lang.title.error), msg, "", (i == 4)? 1 : 2, ((i == 4) ? quitHint : retryHint)});
+
+            if(i==4)
                 return State::undone;
-            } else {
-                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.maintenanceInfoReq) + networkBase::errCodeReason(code), "", 2, [=, &condVar, &stop](bool check) {
-                              if (!check) {
-                                  stop = true;
-                                  condVar.notify_one();
-                                  QApplication::quit();
-                              } else {
-                                  condVar.notify_one();
-                              }
-                          }});
-            }
 
             condVar.wait(lock);
+            
             if (stop) {
                 return State::undone;
             }

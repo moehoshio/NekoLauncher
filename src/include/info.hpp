@@ -198,6 +198,8 @@ namespace neko {
             };
             struct Error {
                 std::string
+                    clickToRetry = "error_clickToRetry",
+                    clickToQuit = "error_clickToQuit",
                     jsonParse = "error_jsonParse",
                     tokenJsonParse = "error_tokenJsonParse",
                     apiMetaParse = "error_apiMetaParse",
