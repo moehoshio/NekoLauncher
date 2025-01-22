@@ -124,12 +124,32 @@ namespace neko {
         static T getSysProxy() {
             auto proxy = std::getenv("http_proxy");
             auto tlsProxy = std::getenv("https_proxy");
-            if (tlsProxy)
-                return T(tlsProxy);
-            else if (proxy)
-                return T(proxy);
+            T res;
+            #if defined(_WIN32)
+            if (!proxy) {
+                HKEY hKey;
+                LPCSTR lpSubKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
+                if (RegOpenKeyExA(HKEY_CURRENT_USER, lpSubKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+                    DWORD dwSize = 0;
+                    DWORD dwType = 0;
+                    RegQueryValueExA(hKey, "ProxyServer", 0, &dwType, 0, &dwSize);
+                    if (dwSize > 0) {
+                        char *proxyServer = new char[dwSize];
+                        RegQueryValueExA(hKey, "ProxyServer", 0, &dwType, (LPBYTE)proxyServer, &dwSize);
+                        res = T(proxyServer);
+                        delete[] proxyServer;
+                    }
+                    RegCloseKey(hKey);
+                }
+            }
+            #endif
 
-            return T();
+            if (tlsProxy)
+                res = T(tlsProxy);
+            else if (proxy)
+                res = T(proxy);
+
+            return res;
         }
         template <typename T = std::string>
         constexpr static T errCodeReason(int code) {
