@@ -85,8 +85,12 @@ namespace neko {
         setLog(argc, argv, cfg);
         setThreadNums(cfg);
         setLogThreadName();
-        configInfoPrint(cfg);
+
+        nerr::Error::enableLogger = true;
         info::language(cfg.main.lang);
+
+        configInfoPrint(cfg);
+        
         return networkBase::init();
     };
 } // namespace neko
