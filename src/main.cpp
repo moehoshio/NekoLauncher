@@ -1,6 +1,7 @@
 #include "autoinit.hpp"
 #include "core.hpp"
 #include "mainwindow.hpp"
+#include "logviewer.hpp"
 #include <iostream>
 
 #include <QtWidgets/QApplication>
@@ -51,7 +52,15 @@ int main(int argc, char *argv[]) {
             }
         });
 
-        return app.exec();
+        app.exec();
+
+        // If execution reaches this point, it means the program has exited.
+        if (config.dev.enable && config.dev.debug)
+        {
+            LogViewer logViewer(QString::fromStdString(neko::info::workPath() + "/logs/new-debug.log"));
+            logViewer.show();
+            app.exec();
+        }
     } catch (const nerr::Error &e) {
         nlog::Err(FI, LI, "main : unexpected not catch nerr exception , msg : %s", e.what());
     } catch (const std::exception &e) {
@@ -59,5 +68,4 @@ int main(int argc, char *argv[]) {
     } catch (...) {
         nlog::Err(FI, LI, "main : unexpected not catch unknown exception");
     }
-    QApplication::quit();
 }

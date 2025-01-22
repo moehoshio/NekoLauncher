@@ -6,6 +6,7 @@ list(APPEND SRCFILES
     src/loguru.cpp
     src/core.cpp
     src/info.cpp
+    src/include/logviewer.hpp # To ensure that qt moc can locate this file
     src/main.cpp   
 )
 
