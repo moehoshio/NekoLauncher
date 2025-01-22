@@ -107,7 +107,7 @@ namespace neko {
             args.writeCallback = networkBase::WriteCallbackFile;
             nlog::Info(FI, LI, "%s : Downloading library: %s", FN, libraryUrl.c_str());
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
-                throw nerr::error("Failed to download library!", FI, LI, FN);
+                throw nerr::Error("Failed to download library!", FI, LI, FN);
             }
         };
 
@@ -124,7 +124,7 @@ namespace neko {
             args.writeCallback = networkBase::WriteCallbackFile;
             nlog::Info(FI, LI, "%s : Downloading client jar: %s", FN, clientJarUrl.c_str());
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
-                throw nerr::error("Failed to download client jar!", FI, LI, FN);
+                throw nerr::Error("Failed to download client jar!", FI, LI, FN);
             }
         };
 
@@ -139,7 +139,7 @@ namespace neko {
             args.writeCallback = networkBase::WriteCallbackFile;
             nlog::Info(FI, LI, "%s : Downloading asset index: %s", FN, assetIndexUrl.c_str());
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
-                throw nerr::error("Failed to download asset index!", FI, LI, FN);
+                throw nerr::Error("Failed to download asset index!", FI, LI, FN);
             }
         };
 
@@ -156,7 +156,7 @@ namespace neko {
             args.writeCallback = &networkBase::WriteCallbackFile;
             nlog::Info(FI, LI, "%s : Downloading asset: %s", FN, assetUrl.c_str());
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
-                throw nerr::error("Failed to download asset!", FI, LI, FN);
+                throw nerr::Error("Failed to download asset!", FI, LI, FN);
             }
         };
 
@@ -199,7 +199,7 @@ namespace neko {
         decltype(net)::Args args{url.c_str(), nullptr, &code};
         auto versionList = net.autoRetryGet(networkBase::Opt::getContent, {args});
         if (versionList.empty()) {
-            throw nerr::error("Failed to get version list!", FI, LI, FN);
+            throw nerr::Error("Failed to get version list!", FI, LI, FN);
         }
 
         nlohmann::json versionListJson = nlohmann::json::parse(versionList, nullptr, false);
@@ -210,7 +210,7 @@ namespace neko {
         });
 
         if (it == versions.end()) {
-            throw nerr::error("Failed to find target version!", FI, LI, FN);
+            throw nerr::Error("Failed to find target version!", FI, LI, FN);
         }
 
         std::string targetVersionUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI((*it).value("url", "")) : (*it).value("url", "");
@@ -219,7 +219,7 @@ namespace neko {
         auto targetVersionJson = net.autoRetryGet(networkBase::Opt::getContent, {args});
 
         if (targetVersionJson.empty()) {
-            throw nerr::error("Failed to download target version json!", FI, LI, FN);
+            throw nerr::Error("Failed to download target version json!", FI, LI, FN);
         }
 
         nlohmann::json versionJson = nlohmann::json::parse(targetVersionJson, nullptr, false);

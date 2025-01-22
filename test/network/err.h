@@ -47,15 +47,15 @@ namespace nerr {
     };
     // For a list of errCode and detailed messages, please refer to: dev.md
     using errCode = int;
-    struct error : public std::exception {
+    struct Error : public std::exception {
         errCode code;
         const char *msg;
         errType type;
-        error() noexcept = default;
-        error(errCode Code, const char *Msg, errType Type) noexcept : code(Code), msg(Msg), type(Type){};
-        error(errCode Code, const char *Msg) noexcept : code(Code), msg(Msg){};
-        error(const char *Msg) noexcept : msg(Msg){};
-        ~error() noexcept = default;
+        Error() noexcept = default;
+        Error(errCode Code, const char *Msg, errType Type) noexcept : code(Code), msg(Msg), type(Type){};
+        Error(errCode Code, const char *Msg) noexcept : code(Code), msg(Msg){};
+        Error(const char *Msg) noexcept : msg(Msg){};
+        ~Error() noexcept = default;
         inline const char *what() const noexcept{ return msg; };
     };
 

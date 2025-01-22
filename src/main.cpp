@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
                 try {
                     neko::checkAndAutoInstall(config);
                     break;
-                } catch (const nerr::error &e) {
+                } catch (const nerr::Error &e) {
 
                     auto quitHint = [](bool) { QApplication::quit(); };
                     auto retryHint = [](bool check) { if (!check) QApplication::quit(); };
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         });
 
         return app.exec();
-    } catch (const nerr::error &e) {
+    } catch (const nerr::Error &e) {
         nlog::Err(FI, LI, "main : unexpected not catch nerr exception , msg : %s", e.what());
     } catch (const std::exception &e) {
         nlog::Err(FI, LI, "main : unexpected not catch std exception , what : %s", e.what());

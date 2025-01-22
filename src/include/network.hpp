@@ -206,7 +206,7 @@ namespace neko {
             nlog::Err(file, line, "%s : %s", formFuncName, msg);
         }
 
-        inline static void handleNerr(const nerr::error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
+        inline static void handleNerr(const nerr::Error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
             doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret,-2);
         }
 
@@ -267,7 +267,7 @@ namespace neko {
                         handleFileResume(args.range, curl, file_size);
                     }
 
-                } catch (const nerr::error &e) {
+                } catch (const nerr::Error &e) {
                     handleNerr(e, FI, LI, FN, args.id, args.code);
                     return false;
                 } catch (const std::exception &e) {
@@ -334,7 +334,7 @@ namespace neko {
                             return;
                         setRetCodeAndClean(curl, args.code, args.id);
 
-                    } catch (const nerr::error &e) {
+                    } catch (const nerr::Error &e) {
                         handleNerr(e, FI, LI, FN, args.id, args.code);
                     } catch (const std::exception &e) {
                         handleStdError(e, FI, LI, FN, args.id, args.code);
@@ -420,7 +420,7 @@ namespace neko {
                 oneIof file(args.fileName, args.fileName, std::ios::out | std::ios::binary | ((args.resBreakPoint) ? std::ios::app : std::ios::trunc));
                 (*file.get()) << res;
                 return res;
-            } catch (const nerr::error &e) {
+            } catch (const nerr::Error &e) {
                 handleNerr(e, FI, LI, FN, args.id, args.code);
             } catch (const std::exception &e) {
                 handleStdError(e, FI, LI, FN, args.id, args.code);
