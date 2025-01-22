@@ -6,7 +6,7 @@
 // neko error
 namespace nerr {
 
-#if defined(nerrImpLoggerMode)
+#if defined(nerrImpLoggerModeDefine)
 #include "nlog.hpp"
 #endif
 
@@ -20,13 +20,13 @@ namespace nerr {
         const char *funcName;
 
         Error(const char *Msg, const char *fileName, uint line, const char *funcName, bool logger = enableLogger) noexcept : msg(Msg), fileName(fileName), line(line), funcName(funcName) {
-            #if defined(nerrImpLoggerMode)
+            #if defined(nerrImpLoggerModeDefine)
                 if (logger)
                     nlog::Err(fileName, line, "%s : %s", funcName, msg);
             #endif
         };
         Error(const char *Msg, bool logger = enableLogger) noexcept : msg(Msg) {
-            #if defined(nerrImpLoggerMode)
+            #if defined(nerrImpLoggerModeDefine)
                 if (logger)
                     nlog::Err(fileName, line, "%s : %s", funcName, msg);
             #endif

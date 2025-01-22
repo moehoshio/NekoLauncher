@@ -23,7 +23,7 @@ namespace neko {
         using RetHttpCode = int;
 
         // if not waiting , testing host (set Dconfig.host) may not be ready
-        static std::future<void> init();
+        inline static std::future<void> init();
 
         struct Config {
             std::string userAgent;
@@ -33,27 +33,33 @@ namespace neko {
         };
 
         struct Api {
-            constexpr static const char *hostList[]{
+            constexpr static const char *hostList[] =
+#if defined(UseNetWorkHostListDefine) && UseNetWorkHostListDefine
+                NetWorkHostListDefine
+#elif !__has_include("../data/hostlist")
+                NetWorkHostListDefine
+#else
 #include "../data/hostlist"
-            };
-            constexpr static const char *mainenance = "/v1/api/maintenance";
+#endif
+
+                constexpr static const char *mainenance = "/v1/api/maintenance";
             constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
+            constexpr static const char *feedback = "/v1/api/feedback";
             constexpr static const char *testing = "/v1/testing/ping";
             // static std::vector<std::string> dynamicHostList;
-            struct Authlib
-            {
-                constexpr static const char * host = "skin.example.org";
-                constexpr static const char * root = "/api/yggdrasil";
-                constexpr static const char * authenticate = "/api/yggdrasil/authserver/authenticate";
-                constexpr static const char * refresh = "/api/yggdrasil/authserver/refresh";
-                constexpr static const char * validate = "/api/yggdrasil/authserver/validate";
-                constexpr static const char * invalidate = "/api/yggdrasil/authserver/invalidate";
-                constexpr static const char * signout = "/api/yggdrasil/authserver/signout";
-                struct Injector{
-                    constexpr static const char * downloadHost = "authlib-injector.yushi.moe";
-                    constexpr static const char * getVersionsList = "/artifacts.json";
-                    constexpr static const char * latest = "/artifact/latest.json";
-                    constexpr static const char * baseRoot = "/artifact";// + {build_number}.json
+            struct Authlib {
+                constexpr static const char *host = NetWorkAuthlibHostDefine;
+                constexpr static const char *root = "/api/yggdrasil";
+                constexpr static const char *authenticate = "/api/yggdrasil/authserver/authenticate";
+                constexpr static const char *refresh = "/api/yggdrasil/authserver/refresh";
+                constexpr static const char *validate = "/api/yggdrasil/authserver/validate";
+                constexpr static const char *invalidate = "/api/yggdrasil/authserver/invalidate";
+                constexpr static const char *signout = "/api/yggdrasil/authserver/signout";
+                struct Injector {
+                    constexpr static const char *downloadHost = "authlib-injector.yushi.moe";
+                    constexpr static const char *getVersionsList = "/artifacts.json";
+                    constexpr static const char *latest = "/artifact/latest.json";
+                    constexpr static const char *baseRoot = "/artifact"; // + {build_number}.json
                 };
                 Injector injector;
             };
@@ -66,17 +72,25 @@ namespace neko {
         enum class Opt {
             none,
             onlyRequest,
-            downloadFile,
+            downloadFile, // When opt is downloadFile, the specified callback function is invalid.
             postText,
             postFile,
-            getSize,        // using getCase or getSize . with return value.
-            getContentType, // using getCase func. with return value.
+            getSize,        // using getCase or getSize
+            getContentType, // using getCase func.
             getContent,     // with return value.
             getHeadContent  // with return value.
 
         };
 
-        static std::unordered_map<Opt, std::string_view> optMap;
+        inline static std::unordered_map<Opt, std::string_view> optMap = {
+            {networkBase::Opt::downloadFile, "downloadFile"},
+            {networkBase::Opt::onlyRequest, "onlyRequest"},
+            {networkBase::Opt::postText, "postText"},
+            {networkBase::Opt::postFile, "postFile"},
+            {networkBase::Opt::getSize, "getSize"},
+            {networkBase::Opt::getContent, "getContent"},
+            {networkBase::Opt::getContentType, "getContentType"},
+            {networkBase::Opt::getHeadContent, "getHeadContent"}};
 
         inline static std::string optStr(Opt opt) {
             for (const auto &it : optMap) {
@@ -117,44 +131,49 @@ namespace neko {
 
             return T();
         }
-        template<typename T = std::string>
-        constexpr static T errCodeReason(int code){
-            switch (code)
-            {
-            case -1:
-                return T("Failed to initialize libcurl.");
-                break;
-            case -2:
-                return T("Failed to open file.");
-                break;
-            case -3:
-                return T("Unexpected standard exception occurred");
-                break;
-            case -4:
-                return T("Get network req failed !");
-                break;
-            case -5:
-                return T("The use of an incorrect method/option");
-                break;
-            case -6:
-                return T("Invalid Content-Length value.");
-                break;
-            case -7:
-                return T("Content-Length value out of range");
-            case -8:
-                return T("In getCase use invalid method! ");
-            default:
-                return T("unknown");
-                break;
+        template <typename T = std::string>
+        constexpr static T errCodeReason(int code) {
+            switch (code) {
+                case -1:
+                    return T("Failed to initialize libcurl.");
+                    break;
+                case -2:
+                    return T("Failed to open file.");
+                    break;
+                case -3:
+                    return T("Unexpected standard exception occurred");
+                    break;
+                case -4:
+                    return T("Get network req failed !");
+                    break;
+                case -5:
+                    return T("The use of an incorrect method/option");
+                    break;
+                case -6:
+                    return T("Invalid Content-Length value.");
+                    break;
+                case -7:
+                    return T("Content-Length value out of range");
+                case -8:
+                    return T("In getCase use invalid method! ");
+                default:
+                    return T("unknown");
+                    break;
             }
         }
 
         // use std string save ,Can be used in most cases ,binary or text
-        static size_t WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata);
+        inline static size_t WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata) {
+            std::string *buffer = reinterpret_cast<std::string *>(userdata);
+            buffer->append(ptr, size * nmemb);
+            return size * nmemb;
+        };
         // ofstream
-        static size_t WriteCallbackFile(char *contents, size_t size, size_t nmemb, void *userp);
-        // write QByteArray
-        static size_t WriteCallbackQBA(char *contents, size_t size, size_t nmemb, void *userp);
+        inline static size_t WriteCallbackFile(char *contents, size_t size, size_t nmemb, void *userp) {
+            std::fstream *file = static_cast<std::fstream *>(userp);
+            file->write(contents, size * nmemb);
+            return size * nmemb;
+        };
     };
 
     template <typename T = std::string>
@@ -200,14 +219,14 @@ namespace neko {
         };
 
     private:
-        inline static void doErr(const char *file, unsigned int line, const char *msg, const char *formFuncName, RetHttpCode *ref,int val) {
+        inline static void doErr(const char *file, unsigned int line, const char *msg, const char *formFuncName, RetHttpCode *ref, int val) {
             if (ref)
                 *ref = val;
             nlog::Err(file, line, "%s : %s", formFuncName, msg);
         }
 
         inline static void handleNerr(const nerr::Error &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
-            doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string(( id == nullptr)?"": id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret,-2);
+            doErr(file, line, std::string(std::string(e.msg) + std::string(", id :") + std::string((id == nullptr) ? "" : id)).c_str(), (std::string(FN) + formFuncName).c_str(), ret, -2);
         }
 
         inline static void handleStdError(const std::exception &e, const char *file, unsigned int line, const char *formFuncName, const char *id, RetHttpCode *ret) {
@@ -225,11 +244,11 @@ namespace neko {
         }
 
         inline static void doLog(Opt opt, const Args &args) {
-            bool dev = exec::getConfigObj().GetBoolValue("dev","enable",false),
-                debug = exec::getConfigObj().GetBoolValue("dev","debug",false);
+            bool dev = exec::getConfigObj().GetBoolValue("dev", "enable", false),
+                 debug = exec::getConfigObj().GetBoolValue("dev", "debug", false);
             std::string resBreakPointStr = (args.resBreakPoint) ? "true" : "false";
             std::string userAgent = (args.userAgent) ? args.userAgent : args.config.userAgent.c_str();
-            std::string data =  (dev&&debug)? ((args.data)? args.data:"null") : "*****";
+            std::string data = (dev && debug) ? ((args.data) ? args.data : "null") : "*****";
             std::string optStrT = optStr(opt);
             nlog::Info(FI, LI,
                        "%s : url : %s , opt : %s , fileName : %s , range : %s , resBreakPoint : %s , userAgent : %s , protocol : %s , proxy : %s , system proxy : %s ,data : %s , id : %s",
@@ -244,17 +263,17 @@ namespace neko {
         }
         inline static bool initOpt(CURL *curl, Args &args) {
             if (!curl) {
-                doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string((args.id == nullptr)?"": args.id )).c_str(), FN, args.code, -1);
+                doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string((args.id == nullptr) ? "" : args.id)).c_str(), FN, args.code, -1);
                 return false;
             }
-            curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");// https://curl.se/ca/cacert.pem
+            curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"); // https://curl.se/ca/cacert.pem
 
             if (args.config.proxy == "true")
                 curl_easy_setopt(curl, CURLOPT_PROXY, getSysProxy<const char *>());
             else if (exec::isProxyAddress(args.config.proxy))
                 curl_easy_setopt(curl, CURLOPT_PROXY, args.config.proxy.c_str());
             else
-                curl_easy_setopt(curl, CURLOPT_PROXY,"");
+                curl_easy_setopt(curl, CURLOPT_PROXY, "");
 
             if (args.resBreakPoint) {
                 try {
@@ -275,11 +294,11 @@ namespace neko {
                     return false;
                 }
             } // resBreakPoint
-            
+
             if (args.header)
                 curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, args.header));
             if (args.range)
-                curl_easy_setopt(curl, CURLOPT_RANGE, args.range);            
+                curl_easy_setopt(curl, CURLOPT_RANGE, args.range);
 
             curl_easy_setopt(curl, CURLOPT_USERAGENT, (args.userAgent) ? args.userAgent : args.config.userAgent.c_str());
             curl_easy_setopt(curl, CURLOPT_URL, args.url);
@@ -293,7 +312,7 @@ namespace neko {
             nlog::Info(FI, LI, "%s : Now start perform , id : %s", FN, id);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::string msg(std::string("Faild to get network req! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr)?"": std::string(id) )));
+                std::string msg(std::string("Faild to get network req! :") + std::string(curl_easy_strerror(res) + std::string(" , id :") + ((id == nullptr) ? "" : std::string(id))));
                 doErr(FI, LI, msg.c_str(), FN, ref, -4);
                 curl_easy_cleanup(curl);
                 return false;
@@ -305,11 +324,11 @@ namespace neko {
         inline static void setRetCodeAndClean(CURL *curl, RetHttpCode *ref, const char *id) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, ref);
             curl_easy_cleanup(curl);
-            nlog::Info(FI, LI, "%s : this ref code : %d (0 is null), id : %s", FN, ((ref)? *ref : 0), id);
+            nlog::Info(FI, LI, "%s : this ref code : %d (0 is null), id : %s", FN, ((ref) ? *ref : 0), id);
         }
 
     public:
-        // Exceptions should not be thrown unless thrown within the constructor of T.
+        // When opt is downloadFile, the specified callback function is invalid.
         inline static void Do(Opt opt, Args &args) noexcept {
             doLog(opt, args);
 
@@ -326,9 +345,8 @@ namespace neko {
                 }
                 case Opt::downloadFile: {
                     try {
-
                         oneIof file(args.fileName, std::chrono::milliseconds(5000), args.fileName, std::ios::out | std::ios::binary | ((args.resBreakPoint) ? std::ios::app : std::ios::trunc));
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, args.writeCallback);
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &networkBase::WriteCallbackFile);
                         curl_easy_setopt(curl, CURLOPT_WRITEDATA, file.get());
                         if (!perform(curl, args.code, args.id))
                             return;
@@ -357,7 +375,7 @@ namespace neko {
                     break;
                 }
                 default: {
-                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but a function that does not provide a return value was used.) id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -5);
+                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but a function that does not provide a return value was used.) id : ") + ((args.id == nullptr) ? "" : std::string(args.id))).c_str(), FN, args.code, -5);
                     break;
                 }
             }
@@ -368,7 +386,7 @@ namespace neko {
             doLog(opt, args);
 
             if (opt != Opt::getSize && opt != Opt::getContentType) {
-                doErr(FI, LI, std::string(std::string("Invalid method! Only Opt::getSize and Opt::getContentType can use this method(getCase)! id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -8);
+                doErr(FI, LI, std::string(std::string("Invalid method! Only Opt::getSize and Opt::getContentType can use this method(getCase)! id : ") + ((args.id == nullptr) ? "" : std::string(args.id))).c_str(), FN, args.code, -8);
                 return std::string();
             }
 
@@ -407,9 +425,9 @@ namespace neko {
                 std::size_t size = std::stoull(res);
                 return size;
             } catch (const std::invalid_argument &e) {
-                doErr(FI, LI, std::string(std::string("Invalid Content-Length value. id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -6);
+                doErr(FI, LI, std::string(std::string("Invalid Content-Length value. id : ") + ((args.id == nullptr) ? "" : std::string(args.id))).c_str(), FN, args.code, -6);
             } catch (const std::out_of_range &e) {
-                doErr(FI, LI, std::string(std::string("Content-Length value out of range. id :") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -7);
+                doErr(FI, LI, std::string(std::string("Content-Length value out of range. id :") + ((args.id == nullptr) ? "" : std::string(args.id))).c_str(), FN, args.code, -7);
             }
             return 0;
         }
@@ -470,7 +488,7 @@ namespace neko {
                     break;
                 }
                 default: {
-                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but it was used with an option that does not have a return value.) id : ") + ((args.id == nullptr)?"": std::string(args.id) )).c_str(), FN, args.code, -5);
+                    doErr(FI, LI, std::string(std::string("The incorrect method was used! (The selected method has a return value, but it was used with an option that does not have a return value.) id : ") + ((args.id == nullptr) ? "" : std::string(args.id))).c_str(), FN, args.code, -5);
                     break;
                 }
             }
@@ -567,15 +585,15 @@ namespace neko {
 
         inline auto nonBlockingDo(Opt opt, Args &args) -> std::future<void> {
             return exec::getThreadObj().enqueue(
-                [=,this] { Do(opt, args); });
+                [=, this] { Do(opt, args); });
         }
         inline auto nonBlockingGet(Opt opt, Args &args) -> std::future<T> {
             return exec::getThreadObj().enqueue(
-                [=,this] { return get(opt, args); });
+                [=, this] { return get(opt, args); });
         }
         inline auto nonBlockingGetPtr(Opt opt, Args &args) -> std::future<T *> {
             return exec::getThreadObj().enqueue(
-                [=,this] { return getPtr(opt, args); });
+                [=, this] { return getPtr(opt, args); });
         }
 
         // Accepts parameters as rvalue objects, indicating the discarding of the returned HTTP code.
@@ -661,8 +679,8 @@ namespace neko {
                     }
                 }
                 std::string range = start + "-" + end;
-                std::string name( info::temp() + exec::generateRandomString(12) + "-" + std::to_string(i));
-                std::string id(std::string((ma.args.id==nullptr)? "" :ma.args.id) + "-" + std::to_string(i));
+                std::string name(info::temp() + exec::generateRandomString(12) + "-" + std::to_string(i));
+                std::string id(std::string((ma.args.id == nullptr) ? "" : ma.args.id) + "-" + std::to_string(i));
 
                 list.push_back(
                     Data{
@@ -682,7 +700,7 @@ namespace neko {
             for (size_t i = 0; i < list.size(); ++i) {
 
                 bool ret = list[i].result.get();
-                if (!ret && !exec::getThreadObj().enqueue([=,&list,this] {
+                if (!ret && !exec::getThreadObj().enqueue([=, &list, this] {
                                                      Args args{ma.args};
                                                      args.range = list[i].range.c_str();
                                                      args.fileName = list[i].name.c_str();
@@ -715,5 +733,55 @@ namespace neko {
         }
 
     }; // network
+
+    inline auto networkBase::init() -> std::future<void> {
+        using namespace std::literals::string_literals;
+
+        std::string proxy = exec::getConfigObj().GetValue("net", "proxy", "true");
+        // "" or true or proxyAdd ,otherwise set ""
+        bool proxyUnexpected = exec::allTrue((proxy != ""), (proxy != "true"), !exec::isProxyAddress(proxy));
+        if (proxyUnexpected)
+            proxy = ""s;
+
+        bool
+            dev = exec::getConfigObj().GetBoolValue("dev", "enable", false),
+            tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
+
+        networkBase::Dconfig = {
+            "NekoLc /"s + info::getVersion(),
+            proxy | exec::move,
+            Api::hostList[0],
+            (dev == true && tls == false) ? "http://"s : "https://"s};
+
+        nlog::Info(FI, LI, "%s :  proxy : %s , dev: %s , tls : %s , protocol : %s , dUseragent : %s ", FN, Dconfig.proxy.c_str(), exec::boolTo<const char *>(dev), exec::boolTo<const char *>(tls), Dconfig.protocol.c_str(), Dconfig.userAgent.c_str());
+
+        return exec::getThreadObj().enqueue([] {
+            network net;
+            for (auto it : Api::hostList) {
+
+                std::string url = buildUrl(Api::testing, it);
+                int retCode;
+
+                decltype(net)::Args args{
+                    url.c_str(),
+                    nullptr,
+                    &retCode};
+                std::string id = "testing-"s + it;
+                args.id = id.c_str();
+
+                decltype(net)::autoRetryArgs Aargs{args, std::vector<int>{200}, 2, 50};
+
+                if (net.autoRetry(Opt::onlyRequest, Aargs)) {
+                    nlog::Info(FI, LI, "%s : testing okay , host : %s , retCode : %d", FN, it, retCode);
+                    neko::networkBase::Dconfig.host = std::string(it);
+                    return;
+                } else {
+                    nlog::Warn(FI, LI, "%s : faild to testing host : %s , now try to the next", FN, it);
+                }
+            };
+            nlog::Err(FI, LI, "%s : Test: No available hosts! End to network test", FN);
+            return;
+        });
+    };
 
 } // namespace neko

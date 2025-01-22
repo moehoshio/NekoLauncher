@@ -16,8 +16,14 @@ namespace neko {
         struct Data {
 
             constexpr static const char *version =
-#include "../data/version"
-                ;
+            #if defined(UseNekoLcCoreVersionDefine) && UseNekoLcCoreVersionDefine
+            NekoLcCoreVersionDefine
+            #elif !__has_include("../data/version")
+            NekoLcCoreVersionDefine
+            #else
+            #include "../data/version"
+            #endif
+            ;
 
             constexpr static const char *osName =
 #if defined(_WIN32)

@@ -4,7 +4,6 @@ project(NekoLc)
 list(APPEND SRCFILES
     src/mainwindow.cpp    
     src/loguru.cpp
-    src/network.cpp
     src/core.cpp
     src/info.cpp
     src/main.cpp   

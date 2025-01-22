@@ -13,7 +13,7 @@ using int_16 = short;
 using uint = uint_32;
 
 // Import the logging module for nerr exceptions , in nerr.hpp
-#define nerrImpLoggerMode true
+#define nerrImpLoggerModeDefine true
 
 // Define a convenient macro for printing logs
 #define FN __FUNCTION__
@@ -21,3 +21,19 @@ using uint = uint_32;
 #define FI __FILE__
 
 #define LI __LINE__
+
+// e.g {"api.example.com","api.example.org","" ...}
+#define NetWorkHostListDefine {"api.example.com","www.example.org"};
+
+// If true, it means that the definition of NetWorkHostListDefine will be used regardless of the presence of a hostlist file. By default (false), it will attempt to read the hostlist file.
+#define UseNetWorkHostListDefine false
+
+
+//any string
+#define NekoLcCoreVersionDefine "v0.0.1"
+
+// If true, the version number defined by NekoLcCoreVersionDefine will be used; otherwise, the version number in the data/version file will be used.
+#define UseNekoLcCoreVersionDefine false
+
+
+#define NetWorkAuthlibHostDefine "skin.example.org"

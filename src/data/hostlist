@@ -1,2 +1,3 @@
-// e.g "api.example.com","api.example.org"
-"api.example.com","www.example.org"
+// If UseNetWorkHostListDefine is defined as true, the file will not be used.
+// e.g {"api.example.com","api.example.org","" ...}
+{"api.example.com","www.example.org"};
