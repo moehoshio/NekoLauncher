@@ -44,7 +44,7 @@ namespace neko {
 
                 constexpr static const char *mainenance = "/v1/api/maintenance";
             constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
-            constexpr static const char *feedback = "/v1/api/feedback";
+            constexpr static const char *feedback = "/v1/api/feedbacklog";
             constexpr static const char *testing = "/v1/testing/ping";
             // static std::vector<std::string> dynamicHostList;
             struct Authlib {

@@ -1173,6 +1173,7 @@ namespace neko {
             {"res", info::getResVersion()},
             {"os", info::getOsName()},
             {"lang", info::language()},
+            {"time",exec::getTimestamp()},
             {"log", feedback}};
         auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
@@ -1182,7 +1183,7 @@ namespace neko {
         args.id = id.c_str();
         net.Do(networkBase::Opt::postText, args);
         if (code != 204){
-            throw nerr::Error( "Failed to feedback log , code : " + std::to_string(code) ,FI, LI, FN);    
+            throw nerr::Error((code == 429)? "Too Many Request , try again later" :  "Failed to feedback log , code : " + std::to_string(code) ,FI, LI, FN);    
         }
     }
 

@@ -272,16 +272,23 @@ namespace exec {
         return (false || ... || args);
     };
 
-    inline std::string getTimeString(const char *Format = "%Y-%m-%d-%H-%M-%S") {
-        auto currentTimePoint = std::chrono::system_clock::now();
+    inline auto getTime(){
+        auto now = std::chrono::system_clock::now();
+        return std::chrono::system_clock::to_time_t(now);
+    }
 
-        std::time_t currentTime = std::chrono::system_clock::to_time_t(currentTimePoint);
+    inline std::string getTimeString(const char *Format = "%Y-%m-%d-%H-%M-%S") {
+        auto currentTime = getTime();
         std::tm *currentTm = std::localtime(&currentTime);
 
         char timeString[128];
         std::strftime(timeString, sizeof(timeString), Format, currentTm);
         return std::string(timeString);
     };
+
+    inline std::string getTimestamp(){
+        return std::to_string(getTime());
+    }
 
     inline std::string generateUUID(int Digits = 32) {
         std::random_device rd;
