@@ -1,5 +1,6 @@
 # Neko Launcher
 
+[正體中文](doc/readme_zh_hant.md) [English](./readme.md)  
 Neko Launcher (NekoLc or NeLC) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
 It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
 It includes automatic content updates and self-updates (both your content and Neko Core itself), as well as automatic installation of your content.  
@@ -33,8 +34,8 @@ In other words, you can also forgo the GUI; its core should still run properly.
 
 prerequisites:  
 std >= c++20  
-Theoretically Qt5.6.0 ? (i dont know) (6.6 is the tested version)  
-Theoretically Cmake3.20 or above (3.29 is the tested version)  
+Theoretically Qt5.6.0 ? (i dont know) (6.6 & 6.8 is the tested version)  
+Cmake3.20 or above (3.29 is the tested version)  
 libcurl 7.0.0 or above (8.1 is the tested version)  
 openssl 3.0.0 or above (3.4 is the tested version)  
 
@@ -49,6 +50,11 @@ After satisfying the prerequisites, continue:
 
 ```shell
 git clone https://github.com/moehoshio/NekoLauncher.git && cd NekoLauncher
+
+chmod + x ./build.sh && ./build.sh
+
+#or
+
 cp CmakeListsCopy.txt CmakeLists.txt
 
 # fill path for your
@@ -57,16 +63,34 @@ cmake . -B./build -DCMAKE_PREFIX_PATH="qt path and package" -DLIBRARY_DIRS="pack
 cmake --build ./build
 ```
 
-If you want to use this project, you need to modify a few things:  
-Using our provided template method: modify the launcherMode variable at the top of `src/include/nekodefine.hpp`.  
-Or modify the provided template.  
-If you want complete custom logic, you can write your own function and call it in the `launcher` function, which is in `src/indclude/core.hpp`.  
-Additionally, you need to edit the content in `src/data/`.  
-More detailed information can be found in the [Contribution and Customization](#contribution-and-customization) section.
+### Contribution and Customization
+
+If you want to use this project, you might need to make modifications to be able to use it. Because it is highly customized.  
+
+if you simply want to keep the content updated automatically, it shouldn't be too difficult.
+
+Using our provided template method: modify the `launcherMode` variable at the top of `src/include/nekodefine.hpp`.  
+
+We currently provide a template for Minecraft Java; change the variable to `"minecraft"`.  
+
+If you want complete custom logic: write your function anywhere and call it in the `launcher` function located in `src/include/core.hpp`.  
+
+You might need to edit the version number and server links in `src/include/nekodefine.hpp` or `src/data/`.  
+
+For example, if you want to launch `example.exe`:  
+
+```cpp
+inline void neko::launcher(launcherOpt opt, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = nullptr) {
+    // Write your content
+
+    // shell: example.exe -args ...
+    std::string command = std::string("example.exe ") + "-you might need some parameters " + "args...";
+    launcherProcess(command.c_str(), opt, winFunc);
+}
+```
+
+For more detailed information, please refer to:
+[dev.md](doc/dev.md)
 
 After completing these steps, you'll need to deploy your server. A simple example can be found at:  
 [server.md](doc/server.md).
-
-### Contribution and Customization
-
-[dev.md](doc/dev.md)
