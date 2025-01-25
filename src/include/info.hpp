@@ -172,7 +172,8 @@ namespace neko {
                     needLogin = "general_needLogin",
                     notEnoughParameters = "general_notEnoughParameters",
                     incompleteApplied = "general_incompleteApplied",
-                    loginOrRegister = "general_loginOrRegister";
+                    loginOrRegister = "general_loginOrRegister",
+                    installMinecraft = "general_installMinecraft";
             };
             struct Title {
                 std::string
@@ -214,6 +215,7 @@ namespace neko {
                     maintenanceInfoParse = "error_maintenanceInfoParse",
                     downloadPoster = "error_downloadPoster",
                     downloadUpdate = "error_downloadUpdate",
+                    installMinecraft = "error_installMinecraft",
                     minecraftVersionEmpty = "error_minecraftVersionEmpty",
                     minecraftVersionParse = "error_minecraftVersionParse",
                     minecraftAuthlibConnection = "error_minecraftAuthlibConnection",

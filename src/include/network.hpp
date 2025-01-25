@@ -135,7 +135,10 @@ namespace neko {
                     if (dwSize > 0) {
                         char *proxyServer = new char[dwSize];
                         RegQueryValueExA(hKey, "ProxyServer", 0, &dwType, (LPBYTE)proxyServer, &dwSize);
-                        return T(proxyServer);
+                        std::string res(proxyServer);
+                        if (res.find("http") == std::string::npos)
+                            res.insert(0, "http://");
+                        return T(res.c_str());
                     }
                     RegCloseKey(hKey);
                 }

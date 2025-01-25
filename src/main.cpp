@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
             // check and auto install , if auto install faild , show hint and retry
             for (size_t i = 0; i < 5; ++i) {
                 try {
-                    neko::checkAndAutoInstall(config);
+                    neko::checkAndAutoInstall(config,hintFunc,loadFunc,setLoadInfo);
                     break;
                 } catch (const nerr::Error &e) {
 
