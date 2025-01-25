@@ -59,8 +59,9 @@
     "general_updateOverReStart":"更新準備就緒\n將在5秒後重新啓動",
     "general_needLogin":"請先登入",
     "general_notEnoughParameters":"請填寫所有項目",
-    "general_incompleteApplied":"更改將在重新啟動後套用",
+    "general_incompleteApplied":"變更將在重新啟動後套用",
     "general_loginOrRegister":"OK: 登入. \nCancel: 註冊",
+    "general_installMinecraft": "Minecraft installing...",
     
     
     "loading_maintenanceInfoReq": "請求維護資訊..",
@@ -85,6 +86,8 @@
     "error_maintenanceInfoParse": "解析維護資訊失敗！",
     "error_downloadPoster": "海報下載失敗！",
     "error_downloadUpdate":"下載更新失敗！\n點擊重試",
+
+    "error_installMinecraft":"安裝Minecraft時發生錯誤！",
 
     "error_minecraftVersionEmpty":"遊戲版本字串是空的！",
     "error_minecraftVersionParse":"解析json失敗！\n檔案可能損壞",

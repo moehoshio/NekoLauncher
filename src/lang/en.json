@@ -61,6 +61,7 @@
     "general_notEnoughParameters":"Please fill in all the fields",
     "general_incompleteApplied":"Changes will be applied after restarting.",
     "general_loginOrRegister":"OK: Log in. \nCancel: Register",
+    "general_installMinecraft": "Minecraft installing...",
 
     
     
@@ -86,6 +87,8 @@
     "error_maintenanceInfoParse": "Failed to maintenance info parse!",
     "error_downloadPoster": "Failed to poster download!",
     "error_downloadUpdate":"Failed to update download !\nclick to reStart update",
+
+    "error_installMinecraft":"Failed to install Minecraft",
 
     "error_minecraftVersionEmpty":"Game version string is empty!",
     "error_minecraftVersionParse":"Faild to json parse! \nThe file may be damaged",
