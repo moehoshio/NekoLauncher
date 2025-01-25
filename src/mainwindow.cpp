@@ -737,7 +737,10 @@ namespace ui {
             // Maybe we should switch the status to loading after the user clicks start?
 
             if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str()) {
-                showHint({neko::info::translations(neko::info::lang.title.notLogin), neko::info::translations(neko::info::lang.general.needLogin), "", 1});
+                showHint({neko::info::translations(neko::info::lang.title.notLogin), neko::info::translations(neko::info::lang.general.needLogin), "", 1, [=,this](bool){
+                    this->showPage(ui::MainWindow::pageState::setting);
+                    this->setting->tabWidget->setCurrentIndex(0);
+                }});
                 return;
             }
 
