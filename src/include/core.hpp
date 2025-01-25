@@ -87,8 +87,10 @@ namespace neko {
     }
 
     // Should not be called from the main thread, as it will block the incoming thread until completion.
-    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string &versionId, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft") {
+    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string &versionId, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft", std::function<void(const ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         nlog::autoLog log{FI, LI, FN};
+
+        std::size_t now = 0;
 
         auto ensureDirectoryExists = [](const std::string &path) {
             if (!std::filesystem::exists(path)) {
@@ -96,11 +98,11 @@ namespace neko {
             }
         };
 
-        auto downloadLibrary = [=](const nlohmann::json &library) {
+        auto downloadLibrary = [=,&now](const nlohmann::json &library) {
             std::string libraryUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(library["downloads"]["artifact"]["url"]) : library["downloads"]["artifact"].value("url", "");
             std::string libraryPath = installPath + "/libraries/" + library["downloads"]["artifact"]["path"].get<std::string>();
             ensureDirectoryExists(libraryPath.substr(0, libraryPath.find_last_of('/')));
-
+            setLoadInfo(now, library["name"].get<std::string>().c_str());
             network net;
             int code = 0;
             decltype(net)::Args args{libraryUrl.c_str(), libraryPath.c_str(), &code};
@@ -109,6 +111,8 @@ namespace neko {
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
                 throw nerr::Error("Failed to download library!", FI, LI, FN);
             }
+            ++now;
+            setLoadInfo(now, library["name"].get<std::string>().c_str());
         };
 
         auto downloadClient = [=]() {
@@ -132,7 +136,7 @@ namespace neko {
             std::string assetIndexUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(versionJson["assetIndex"]["url"]) : versionJson["assetIndex"].value("url", "");
             std::string assetIndexPath = installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json";
             ensureDirectoryExists(installPath + "/assets/indexes");
-
+            setLoadInfo(now, "Downloading asset index");
             network net;
             int code = 0;
             decltype(net)::Args args{assetIndexUrl.c_str(), assetIndexPath.c_str(), &code};
@@ -141,6 +145,7 @@ namespace neko {
             if (!net.autoRetry(networkBase::Opt::downloadFile, {args})) {
                 throw nerr::Error("Failed to download asset index!", FI, LI, FN);
             }
+            setLoadInfo(now, "asset Download is ok");
         };
 
         auto downloadAsset = [=](const nlohmann::json &asset) {
@@ -160,6 +165,16 @@ namespace neko {
             }
         };
 
+        std::size_t libSize = versionJson["libraries"].size();        
+
+        downloadAssetIndex();
+
+        auto assetIndexJson = nlohmann::json::parse(std::ifstream(installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json"), nullptr, false);
+
+        ui::loadMsg msg{ui::loadMsg::Progress, "Downloading libraries"};
+        msg.progressMax = (libSize + assetIndexJson.size());
+        loadFunc(msg);
+
         for (const auto &library : versionJson["libraries"]) {
             exec::getThreadObj().enqueue([=]() {
                 downloadLibrary(library);
@@ -167,10 +182,6 @@ namespace neko {
         }
 
         downloadClient();
-
-        downloadAssetIndex();
-
-        auto assetIndexJson = nlohmann::json::parse(std::ifstream(installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json"), nullptr, false);
 
         for (const auto &asset : assetIndexJson["objects"]) {
             exec::getThreadObj().enqueue([=]() {
@@ -188,11 +199,12 @@ namespace neko {
         exec::getThreadObj().wait_until_empty();
     }
     // Should not be called from the main thread, as it will block the incoming thread until completion.
-    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official) {
+    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(const ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         std::string EnterMsg = std::string("Enter , downloadSource : ") + std::string(downloadSourceMap.at(downloadSource)) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
         nlog::autoLog log{FI, LI, FN, EnterMsg};
 
         network net;
+        setLoadInfo(1,"Get version list..");
 
         auto url = getMinecraftListUrl(downloadSource);
         int code = 0;
@@ -202,7 +214,10 @@ namespace neko {
             throw nerr::Error("Failed to get version list!", FI, LI, FN);
         }
 
+        setLoadInfo(2,"parse version list..");
+
         nlohmann::json versionListJson = nlohmann::json::parse(versionList, nullptr, false);
+        
 
         auto versions = versionListJson["versions"];
         auto it = std::find_if(versions.begin(), versions.end(), [&](const auto &version) {
@@ -213,6 +228,7 @@ namespace neko {
             throw nerr::Error("Failed to find target version!", FI, LI, FN);
         }
 
+        setLoadInfo(2,"Get target version info..");
         std::string targetVersionUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI((*it).value("url", "")) : (*it).value("url", "");
 
         args.url = targetVersionUrl.c_str();
@@ -224,16 +240,34 @@ namespace neko {
 
         nlohmann::json versionJson = nlohmann::json::parse(targetVersionJson, nullptr, false);
 
-        installMinecraftDownloads(downloadSource, targetVersion, versionJson, installPath);
+        installMinecraftDownloads(downloadSource, targetVersion, versionJson, installPath, loadFunc, setLoadInfo);
     }
 
-    inline void checkAndAutoInstall(ClientConfig cfg) {
+    inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr,std::function<void(const ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         std::string resVer = (cfg.more.resVersion) ? std::string(cfg.more.resVersion) : std::string();
         if (resVer.empty()) {
             // Customize your installation logic, resource version needs to be stored after installation
-            installMinecraft("./.minecraft", "1.16.5", DownloadSource::BMCLAPI);
-            cfg.more.resVersion = "v1.0.0";
-            cfg.save(exec::getConfigObj(), "config.ini", cfg);
+            bool stop = false;
+            std::mutex mtx;
+            std::condition_variable condVar;
+            std::unique_lock<std::mutex> lock(mtx);
+            while (!stop) {
+                try {
+                    loadFunc({ui::loadMsg::OnlyRaw, info::translations(info::lang.general.installMinecraft)});
+                    installMinecraft("./.minecraft", "1.16.5", DownloadSource::Official,hintFunc,loadFunc,setLoadInfo);
+                    cfg.more.resVersion = "v0.0.1";
+                    cfg.save(exec::getConfigObj(), "config.ini", cfg);
+                } catch (const nerr::Error &e) {
+                    hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.installMinecraft) + e.msg, "", 2,[&mtx,&condVar,&stop](bool check){
+                        if (!check){
+                            stop = true;
+                            QApplication::quit();
+                        }
+                        condVar.notify_all();
+                    }});
+                }
+                condVar.wait(lock);
+            }
         }
     }
 
@@ -693,7 +727,11 @@ namespace neko {
                                           {"${version_type}", gameArgsVerType}});
         std::vector<std::string> jvmOptimizeArgs = {
             "-XX:+UnlockExperimentalVMOptions", "-XX:+UseG1GC", "-XX:G1NewSizePercent=20", "-XX:G1ReservePercent=20", "-XX:MaxGCPauseMillis=50", "-XX:G1HeapRegionSize=16m", "-XX:-UseAdaptiveSizePolicy", "-XX:-OmitStackTraceInFastThrow", "-XX:-DontCompileHugeMethods", "-Xmn128m", "-Xmx10240m", "-Dfml.ignoreInvalidMinecraftCertificates=true", "-Dfml.ignorePatchDiscrepancies=true"};
-
+        
+        // gameArgsVec.push_back("--server");
+        // gameArgsVec.push_back("");
+        // gameArgsVec.push_back("--port");
+        // gameArgsVec.push_back("25566");
         // authlib Injector
         std::string authlibPrefrtched = std::string(cfg.manage.authlibPrefetched);
         authlibPrefrtched.erase(std::remove(authlibPrefrtched.begin(), authlibPrefrtched.end(), '\\'), authlibPrefrtched.end());
@@ -745,11 +783,8 @@ namespace neko {
 
         if constexpr (info::getOsName() == std::string_view("windows")) {
             std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
-            std::fstream file2(info::workPath() + "/Nekolc.ps1", std::ios::in | std::ios::out | std::ios::trunc);
-            file2 << command;
-            file2.close();
             nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
-            std::string cmd = "cmd.exe /C powershell " + info::workPath() + "/Nekolc.ps1";
+            std::string cmd = "powershell " + command;
             launcherProcess(cmd.c_str(), opt, winFunc);
         } else {
             std::filesystem::current_path("." + minecraftDir);
@@ -883,15 +918,15 @@ namespace neko {
                 }
             });
 
-            std::string msg = info::translations((i == 4) ? info::lang.error.networkConnectionRetryMax : info::lang.error.maintenanceInfoReq) + networkBase::errCodeReason(code) + "\n" + info::translations((i==4)? info::lang.error.clickToQuit : info::lang.error.clickToRetry );
+            std::string msg = info::translations((i == 4) ? info::lang.error.networkConnectionRetryMax : info::lang.error.maintenanceInfoReq) + networkBase::errCodeReason(code) + "\n" + info::translations((i == 4) ? info::lang.error.clickToQuit : info::lang.error.clickToRetry);
 
-            hintFunc({info::translations(info::lang.title.error), msg, "", (i == 4)? 1 : 2, ((i == 4) ? quitHint : retryHint)});
+            hintFunc({info::translations(info::lang.title.error), msg, "", (i == 4) ? 1 : 2, ((i == 4) ? quitHint : retryHint)});
 
-            if(i==4)
+            if (i == 4)
                 return State::undone;
 
             condVar.wait(lock);
-            
+
             if (stop) {
                 return State::undone;
             }
@@ -1164,7 +1199,7 @@ namespace neko {
         return State::over;
     }
 
-    inline void feedbackLog(const std::string & feedback) {
+    inline void feedbackLog(const std::string &feedback) {
         nlog::autoLog log{FI, LI, FN};
         network net;
         auto url = net.buildUrl(networkBase::Api::feedback);
@@ -1173,7 +1208,7 @@ namespace neko {
             {"res", info::getResVersion()},
             {"os", info::getOsName()},
             {"lang", info::language()},
-            {"time",exec::getTimestamp()},
+            {"time", exec::getTimestamp()},
             {"log", feedback}};
         auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
@@ -1182,8 +1217,8 @@ namespace neko {
         args.data = data.c_str();
         args.id = id.c_str();
         net.Do(networkBase::Opt::postText, args);
-        if (code != 204){
-            throw nerr::Error((code == 429)? "Too Many Request , try again later" :  "Failed to feedback log , code : " + std::to_string(code) ,FI, LI, FN);    
+        if (code != 204) {
+            throw nerr::Error((code == 429) ? "Too Many Request , try again later" : "Failed to feedback log , code : " + std::to_string(code), FI, LI, FN);
         }
     }
 
