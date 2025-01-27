@@ -7,18 +7,17 @@ constexpr const char *launcherMode = "minecraft"; // Option: `minecraft`. Used i
 
 #define NetWorkAuthlibHostDefine "skin.example.org"
 
+// If true, it means that the definition of NetWorkHostListDefine will be used regardless of the presence of a hostlist file. By default (false), it will attempt to read the hostlist file.
+#define UseNetWorkHostListDefine false
 // e.g {"api.example.com","api.example.org","" ...}
 #define NetWorkHostListDefine {"api.example.com","www.example.org"};
 
-// If true, it means that the definition of NetWorkHostListDefine will be used regardless of the presence of a hostlist file. By default (false), it will attempt to read the hostlist file.
-#define UseNetWorkHostListDefine false
-
-
+// If true, the version number defined by NekoLcCoreVersionDefine will be used; otherwise, attempt the version number in the data/version file will be used.
+#define UseNekoLcCoreVersionDefine false
 //any string
 #define NekoLcCoreVersionDefine "v0.0.1"
 
-// If true, the version number defined by NekoLcCoreVersionDefine will be used; otherwise, attempt the version number in the data/version file will be used.
-#define UseNekoLcCoreVersionDefine false
+
 
 
 
