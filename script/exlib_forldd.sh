@@ -9,7 +9,7 @@ PROGRAM=$1
 DEST_DIR=$2
 
 
-if [ ! -f "PROGRAM" ]; then
+if [ ! -f "$PROGRAM" ]; then
     echo "Error: Program not found archive PROGRAM"
     exit 1
 fi

@@ -78,7 +78,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     else()
         set(DLL_LIST "libcrypto-3-x64.dll" "libssl-3-x64.dll" "zlibd1.dll" "libcurl-d.dll")
     endif()
-endif() # os win
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "MacOS")
+    set_target_properties(NekoLc PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
+    )
+
+endif() # os
 
 
 copy_dlls(NekoLc "${DLL_LIST}")
