@@ -17,6 +17,14 @@ constexpr const char *launcherMode = "minecraft"; // Option: `minecraft`. Used i
 //any string
 #define NekoLcCoreVersionDefine "v0.0.1"
 
+#include <string_view>
+
+#if defined(GIT_BUILD_ID)
+constexpr inline const std::string_view build_id = GIT_BUILD_ID;
+#else
+#include "exec.hpp"
+inline const std::string_view build_id = exec::generateUUID(16);
+#endif
 
 
 

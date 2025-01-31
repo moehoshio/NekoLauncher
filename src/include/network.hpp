@@ -66,7 +66,7 @@ namespace neko {
             Authlib authlib;
         };
 
-        inline static Config Dconfig;
+        inline static networkBase::Config Dconfig;
         constexpr inline static Api api;
 
         enum class Opt {
@@ -124,7 +124,7 @@ namespace neko {
         static T getSysProxy() {
             auto proxy = std::getenv("http_proxy");
             auto tlsProxy = std::getenv("https_proxy");
-            #if defined(_WIN32)
+#if defined(_WIN32)
             if (!proxy) {
                 HKEY hKey;
                 LPCSTR lpSubKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
@@ -143,7 +143,7 @@ namespace neko {
                     RegCloseKey(hKey);
                 }
             }
-            #endif
+#endif
 
             if (tlsProxy)
                 return T(tlsProxy);
@@ -289,7 +289,8 @@ namespace neko {
             }
             curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"); // https://curl.se/ca/cacert.pem
 
-            if (args.config.proxy == "true")
+            if (auto sysProxy = getSysProxy<const char *>();
+                args.config.proxy == "true" && exec::isProxyAddress(sysProxy))
                 curl_easy_setopt(curl, CURLOPT_PROXY, getSysProxy<const char *>());
             else if (exec::isProxyAddress(args.config.proxy))
                 curl_easy_setopt(curl, CURLOPT_PROXY, args.config.proxy.c_str());
@@ -769,7 +770,7 @@ namespace neko {
             tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
 
         networkBase::Dconfig = {
-            "NekoLc /"s + info::getVersion(),
+            "NekoLc /"s + info::getVersion() + "-" + info::getOsNameS() + "/" + build_id,
             proxy | exec::move,
             Api::hostList[0],
             (dev == true && tls == false) ? "http://"s : "https://"s};
