@@ -862,10 +862,10 @@ namespace neko {
     inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
         if (!url.empty()) {
             network net;
-            auto fileName = info::temp() + "update_" + exec::generateRandomString(10) + ".png";
+            auto fileName = info::temp() + "/update_" + exec::generateRandomString(12) + ".png";
             int code = 0;
 
-            network<std::string>::Args args{url.c_str(), fileName.c_str(), &code};
+            decltype(net)::Args args{url.c_str(), fileName.c_str(), &code};
             args.writeCallback = networkBase::WriteCallbackFile;
             net.Do(networkBase::Opt::downloadFile, args);
             if (code != 200) {
@@ -873,7 +873,7 @@ namespace neko {
                 hintFunc({info::translations(info::lang.title.warning), info::translations(info::lang.error.downloadPoster), "", 1, [](bool) {}});
                 return T();
             }
-            return fileName.c_str();
+            return T(fileName.c_str());
         }
         return T();
     }
