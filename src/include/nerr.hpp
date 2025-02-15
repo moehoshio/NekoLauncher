@@ -6,8 +6,10 @@
 // neko error
 namespace nerr {
 
-#if defined(nerrImpLoggerModeDefine)
+#if defined(nerrImpLoggerModeDefine) && __has_include("nlog.hpp")
 #include "nlog.hpp"
+#else
+#define nerrImpLoggerModeDefine false
 #endif
 
     struct Error : public std::exception {
@@ -20,13 +22,13 @@ namespace nerr {
         const char *funcName;
 
         Error(std::string Msg, const char *fileName, uint line, const char *funcName, bool logger = enableLogger) noexcept : msg(Msg), fileName(fileName), line(line), funcName(funcName) {
-            #if defined(nerrImpLoggerModeDefine)
+            #if defined(nerrImpLoggerModeDefine) && nerrImpLoggerModeDefine != false
                 if (logger)
                     nlog::Err(fileName, line, "%s : %s", funcName, msg.c_str());
             #endif
         };
         Error(std::string Msg, bool logger = enableLogger) noexcept : msg(Msg) {
-            #if defined(nerrImpLoggerModeDefine)
+            #if defined(nerrImpLoggerModeDefine) && nerrImpLoggerModeDefine != false
                 if (logger)
                     nlog::Err(fileName, line, "%s : %s", funcName, msg.c_str());
             #endif

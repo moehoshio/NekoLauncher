@@ -770,7 +770,7 @@ namespace neko {
             tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
 
         networkBase::Dconfig = {
-            "NekoLc /"s + info::getVersion() + "-" + info::getOsNameS() + "/" + build_id,
+            "NekoLc /"s + info::getVersion() + "-" + info::getOsNameS() + "/" + std::string(build_id),
             proxy | exec::move,
             Api::hostList[0],
             (dev == true && tls == false) ? "http://"s : "https://"s};
