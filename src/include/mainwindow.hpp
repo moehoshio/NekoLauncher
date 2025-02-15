@@ -393,12 +393,12 @@ namespace ui {
                 btn->show();
                 if (!callback)
                     return;
-                connect(
-                    btn, &QPushButton::clicked, [=, this, &did] {
-                        callback(true);
-                        disconnect(btn);
-                        did = true;
-                    });
+                QMetaObject::Connection oneButtonClickConnection;
+                oneButtonClickConnection = connect(btn, &QPushButton::clicked, [=, this, &did]() mutable {
+                    callback(true);
+                    disconnect(oneButtonClickConnection);
+                    did = true;
+                });
             }
 
             inline void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback, bool &did) {
@@ -408,13 +408,15 @@ namespace ui {
                 connect(
                     btnBox, &QDialogButtonBox::accepted, [=, this, &did] {
                         callback(true);
-                        disconnect(btnBox);
+                        disconnect(btnBox, &QDialogButtonBox::accepted, nullptr, nullptr);
+                        disconnect(btnBox, &QDialogButtonBox::rejected, nullptr, nullptr);
                         did = true;
                     });
                 connect(
                     btnBox, &QDialogButtonBox::rejected, [=, this, &did] {
                         callback(false);
-                        disconnect(btnBox);
+                        disconnect(btnBox, &QDialogButtonBox::accepted, nullptr, nullptr);
+                        disconnect(btnBox, &QDialogButtonBox::rejected, nullptr, nullptr);
                         did = true;
                     });
             }
@@ -429,8 +431,8 @@ namespace ui {
                     setupButton(button, m.callback, *did);
                     dialogButton->hide();
                 } else {
-                    button->hide();
                     setupButton(dialogButton, m.callback, *did);
+                    button->hide();
                 }
                 if (!m.callback)
                     return;

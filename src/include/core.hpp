@@ -966,7 +966,7 @@ namespace neko {
         hintFunc(hmsg);
         return State::undone;
     }
-    // over : none update , undone : update
+    // over : none update , undone : need update
     inline State checkUpdate(std::string &res) {
         nlog::autoLog log{FI, LI, FN};
         network net;
