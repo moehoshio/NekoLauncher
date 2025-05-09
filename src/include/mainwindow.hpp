@@ -393,12 +393,12 @@ namespace ui {
                 btn->show();
                 if (!callback)
                     return;
-                QMetaObject::Connection oneButtonClickConnection;
-                oneButtonClickConnection = connect(btn, &QPushButton::clicked, [=, this, &did]() mutable {
-                    callback(true);
-                    disconnect(oneButtonClickConnection);
-                    did = true;
-                });
+                connect(
+                    btn, &QPushButton::clicked, [=, this, &did] {
+                        callback(true);
+                        this->disconnect(btn);
+                        did = true;
+                    });
             }
 
             inline void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback, bool &did) {
@@ -408,15 +408,13 @@ namespace ui {
                 connect(
                     btnBox, &QDialogButtonBox::accepted, [=, this, &did] {
                         callback(true);
-                        disconnect(btnBox, &QDialogButtonBox::accepted, nullptr, nullptr);
-                        disconnect(btnBox, &QDialogButtonBox::rejected, nullptr, nullptr);
+                        this->disconnect(btnBox);
                         did = true;
                     });
                 connect(
                     btnBox, &QDialogButtonBox::rejected, [=, this, &did] {
                         callback(false);
-                        disconnect(btnBox, &QDialogButtonBox::accepted, nullptr, nullptr);
-                        disconnect(btnBox, &QDialogButtonBox::rejected, nullptr, nullptr);
+                        this->disconnect(btnBox);
                         did = true;
                     });
             }
@@ -431,8 +429,8 @@ namespace ui {
                     setupButton(button, m.callback, *did);
                     dialogButton->hide();
                 } else {
-                    setupButton(dialogButton, m.callback, *did);
                     button->hide();
+                    setupButton(dialogButton, m.callback, *did);
                 }
                 if (!m.callback)
                     return;

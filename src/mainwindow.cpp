@@ -743,6 +743,7 @@ namespace ui {
                 }});
                 return;
             }
+            // this->showLoad({ui::loadMsg::Type::OnlyRaw,"launching.."});
 
             int id = setting->page2->lcWindowSetBox->currentIndex();
             neko::launcherOpt opt;
@@ -770,7 +771,7 @@ namespace ui {
                     });
                 } else {
                     neko::launcher(opt, hintFunc);
-                }
+                } 
             });
         });
         connect(index->menuButton, &QPushButton::clicked, [=, this]() {
