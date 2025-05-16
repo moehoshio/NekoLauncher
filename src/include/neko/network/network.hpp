@@ -1,20 +1,21 @@
 #pragma once
 
-#include "nlog.hpp"
+#include "neko/log/nlog.hpp"
+
+#include "neko/schema/nerr.hpp"
+#include "neko/schema/nekodefine.hpp"
+
+#include "neko/function/one.hpp"
+#include "neko/function/exec.hpp"
+#include "neko/function/info.hpp"
+
 
 #include <curl/curl.h>
+
 
 #include <algorithm>
 #include <future>
 #include <string>
-
-#include "nerr.hpp"
-
-#include "exec.hpp"
-#include "info.hpp"
-
-#include "nekodefine.hpp"
-#include "one.hpp"
 
 namespace neko {
 
@@ -34,15 +35,11 @@ namespace neko {
 
         struct Api {
             constexpr static const char *hostList[] =
-#if defined(UseNetWorkHostListDefine) && UseNetWorkHostListDefine
+            {
                 NetWorkHostListDefine
-#elif !__has_include("../data/hostlist")
-                NetWorkHostListDefine
-#else
-#include "../data/hostlist"
-#endif
-
-                constexpr static const char *mainenance = "/v1/api/maintenance";
+            };
+                
+            constexpr static const char *mainenance = "/v1/api/maintenance";
             constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
             constexpr static const char *feedback = "/v1/api/feedbacklog";
             constexpr static const char *testing = "/v1/testing/ping";

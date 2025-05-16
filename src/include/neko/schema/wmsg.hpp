@@ -1,6 +1,9 @@
 #pragma once
 
+// Structure definition for window messages
+
 #include <string>
+#include <vector>
 #include <functional>
 
 namespace ui {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "loguru.hpp"
+#include "library/loguru.hpp"
 #include <string>
 
 // neko log

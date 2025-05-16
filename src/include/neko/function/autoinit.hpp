@@ -1,9 +1,10 @@
 #pragma once
 
-#include "clientconfig.hpp"
-#include "nlog.hpp"
+#include "neko/log/nlog.hpp"
 
-#include "network.hpp"
+#include "neko/network/network.hpp"
+
+#include "neko/schema/clientconfig.hpp"
 
 #include <filesystem>
 
@@ -20,10 +21,11 @@ namespace neko {
 
         if (!debug) {
             std::string file_name = exec::sum<std::string>("logs/", exec::getTimeString(), ".log");
+
             try {
                 oneIof file(file_name, file_name, std::ios::out);
-            } catch (...) {
-            }
+            } catch (...) {}
+
             // If there is a callback, the user can be notified
             (void)loguru::add_file(file_name.c_str(), loguru::Append, loguru::Verbosity_WARNING);
 
@@ -35,11 +37,12 @@ namespace neko {
 
         for (auto path : file_name) {
             if (!std::filesystem::exists(std::filesystem::path(path))) {
+
                 try {
                     oneIof file(path, path, std::ios::out);
-                } catch (...) {
-                }
+                } catch (...) {}
             }
+
             loguru::FileMode mode = (path == std::string_view("logs/new-debug.log")) ? loguru::Truncate : loguru::Append;
             // If there is a callback, the user can be notified
             (void)loguru::add_file(path, mode, loguru::Verbosity_6);
@@ -53,8 +56,10 @@ namespace neko {
         for (size_t i = 0; i < nums; ++i) {
             exec::getThreadObj().enqueue(
                 [i_str = std::to_string(i + 1)]() {
+
                     loguru::set_thread_name((std::string("thread ") + i_str).c_str());
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
                     nlog::Info(FI, LI, "%s : Hello thread %s", FN, i_str.c_str());
                 });
         }
@@ -71,14 +76,14 @@ namespace neko {
         nlog::Info(FI, LI, "%s : config net : thread : %d , proxy : %s", FN, config.net.thread, config.net.proxy);
         nlog::Info(FI, LI, "%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ", FN, config.style.blurHint, config.style.blurValue, config.style.fontPointSize, config.style.fontFamilies);
         nlog::Info(FI, LI, "%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ", FN, exec::boolTo<const char *>(config.dev.enable), exec::boolTo<const char *>(config.dev.debug), config.dev.server, exec::boolTo<const char *>(config.dev.tls));
-        nlog::Info(FI, LI, "%s : config manage : account : %s , name : %s , uuid : %s , authlibPrefetched : %s ", FN, config.manage.account, config.manage.displayName, config.manage.uuid, config.manage.authlibPrefetched);
-        nlog::Info(FI, LI, "%s : config more : temp : %s , resVersion : %s", FN, config.more.temp, config.more.resVersion);
+        nlog::Info(FI, LI, "%s : config minecraft : account : %s , name : %s , uuid : %s , authlibPrefetched : %s ", FN, config.minecraft.account, config.minecraft.displayName, config.minecraft.uuid, config.minecraft.authlibPrefetched);
+        nlog::Info(FI, LI, "%s : config more : temp : %s , resVersion : %s", FN, config.more.tempDir, config.more.resourceVersion);
     }
 
     inline auto autoInit(int argc, char *argv[]) {
 
         if (exec::getConfigObj().LoadFile("config.ini") < 0)
-            oneIof o("loadBad.txt"); // If there is a callback, the user can be notified
+            oneIof o("loadConfigBad.txt"); // If there is a callback, the user can be notified
 
         ClientConfig cfg(exec::getConfigObj());
 

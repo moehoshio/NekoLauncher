@@ -1,6 +1,7 @@
 // client config class
 #pragma once
-#include "SimpleIni/SimpleIni.h"
+
+#include "library/SimpleIni/SimpleIni.h"
 
 namespace neko {
     struct ClientConfig {
@@ -31,10 +32,10 @@ namespace neko {
             bool tls;
         };
         struct More {
-            const char *temp;
-            const char *resVersion;
+            const char *tempDir;
+            const char *resourceVersion;
         };
-        struct Manage {
+        struct Minecraft {
             const char *account;
             const char *displayName;
             const char *uuid;
@@ -47,7 +48,7 @@ namespace neko {
         Net net;
         Dev dev;
         More more;
-        Manage manage;
+        Minecraft minecraft;
         ClientConfig(const CSimpleIniA &cfg) {
             main = Main{
                 cfg.GetValue("main","language","en"),
@@ -71,14 +72,14 @@ namespace neko {
                 cfg.GetValue("dev", "server", "auto"),
                 cfg.GetBoolValue("dev", "tls", true)};
             more = More{
-                cfg.GetValue("more", "temp", ""),
-                cfg.GetValue("more","resVersion","")};
-            manage = Manage{
-                cfg.GetValue("manage","account",""),
-                cfg.GetValue("manage","displayName",""),
-                cfg.GetValue("manage","uuid",""),
-                cfg.GetValue("manage","accessToken",""),
-                cfg.GetValue("manage","authlibPrefetched","")};
+                cfg.GetValue("more", "customTempDir", ""),
+                cfg.GetValue("more","resourceVersion","")};
+            minecraft = Minecraft{
+                cfg.GetValue("minecraft","account",""),
+                cfg.GetValue("minecraft","displayName",""),
+                cfg.GetValue("minecraft","uuid",""),
+                cfg.GetValue("minecraft","accessToken",""),
+                cfg.GetValue("minecraft","authlibPrefetched","")};
         }
     static void save(CSimpleIniA &saveCfg,const char * fileName,ClientConfig nowConfig){
         saveCfg.SetValue("main","language",nowConfig.main.lang);
@@ -102,14 +103,14 @@ namespace neko {
         saveCfg.SetValue("dev","server",nowConfig.dev.server);
         saveCfg.SetBoolValue("dev","tls",nowConfig.dev.tls);
 
-        saveCfg.SetValue("more","temp",nowConfig.more.temp);
-        saveCfg.SetValue("more","resVersion",nowConfig.more.resVersion);
+        saveCfg.SetValue("more","customTempDir",nowConfig.more.tempDir);
+        saveCfg.SetValue("more","resourceVersion",nowConfig.more.resourceVersion);
 
-        saveCfg.SetValue("manage","account",nowConfig.manage.account);
-        saveCfg.SetValue("manage","displayName",nowConfig.manage.displayName);
-        saveCfg.SetValue("manage","uuid",nowConfig.manage.uuid);
-        saveCfg.SetValue("manage","accessToken",nowConfig.manage.accessToken);
-        saveCfg.SetValue("manage","authlibPrefetched",nowConfig.manage.authlibPrefetched);
+        saveCfg.SetValue("minecraft","account",nowConfig.minecraft.account);
+        saveCfg.SetValue("minecraft","displayName",nowConfig.minecraft.displayName);
+        saveCfg.SetValue("minecraft","uuid",nowConfig.minecraft.uuid);
+        saveCfg.SetValue("minecraft","accessToken",nowConfig.minecraft.accessToken);
+        saveCfg.SetValue("minecraft","authlibPrefetched",nowConfig.minecraft.authlibPrefetched);
 
         saveCfg.SaveFile(fileName);
     };

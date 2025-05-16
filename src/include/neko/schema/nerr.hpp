@@ -1,13 +1,13 @@
 #pragma once
-#include "nekodefine.hpp"
+#include "neko/schema/nekodefine.hpp"
 
 #include <exception>
 
 // neko error
 namespace nerr {
 
-#if defined(nerrImpLoggerModeDefine) && __has_include("nlog.hpp")
-#include "nlog.hpp"
+#if defined(nerrImpLoggerModeDefine) && __has_include("neko/log/nlog.hpp")
+#include "neko/log/nlog.hpp"
 #else
 #define nerrImpLoggerModeDefine false
 #endif
@@ -45,6 +45,31 @@ namespace nerr {
     struct TimeOut : public Error {
         TimeOut(std::string Msg, const char *fileName, uint line, const char *funcName , bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName,logger) {};
         TimeOut(std::string Msg = "Operation timed out!",bool logger = enableLogger) : Error(Msg,logger) {};
+    };
+
+    struct InvalidArgument : public Error {
+        InvalidArgument(std::string Msg, const char *fileName, uint line, const char *funcName , bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName,logger) {};
+        InvalidArgument(std::string Msg = "Invalid argument!",bool logger = enableLogger) : Error(Msg,logger) {};
+    };
+
+    struct InvalidState : public Error {
+        InvalidState(std::string Msg, const char *fileName, uint line, const char *funcName , bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName,logger) {};
+        InvalidState(std::string Msg = "Invalid state!",bool logger = enableLogger) : Error(Msg,logger) {};
+    };
+
+    struct InvalidOperation : public Error {
+        InvalidOperation(std::string Msg, const char *fileName, uint line, const char *funcName , bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName,logger) {};
+        InvalidOperation(std::string Msg = "Invalid operation!",bool logger = enableLogger) : Error(Msg,logger) {};
+    };
+
+    struct InvalidType : public Error {
+        InvalidType(std::string Msg, const char *fileName, uint line, const char *funcName , bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName,logger) {};
+        InvalidType(std::string Msg = "Invalid type!",bool logger = enableLogger) : Error(Msg,logger) {};
+    };
+
+    struct InvalidValue : public Error {
+        InvalidValue(std::string Msg, const char *fileName, uint line, const char *funcName , bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName,logger) {};
+        InvalidValue(std::string Msg = "Invalid value!",bool logger = enableLogger) : Error(Msg,logger) {};
     };
 
     struct FileRead : public Error {

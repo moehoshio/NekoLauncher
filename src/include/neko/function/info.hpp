@@ -1,10 +1,11 @@
 #pragma once
 
-#include "exec.hpp"
-#include "nlog.hpp"
-#include "nekodefine.hpp"
+#include "neko/function/exec.hpp"
+#include "neko/log/nlog.hpp"
+#include "neko/schema/nekodefine.hpp"
+#include "neko/schema/clientconfig.hpp"
 
-#include "nlohmann/json.hpp"
+#include "library/nlohmann/json.hpp"
 
 #include <filesystem>
 #include <string>
@@ -16,14 +17,7 @@ namespace neko {
         struct Data {
 
             constexpr static const char *version =
-            #if defined(UseNekoLcCoreVersionDefine) && UseNekoLcCoreVersionDefine
-            NekoLcCoreVersionDefine
-            #elif !__has_include("../data/version")
-            NekoLcCoreVersionDefine
-            #else
-            #include "../data/version"
-            #endif
-            ;
+                NekoLcCoreVersionDefine;
 
             constexpr static const char *osName =
 #if defined(_WIN32)
@@ -54,13 +48,15 @@ namespace neko {
         inline static std::string temp(const std::string &setTempDir = "") {
             static std::mutex mtx;
             std::lock_guard<std::mutex> lock(mtx);
-            auto init = [] {
-                if (std::string temp = exec::getConfigObj().GetValue("more", "temp", "");
-                    std::filesystem::is_directory(temp))
-                    return temp | exec::unifiedPaths;
+
+            auto init = []()-> std::string {
+                ClientConfig cfg(exec::getConfigObj());
+                if (std::filesystem::is_directory(cfg.more.tempDir))
+                    return std::string(cfg.more.tempDir) | exec::unifiedPaths;
                 else
-                    return (std::filesystem::temp_directory_path().string() + "Nekolc/") | exec::unifiedPaths;
+                    return (std::filesystem::temp_directory_path().string() + "/Nekolc") | exec::unifiedPaths;
             };
+            
             static std::string tempDir = init();
 
             if (!setTempDir.empty() && std::filesystem::is_directory(setTempDir)) {
@@ -103,7 +99,8 @@ namespace neko {
             return Data::version;
         };
         inline static std::string getResVersion() {
-            return exec::getConfigObj().GetValue("more", "resVersion", "");
+            ClientConfig cfg(exec::getConfigObj());
+            return cfg.more.resourceVersion;
         }
 
         constexpr inline static auto getOsName() {
@@ -271,15 +268,15 @@ namespace neko {
         inline static std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
             auto check = [&key](const nlohmann::json &obj) -> std::string {
                 if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
-                    return "Null";
+                    return "Load failed";
                 }
-                return obj.value(key, "Null");
+                return obj.value(key, "Load failed");
             };
 
             auto res = check(langFile);
 
-            if ( res == "Null") {
-                nlog::Warn(FI, LI, "%s : faild to load key : %s for : %s , try to load default file", FN,key.c_str(), langFile.value("language", "Null").c_str());
+            if (res == "Load failed") {
+                nlog::Warn(FI, LI, "%s : faild to load key : %s for : %s , try to load default file", FN, key.c_str(), langFile.value("language", "Null").c_str());
                 return check(loadTranslations("en"));
             }
 

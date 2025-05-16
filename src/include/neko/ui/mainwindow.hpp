@@ -1,5 +1,12 @@
 #pragma once
+
+#include "neko/schema/wmsg.hpp"
+#include "neko/schema/clientconfig.hpp"
+#include "neko/function/info.hpp"
+
+
 #include <string>
+
 
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
@@ -44,9 +51,6 @@
 
 #include <QtGui/QScreen>
 
-#include "clientconfig.hpp"
-#include "msgtypes.hpp"
-#include "info.hpp"
 
 namespace ui {
 

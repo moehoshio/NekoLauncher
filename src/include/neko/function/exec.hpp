@@ -30,15 +30,16 @@ SOFTWARE.
 
 #pragma once
 
+// NekoLc Project Customization
+#include "library/SimpleIni/SimpleIni.h"
+#include "library/threadpool.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <random>
 #include <regex>
 #include <string>
-// NekoLc Project Customization
-#include "SimpleIni/SimpleIni.h"
-#include "threadpool.hpp"
 
 // hash
 #include <fstream>

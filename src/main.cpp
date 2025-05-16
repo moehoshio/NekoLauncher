@@ -1,7 +1,15 @@
-#include "autoinit.hpp"
-#include "core.hpp"
-#include "logviewer.hpp"
-#include "mainwindow.hpp"
+
+#include "neko/core/core.hpp"
+
+#include "neko/log/nlog.hpp"
+#include "neko/log/logviewer.hpp"
+
+#include "neko/function/autoinit.hpp"
+
+#include "neko/minecraft/installMinecraft.hpp"
+
+#include "neko/ui/mainwindow.hpp"
+
 #include <iostream>
 
 #include <QtWidgets/QApplication>
@@ -56,7 +64,7 @@ int main(int argc, char *argv[]) {
             it.get();
 
             // If the update is complete or there are no updates, show the homepage
-            if (neko::autoUpdate(hintFunc, loadFunc, setLoadInfo) == neko::State::over) {
+            if (neko::autoUpdate(hintFunc, loadFunc, setLoadInfo) == neko::State::Completed) {
                 emit w.showPageD(ui::MainWindow::pageState::index);
             } else {
                 QApplication::quit();
@@ -68,7 +76,7 @@ int main(int argc, char *argv[]) {
 
         // If execution reaches this point, it means the program has exited.
         if (config.dev.enable && config.dev.debug) {
-            LogViewer logViewer(QString::fromStdString(neko::info::workPath() + "/logs/new-debug.log"));
+            ui::LogViewer logViewer(QString::fromStdString(neko::info::workPath() + "/logs/new-debug.log"));
             logViewer.setWindowTitle("NekoLauncher Developer Debug Log");
             logViewer.show();
             app.exec();

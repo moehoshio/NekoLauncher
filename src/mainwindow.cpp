@@ -1,11 +1,17 @@
-#include "mainwindow.hpp"
+#include "neko/ui/mainwindow.hpp"
+// #include "mainwindow.hpp"
 
-#include "autoinit.hpp"
-#include "core.hpp"
-#include "exec.hpp"
-#include "info.hpp"
+#include "neko/core/core.hpp"
+#include "neko/core/launcher.hpp"
 
-#include "nlohmann/json.hpp"
+#include "neko/minecraft/account.hpp"
+
+#include "neko/function/autoinit.hpp"
+#include "neko/function/exec.hpp"
+#include "neko/function/info.hpp"
+
+
+#include "library/nlohmann/json.hpp"
 
 #include <filesystem>
 namespace ui {
@@ -746,31 +752,20 @@ namespace ui {
             // this->showLoad({ui::loadMsg::Type::OnlyRaw,"launching.."});
 
             int id = setting->page2->lcWindowSetBox->currentIndex();
-            neko::launcherOpt opt;
-            switch (id) {
-                case 0:
-                    opt = neko::launcherOpt::keep;
-                    break;
-                case 1:
-                    opt = neko::launcherOpt::endProcess;
-                    break;
-                case 2:
-                    opt = neko::launcherOpt::hideProcessAndOverReShow;
-                    break;
-                default:
-                    opt = neko::launcherOpt::keep;
-                    break;
-            }
+
             auto hintFunc = [=, this](const ui::hintMsg &m) {
                 emit this->showHintD(m);
             };
+            auto onStart = [=, this]() {
+
+            };
+            auto onExit = [=, this](int code) {
+            };
             exec::getThreadObj().enqueue([=, this] {
                 if (id == 2) {
-                    neko::launcher(opt, hintFunc, [=, this](bool check) {
-                        emit this->winShowHideD(check);
-                    });
+                    neko::launcher(hintFunc, onStart, onExit);
                 } else {
-                    neko::launcher(opt, hintFunc);
+                    neko::launcher(hintFunc,onStart, onExit);
                 } 
             });
         });
@@ -796,7 +791,7 @@ namespace ui {
                                   emit this->showHintD(m);
                               });
                               neko::ClientConfig cfg(exec::getConfigObj());
-                              nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.manage.authlibPrefetched));
+                              nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
 
                               if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
                                   std::string url = authlibData["meta"]["links"]["register"];
@@ -807,14 +802,14 @@ namespace ui {
 
                           if (setting->page1->accountLogInOutButton->text() != neko::info::translations(neko::info::lang.general.login).c_str()) {
                               exec::getThreadObj().enqueue([] {
-                                  exec::getConfigObj().SetValue("manage", "accessToken", "");
-                                  exec::getConfigObj().SetValue("manage", "uuid", "");
-                                  exec::getConfigObj().SetValue("manage", "account", "");
-                                  exec::getConfigObj().SetValue("manage", "displayName", "");
+                                  exec::getConfigObj().SetValue("minecraft", "accessToken", "");
+                                  exec::getConfigObj().SetValue("minecraft", "uuid", "");
+                                  exec::getConfigObj().SetValue("minecraft", "account", "");
+                                  exec::getConfigObj().SetValue("minecraft", "displayName", "");
 
                                   auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
                                   nlohmann::json json = {
-                                      {"accessToken", exec::getConfigObj().GetValue("manage", "accessToken", "")}};
+                                      {"accessToken", exec::getConfigObj().GetValue("minecraft", "accessToken", "")}};
                                   auto data = json.dump();
                                   neko::network net;
                                   int code = 0;
@@ -846,7 +841,7 @@ namespace ui {
                                              emit this->loginStatusChangeD(name);
                                          };
                                          exec::getThreadObj().enqueue([=, this] {
-                                             if (neko::authLogin(inData, hintFunc, callBack) == neko::State::over) {
+                                             if (neko::authLogin(inData, hintFunc, callBack) == neko::State::Completed) {
                                                  emit this->hideInputD();
                                              }
                                          });
@@ -1130,8 +1125,8 @@ namespace ui {
                 setting->page2->netProxyEdit->setText(config.net.proxy);
         }
 
-        if (std::filesystem::is_directory(config.more.temp))
-            setting->page2->moreTempEdit->setText(config.more.temp);
+        if (std::filesystem::is_directory(config.more.tempDir))
+            setting->page2->moreTempEdit->setText(config.more.tempDir);
 
         setting->page3->devOptEnable->setChecked(config.dev.enable);
         setting->page3->devOptDebug->setChecked(config.dev.debug);
@@ -1146,8 +1141,8 @@ namespace ui {
             setting->page3->devServerEdit->show();
         }
 
-        if (!std::string(config.manage.account).empty() && !std::string(config.manage.displayName).empty()) {
-            setting->page1->accountLogInOutInfoText->setText(config.manage.displayName);
+        if (!std::string(config.minecraft.account).empty() && !std::string(config.minecraft.displayName).empty()) {
+            setting->page1->accountLogInOutInfoText->setText(config.minecraft.displayName);
             setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.logout).c_str());
         } else {
             setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
@@ -1271,7 +1266,7 @@ namespace ui {
         else
             cfg.net.proxy = "";
         std::string tempText = setting->page2->moreTempEdit->text().toStdString();
-        cfg.more.temp = tempText.c_str();
+        cfg.more.tempDir = tempText.c_str();
         cfg.dev.enable = setting->page3->devOptEnable->isChecked();
         cfg.dev.debug = setting->page3->devOptDebug->isChecked();
         cfg.dev.tls = setting->page3->devOptTls->isChecked();
@@ -1341,4 +1336,4 @@ namespace ui {
 
 } // namespace ui
 
-#include "moc_mainwindow.cpp"
+#include "neko/ui/moc_mainwindow.cpp"
