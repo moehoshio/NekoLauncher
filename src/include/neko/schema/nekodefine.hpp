@@ -28,10 +28,9 @@ constexpr const char *launcherMode = "minecraft";
 constexpr inline const std::string_view build_id = GIT_BUILD_ID;
 #else
 #include "exec.hpp"
-inline const std::string_view build_id = exec::generateUUID(10);
+constexpr auto build_id_array = make_identifier<10>(__TIME__, __DATE__, __FILE__);
+constexpr std::string_view build_id(build_id_array.data(), 10);
 #endif
-
-
 
 
 using uint_64 =  unsigned long long;

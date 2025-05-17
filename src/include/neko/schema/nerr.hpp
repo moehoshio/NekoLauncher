@@ -1,4 +1,5 @@
 #pragma once
+
 #include "neko/schema/nekodefine.hpp"
 
 #include <exception>
