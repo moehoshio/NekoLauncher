@@ -82,9 +82,6 @@ int main(int argc, char *argv[]) {
             app.exec();
         }
 
-        // Clean up and exit
-        exec::getThreadObj().wait_until_nothing_in_flight();
-
         return 0;
 
     } catch (const nerr::Error &e) {
