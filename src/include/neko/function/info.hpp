@@ -264,27 +264,38 @@ namespace neko {
         }
 
         inline static nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langPath = info::workPath() + "/lang/") {
-            std::string fileName = langPath + lang + ".json";
-            std::ifstream i;
-            if (std::filesystem::exists(fileName) && [&i, &fileName] {i.open(fileName); return i.is_open(); }()) {
-                auto j = nlohmann::json::parse(i, nullptr, false);
-                nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<const char *>(i.is_open()), exec::boolTo<const char *>(j.is_discarded()));
-                return j;
+            //cached lang
+            static std::string cachedLang;
+            static std::string cachedLangPath;
+            static nlohmann::json cachedJson;
+
+            if (lang != cachedLang || langPath != cachedLangPath) {
+                std::string fileName = langPath + lang + ".json";
+                std::ifstream i;
+                if (std::filesystem::exists(fileName) && [&i, &fileName] {i.open(fileName); return i.is_open(); }()) {
+                    auto j = nlohmann::json::parse(i, nullptr, false);
+                    nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<const char *>(i.is_open()), exec::boolTo<const char *>(j.is_discarded()));
+                    cachedJson = j;
+                } else {
+                    cachedJson = nlohmann::json::object();
+                }
+                cachedLang = lang;
+                cachedLangPath = langPath;
             }
-            return nlohmann::json::object();
+            return cachedJson;
         }
 
         inline static std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
             auto check = [&key](const nlohmann::json &obj) -> std::string {
                 if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
-                    return "Load failed";
+                    return "translation not found";
                 }
-                return obj.value(key, "Load failed");
+                return obj.value(key, "translation not found");
             };
 
             auto res = check(langFile);
 
-            if (res == "Load failed") {
+            if (res == "translation not found") {
                 nlog::Warn(FI, LI, "%s : faild to load key : %s for : %s , try to load default file", FN, key.c_str(), langFile.value("language", "Null").c_str());
                 return check(loadTranslations("en"));
             }

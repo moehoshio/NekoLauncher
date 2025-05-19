@@ -77,8 +77,8 @@
 
     "network_testtingNetwork": "Testing network connect...",
 
-    "error_ClickToRetry":"Click to retry",
-    "error_ClickToQuit":"Click to quit",
+    "error_clickToRetry":"Click to retry",
+    "error_clickToQuit":"Click to quit",
     "error_jsonParse":"Faild to json parse!",
     "error_tokenJsonParse":"Faild to token json parse!",
     "error_apiMetaParse":"Faild to api mete data parse!",

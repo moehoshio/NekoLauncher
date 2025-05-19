@@ -78,8 +78,8 @@
     "network_testtingNetwork": "测试网络连接...",
 
 
-    "error_ClickToRetry": "點擊重試",
-    "error_ClickToQuit": "點擊退出",
+    "error_clickToRetry": "點擊重試",
+    "error_clickToQuit": "點擊退出",
     "error_jsonParse":"解析json失敗！",
     "error_tokenJsonParse":"解析token json失敗！",
     "error_apiMetaParse":"解析api meta失敗！",
