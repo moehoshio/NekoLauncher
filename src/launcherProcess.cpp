@@ -1,13 +1,13 @@
+#include "neko/log/nlog.hpp"
 #include "neko/core/launcherProcess.hpp"
 #include "neko/schema/nekodefine.hpp"
-#include "neko/log/nlog.hpp"
 
 #include <boost/process.hpp>
 
-#include <string>
-#include <string_view>
 #include <iostream>
 #include <functional>
+#include <string>
+#include <string_view>
 
 namespace neko {
 
@@ -39,6 +39,22 @@ namespace neko {
         } catch (const std::exception &e) {
             nlog::Err(FI, LI, "%s : Launcher error: %s", FN, e.what());
             on_exit(-1);
+        }
+    }
+
+    void launcherNewProcess(const std::string &command) {
+        try {
+#ifdef _WIN32
+            boost::process::child proc(boost::process::search_path("cmd"), "/c", command);
+#else
+            boost::process::child proc("/bin/sh", "-c", command);
+#endif
+            if (!proc.valid()) {
+                throw std::runtime_error("Failed to launch process");
+            }
+            proc.detach();
+        } catch (const std::exception &e) {
+            nlog::Err(FI, LI, "%s : Launcher error: %s", FN, e.what());
         }
     }
 

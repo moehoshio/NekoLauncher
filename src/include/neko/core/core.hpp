@@ -414,7 +414,7 @@ namespace neko {
             if (resState == std::cv_status::timeout) {
                 QApplication::quit();
             }
-            launcherProcess(cmd,[]{},[](int){});
+            launcherNewProcess(cmd);
         }
 
         return State::Completed;
