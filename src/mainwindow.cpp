@@ -1278,7 +1278,7 @@ namespace ui {
 
         neko::configInfoPrint(cfg);
 
-        neko::ClientConfig::save(exec::getConfigObj(), "config.ini", cfg);
+        neko::ClientConfig::save(exec::getConfigObj(), info::getConfigFileName() , cfg);
     }
     bool MainWindow::event(QEvent *event) {
         constexpr qreal border = 11;

@@ -82,7 +82,7 @@ namespace neko {
 
     inline auto autoInit(int argc, char *argv[]) {
 
-        if (exec::getConfigObj().LoadFile("config.ini") < 0)
+        if (exec::getConfigObj().LoadFile(info::getConfigFileName()) < 0)
             oneIof o("loadConfigBad.txt"); // If there is a callback, the user can be notified
 
         ClientConfig cfg(exec::getConfigObj());

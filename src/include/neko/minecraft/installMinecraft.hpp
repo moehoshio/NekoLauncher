@@ -235,7 +235,7 @@ namespace neko {
                     loadFunc({ui::loadMsg::OnlyRaw, info::translations(info::lang.general.installMinecraft)});
                     installMinecraft("./.minecraft", "1.16.5", DownloadSource::Official, hintFunc, loadFunc, setLoadInfo);
                     cfg.more.resourceVersion = "v0.0.1";
-                    cfg.save(exec::getConfigObj(), "config.ini", cfg);
+                    cfg.save(exec::getConfigObj(), info::getConfigFileName(), cfg);
                 } catch (const nerr::Error &e) {
                     hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.installMinecraft) + e.msg, "", 2, [&mtx, &condVar, &stop](bool check) {
                                   if (!check) {

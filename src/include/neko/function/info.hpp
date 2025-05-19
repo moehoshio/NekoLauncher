@@ -16,8 +16,9 @@ namespace neko {
     private:
         struct Data {
 
-            constexpr static const char *version =
-                NekoLcCoreVersionDefine;
+            constexpr static const char *version = NekoLcCoreVersionDefine;
+
+            constexpr static const char *configFileName = "config.ini";
 
             constexpr static const char *osName =
 #if defined(_WIN32)
@@ -101,6 +102,14 @@ namespace neko {
         inline static std::string getResVersion() {
             ClientConfig cfg(exec::getConfigObj());
             return cfg.more.resourceVersion;
+        }
+
+        constexpr inline static auto getConfigFileName() {
+            return Data::configFileName;
+        }
+
+        inline static std::string getConfigFileNameS() {
+            return Data::configFileName;
         }
 
         constexpr inline static auto getOsName() {
