@@ -6,7 +6,7 @@
 
 #include "neko/function/autoinit.hpp"
 
-#include "neko/minecraft/installMinecraft.hpp"
+#include "neko/core/install.hpp"
 
 #include "neko/ui/mainwindow.hpp"
 
