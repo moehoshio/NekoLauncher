@@ -394,7 +394,10 @@ namespace neko {
             }
         }
         if (!data.resVersion.empty()) {
-            exec::getConfigObj().SetValue("more", "resourceVersion", data.resVersion.c_str());
+            ClientConfig cfg(exec::getConfigObj());
+            cfg.more.resourceVersion = data.resVersion.c_str();
+            cfg.save(exec::getConfigObj(), info::getConfigFileName(), cfg);
+            nlog::Info(FI, LI, "%s : save resource version : %s", FN, data.resVersion.c_str());
         }
 
         if (needExecUpdate) {
