@@ -1,28 +1,17 @@
 # Server
 
-The "res" version and the "core" version are separate. In most cases, we use JSON for data interaction.
+## Definition
 
-standard error message:
+1. "coreVersion": This represents the version of NekoLc.
+2. "resourceVersion": This represents the version of any resources managed, maintained, or upgraded by NekoLc.
 
-```json
-{
-    "error":{
-        "type":"",
-        "message":"",//Note Messages return translations corresponding to the preferred language.
-        "details":[
-        {
-            "field": "username",
-            "issue": "Username is required."
-        },
-        {
-            "field": "email",
-            "issue": "Email format is invalid."
-        }
-        //...
-        ]
-    }
-}
-```
+## Protocol
+
+1. In most cases, we use JSON for data interaction.
+2. The client and server need the header: "Content-Type: application/json"
+
+
+## Api
 
 1. testing
     - `/v1/testing/ping`
@@ -30,19 +19,31 @@ standard error message:
         - Custom return content, typically HTTP code 200 indicates success
 2. api
 
-    - `/v1/api/maintenance?os=osName&lang=en` : get
+    - `/v1/api/maintenance` : post
+        - post:
+        
+        ```json
+        {
+            "queryMaintenance":{
+                "os" : "string",
+                "language" : "string",
+            }
+        }
+        ```
 
-        - os : windows, osx, linux or custom
-        - lang : preferred language
-        - Returns maintenance information
+        - os: windows, osx, linux or custom
+        - lang: preferred language
+        - Returns maintenance information :
 
         ```json
         {
-            "enable": true,
-            "msg": "",
-            "poster": "url",
-            "time": "",
-            "link": "url"
+            "maintenanceInformation": {
+                "enable": true,
+                "message": "string",
+                "poster": "url",
+                "time": "string",
+                "link": "url"
+            }
         }
         ```
 
@@ -52,10 +53,12 @@ standard error message:
 
         ```json
         {
-            "core":"v0.0.1",
-            "res":"v0.0.1",
-            "os":"osx",// windows , osx , linux or custom
-            "lang":"en"
+            "checkUpdate" : {
+                "coreVersion" : "string",
+                "resourceVersion" : "string",
+                "os" : "string",
+                "language" : "string"
+            }
         }
         ```
 
@@ -66,41 +69,44 @@ standard error message:
 
         ```json
         {
-            "title":"",
-            "msg":"",
-            "poster":"url",
-            "time":"",
-            "resVersion":"",//If the version has been updated
-            "update":[
-                {
-                    "url":"url1",
-                    "name":"name1",
-                    "hash":"hash1",
-                    "meta":{
-                        "hashAlgorithm": "sha256",// md5 , sha1 ,sha256 ,sha512
-                        "multis":false,// use multis download?
-                        "temp":false,//in temp dir? Enabling this option will pass the file name to the update program and copy it to the root folder. This usually indicates a core update.
-                        "randName":false,//use rand name? Using this option allows the "name" key value to be an empty string.
-                        "absoluteUrl":false// if not absolute url , an use current host.
+            "updates" : {
+                "title": "string",
+                "message": "string",
+                "poster": "url",
+                "time": "string",
+                "resourceVersion": "string",//If the version has been updated
+                "mandatory": true,
+                "download":[
+                    {
+                        "url":"url",
+                        "name":"string",
+                        "hash":"string",
+                        "meta":{
+                            "hashAlgorithm": "sha256",// md5 , sha1 ,sha256 ,sha512
+                            "multis":false,// use multis thread download?
+                            "temp":false,//in temp dir? Enabling this option will pass the file name to the update program and copy it to the root folder. This usually indicates a core update.
+                            "randName":false,//use rand name? Using this option allows the "name" key value to be an empty string.
+                            "absoluteUrl":false// if not absolute url , an use current host.
+                        }
+                    },
+                    {
+                        "url":"",
+                        "name":"",
+                        "hash":"",
+                        "meta":{
+                            "hashAlgorithm": "sha256",
+                            "multis":true,
+                            "temp":false,
+                            "randName":true,
+                            "absoluteUrl":true
+                        }
                     }
-                },
-                {
-                    "url":"url2",
-                    "name":"",
-                    "hash":"hash2",
-                    "meta":{
-                        "hashAlgorithm": "sha256",
-                        "multis":true,
-                        "temp":false,
-                        "randName":true,
-                        "absoluteUrl":true
-                    }
-                }
-            ],
-            "mandatory": true
+                ]
+            }
         }
         ```
 
+        - resourceVersion: If this update does not involve a resource version, this key can be absent or an empty string.
         - If the main program (i.e., Nekolc core, including libraries) needs to be updated, a separate temporary update program will be downloaded. The main program, update program, and main libraries should be included in the URL. The temporary program is then run, and the main program exits.
         - The temporary update program will update the main program and files by replacing them with the already downloaded versions, and then it will launch the main program.
         - If only resources need to be updated, the update is completed as soon as the download finishes.
@@ -111,18 +117,25 @@ standard error message:
 
         ```json
         {
-            "core": "v0.0.1",
-            "res": "v0.0.1",
-            "os": "osx",
-            "time": "timestamp",
-            "log": "feedback content"
+            "feedbacklog" : {
+                "coreVersion": "string",
+                "resourceVersion": "string",
+                "os": "string",
+                "timestamp": int,
+                "log": "string"
+            }
         }
         ```
 
         - Return 204 for success, 400 for client error, 500 for server error.
-        - For example, if either the core or res version is a non-existent version, return a client error.
+        - For example, if either the core or resource version is a non-existent version, return a client error.
+
+### Implementation Example
 
 The server can be implemented in any language. Below is an example of the above API implemented using PHP:
+
+Note: This should not be used in production environments.
+
 - `/v1/api/maintenance` :
 
     ```php
