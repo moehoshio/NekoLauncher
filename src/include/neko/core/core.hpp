@@ -99,8 +99,7 @@ namespace neko {
         return T();
     }
 
-    // over : not maintenance, undone : in maintenance
-    inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
+    inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int, const char *)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
 
         loadFunc({ui::loadMsg::Type::OnlyRaw, info::translations(info::lang.loading.maintenanceInfoReq)});
@@ -115,10 +114,21 @@ namespace neko {
             std::unique_lock<std::mutex> lock(mtx);
 
             network net;
-            auto url = networkBase::buildUrl(networkBase::Api::mainenance + std::string("?os=") + info::getOsNameS() + "&lang=" + info::language());
             int code = 0;
-            decltype(net)::Args args{url.c_str(), nullptr, &code};
-            auto temp = net.get(networkBase::Opt::getContent, args);
+            nlohmann::json dataJson = {
+                {   "queryMaintenance",{
+                        {"os", info::getOsName()},
+                        {"language", info::language()}
+                    }
+                }
+            };
+            auto data = dataJson.dump();
+            auto id = std::string(FN) + "-" + exec::generateRandomString(6);
+            decltype(net)::Args args{networkBase::Api::mainenance, nullptr, &code};
+            args.data = data.c_str();
+            args.id = id.c_str();
+            args.header = "Content-Type: application/json";
+            auto temp = net.get(networkBase::Opt::postText, args);
 
             if (code == 200) {
                 res = temp | exec::move;
@@ -156,8 +166,8 @@ namespace neko {
         nlog::Info(FI, LI, "%s : res : %s", FN, res.c_str());
         setLoadInfoFunc(0, info::translations(info::lang.loading.maintenanceInfoParse).c_str());
 
-        auto jsonData = nlohmann::json::parse(res, nullptr, false);
-        if (jsonData.is_discarded()) {
+        auto rawJsonData = nlohmann::json::parse(res, nullptr, false);
+        if (rawJsonData.is_discarded() && !rawJsonData.contains("maintenanceInformation")) {
             nlog::Info(FI, LI, "%s : failed to maintenance parse!", FN);
             hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.maintenanceInfoParse), "", 1, [](bool) {
                           nlog::Err(FI, LI, "%s : click , quit programs", FN);
@@ -166,12 +176,14 @@ namespace neko {
             return State::RetryRequired;
         }
 
+        auto jsonData = rawJsonData["maintenanceInformation"];
+        
         bool enable = jsonData["enable"].get<bool>();
         nlog::Info(FI, LI, "%s : maintenance enable : %s", FN, exec::boolTo<const char *>(enable));
         if (!enable)
             return State::Completed;
 
-        std::string msg = jsonData["msg"].get<std::string>(),
+        std::string msg = jsonData["message"].get<std::string>(),
                     poster = jsonData["poster"].get<std::string>(),
                     time = jsonData["time"].get<std::string>(),
                     link = jsonData["link"].get<std::string>();
@@ -187,22 +199,28 @@ namespace neko {
         hintFunc(hmsg);
         return State::ActionNeeded;
     }
-    // over : none update , undone : need update
+
     inline State checkUpdate(std::string &res) {
         nlog::autoLog log{FI, LI, FN};
         network net;
         auto url = net.buildUrl(networkBase::Api::checkUpdates);
         nlohmann::json dataJson = {
-            {"core", info::getVersion()},
-            {"res", info::getResVersion()},
-            {"os", info::getOsName()},
-            {"lang", info::language()}};
+            {"checkUpdate", 
+                {
+                    {"coreVersion", info::getVersion()},
+                    {"resourceVersion", info::getResVersion()},
+                    {"os", info::getOsName()},
+                    {"language", info::language()}
+                }
+            }
+        };
         auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
         int code = 0;
         decltype(net)::Args args{url.c_str(), nullptr, &code};
         args.data = data.c_str();
         args.id = id.c_str();
+        args.header = "Content-Type: application/json";
         res = net.get(networkBase::Opt::postText, args);
         if (code == 204)
             return State::Completed;
@@ -219,21 +237,22 @@ namespace neko {
         nlog::autoLog log{FI, LI, FN};
 
         nlog::Info(FI, LI, "%s : res : %s ", FN, res.c_str());
-        auto jsonData = nlohmann::json::parse(res, nullptr, false);
-        if (jsonData.is_discarded()) {
+        auto rawJsonData = nlohmann::json::parse(res, nullptr, false);
+        if (rawJsonData.is_discarded() && !rawJsonData.contains("updateInformation")) {
             nlog::Err(FI, LI, "%s : failed to update parse!", FN);
             return {};
         }
+        auto jsonData = rawJsonData["updateInformation"];
         UpdateInfo info{
             jsonData["title"].get<std::string>(),
-            jsonData["msg"].get<std::string>(),
+            jsonData["message"].get<std::string>(),
             jsonData["poster"].get<std::string>(),
             jsonData["time"].get<std::string>(),
-            jsonData["resVersion"].get<std::string>()};
+            jsonData["resourceVersion"].get<std::string>()};
 
         info.mandatory = jsonData["mandatory"].get<bool>();
 
-        for (const auto &it : jsonData["update"]) {
+        for (const auto &it : jsonData["download"]) {
             info.urls.push_back({it["url"].get<std::string>(),
                                  it["name"].get<std::string>(),
                                  it["hash"].get<std::string>(),
@@ -428,12 +447,17 @@ namespace neko {
         network net;
         auto url = net.buildUrl(networkBase::Api::feedback);
         nlohmann::json dataJson = {
-            {"core", info::getVersion()},
-            {"res", info::getResVersion()},
-            {"os", info::getOsName()},
-            {"lang", info::language()},
-            {"time", exec::getTimestamp()},
-            {"log", feedback}};
+            {
+                "feedbacklog",{
+                    {"coreVersion", info::getVersion()},
+                    {"resourceVersion", info::getResVersion()},
+                    {"os", info::getOsName()},
+                    {"language", info::language()},
+                    {"timestamp", exec::getTimestamp()},
+                    {"content", feedback}
+                }
+            }
+            };
         auto data = dataJson.dump();
         auto id = std::string(FN) + "-" + exec::generateRandomString(6);
         int code = 0;

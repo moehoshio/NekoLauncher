@@ -69,7 +69,7 @@
 
         ```json
         {
-            "updates" : {
+            "updateInformation" : {
                 "title": "string",
                 "message": "string",
                 "poster": "url",
@@ -121,8 +121,8 @@
                 "coreVersion": "string",
                 "resourceVersion": "string",
                 "os": "string",
-                "timestamp": int,
-                "log": "string"
+                "timestamp": "string",
+                "content": "string"
             }
         }
         ```
