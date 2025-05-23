@@ -122,9 +122,10 @@ namespace neko {
                     }
                 }
             };
+            auto url = net.buildUrl(networkBase::Api::mainenance);
             auto data = dataJson.dump();
             auto id = std::string(FN) + "-" + exec::generateRandomString(6);
-            decltype(net)::Args args{networkBase::Api::mainenance, nullptr, &code};
+            decltype(net)::Args args{url.c_str(), nullptr, &code};
             args.data = data.c_str();
             args.id = id.c_str();
             args.header = "Content-Type: application/json";

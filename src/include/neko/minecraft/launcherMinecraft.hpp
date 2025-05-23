@@ -267,7 +267,6 @@ namespace neko {
                 int code = 0;
                 decltype(net)::Args args{
                     single.url.c_str(), nullptr, &code};
-                args.writeCallback = networkBase::WriteCallbackFile;
                 net.Do(networkBase::Opt::downloadFile, args);
                 if (code != 200) {
                     hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftPatchDownload), "", 1});
