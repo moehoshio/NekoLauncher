@@ -266,7 +266,7 @@ namespace neko {
                 network net;
                 int code = 0;
                 decltype(net)::Args args{
-                    single.url.c_str(), nullptr, &code};
+                    single.url.c_str(), single.path.c_str(), &code};
                 net.Do(networkBase::Opt::downloadFile, args);
                 if (code != 200) {
                     hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftPatchDownload), "", 1});
@@ -444,8 +444,7 @@ namespace neko {
         if constexpr (info::getOsName() == std::string_view("windows")) {
             std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
             nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
-            std::string cmd = "powershell " + command;
-            launcherProcess(cmd.c_str(), onStart, onExit);
+            launcherProcess(cmd, onStart, onExit);
         } else {
             std::filesystem::current_path("." + minecraftDir);
             std::string command = "\"" + javaPath + "\"" + plusArgs(jvmOptimizeArgs) + plusArgs(jvmArgsVec) + plusArgs(authlibInjector) + plusArgs({mainClass}) + plusArgs(gameArgsVec);

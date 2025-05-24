@@ -757,9 +757,42 @@ namespace ui {
                 emit this->showHintD(m);
             };
             auto onStart = [=, this]() {
+                switch (id)
+                {
+                case 1:
+                    QApplication::quit();
+                    break;
+                case 2:
+                    emit this->winShowHide(false);
+                    break;
+                case 0:
+                default:
+                    break;
+                }
 
             };
             auto onExit = [=, this](int code) {
+                switch (id)
+                {
+                    case 1:
+                        QApplication::quit();
+                        break;
+                    case 2:
+                        emit this->winShowHide(true);
+                        break;
+                    case 0:
+                    default:
+                        break;
+                }
+                switch (code)
+                {
+                case 0:
+                    break;
+                case -1:
+                default:
+                    nlog::Err(FI,LI,"%s: Launcher exit with code: %d", FN,code);
+                    break;
+                }
             };
             exec::getThreadObj().enqueue([=, this] {
                 if (id == 2) {
@@ -1080,6 +1113,8 @@ namespace ui {
             bgWidget->setPixmap(config.main.bg);
             setting->page2->bgSelectRadioImage->setChecked(true);
         }
+
+        setting->page2->lcWindowSetBox->setCurrentIndex(config.main.launcherMode);
 
         setting->page2->bgInputLineEdit->setText(config.main.bg);
         if (config.style.blurValue > 22)
