@@ -10,7 +10,6 @@
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
 
-
 #include "library/nlohmann/json.hpp"
 
 #include <filesystem>
@@ -743,13 +742,13 @@ namespace ui {
             // Maybe we should switch the status to loading after the user clicks start?
 
             if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str()) {
-                showHint({neko::info::translations(neko::info::lang.title.notLogin), neko::info::translations(neko::info::lang.general.needLogin), "", 1, [=,this](bool){
-                    this->showPage(ui::MainWindow::pageState::setting);
-                    this->setting->tabWidget->setCurrentIndex(0);
-                }});
+                showHint({neko::info::translations(neko::info::lang.title.notLogin), neko::info::translations(neko::info::lang.general.needLogin), "", 1, [=, this](bool) {
+                              this->showPage(ui::MainWindow::pageState::setting);
+                              this->setting->tabWidget->setCurrentIndex(0);
+                          }});
                 return;
             }
-            // this->showLoad({ui::loadMsg::Type::OnlyRaw,"launching.."});
+            this->showLoad({ui::loadMsg::Type::OnlyRaw, "launching.."});
 
             int id = setting->page2->lcWindowSetBox->currentIndex();
 
@@ -757,23 +756,21 @@ namespace ui {
                 emit this->showHintD(m);
             };
             auto onStart = [=, this]() {
-                switch (id)
-                {
-                case 1:
-                    QApplication::quit();
-                    break;
-                case 2:
-                    emit this->winShowHide(false);
-                    break;
-                case 0:
-                default:
-                    break;
+                switch (id) {
+                    case 1:
+                        QApplication::quit();
+                        break;
+                    case 2:
+                        emit this->winShowHide(false);
+                        break;
+                    case 0:
+                    default:
+                        break;
                 }
-
+                emit this->showPageD(ui::MainWindow::pageState::index);
             };
             auto onExit = [=, this](int code) {
-                switch (id)
-                {
+                switch (id) {
                     case 1:
                         QApplication::quit();
                         break;
@@ -784,22 +781,21 @@ namespace ui {
                     default:
                         break;
                 }
-                switch (code)
-                {
-                case 0:
-                    break;
-                case -1:
-                default:
-                    nlog::Err(FI,LI,"%s: Launcher exit with code: %d", FN,code);
-                    break;
+                switch (code) {
+                    case 0:
+                        break;
+                    case -1:
+                    default:
+                        nlog::Err(FI, LI, "%s: Launcher exit with code: %d", FN, code);
+                        break;
                 }
             };
             exec::getThreadObj().enqueue([=, this] {
                 if (id == 2) {
                     neko::launcher(hintFunc, onStart, onExit);
                 } else {
-                    neko::launcher(hintFunc,onStart, onExit);
-                } 
+                    neko::launcher(hintFunc, onStart, onExit);
+                }
             });
         });
         connect(index->menuButton, &QPushButton::clicked, [=, this]() {
@@ -814,71 +810,95 @@ namespace ui {
             updatePage(state, oldState);
         });
         connect(setting->page1->accountLogInOutButton, &QPushButton::clicked, [=, this] {
-            showHint({neko::info::translations(neko::info::lang.title.loginOrRegister),
-                      neko::info::translations(neko::info::lang.general.loginOrRegister),
-                      "",
-                      2,
-                      [=, this](bool checkOpt1) {
+            auto logoutFunc = [=, this]() {
+                exec::getThreadObj().enqueue([] {
+                    exec::getConfigObj().SetValue("minecraft", "accessToken", "");
+                    exec::getConfigObj().SetValue("minecraft", "uuid", "");
+                    exec::getConfigObj().SetValue("minecraft", "account", "");
+                    exec::getConfigObj().SetValue("minecraft", "displayName", "");
+
+                    auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
+                    nlohmann::json json = {
+                        {"accessToken", exec::getConfigObj().GetValue("minecraft", "accessToken", "")}};
+                    auto data = json.dump();
+                    neko::network net;
+                    int code = 0;
+                    decltype(net)::Args args{url.c_str(), nullptr, &code};
+                    args.data = data.c_str();
+                    args.header = "Content-Type: application/json";
+                    net.Do(neko::networkBase::Opt::postText, args);
+                });
+                setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
+                setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
+            };
+
+            // logout
+            if (setting->page1->accountLogInOutButton->text() != neko::info::translations(neko::info::lang.general.login).c_str()) {
+                showHint({
+                    neko::info::translations(neko::info::lang.title.logoutConfirm),
+                    neko::info::translations(neko::info::lang.general.logoutConfirm),
+                    "",
+                    2,
+                    [=,this](bool checkOpt1) {
+                        if (!checkOpt1) {
+                            return;
+                        }
+                        logoutFunc();
+                    }
+                });
+                return;
+            }
+
+            auto registerFunc = [=, this]() {
+                neko::launcherMinecraftAuthlibAndPrefetchedCheck([=, this](const ui::hintMsg &m) {
+                    emit this->showHintD(m);
+                });
+                neko::ClientConfig cfg(exec::getConfigObj());
+                nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
+
+                if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
+                    std::string url = authlibData["meta"]["links"]["register"];
+                    QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
+                }
+            };
+
+            auto loginFunc = [=, this]() {
+                showInput({neko::info::translations(neko::info::lang.title.inputLogin),
+                           "",
+                           "",
+                           {neko::info::translations(neko::info::lang.general.username), neko::info::translations(neko::info::lang.general.password)},
+                           [=, this](bool check) {
+                               if (!check) {
+                                   hideInput();
+                                   return;
+                               }
+
+                               auto inData = getInput();
+                               if (inData.size() != 2) {
+                                   showHint({neko::info::translations(neko::info::lang.title.inputNotEnoughParameters), neko::info::translations(neko::info::lang.general.notEnoughParameters), "", 1});
+                                   return;
+                               }
+                               auto hintFunc = [=, this](const ui::hintMsg &m) {
+                                   emit this->showHintD(m);
+                               };
+                               auto callBack = [=, this](const std::string &name) {
+                                   emit this->loginStatusChangeD(name);
+                               };
+                               exec::getThreadObj().enqueue([=, this] {
+                                   if (neko::authLogin(inData, hintFunc, callBack) == neko::State::Completed) {
+                                       emit this->hideInputD();
+                                   }
+                               });
+                           }});
+            };
+
+            // login
+            showHint({neko::info::translations(neko::info::lang.title.loginOrRegister), neko::info::translations(neko::info::lang.general.loginOrRegister), "", 2, [=, this](bool checkOpt1) {
                           if (!checkOpt1) {
-                              neko::launcherMinecraftAuthlibAndPrefetchedCheck([=, this](const ui::hintMsg &m) {
-                                  emit this->showHintD(m);
-                              });
-                              neko::ClientConfig cfg(exec::getConfigObj());
-                              nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
-
-                              if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
-                                  std::string url = authlibData["meta"]["links"]["register"];
-                                  QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
-                              }
+                              registerFunc();
                               return;
                           }
-
-                          if (setting->page1->accountLogInOutButton->text() != neko::info::translations(neko::info::lang.general.login).c_str()) {
-                              exec::getThreadObj().enqueue([] {
-                                  exec::getConfigObj().SetValue("minecraft", "accessToken", "");
-                                  exec::getConfigObj().SetValue("minecraft", "uuid", "");
-                                  exec::getConfigObj().SetValue("minecraft", "account", "");
-                                  exec::getConfigObj().SetValue("minecraft", "displayName", "");
-
-                                  auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
-                                  nlohmann::json json = {
-                                      {"accessToken", exec::getConfigObj().GetValue("minecraft", "accessToken", "")}};
-                                  auto data = json.dump();
-                                  neko::network net;
-                                  int code = 0;
-                                  decltype(net)::Args args{url.c_str(), nullptr, &code};
-                                  args.data = data.c_str();
-                                  args.header = "Content-Type: application/json";
-                                  net.Do(neko::networkBase::Opt::postText, args);
-                              });
-                              setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
-                              setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
-                              return;
-                          }
-
-                          showInput({neko::info::translations(neko::info::lang.title.inputLogin), "", "", {neko::info::translations(neko::info::lang.general.username), neko::info::translations(neko::info::lang.general.password)}, [=, this](bool check) {
-                                         if (!check) {
-                                             hideInput();
-                                             return;
-                                         }
-
-                                         auto inData = getInput();
-                                         if (inData.size() != 2) {
-                                             showHint({neko::info::translations(neko::info::lang.title.inputNotEnoughParameters), neko::info::translations(neko::info::lang.general.notEnoughParameters), "", 1});
-                                             return;
-                                         }
-                                         auto hintFunc = [=, this](const ui::hintMsg &m) {
-                                             emit this->showHintD(m);
-                                         };
-                                         auto callBack = [=, this](const std::string &name) {
-                                             emit this->loginStatusChangeD(name);
-                                         };
-                                         exec::getThreadObj().enqueue([=, this] {
-                                             if (neko::authLogin(inData, hintFunc, callBack) == neko::State::Completed) {
-                                                 emit this->hideInputD();
-                                             }
-                                         });
-                                     }});
+                          loginFunc();
                       }});
         });
 
@@ -1313,7 +1333,7 @@ namespace ui {
 
         neko::configInfoPrint(cfg);
 
-        neko::ClientConfig::save(exec::getConfigObj(), neko::info::getConfigFileName() , cfg);
+        neko::ClientConfig::save(exec::getConfigObj(), neko::info::getConfigFileName(), cfg);
     }
     bool MainWindow::event(QEvent *event) {
         constexpr qreal border = 11;

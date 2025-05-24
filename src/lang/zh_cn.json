@@ -10,6 +10,7 @@
     "title_inputLogin":"登录",
     "title_inputNotEnoughParameters":"参数不够",
     "title_loginOrRegister":"您有账号吗?",
+    "title_logoutConfirm":"登出确认",
 
     "general_general":"一般",
     "general_menu":"菜单",
@@ -61,6 +62,7 @@
     "general_notEnoughParameters":"请填写所有项目",
     "general_incompleteApplied":"更改在重启后才能完全套用。",
     "general_loginOrRegister":"OK: 登入. \nCancel: 註冊",
+    "general_logoutConfirm": "登出确认",
     "general_installMinecraft": "Minecraft installing...",
 
     

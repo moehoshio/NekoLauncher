@@ -179,6 +179,7 @@ namespace neko {
                     notEnoughParameters = "general_notEnoughParameters",
                     incompleteApplied = "general_incompleteApplied",
                     loginOrRegister = "general_loginOrRegister",
+                    logoutConfirm = "general_logoutConfirm",
                     installMinecraft = "general_installMinecraft";
             };
             struct Title {
@@ -191,7 +192,9 @@ namespace neko {
                     notLogin = "title_notLogin",
                     inputLogin = "title_inputLogin",
                     inputNotEnoughParameters = "title_inputNotEnoughParameters",
-                    loginOrRegister = "title_loginOrRegister";
+                    loginOrRegister = "title_loginOrRegister",
+                    logoutConfirm = "title_logoutConfirm"
+                    ;
             };
 
             struct Loading {

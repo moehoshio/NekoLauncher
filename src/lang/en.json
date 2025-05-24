@@ -10,6 +10,7 @@
     "title_inputLogin":"Login",
     "title_inputNotEnoughParameters":"Not enough parameters",
     "title_loginOrRegister":"Do you have an account?",
+    "title_logoutConfirm":"Logout confirmation",
 
     "general_general":"general",
     "general_menu":"MENU",
@@ -61,6 +62,7 @@
     "general_notEnoughParameters":"Please fill in all the fields",
     "general_incompleteApplied":"Changes will be applied after restarting.",
     "general_loginOrRegister":"OK: Log in. \nCancel: Register",
+    "general_logoutConfirm": "Are you sure you want to log out?",
     "general_installMinecraft": "Minecraft installing...",
 
     

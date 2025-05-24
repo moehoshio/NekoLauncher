@@ -444,7 +444,7 @@ namespace neko {
         if constexpr (info::getOsName() == std::string_view("windows")) {
             std::string command = "Set-Location -Path " + psPlusArgs({gameDir}) + "\n& " + psPlusArgs({javaPath}) + psPlusArgs(jvmOptimizeArgs) + psPlusArgs(jvmArgsVec) + psPlusArgs(authlibInjector) + psPlusArgs({mainClass}) + psPlusArgs(gameArgsVec);
             nlog::Info(FI, LI, "%s : command len : %zu , command : %s", FN, command.length(), command.c_str());
-            launcherProcess(cmd, onStart, onExit);
+            launcherProcess(command, onStart, onExit);
         } else {
             std::filesystem::current_path("." + minecraftDir);
             std::string command = "\"" + javaPath + "\"" + plusArgs(jvmOptimizeArgs) + plusArgs(jvmArgsVec) + plusArgs(authlibInjector) + plusArgs({mainClass}) + plusArgs(gameArgsVec);
