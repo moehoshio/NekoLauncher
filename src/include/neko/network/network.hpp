@@ -284,7 +284,12 @@ namespace neko {
                 doErr(FI, LI, std::string(std::string("Failed to initialize curl. id : ") + std::string((args.id == nullptr) ? "" : args.id)).c_str(), FN, args.code, -1);
                 return false;
             }
-            curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"); // https://curl.se/ca/cacert.pem
+            std::string caPath = info::workPath() + "/cacert.pem"; // https://curl.se/ca/cacert.pem
+            if (!std::filesystem::exists(caPath)) { // Ensure the cacert.pem file is in the working directory
+                doErr(FI, LI, std::string(std::string("The cacert.pem file does not exist at: ") + caPath).c_str(), FN, args.code, -1);
+                return false;
+            }
+            curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str()); 
 
             if (auto sysProxy = getSysProxy<const char *>();
                 args.config.proxy == "true" && exec::isProxyAddress(sysProxy))
