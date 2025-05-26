@@ -2,16 +2,24 @@ cmake_minimum_required(VERSION 3.20)
 project(NekoLc)
 
 list(APPEND SRCFILES
+    
+    # To ensure that qt moc can locate this file
+    src/include/neko/log/logviewer.hpp 
+    src/include/neko/ui/mainwindow.hpp
+
     src/mainwindow.cpp    
+    src/launcherProcess.cpp
     src/loguru.cpp
-    src/core.cpp
     src/info.cpp
-    src/include/logviewer.hpp # To ensure that qt moc can locate this file
     src/main.cpp   
+
 )
 
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
+    ${CMAKE_SOURCE_DIR}/src/include/library
+    C:/Qt/6.6.1/msvc2019_64/include
+    C:/dev/vcpkg/installed/x64-windows/include
 )
 
 # package and qt path
@@ -24,11 +32,10 @@ set(Qt6 "C:/Qt/qt6/msvc2019_64/")
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_AUTOMOC ON)
 
+find_package(boost_process REQUIRED CONFIG)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-
-add_executable(NekoLc ${SRCFILES})
 
 execute_process(
     COMMAND git rev-parse --short HEAD
@@ -36,6 +43,8 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 add_definitions(-DGIT_BUILD_ID="${GIT_COMMIT_HASH}")
+add_executable(NekoLc ${SRCFILES})
+
 
 target_include_directories(NekoLc PRIVATE ${INCLUDE_DIRS})
 target_compile_features(NekoLc PRIVATE cxx_std_20)
@@ -48,35 +57,14 @@ Qt6::Core Qt6::Widgets Qt6::Gui
 OpenSSL::SSL OpenSSL::Crypto
 # libcurl
 CURL::libcurl
+# boost process
+Boost::process
 )
-
-
-function(copy_dlls TARGET_NAME DLL_LIST)
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        foreach(DLL ${DLL_LIST})
-            add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${LIBRARY_DIRS}/bin/${DLL}"
-                $<TARGET_FILE_DIR:${TARGET_NAME}>)
-        endforeach()
-    elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        foreach(DLL ${DLL_LIST})
-            add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${LIBRARY_DIRS}/debug/bin/${DLL}"
-                $<TARGET_FILE_DIR:${TARGET_NAME}>)
-        endforeach()
-    endif()
-endfunction()
-
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
         set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
         target_sources(NekoLc PRIVATE resource/win/icon.rc)
-        set(DLL_LIST "libcrypto-3-x64.dll" "libssl-3-x64.dll" "zlib1.dll" "libcurl.dll")
-    else()
-        set(DLL_LIST "libcrypto-3-x64.dll" "libssl-3-x64.dll" "zlibd1.dll" "libcurl-d.dll")
     endif()
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "MacOS")
@@ -86,6 +74,3 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "MacOS")
     )
 
 endif() # os
-
-
-copy_dlls(NekoLc "${DLL_LIST}")
