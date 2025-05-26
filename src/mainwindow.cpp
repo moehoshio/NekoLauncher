@@ -921,7 +921,7 @@ namespace ui {
         });
         connect(
             setting->page2->moreTempEdit, &QLineEdit::editingFinished, [=, this]() {
-                neko::info::temp(setting->page2->moreTempEdit->text().toStdString().c_str());
+                neko::info::tempDir(setting->page2->moreTempEdit->text().toStdString().c_str());
             });
         connect(
             setting->page2->moreTempTool, &QPushButton::clicked, [=, this]() {

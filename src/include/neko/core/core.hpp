@@ -83,7 +83,7 @@ namespace neko {
     inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
         if (!url.empty()) {
             network net;
-            auto fileName = info::temp() + "/update_" + exec::generateRandomString(12) + ".png";
+            auto fileName = info::tempDir() + "/update_" + exec::generateRandomString(12) + ".png";
             int code = 0;
 
             decltype(net)::Args args{url.c_str(), fileName.c_str(), &code};
@@ -156,8 +156,9 @@ namespace neko {
 
             if (i == 4)
                 return State::ActionNeeded;
-
-            condVar.wait(lock);
+            
+            // Wait for the user to click the button or timeout after 6 seconds
+            condVar.wait_for(lock, std::chrono::seconds(6));
 
             if (stop) {
                 return State::ActionNeeded;
@@ -326,7 +327,7 @@ namespace neko {
                 it.name = exec::generateRandomString(16);
 
             if (it.temp)
-                it.name = info::temp() + it.name;
+                it.name = info::tempDir() + it.name;
 
             if (!it.absoluteUrl)
                 it.url = networkBase::buildUrl(it.url);

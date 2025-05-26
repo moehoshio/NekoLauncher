@@ -703,7 +703,7 @@ namespace neko {
                     }
                 }
                 std::string range = start + "-" + end;
-                std::string name(info::temp() + exec::generateRandomString(12) + "-" + std::to_string(i));
+                std::string name(info::tempDir() + exec::generateRandomString(12) + "-" + std::to_string(i));
                 std::string id(std::string((ma.args.id == nullptr) ? "" : ma.args.id) + "-" + std::to_string(i));
 
                 list.push_back(

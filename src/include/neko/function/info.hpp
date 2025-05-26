@@ -46,7 +46,7 @@ namespace neko {
         };
 
     public:
-        inline static std::string temp(const std::string &setTempDir = "") {
+        inline static std::string tempDir(const std::string &setTempDir = "") {
             static std::mutex mtx;
             std::lock_guard<std::mutex> lock(mtx);
 
