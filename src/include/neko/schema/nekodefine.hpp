@@ -33,6 +33,8 @@ constexpr std::string_view build_id(build_id_array.data(), 10);
 #endif
 
 
+using cstr = const char *;
+
 using uint_64 =  unsigned long long;
 using uint_32 = unsigned int;
 using uint_16 = unsigned short;

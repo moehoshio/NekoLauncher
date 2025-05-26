@@ -1,13 +1,19 @@
 # Neko Launcher
 
-[正體中文](doc/readme_zh_hant.md) [English](./readme.md)  
-Neko Launcher (NekoLc or NeLC) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
+[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.nd) [English](readme.md)  
+Neko Launcher (NekoLc) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
 It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
 It includes automatic content updates and self-updates (both your content and Neko Core itself), as well as automatic installation of your content.  
 If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions...), then try it.  
 The project is still in development, and any constructive ideas are welcome.  
 Preview :  
-![img](res/img/img1.png)
+![img](resource/img/img1.png)
+
+<video width="600" controls>
+   <source src="./resource/img/video1.mp4" type="video/mp4">
+   Your browser does not support video playback.
+</video>
+
 
 ## Become Contributors
 
@@ -34,10 +40,11 @@ In other words, you can also forgo the GUI; its core should still run properly.
 
 prerequisites:  
 std >= c++20  
-Theoretically Qt5.6.0 ? (i dont know) (6.6 & 6.8 is the tested version)  
-Cmake3.20 or above (3.29 is the tested version)  
-libcurl 7.0.0 or above (8.1 is the tested version)  
-openssl 3.0.0 or above (3.4 is the tested version)  
+Qt5.6.0 ? (6.6 & 6.8 is the tested version)  
+cmake 3.20 or above (3.29 is the tested version)  
+libcurl 8.1 is the tested version  
+openssl 3.4 is the tested version  
+boost.process 1.86.0 is the testd version  
 
 Already included in the project dependencies:  
 
@@ -51,41 +58,49 @@ After satisfying the prerequisites, continue:
 ```shell
 git clone https://github.com/moehoshio/NekoLauncher.git && cd NekoLauncher
 
-chmod + x ./build.sh && ./build.sh
+# Unix
+chmod +x ./build.sh && ./build.sh
 
-#or
+# Windows
+build.bat
+
+# Or build manually
 
 cp CmakeListsCopy.txt CmakeLists.txt
 
 # fill path for your
 cmake . -B./build -DCMAKE_PREFIX_PATH="qt path and package" -DLIBRARY_DIRS="package path(opt)" -DQt6="qt path(opt)" -DCMAKE_BUILD_TYPE="Debug or Release (opt)"
 
-cmake --build ./build
+cmake --build ./build --config Release
 ```
+
+In addition, the working directory needs to contain the following files:  
+Folders required: lang/, img/  
+Files required: config.ini, cacert.pem, img/loading.gif, img/ico.png, lang/en.json. (This does not include your dynamic link libraries)
 
 ### Contribution and Customization
 
 If you want to use this project, you might need to make modifications to be able to use it. Because it is highly customized.  
 
-if you simply want to keep the content updated automatically, it shouldn't be too difficult.
+If you simply want to keep the content updated automatically, it shouldn't be too difficult.
 
 Using our provided template method: modify the `launcherMode` variable at the top of `src/include/nekodefine.hpp`.  
 
 We currently provide a template for Minecraft Java; change the variable to `"minecraft"`.  
 
-If you want complete custom logic: write your function anywhere and call it in the `launcher` function located in `src/include/core.hpp`.  
+If you want complete custom logic: write your function anywhere and call it in the `launcher` function located in `src/include/neko/core/launcher.hpp`.  
 
-You might need to edit the version number and server links in `src/include/nekodefine.hpp` or `src/data/`.  
+You might need to edit the version number and server links in `src/include/nekodefine.hpp`.  
 
 For example, if you want to launch `example.exe`:  
 
 ```cpp
-inline void neko::launcher(launcherOpt opt, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(bool)> winFunc = nullptr) {
+inline void launcher(std::function<void(const ui::hintMsg &)> hintFunc,std::function<void()> onStart, std::function<void(int)> onExit) {
     // Write your content
 
     // shell: example.exe -args ...
     std::string command = std::string("example.exe ") + "-you might need some parameters " + "args...";
-    launcherProcess(command.c_str(), opt, winFunc);
+    launcherProcess(command,onStart,onExit);
 }
 ```
 
