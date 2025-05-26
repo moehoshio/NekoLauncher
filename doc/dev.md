@@ -1,26 +1,33 @@
-# dev
-[module](#module-list)  
+# Developer documentation
 [style guide](#style-guide)  
-[module for example](#module-example)  
+[Definitions and Interfaces](#definitions-and-interfaces)  
+[Examples](#examples)  
 [server](server.md)  
 
 ## Style Guide
 
-1. **CamelCase** should be used for naming. Specifically:
+1. Use **CamelCase** naming convention: For **type definitions**, use an uppercase initial letter (types that do not require corresponding variables are exceptions), variables and functions use a lowercase initial letter. Specifically:
 
 ```cpp
 std::string myName;
 void func();
+struct Name {} name;
+
+struct ovo {
+    static ...// Only provides static methods, no need to instantiate the type
+};
 ```
 
-2. Use **4-space** indentation per level. Source files should use **UTF-8 encoding** with **LF** line endings (not strictly enforced).
+2. Use **4-space** indentation per level. Source files should use **UTF-8 encoding**.
 
 3. Organize `#include` statements into categories, such as:
 
 ```cpp
 // Custom Headers
-#include "exec.h"
-#include "network.h"
+#include "neko/function/exec.hpp"
+#include "neko/function/info.hpp"
+
+#include "neko/network/network.hpp"
 
 // Standard Library
 #include <string>
@@ -39,9 +46,9 @@ void func();
 #include <curl/curl.h>
 ```
 
-4. Use `#pragma once` at the top of header files. Avoid introducing `using namespace` in the global scope within header files. Scoping should be applied most of the time.
+4. Use `#pragma once` at the top of header files. Avoid introducing `using namespace` in the global scope within header files.
 
-5. For simple single-line `if` statements, it's recommended to omit extra braces for brevity:
+5. For simple single-line `if` statements, it is recommended to omit extra braces for brevity (of course, you can add them if you wish):
 
 ```cpp
 if (true)
@@ -52,449 +59,547 @@ else
 
 6. Always include curly braces `{}` for `for` or `while` loops.
 
-### Module List
+## Definitions and Interfaces
 
-1. **Auto-init Function**:
-    - Automatically configures all initial information.
-    - Specifically, it will:
-        - Correct the working directory
-        - Load configuration
-        - Set the log
-        - Set thread numbers
-        - Set thread names
-        - Print configuration
-        - Set language
-        - Initialize networkBase
-            - Load default proxy configuration
-            - Set default user-agent
-            - Set TLS settings
-            - Configure default host and Returns a future object indicating whether the test of networkBase::Dconfig.host is complete
-        - Returns the object returned by networkBase::init
+Below are the types we define. A trailing `{}` means a type, `()` means a function, otherwise it's a variable:
+- neko::info{}
+    - tempDir()
+        - Get or set the temporary directory path
 
-    Function prototype:
+    - workPath()
+        - Get or set the current working directory path
+    - getHome()
+        - Get the user home path
+    - getVersion()
+        - Get NekoLc version
+    - getVersionS()
+        - std::string version
+    - getResVersion()
+        - Get resource version
+    - getConfigFileName()
+        - Get config file name
+    - getConfigFileNameS()
+        - std::string version
+    - getOsName()
+        - Get OS name
+    - getOsNameS()
+        - std::string version
+    - getOsArch()
+        - Get OS architecture
+    - getOsArchS()
+        - std::string version
+    - LanguageKey{}
+        - Stores translation keys for language files
+        - General{}
+        - Title{}
+        - Loading{}
+        - Network{}
+        - Error{}
+    - language()
+        - Get or set preferred language
+    - getLanguages()
+        - Get available language list
+    - loadTranslations()
+        - Load and parse translation files
+    - translations()
+        - Get translations
+- wmsg.hpp : window msg, defines structs for displaying window messages
+    - ui::InputMsg{}
+        - title
+            - Title
+        - msg
+            - Message
+        - poster
+            - Background image path, empty string means not set
+        - lines
+            - Each object in the container represents a line of input required
+        - callback
+            - Callback function, receives a bool value, true means confirmed, false means user clicked cancel
+    - ui::loadMsg{}
+        - enum Type{}
+            - OnlyRaw
+                - Show loading icon (loading.gif) and a progress text
+            - Text
+                - Additionally show text components (with title h1, subtitle h2, and message msg)
+            - Progress
+                - Additionally show progress bar, progressVal is current value, progressMax is max value
+            - All
+                - Show all
+        - type
+            - Display type
+        - process
+            - Progress text
+        - h1
+            - Title, needs to display text component (type is Text or All)
+        - h2
+            - Subtitle, needs to display text component
+        - msg
+            - Message, needs to display text component
+        - poster
+            - Poster, needs background image file path, empty string means not set
+        - speed
+            - Speed of loading.gif icon playback, percentage
+        - progressVal
+            - Current value of progress bar, needs to display progress bar (type is Progress or All)
+        - progressMax
+            - Max value of progress bar
+
+    - ui::hintMsg{}
+        - title
+            - Title
+        - msg
+            - Message
+        - poster
+            - Background image path, empty string means not set
+        - buttonNum
+            - Number of buttons
+            - 1 : Show one ok button
+            - 2 : Show ok and cancel buttons
+        - callback
+            - Callback function, receives a bool value, indicating whether user chose ok or cancel. Always true if only one button
+
+- ui::PixmapWidget{}
+
+    - setPixmap()
+
+        - Set image
+- ui::MainWindow{}
+
+    - enum pageState
+        - index : main page
+        - setting : settings (menu) page
+        - loading : loading page
+    
+    - resizeItem()
+        - Resize items on the current page
+    - setupSize()
+        - Set basic size info, such as max/min size and spacing
+    - setupStyle()
+        - Set component style
+    - setupTranslucentBackground()
+        - Set component style
+    - setupText()
+        - Set text
+    - setupFont()
+        - Load fonts (requires config file)
+    - setupBase()
+        - Set basics, such as title, icon, and set values for corresponding options
+    - autoSetText()
+        - Automatically set h1, h2 font size based on input text size
+    - setTextFont()
+        - Set font size, but need to manually set text, h2, h1 font size
+    - setupConnect()
+        - Set up signal-slot connections
+    - updatePage()
+        - Switch page and auto-resize, parameters needed: page to switch to, previous page
+    - showPage()
+        - Encapsulated page switch, only needs one parameter
+
+    Tips: Switching pages does not change the page state, it simply shows/hides. So functions like showHint, showLoad, etc. will set state/text when displaying the page.
+
+    - showLoad()
+
+        - Switch page and show loading state, and set display info
+    - setLoadingVal()
+        - Set current loading value
+    - setLoadingNow()
+        - Set current loading text
+    - showHint()
+        - Show hint component on current page
+    - showInput()
+        - Show input component on current page
+    - getInput()
+        - Get current input component values
+    - hideInput()
+        - Hide input component and disconnect previous callback signal
+    - winShowHide()
+        - Show or hide window, true to show, false to hide
+    - signals : Signal versions of above functions, sending signals will invoke via main thread
+        - showPageD()
+        - showLoadD()
+        - setLoadingValD()
+        - setLoadingNowD()
+        - showHintD()
+        - showInputD()
+        - hideInputD()
+        - loginStatusChangeD()
+            - Set status to logged in
+        - winShowHideD()
+
+- neko::networkBase{}
+
+    - init()
+
+        - Initialize network settings, including initializing libcurl, setting default UA, proxy, and testing available host list, etc.
+    - Config{}
+        - userAgent
+        - proxy
+        - host
+        - protocol
+    - Api{}
+        - hostList
+        - mainenance
+        - checkUpdates
+        - feedback
+        - testing
+        - Authlib{}
+            - host
+            - root
+            - authenticate
+            - refresh
+            - validate
+            - invalidate
+            - signout
+            - Injector{}
+                - downloadHost
+                - getVersionList
+                - latest
+                - baseRoot
+    - enum Opt
+
+        - none
+
+            - Returned when method not found
+        - onlyRequest
+            - Only send request, no callback needed
+        - downloadFile
+            - Download file, no return value
+            - When using this option, the specified callback is invalid
+        - postText
+            - Send post request, args.data is post content. Optional return value
+        - postFile
+            - Send post request, args.fileName is the file to upload. Optional return value.
+        - getSize
+            - Get target size, can only be used for getCase or getSize functions
+        - getContentType
+            - Get target type, can only be used for getCase function
+        - getContent
+            - Return content via get function
+        - getHeadContent
+            - Return header content via get function
+    - optStr()
+        - Convert option to string, returns "unknown" if not found
+    - strOpt()
+        - Convert string to Opt, returns Opt::none if not found
+    - buildUrl()
+        - Automatically build URL
+    - buildUrlP()
+        - Automatically build URL, need to manually fill all info, variadic parameters
+    - getSysProxy()
+        - Get system proxy link, returns empty if none
+    - WriteCallbackString()
+        - Default write to std::string callback function
+    - WriteCallbackFile()
+        - Default write to std::fstream callback function
+- network{}
+
+    - Args{}
+
+        - url
+        - fileName
+            - Downloaded file name
+        - code
+            - HTTP code for this request
+        - resBreakPoint
+            - Whether to use breakpoint resume
+        - range
+            - Range request
+        - userAgent
+        - header
+            - Header info for this request
+        - data
+            - Post content for this request
+        - id
+            - ID for this request, shown in log
+        - writeCallback
+            - Callback function for this request
+        - headerCallback
+            - Header callback function for this request
+        - config
+            - Config info for this request
+    - autoRetryArgs{}
+        - args
+        - code
+            - If any HTTP code in the container, considered success
+        - times
+            - Max retry times
+        - sleep
+            - Interval between retries
+    - MultiArgs{}
+        - args
+        - enum Approach
+            - Auto
+                - If file >50MB, fixed to 100 parts, otherwise fixed to 5MB per part
+            - Size
+                - Fixed to 5MB per part
+            - Quantity
+                - Fixed to 100 parts
+        - approach
+            - File splitting method
+        - nums
+            - Number of threads, 0 means use system max-1
+        - code
+            - If any HTTP code in the container, considered success
+    - Do()
+        - Execute request without caring about return value
+        - Available options: onlyRequest, downloadFile, postText, postFile
+    - getCase()
+        - Execute specific request
+        - Available options: getSize, getContentType
+    - getSize()
+        - Get file size
+    - getContentAndStorage()
+        - Store to file and return content
+        - T needs to support operator<< for std::ostream
+    - get()
+        - Request URL and return value
+        - Available options: postText, postFile, getContent, getHeadContent.
+    - getPtr()
+    - getShadPtr()
+    - getUnqePtr()
+    - autoRetry()
+        - Automatically retry request on error, until max times or success
+    - autoRetryGet()
+    - nonBlockingDo()
+        - Execute Do in non-blocking thread
+    - nonBlockingGet()
+    - nonBlockingGetPtr()
+    - Multi()
+        - Download file via multi-threading
+    
+## Examples
+
+1. Ask user for input and get input info
 
 ```cpp
-inline auto /* std::future<void>*/ neko::autoInit(int argc, char *argv[])
+#include "neko/ui/mainwindow.hpp"
+
+#include "neko/function/exec.hpp"
+
+#include "neko/schema/wmsg.hpp"
+
+void example(){
+    ui::MainWindow w(exec::getConfigObj());
+    ui::InputMsg imsg;
+    imsg.title = "Enter your information";
+    imsg.msg = "";
+    imsg.poster = "";
+    imsg.lines = std::vector<std::string>{"Name","Age"};
+    imsg.callback = [=](bool check){
+        if (!check){
+            std::cout<< "User cancelled input!\n";
+            w.hideInput(); // Hide input component
+            return;
+        }
+        std::vector<std::string> res = w.getInput();
+        // The order of results matches the input order
+        std::cout<< "User entered all info! Name: " <<res[0] << ", Age: " << res[1] << "\n";
+        
+        w.hideInput(); // On success, hide input
+        // Of course, you can validate input data, prompt user if there's an issue, and ask for input again
+    };
+    w.showInput(imsg);
+}
 ```
 
-2. **exec.h**:
-    - Custom features and encapsulations are defined in this project:
-    - Move operator overloading into the project's `neko` namespace.
-    - Manage singleton objects:
-        - **ThreadPool**
-
-            ```cpp
-            neko::ThreadPool &exec::getThreadObj();
-            ```
-
-            Usage example:
-
-            ```cpp
-            auto it = exec::getThreadObj().enqueue(func, args);
-            auto res = it.get();
-            ```
-
-        - **CSimpleIniA** (for config files)
-
-            ```cpp
-            CSimpleIniA &exec::getConfigObj();
-            ```
-
-            Usage example:
-
-            ```cpp
-                const char * debug = exec::getConfigObj().GetValue("Section","key","default");
-            ```
-
-    - utility func
-        - look the [exec.h](https://github.com/moehoshio/exec.h)
-
-3. **network.h**: Inherits from `networkBase`.
-    - **networkBase**:
-        - Initialization function
-        - Defines classes/structures:
-            - **Config**: Network Configuration information
-                - User-Agent (ua)
-                - Proxy
-                - Host
-                - Protocol
-                    - Includes a default configuration object:
-                        - `static Dconfig`
-            - **Api**: APIs, detailed in [server.md](server.md)
-                - Members are `constexpr static const char *`
-                - Minecraft Authlib Apis for [authlib-injector](https://github.com/yushijinhun/authlib-injector/wiki/)
-                - Includes a default configuration object:
-                    - `constexpr static api`
-        - **Opt Enum**: Enumeration for download options
-            - `none`
-            - `onlyRequest`
-            - `downloadFile`
-            - `postText`
-            - `postFile`
-            - `getSize`
-            - `getContentType`
-            - `getContent`
-            - `getHeadContent`
-        - **optMap Object** and Functions:
-
-        ```cpp
-        static std::unordered_map<Opt, std::string_view> optMap;
-        ```
-
-        ```cpp
-        inline static std::string optStr(Opt opt);
-        ```
-
-        ```cpp
-        inline static Opt strOpt(const std::string_view str);
-        ```
-
-        - **buildUrl**: Constructs a complete URL from a fixed or pre-concatenated path
-
-        ```cpp
-        static std::string buildUrl(const std::string &path, const std::string &host = Dconfig.host, const std::string &protocol = Dconfig.protocol);
-        ```
-
-        - **buildUrlP**: Constructs a complete URL with an indefinite number of path segments; protocol and host need to be manually specified.
-
-        ```cpp
-        template <typename T = std::string, typename... Paths>
-        constexpr static T buildUrlP(const T &protocol, const T &host, Paths &&...paths);
-        ```
-
-        - **getSysProxy**: Retrieves system proxy information (only unix)
-
-        ```cpp
-        template <typename T = std::string>
-        static T getSysProxy();
-        ```
-
-        - **errCodeReason** : Provides a general reason for the error code This. is typically used to inform the user.
-
-        ```cpp
-        template<typename T = std::string>
-        constexpr static T errCodeReason(int code);
-        ```
-
-        - **Default Callback Functions**:
-
-        ```cpp
-        static size_t WriteCallbackString(char *ptr, size_t size, size_t nmemb, void *userdata);
-        ```
-
-        - When writing to a file is required, e.g., `Opt::downloadFile`
-
-        ```cpp
-        static size_t WriteCallbackFile(char *contents, size_t size, size_t nmemb, void *userp);
-        ```
-
-        - For cases where the return type is `QByteArray` (T = `QByteArray`)
-
-        ```cpp
-        static size_t WriteCallbackQBA(char *contents, size_t size, size_t nmemb, void *userp);
-        ```
-
-    - **network**:
-        - Prototype: (T cannot be a pointer)
-
-        ```cpp
-        template <typename T = std::string>
-        class network : public networkBase
-        ```
-
-        - **Defined Classes/Structures**:
-            - **Args**: Parameters for the current request
-                - `url`: cstr
-                - `fileName`: cstr
-                - `(ret)code`: int* returned HTTP code
-                - `resBreakPoint`: bool
-                - `range`: cstr range of the file to fetch
-                - `userAgent`: cstr
-                - `header`: cstr Custom request headers, multiple key-value pairs can be separated by `\n`.
-                - `data`: cstr data to be sent when using POST
-                - `id` : cstr
-                - `writeCallback`: `size_t(char*, size_t, size_t, void*)`
-                - `headerCallback`: `size_t(char*, size_t, size_t, void*)`
-                - `config`: Network Config
-            - **autoRetryArgs**: Parameters for using the `autoRetry` function
-                - `args`: Args
-                - `code`: vector list int expected HTTP code, retries if not met
-                - `times`: size_t maximum number of retries
-                - `sleep`: size_t sleep time between retries (milliseconds)
-            - **MultiArgs**: Parameters for using the `Multi` function
-                - `args`: Args
-                - **Defined Approach Enum**: Download method
-                    - `Auto`: Splits into 100 parts if less than 50MB, otherwise 5MB each part
-                    - `Size`: Fixed size of 5MB
-                    - `Quantity`: Fixed quantity of 100 files
-                - `nums`: Number of download tasks, 0 equals thread count
-                - `approach`
-                - `code`: vector list int , Expected HTTP code, Usually http code 206
-            - **Error Return Values**: (Args::code)  
-                - `-1`: Indicates an error occurred during libcurl initialization.
-                - `-3`: Indicates an unexpected standard exception occurred.
-                - `-4`: Indicates an error during the execution of a network request, such as an SSL connection failure, DNS resolution failure, etc.
-                - `-5`: Indicates the use of an incorrect method/option. Refer to the applicable options for the function later.
-                - `-6`: Occurs in the getSize function, indicating an invalid Content-Length value.
-                - `-7`: Occurs in the getSize function, indicating the Content-Length value is out of range.
-                - `-8`: Occurs in the getCase function when using methods other than Opt::getSize or Opt::getContentType.
-        - **Functions**:
-            - **Do**: Base function
-                - Applicable Options:
-                    - `Opt::onlyRequest`: Only request
-                    - `Opt::downloadFile`: Downloads to `args.fileName`; note the use of the file writing callback.
-                    - `Opt::postText`: POSTs `args.data`
-                    - `Opt::postFile`: Not implemented at the time of writing this document
-
-                        ```cpp
-                        inline static void Do(Opt opt, Args &args) noexcept;
-                        ```
-
-                        The T here is useless.
-
-            - **get**: Base function
-                - Applicable Options:
-                    - `Opt::postText`: POSTs `args.data` with a return content
-                    - `Opt::getContent`: Retrieves content (can be binary)
-                    - `Opt::getHeadContent`: Retrieves only the header content
-
-                        ```cpp
-                        inline T get(Opt opt, Args &args) noexcept;
-                        ```
-
-                - Returns an empty object if an error occurs
-
-            - **getCase**: Base function
-                - Applicable Options:
-                    - `Opt::getContentType`: Retrieves type from the header
-                    - `Opt::getSize`: Retrieves size from the header
-
-                        ```cpp
-                        inline std::string getCase(Opt opt, Args &args);
-                        ```
-
-                - Returns an empty object if an error occurs
-                - Note that all return values will be converted to lowercase.
-
-            - **getSize**: Encapsulation function
-
-                ```cpp
-                inline size_t getSize(Args &args) noexcept;
-                ```
-
-                - Returns 0 if an error occurs
-
-            - **getContentAndStorage**: Encapsulation function
-                - Returns content and stores it to `args.fileName`
-                - T must support `operator<<` for `std::ostream` (`std::ostream<<T`)
-
-                    ```cpp
-                    inline T getContentAndStorage(Args &args) noexcept;
-                    ```
-
-            - **getPtr**:
-                - Scope of use: same as `get` function
-
-                ```cpp
-                inline T *getPtr(Opt opt, Args &args) noexcept;
-                ```
-
-                - Overloaded version supports temporary arguments `(const Args & args)`
-
-            - **getShadPtr**:
-                - Scope of use: same as `get` function
-
-                ```cpp
-                inline std::shared_ptr<T> getShadPtr(Opt opt, Args &args) noexcept;
-                ```
-
-                - Overloaded version supports temporary arguments `(const Args & args)`
-
-            - **getUnqePtr**:
-                - Scope of use: same as `get` function
-
-                ```cpp
-                inline std::unique_ptr<T> getUnqePtr(Opt opt, Args &args) noexcept;
-                ```
-
-                - Overloaded version supports temporary arguments `(const Args & args)`
-
-        - Functions to handle retry logic and non-blocking execution are provided, such as:
-
-        - **autoRetry**: Encapsulation function
-            - Scope of use: same as `Do` function
-            - If the maximum retry count is reached without obtaining the expected HTTP code, returns `false`.
-            - Note: If resume is enabled, HTTP code 416 is also considered as completed.
-
-                ```cpp
-                inline static bool autoRetry(Opt opt, autoRetryArgs &ra);
-                ```
-
-            - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
-
-        - **autoRetryGet**: Encapsulation function
-            - Scope of use: same as `get` function
-            - If the maximum retry count is reached without obtaining the expected HTTP code, returns an empty object.
-            - Note: If resume is enabled, HTTP code 416 is also considered as completed.
-
-                ```cpp
-                inline T autoRetryGet(Opt opt, autoRetryArgs &ra);
-                ```
-
-            - Overloaded version supports temporary arguments `(const autoRetryArgs &ra)`.
-
-        - **nonBlockingDo**: Encapsulation function
-            - Scope of use: same as `Do` function
-
-                ```cpp
-                inline static auto nonBlockingDo(Opt opt, Args &args) -> std::future<void>;
-                ```
-
-        - **nonBlockingGet**: Encapsulation function
-            - Scope of use: same as `get` function
-
-                ```cpp
-                inline auto nonBlockingGet(Opt opt, Args &args) -> std::future<T>;
-                ```
-
-        - **nonBlockingGetPtr**: Encapsulation function
-            - Scope of use: same as `get` function
-
-                ```cpp
-                inline auto nonBlockingGetPtr(Opt opt, Args &args) -> std::future<T *>;
-                ```
-
-        - **Multi**: Encapsulation function
-            - Scope of use: same as `Do` function
-
-                ```cpp
-                inline bool Multi(Opt opt, MultiArgs &ma);
-                ```
-
-        - Overloaded version supports temporary arguments `(const MultiArgs &ma)`.
-
-4. **mainwindow.h**:
-    - Inherits from `QMainWindow` for the main window.
-    - Key interfaces:
-        - **onUpdateDownloadPage** function
-            - Displays the update page and information in the window.
-
-            ```cpp
-            void onUpdateDownloadPage(updateMsg m);
-            ```
-
-        - **showHint** function
-            - Displays a hint window.
-            - If `buttonType` is 1, a single confirmation button is displayed; otherwise, both confirmation and cancel buttons are shown.
-
-            ```cpp
-            void showHint(const hintMsg &m);
-            ```
-
-            - When the user clicks, `m.callback` is invoked with a boolean representing the user's choice (always `true` for a single button).
-
-5. **core.h**:
-   - All objects are within the project namespace `neko`.
-   - **Defined Classes/Structures**:
-     - **State Enum**:
-       - `over`: Indicates the task is completed, based on specific semantics.
-       - `undone`: Indicates the task is not completed, possibly due to a fatal error such as JSON parsing failure.
-       - `tryAgainLater`: Indicates the task is not completed but can be retried, such as a failed network request.
-     - **updateInfo Struct**:
-       - `title`: std::string
-       - `msg`: std::string
-       - `poster`: std::string
-       - `time`: std::string
-       - `resVersion`: std::string
-       - `mandatory`: bool
-       - **urlInfo**: Information for a single URL
-         - `url`: std::string
-         - `name`: std::string
-         - `hash`: std::string
-         - `hashAlgorithm`: std::string
-         - `multis`: bool
-         - `temp`: bool
-         - `randName`: bool
-         - `absoluteUrl`: bool
-         - **empty func**
-       - `urls`: urlInfo
-       - **empty func**
-     - **launcherOpt Enum**:
-       - `keep`: Indicates maintaining the current window state
-       - `endProcess`: Indicates ending the launcher after starting
-       - `hideProcessAndOverReShow`: Indicates hiding after starting and re-displaying after the process ends.
-   - **Functions**
-     - Contains the main logic and functions of the program:
-       - **downloadPoster**: Downloads the poster and returns the file name. If it fails, returns an empty container and notifies the user of the failure.
-         - `hintFunc`: Function for notifying the user
-         - `url`: Poster URL
-
-         ```cpp
-         template <typename T = std::string>
-         inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url);
-         ```
-
-       - **checkMaintenance**: Checks maintenance information and returns `over` if no maintenance is needed, `undone` if maintenance is ongoing.
-         - `hint`: Function for notifying the user
-         - `loadFunc`: Function for displaying the loading page; the function updates the status to loading (shows the loading page)
-         - `setLoadInfoFunc`: Function for setting the loading status
-
-         ```cpp
-         inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc);
-         ```
-
-       - **checkUpdate**: Checks for update information; returns `over` if no update is available, `undone` if there is an update.
-         - `res`: The returned update information.
-
-         ```cpp
-         inline State checkUpdate(std::string &res);
-         ```
-
-       - **parseUpdate**: Parses update information into `updateInfo`; returns an empty object if an error occurs.
-         - `res`: Content to be parsed.
-
-         ```cpp
-         inline updateInfo parseUpdate(const std::string &res);
-         ```
-
-       - **autoUpdate**: Automatically updates; if an update is available, it will automatically parse and download. Returns `over` if the update is completed (i.e., if there is no update or the update is completed).
-         - `hintFunc`: Function for notifying the user; passed to `checkMaintenance` and used to notify the user upon download failure and update completion.
-         - `loadFunc`: Function for displaying the loading page; passed to `checkMaintenance` and used to show download progress.
-         - `setLoadInfoFunc`: Function for setting loading progress; passed to `checkMaintenance` and used to display download progress during the download.
-
-         ```cpp
-         inline State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc);
-         ```
-
-       - **launchNewProcess**: Launches a new process that can continue running after the main program ends. Typically used when updating the core.
-         - `command`: The command to be executed
-
-         ```cpp
-         void launchNewProcess(const std::string &command);
-         ```
-
-       - **launcherProcess**: Launches a process
-         - `command`: The command to be executed
-         - `opt`: The method for handling the program after launching the process
-         - `winFunc`: If using `launcherOpt::hideProcessAndOverReShow`, this function is required. `false` means hide the window, `true` means show the window.
-
-         ```cpp
-         inline void launcherProcess(const std::string &command, launcherOpt opt, std::function<void(bool)> winFunc = NULL);
-         ```
-
-       - **launcherLuaPreCheck**: A sample for launching Lua, checking for Lua environment variables and whether the target script is exists before launching.
-
-         ```cpp
-         inline bool launcherLuaPreCheck();
-         ```
-
-       - **launcher**: A sample for launching Lua that you can fully customize. Called when the user clicks.
-         - `opt`: The method for handling the program after launching the process
-
-         ```cpp
-         inline void launcher(launcherOpt opt);
-         ```
-
-## Module Example
-
-1. network: You can refer to [test/network/main.cpp](../test/network/main.cpp) It includes usage examples for most scenarios.
+2. Show hint and ask user to choose
+
+```cpp
+#include "neko/ui/mainwindow.hpp"
+
+#include "neko/function/exec.hpp"
+
+#include "neko/schema/wmsg.hpp"
+
+void example(){
+    ui::MainWindow w(exec::getConfigObj());
+    ui::hintMsg hmsg;
+    hmsg.title = "Hint";
+    hmsg.msg = "Exit the program now?";
+    hmsg.poster = "";
+    hmsg.buttonNum = 2;
+    hmsg.callback = [=](bool check){
+        if (check){
+            std::cout<< "User exited!\n";
+            QApplication::quit();
+            return;
+        }
+        // The hint window will automatically hide after selection
+        // Do nothing if cancelled
+    }
+    w.showHint(hmsg);
+}
+```
+
+3. Network request
+
+```cpp
+#include "neko/network/network.hpp"
+
+void example(){
+
+    // ping test network
+    auto ping = []{
+        neko::networkBase::Opt opt = neko::networkBase::Opt::onlyRequest; // This requests the URL and gets HTTP code, but not content. Suitable for ping
+
+        int code = 0;
+        neko::network<std::string>::Args args;
+        args.url = "https://example.com";
+        args.fileName = "";
+        args.code = &code; // HTTP code of response
+        args.resBreakPoint = false;
+        args.range = nullptr; 
+        args.userAgent = "NekoLc/0.0.1";
+        args.header = nullptr; 
+        args.data = nullptr;
+        args.id = "testing network - 1";
+        args.config = networkBase::Dconfig; // Use default config
+        args.writeCallback = &networkBase::WriteCallbackString; // Default std::string callback
+        args.headerCallback = &networkBase::WriteCallbackString;
+
+        neko::network<std::string>::Do(opt,args); // Blocks until request completes, Do is for requests without return value
+
+        if (code == 200) {
+            std::cout<< "Request succeeded!\n";
+        }
+        std::cout<< "Request failed!\n";
+    }();
+
+    // Download to file
+    auto downloadFile = []{
+        neko::networkBase::Opt opt = neko::networkBase::Opt::downloadFile; // Download file
+
+        int code = 0;
+        neko::network<std::string>::Args args;
+        args.url = "https://example.com";
+        args.fileName = "index.html"; // Downloaded file name
+        args.code = &code;
+        args.resBreakPoint = false; // Resume breakpoint, generally for large files or unstable network
+        args.range = nullptr;  // Range request, useful for multi-threaded download
+        args.id = "testing network - 2";
+        args.writeCallback = &networkBase::WriteCallbackFile;  // Write to file callback, when Opt:downloadFile is used, this is automatically used, but the set callback is invalid.
+
+        neko::network<std::string>::Do(opt,args); // Blocks until download completes
+
+        if (code == 200) {
+            std::cout<< "Download complete!\n";
+        }
+        std::cout<< "Download failed!\n";
+    }();
+
+    // Request value to variable
+    auto get = []{
+        neko::network<std::string> net;
+        neko::networkBase::Opt opt = neko::networkBase::Opt::getContent; // Get request result
+
+        int code = 0;
+        decltype(net)::Args args;
+        args.url = "https://example.com";
+        args.code = &code;
+        args.id = "testing network - 3";
+
+        std::string res = net.get(opt,args);
+
+        if (code == 200) {
+            std::cout<< "Access succeeded! Result: "<<res<<"\n";
+        }
+        std::cout<< "Access failed!\n";
+    }();
+
+    // Custom return type
+    auto customGet = []{
+        // Define return type, e.g. QByteArray
+        neko::network<QByteArray> net;
+        neko::networkBase::Opt opt = neko::networkBase::Opt::getContent; // Get request result
+
+        int code = 0;
+        decltype(net)::Args args;
+        args.url = "https://example.com";
+        args.code = &code;
+        args.id = "testing network - 4";
+        args.writeCallback = [](char *ptr, size_t size, size_t nmemb, void *userdata) -> size_t {
+            QByteArray *res = static_cast<QByteArray *>(userp);
+            QByteArray->append(contents, size * nmemb);
+            return size * nmemb;
+        }; // Custom callback logic, you can also display progress in window
+
+        QByteArray res = net.get(opt,args);
+
+        // ...
+    }();
+    
+    // Post value to variable
+    auto post = []{
+        neko::network<std::string> net;
+        neko::networkBase::Opt opt = neko::networkBase::Opt::postText; // post text
+
+        int code = 0;
+        decltype(net)::Args args;
+        args.url = "https://example.com";
+        args.code = &code;
+        args.data = "{\"core\":\"v0.0.0.1\",\"res\":\"v1.0.0.1\"}";
+        args.header = "Content-Type: application/json";
+        args.id = "testing network - 5";
+
+        std::string res = net.get(opt,args); // Server response for post
+
+        net.Do(opt,args); // You can also just post without getting response
+
+        // ...
+    }();
+}
+
+```
+
+4. Download file and show progress
+
+```cpp
+#include "neko/ui/mainwindow.hpp"
+
+#include "neko/function/exec.hpp"
+
+#include "neko/network/network.hpp"
+
+#include "neko/schema/wmsg.hpp"
+
+void example(){
+    ui::MainWindow w(exec::getConfigObj());
+    neko::network net;
+
+    ui::loadMsg lmsg;
+    lmsg.type = ui::loadMsg::Type::Progress;
+    lmsg.process = "ready download file..";
+    lmsg.progressVal = 0;
+    lmsg.progressMax = 1;
+    w.showLoad(lmsg); // Show loading window and download progress bar
+    int code = 0;
+    
+    w.setLoadingNow("download file...");
+    
+    // Note: Here, progress is based only on the number of files
+    // For more accurate progress, you need to get the total size of files to download, then handle in callback, calculate and display.
+    // Not implemented here
+
+    net.Do(
+        neko::networkBase::Opt::downloadFile,
+        {
+            "https://example.com",
+            "index2.html",
+            &code
+        }
+    );
+
+    if (code == 200){
+        // Download complete, set progress
+        w.setLoadingNow("download over");
+        w.setLoadingVal(1);
+    } else {
+        // Download failed, exit
+        QApplication::quit();
+    }
+
+    // All tasks complete, switch back to main page
+    w.showPage(ui::MainWindow::pageState::index);
+}
+
+```
