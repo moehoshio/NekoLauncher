@@ -7,13 +7,9 @@ It includes automatic content updates and self-updates (both your content and Ne
 If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions...), then try it.  
 The project is still in development, and any constructive ideas are welcome.  
 Preview :  
-![img](resource/img/img1.png)
-
-<video width="600" controls>
-   <source src="./resource/img/video1.mp4" type="video/mp4">
-   Your browser does not support video playback.
-</video>
-
+![img](resource/img/img1.png)  
+gif:  
+![img2](resource/img/img2.gif)  
 
 ## Become Contributors
 

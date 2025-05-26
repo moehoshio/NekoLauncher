@@ -7,13 +7,9 @@ Neko Launcher (NekoLc) 是一个现代化、跨平台、多语言支持的自动
 如果你还在寻找自动更新方案，或是被自动化更新困扰（用户不会操作、缺乏自动化更新管理方案……），那么可以试试这个。  
 本项目仍在开发中，欢迎任何建设性的想法。  
 预览：  
-![img](resource/img/img1.png)
-
-<video width="600" controls>
-   <source src="./resource/img/video1.mp4" type="video/mp4">
-   您的浏览器不支持视频播放。
-</video>
-
+![img](resource/img/img1.png)  
+gif:  
+![img2](resource/img/img2.gif)  
 
 ## 欢迎成为贡献者
 
