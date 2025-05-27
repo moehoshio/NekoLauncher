@@ -1,8 +1,8 @@
 # Developer documentation
-[style guide](#style-guide)  
+[Style guide](#style-guide)  
 [Definitions and Interfaces](#definitions-and-interfaces)  
 [Examples](#examples)  
-[server](server.md)  
+[Server](server.md)  
 
 ## Style Guide
 

@@ -1,6 +1,6 @@
 # Neko Launcher
 
-[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.nd) [English](readme.md)  
+[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.md) [English](readme.md)  
 Neko Launcher (NekoLc) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
 It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
 It includes automatic content updates and self-updates (both your content and Neko Core itself), as well as automatic installation of your content.  

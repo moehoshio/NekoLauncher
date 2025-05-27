@@ -1,6 +1,6 @@
 # Neko Launcher
 
-[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.nd) [English](readme.md)  
+[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.md) [English](readme.md)  
 Neko Launcher (NekoLc) 是一個現代化、跨平台、多語言支援的自動更新啟動器解決方案。  
 它可以啟動你想要的任何目標，目前的模板已經可以成功啟動 Java 版 Minecraft。  
 它包含自動內容更新與自我更新（不論是你的內容還是 Neko Core 本身），也支援自動安裝你的內容。  
