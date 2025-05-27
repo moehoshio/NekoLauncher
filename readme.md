@@ -1,6 +1,6 @@
 # Neko Launcher
 
-[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.md) [English](readme.md)  
+[正體中文](readme_zh_hant.md) | [简体中文](readme_zh_hans.md) | [English](readme.md)  
 Neko Launcher (NekoLc) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
 It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
 It includes automatic content updates and self-updates (both your content and Neko Core itself), as well as automatic installation of your content.  
@@ -80,13 +80,13 @@ If you want to use this project, you might need to make modifications to be able
 
 If you simply want to keep the content updated automatically, it shouldn't be too difficult.
 
-Using our provided template method: modify the `launcherMode` variable at the top of `src/include/nekodefine.hpp`.  
+Using our provided template method: modify the `launcherMode` variable at the top of `src/include/neko/schema/nekodefine.hpp`.  
 
 We currently provide a template for Minecraft Java; change the variable to `"minecraft"`.  
 
 If you want complete custom logic: write your function anywhere and call it in the `launcher` function located in `src/include/neko/core/launcher.hpp`.  
 
-You might need to edit the version number and server links in `src/include/nekodefine.hpp`.  
+You might need to edit the version number and server links in `src/include/neko/schema/nekodefine.hpp`.  
 
 For example, if you want to launch `example.exe`:  
 

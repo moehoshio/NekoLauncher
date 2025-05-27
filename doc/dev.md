@@ -1,4 +1,5 @@
 # Developer documentation
+
 [Style guide](#style-guide)  
 [Definitions and Interfaces](#definitions-and-interfaces)  
 [Examples](#examples)  

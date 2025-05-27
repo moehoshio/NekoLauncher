@@ -1,6 +1,6 @@
 # Neko Launcher
 
-[正體中文](readme_zh_hant.md) [简体中文](readme_zh_hans.md) [English](readme.md)  
+[正體中文](readme_zh_hant.md) | [简体中文](readme_zh_hans.md) | [English](readme.md)  
 Neko Launcher (NekoLc) 是一個現代化、跨平台、多語言支援的自動更新啟動器解決方案。  
 它可以啟動你想要的任何目標，目前的模板已經可以成功啟動 Java 版 Minecraft。  
 它包含自動內容更新與自我更新（不論是你的內容還是 Neko Core 本身），也支援自動安裝你的內容。  
@@ -80,13 +80,13 @@ cmake --build ./build --config Release
 
 如果你只是想讓內容自動更新，其實不會太困難。
 
-使用我們提供的模板方法：修改 `src/include/nekodefine.hpp` 最上方的 `launcherMode` 變數。  
+使用我們提供的模板方法：修改 `src/include/neko/schema/nekodefine.hpp` 最上方的 `launcherMode` 變數。  
 
 目前已提供 Minecraft Java 的模板，將變數改為 `"minecraft"` 即可。  
 
 如果你想要完全自訂邏輯：可以在任何地方寫你的函式，然後在 `src/include/neko/core/launcher.hpp` 的 `launcher` 函式中呼叫它。  
 
-你可能還需要編輯 `src/include/nekodefine.hpp` 裡的版本號與伺服器連結。  
+你可能還需要編輯 `src/include/neko/schema/nekodefine.hpp` 裡的版本號與伺服器連結。  
 
 例如，如果你想啟動 `example.exe`：
 
