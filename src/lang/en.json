@@ -101,5 +101,7 @@
     "error_minecraftGetAuthlibVersion":"In download authlib injector \nfaild to get authlib Injector version info",
     "error_minecraftAuthlibJsonParse":"In download authlib injector \nfaild to parse authlib Injector version info",
     "error_minecraftAuthlibDownload":"In download authlib injector \nfaild to download authlib Injector archive",
-    "error_minecraftAuthlibDownloadHash":"In download authlib injector \ndownload is ok but hash not match"
+    "error_minecraftAuthlibDownloadHash":"In download authlib injector \ndownload is ok but hash not match",
+
+    "error_minecraftMemoryNotEnough" : "Memory does not meet the minimum requirements!\nPlease check your system configuration, at least available memory: "
 }

@@ -102,5 +102,7 @@
     "error_minecraftGetAuthlibVersion":"在下載 authlib injector 時\n取得版本資訊失敗！",
     "error_minecraftAuthlibJsonParse":"在下載 authlib injector 時\n解析版本資訊失敗！",
     "error_minecraftAuthlibDownload":"在下載 authlib injector 時\n下載檔案失敗！",
-    "error_minecraftAuthlibDownloadHash":"在下載 authlib injector 時\n下載的檔案與期望雜湊值不匹配！"
+    "error_minecraftAuthlibDownloadHash":"在下載 authlib injector 時\n下載的檔案與期望雜湊值不匹配！",
+
+    "error_minecraftMemoryNotEnough" : "内存不足！\n请检查您的系统配置，至少需要可用内存："
 }

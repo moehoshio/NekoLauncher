@@ -233,7 +233,8 @@ namespace neko {
                     minecraftGetAuthlibVersion = "error_minecraftGetAuthlibVersion",
                     minecraftAuthlibJsonParse = "error_minecraftAuthlibJsonParse",
                     minecraftAuthlibDownload = "error_minecraftAuthlibDownload",
-                    minecraftAuthlibDownloadHash = "error_minecraftAuthlibDownloadHash";
+                    minecraftAuthlibDownloadHash = "error_minecraftAuthlibDownloadHash",
+                    minecraftMemoryNotEnough = "error_minecraftMemoryNotEnough";
             };
 
             std::string language = "language";

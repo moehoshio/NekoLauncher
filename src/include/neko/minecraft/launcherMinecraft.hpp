@@ -5,9 +5,12 @@
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
 
+#include "neko/system/memoryinfo.hpp"
+
 #include "neko/network/network.hpp"
 
 #include "library/nlohmann/json.hpp"
+
 
 namespace neko {
 
@@ -385,13 +388,42 @@ namespace neko {
                                           {"${auth_access_token}", gameArgsToken},
                                           {"${user_type}", gameArgsUserType},
                                           {"${version_type}", gameArgsVerType}});
+        
+        
+        std::string maxMemory =  "-Xmx7G";
+
+        // Get system memory information
+        
+        if (auto memoryInfo = system::getSystemMemoryInfo()) {
+            if (memoryInfo.value().totalBytes / (1024*1024*1024) <7) {
+                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftMemoryNotEnough) + "8GB", "", 1});
+                nlog::Err(FI, LI, "%s : system memory is not enough , total memory : %zu MB", FN, memoryInfo.value().totalBytes / (1024*1024));
+                return;
+            }
+            maxMemory = "-Xmx" + std::to_string(memoryInfo.value().totalBytes / (1024*1024*1024) - 1) + "G"; // 1 GB less than total memory
+        }
+
+        // jvm optimize args
         std::vector<std::string> jvmOptimizeArgs = {
-            "-XX:+UnlockExperimentalVMOptions", "-XX:+UseG1GC", "-XX:G1NewSizePercent=20", "-XX:G1ReservePercent=20", "-XX:MaxGCPauseMillis=50", "-XX:G1HeapRegionSize=16m", "-XX:-UseAdaptiveSizePolicy", "-XX:-OmitStackTraceInFastThrow", "-XX:-DontCompileHugeMethods", "-Xmn128m", "-Xmx10240m", "-Dfml.ignoreInvalidMinecraftCertificates=true", "-Dfml.ignorePatchDiscrepancies=true"};
+            "-XX:+UnlockExperimentalVMOptions",
+            "-XX:+UseG1GC",
+            "-XX:G1NewSizePercent=20",
+            "-XX:G1ReservePercent=20", 
+            "-XX:MaxGCPauseMillis=50", 
+            "-XX:G1HeapRegionSize=16m", 
+            "-XX:-UseAdaptiveSizePolicy", 
+            "-XX:-OmitStackTraceInFastThrow", 
+            "-XX:-DontCompileHugeMethods", 
+            "-Xmn128m", 
+            maxMemory, 
+            "-Dfml.ignoreInvalidMinecraftCertificates=true", 
+            "-Dfml.ignorePatchDiscrepancies=true"};
 
         // gameArgsVec.push_back("--server");
         // gameArgsVec.push_back("");
         // gameArgsVec.push_back("--port");
         // gameArgsVec.push_back("25566");
+        
         // authlib Injector
         std::string authlibPrefrtched = std::string(cfg.minecraft.authlibPrefetched);
         authlibPrefrtched.erase(std::remove(authlibPrefrtched.begin(), authlibPrefrtched.end(), '\\'), authlibPrefrtched.end());
