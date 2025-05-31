@@ -776,6 +776,7 @@ namespace ui {
                         break;
                     case 2:
                         emit this->winShowHide(true);
+                        this->activateWindow();
                         break;
                     case 0:
                     default:

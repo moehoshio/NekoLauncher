@@ -289,7 +289,8 @@ namespace neko {
                 doErr(FI, LI, std::string(std::string("The cacert.pem file does not exist at: ") + caPath).c_str(), FN, args.code, -1);
                 return false;
             }
-            curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str()); 
+            curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str());
+            curl_easy_setopt(curl, CURLOPT_CAPATH, caPath.c_str());
 
             if (auto sysProxy = getSysProxy<const char *>();
                 args.config.proxy == "true" && exec::isProxyAddress(sysProxy))
