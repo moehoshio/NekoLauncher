@@ -7,9 +7,9 @@ It includes automatic content updates and self-updates (both your content and Ne
 If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions...), then try it.  
 The project is still in development, and any constructive ideas are welcome.  
 Preview :  
-![img](resource/img/img1.png)  
+![img](resource/img/example1.png)  
 gif:  
-![img2](resource/img/img2.gif)  
+![img2](resource/img/example2.gif)  
 
 ## Become Contributors
 
