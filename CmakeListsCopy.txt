@@ -9,6 +9,7 @@ list(APPEND SRCFILES
 
     src/mainwindow.cpp    
     src/launcherProcess.cpp
+    src/memoryinfo.cpp
     src/loguru.cpp
     src/info.cpp
     src/main.cpp   
