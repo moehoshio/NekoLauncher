@@ -98,7 +98,7 @@ namespace neko {
          * @brief Get system proxy settings
          * @return std::string - The system proxy settings, or an empty string if no proxy is set.
          * **/
-        static std::string getSysProxy();
+        static std::optional<std::string> getSysProxy();
 
         /**
          * @brief Build a complete URL from the given path, host, and protocol.

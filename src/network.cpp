@@ -1,10 +1,10 @@
 // Neko Module
 
-#include "neko/network/net.hpp"
-
-#include "neko/log/nlog.hpp"
+#include "neko/network/network.hpp"
 
 #include "neko/schema/nekodefine.hpp"
+
+#include "neko/log/nlog.hpp"
 
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
@@ -40,7 +40,7 @@ namespace neko {
     // NetworkBase Implementation
     //=================================================
 
-    std::string NetworkBase::getSysProxy() {
+    std::optional<std::string> NetworkBase::getSysProxy() {
         auto proxy = std::getenv("http_proxy");
         auto tlsProxy = std::getenv("https_proxy");
 
@@ -71,7 +71,7 @@ namespace neko {
         else if (proxy)
             return std::string(proxy);
 
-        return std::string();
+        return std::nullopt;
     }
 
     void NetworkBase::logError(const std::string &message) {
@@ -190,6 +190,7 @@ namespace neko {
                 methodStr = "UNKNOWN";
                 break;
         }
+        auto sysProxy = getSysProxy();
 
         logInfo(
             "Network::logRequestInfo() : ",
@@ -201,7 +202,7 @@ namespace neko {
             ", UserAgent: ", exec::boolTo(config.userAgent.empty(), globalConfig.userAgent, config.userAgent),
             ", Global Protocol: ", globalConfig.protocol,
             ", Proxy: ", exec::boolTo<std::string>(config.proxy.empty(), "none", config.proxy),
-            ", SysProxy: ", getSysProxy().empty() ? "none" : getSysProxy(),
+            ", SysProxy: ", sysProxy ? "none" : *sysProxy,
             ", ID: ", config.requestId);
 
         logDebug(
@@ -236,11 +237,12 @@ namespace neko {
         curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str());
         curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 
-        std::string systemProxy = getSysProxy();
+        auto systemProxy = getSysProxy();
+        
 
         // proxy = "true" means use system proxy
-        if (config.proxy == "true" && exec::isProxyAddress(systemProxy)) {
-            curl_easy_setopt(curl, CURLOPT_PROXY, systemProxy.c_str());
+        if (config.proxy == "true" && systemProxy && exec::isProxyAddress(*systemProxy)) {
+            curl_easy_setopt(curl, CURLOPT_PROXY, (*systemProxy).c_str());
         } else if (!config.proxy.empty() && exec::isProxyAddress(config.proxy)) {
             curl_easy_setopt(curl, CURLOPT_PROXY, config.proxy.c_str());
         } else {
