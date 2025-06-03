@@ -7,19 +7,14 @@ list(APPEND SRCFILES
     src/include/neko/log/logviewer.hpp 
     src/include/neko/ui/mainwindow.hpp
 
-    src/mainwindow.cpp    
+    src/mainwindow.cpp
     src/launcherProcess.cpp
     src/memoryinfo.cpp
     src/loguru.cpp
-    src/info.cpp
     src/network.cpp
-    src/main.cpp   
+    src/info.cpp
+    src/main.cpp
 
-)
-
-list(APPEND INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/src/include
-    ${CMAKE_SOURCE_DIR}/src/include/library
 )
 
 # package path
@@ -27,12 +22,21 @@ set(LIBRARY_DIRS "C:/dev/vcpkg/installed/x64-windows")
 
 # qt path
 set(Qt6_DIR "C:/Qt/qt6.6/6.6.1/msvc2019_64")
-set(Qt6 "C:/Qt/qt6.6/6.6.1/msvc2019_64")
 
-set(CMAKE_PREFIX_PATH "${Qt6};${LIBRARY_DIRS}")
+
+
+list(APPEND INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/src/include
+    ${CMAKE_SOURCE_DIR}/src/include/library
+    ${Qt6_DIR}/include
+    ${LIBRARY_DIRS}/include
+)
+
+set(CMAKE_PREFIX_PATH "${Qt6_DIR};${LIBRARY_DIRS}")
 
 # Debug or Release
 set(CMAKE_BUILD_TYPE Release)
+
 set(CMAKE_AUTOMOC ON)
 
 find_package(boost_process REQUIRED CONFIG)
@@ -40,12 +44,17 @@ find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
+# Get the git commit hash
+# This is used to set the GIT_BUILD_ID macro for the application
+# This is used to build the userAgent
 execute_process(
     COMMAND git rev-parse --short HEAD
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 add_definitions(-DGIT_BUILD_ID="${GIT_COMMIT_HASH}")
+
+
 add_executable(NekoLc ${SRCFILES})
 
 
@@ -65,12 +74,14 @@ Boost::process
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # Set not to use the console window And add icon resource
     if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
         set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
         target_sources(NekoLc PRIVATE resource/win/icon.rc)
     endif()
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "MacOS")
+    # Set the application bundle properties for macOS
     set_target_properties(NekoLc PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
