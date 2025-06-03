@@ -11,8 +11,7 @@
     #include <sys/types.h>
 #endif
 
-namespace neko {
-    namespace system {
+namespace neko::system {
 
         std::optional<MemoryInfo> getSystemMemoryInfo() {
 #ifdef _WIN32
@@ -63,5 +62,4 @@ namespace neko {
 #endif
         }
 
-    } // namespace system
-} // namespace neko
+} // namespace neko::system

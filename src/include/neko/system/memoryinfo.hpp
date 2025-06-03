@@ -5,8 +5,7 @@
 #include <string>
 #include <sstream>
 
-namespace neko {
-    namespace system {
+namespace neko::system {
 
         struct MemoryInfo {
             uint64_t totalBytes; // total memory , bytes
@@ -21,6 +20,5 @@ namespace neko {
 
         // Get system memory information, return std::nullopt on failure
         std::optional<MemoryInfo> getSystemMemoryInfo();
-    } // namespace system
-    
-} // namespace neko
+
+} // namespace neko::system
