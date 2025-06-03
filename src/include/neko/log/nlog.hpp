@@ -18,6 +18,9 @@ namespace nlog {
     constexpr inline void Warn(const char *file, unsigned int line, const char *format, const auto &...args) {
         loguru::log(loguru::Verbosity_WARNING, file, line, format, args...);
     }
+    constexpr inline void Debug(const char *file, unsigned int line, const char *format, const auto &...args) {
+        loguru::log(loguru::Verbosity_9, file, line, format, args...);
+    }
 
     struct autoLog {
         const char *file;
