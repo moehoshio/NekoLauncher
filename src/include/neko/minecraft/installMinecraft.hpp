@@ -67,7 +67,7 @@ namespace neko {
     }
 
     // Should not be called from the main thread, as it will block the incoming thread until completion.
-    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string &versionId, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft", std::function<void(const ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
+    inline void installMinecraftDownloads(DownloadSource downloadSource, const std::string &versionId, const nlohmann::json &versionJson, const std::string &installPath = "./.minecraft", std::function<void(const neko::ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         nlog::autoLog log{FI, LI, FN};
 
         std::size_t now = 0;
@@ -151,7 +151,7 @@ namespace neko {
 
         auto assetIndexJson = nlohmann::json::parse(std::ifstream(installPath + "/assets/indexes/" + versionJson["assetIndex"]["id"].get<std::string>() + ".json"), nullptr, false);
 
-        ui::loadMsg msg{ui::loadMsg::Progress, "Downloading libraries"};
+        neko::ui::loadMsg msg{neko::ui::loadMsg::Progress, "Downloading libraries"};
         msg.progressMax = (libSize + assetIndexJson.size());
         loadFunc(msg);
 
@@ -180,7 +180,7 @@ namespace neko {
     }
     
     // Should not be called from the main thread, as it will block the incoming thread until completion.
-    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(const ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
+    inline void installMinecraft(const std::string &installPath = "./.minecraft", const std::string &targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(const neko::ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         std::string EnterMsg = std::string("Enter , downloadSource : ") + std::string(downloadSourceMap.at(downloadSource)) + ", installPath : " + installPath + ", targetVersion : " + targetVersion;
         nlog::autoLog log{FI, LI, FN, EnterMsg};
 

@@ -11,7 +11,7 @@
 #include <QtGui/QScreen>
 #include <QtGui/QTextCharFormat>
 
-namespace ui {
+namespace neko::ui {
 
     class LogViewer : public QWidget {
         Q_OBJECT
@@ -60,4 +60,4 @@ namespace ui {
         QTextEdit *textEdit;
     };
 
-} // namespace ui
+} // namespace neko::ui

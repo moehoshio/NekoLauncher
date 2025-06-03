@@ -28,16 +28,16 @@ int main(int argc, char *argv[]) {
 
         // Create the main window
         neko::ClientConfig config(exec::getConfigObj());
-        ui::MainWindow w(config);
+        neko::ui::MainWindow w(config);
 
         // Show loading message
-        w.showLoad({ui::loadMsg::OnlyRaw,
+        w.showLoad({neko::ui::loadMsg::OnlyRaw,
                     neko::info::translations(neko::info::lang.network.testtingNetwork)});
         w.show();
 
         // Callback functions for showing hints and loading messages
-        auto hintFunc = [=, &w](const ui::hintMsg &m) { emit w.showHintD(m); };
-        auto loadFunc = [=, &w](const ui::loadMsg &m) { emit w.showLoadD(m); };
+        auto hintFunc = [=, &w](const neko::ui::hintMsg &m) { emit w.showHintD(m); };
+        auto loadFunc = [=, &w](const neko::ui::loadMsg &m) { emit w.showLoadD(m); };
         auto setLoadInfo = [=, &w](unsigned int val, const char *msg) {
             emit w.setLoadingValD(val);
             if (msg)
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 
             // If the update is complete or there are no updates, show the homepage
             if (neko::autoUpdate(hintFunc, loadFunc, setLoadInfo) == neko::State::Completed) {
-                emit w.showPageD(ui::MainWindow::pageState::index);
+                emit w.showPageD(neko::ui::MainWindow::pageState::index);
             } else {
                 QApplication::quit();
             }
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
         // If execution reaches this point, it means the program has exited.
         if (config.dev.enable && config.dev.debug) {
-            ui::LogViewer logViewer(QString::fromStdString(neko::info::workPath() + "/logs/new-debug.log"));
+            neko::ui::LogViewer logViewer(QString::fromStdString(neko::info::workPath() + "/logs/new-debug.log"));
             logViewer.setWindowTitle("NekoLauncher Developer Debug Log");
             logViewer.show();
             app.exec();

@@ -52,7 +52,7 @@
 #include <QtGui/QScreen>
 
 
-namespace ui {
+namespace neko::ui {
 
     class ToolBar : public QToolBar {
         Q_OBJECT
@@ -683,4 +683,4 @@ namespace ui {
         void winShowHideD(bool check);
     };
 
-} // namespace ui
+} // namespace neko::ui

@@ -14,7 +14,7 @@
 
 namespace neko {
 
-    inline void launcherMinecraft(ClientConfig cfg, std::function<void(const ui::hintMsg &)> hintFunc, std::function<void()> onStart, std::function<void(int)> onExit) {
+    inline void launcherMinecraft(ClientConfig cfg, std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void()> onStart, std::function<void(int)> onExit) {
         nlog::autoLog log{FI, LI, FN};
         // /.minecraft
         std::string minecraftDir;

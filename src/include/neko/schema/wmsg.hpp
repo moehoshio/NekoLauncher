@@ -6,7 +6,7 @@
 #include <vector>
 #include <functional>
 
-namespace ui {
+namespace neko::ui {
 
     struct InputMsg {
         std::string title,
@@ -55,4 +55,4 @@ namespace ui {
         // hintMsg(const std::string & title,const std::string &msg,const std::string &poster,int buttonType,std::function<void(bool)> callback) : title(title),msg(msg),poster(poster),buttonType(buttonType),callback(callback){};
     };
     
-} // namespace ui
+} // namespace neko::ui

@@ -80,7 +80,7 @@ namespace neko {
 
     // Return file name, if the download fails a null T value.
     template <typename T = std::string>
-    inline T downloadPoster(std::function<void(const ui::hintMsg &)> hintFunc, const std::string &url) {
+    inline T downloadPoster(std::function<void(const neko::ui::hintMsg &)> hintFunc, const std::string &url) {
         if (!url.empty()) {
             network net;
             auto fileName = info::tempDir() + "/update_" + exec::generateRandomString(12) + ".png";
@@ -99,10 +99,10 @@ namespace neko {
         return T();
     }
 
-    inline State checkMaintenance(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int, const char *)> setLoadInfoFunc) {
+    inline State checkMaintenance(std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void(const neko::ui::loadMsg &)> loadFunc, std::function<void(unsigned int, const char *)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
 
-        loadFunc({ui::loadMsg::Type::OnlyRaw, info::translations(info::lang.loading.maintenanceInfoReq)});
+        loadFunc({neko::ui::loadMsg::Type::OnlyRaw, info::translations(info::lang.loading.maintenanceInfoReq)});
 
         std::string res;
         std::mutex mtx;
@@ -194,7 +194,7 @@ namespace neko {
         setLoadInfoFunc(0, info::translations(info::lang.loading.downloadMaintenancePoster).c_str());
         auto fileName = downloadPoster(hintFunc, poster);
 
-        ui::hintMsg hmsg{info::translations(info::lang.title.maintenance), msg, fileName, 1, [link](bool) {
+        neko::ui::hintMsg hmsg{info::translations(info::lang.title.maintenance), msg, fileName, 1, [link](bool) {
                              QDesktopServices::openUrl(QUrl(link.c_str()));
                              QApplication::quit();
                          }};
@@ -272,7 +272,7 @@ namespace neko {
         return info;
     }
 
-    inline State autoUpdate(std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
+    inline State autoUpdate(std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void(const ui::loadMsg &)> loadFunc, std::function<void(unsigned int val, const char *msg)> setLoadInfoFunc) {
         nlog::autoLog log{FI, LI, FN};
         std::string res;
 
@@ -315,7 +315,7 @@ namespace neko {
             }
         }
 
-        ui::loadMsg lmsg{ui::loadMsg::All, info::translations(info::lang.loading.settingDownload), data.Title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
+        neko::ui::loadMsg lmsg{neko::ui::loadMsg::All, info::translations(info::lang.loading.settingDownload), data.Title, data.time, data.msg, fileName, 100, 0, static_cast<int>(data.urls.size() * 2)};
         loadFunc(lmsg);
 
         std::vector<std::future<neko::State>> result;

@@ -16,7 +16,7 @@
 
 namespace neko
 {
-    inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const ui::hintMsg &)> hintFunc = nullptr, std::function<void(const ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
+    inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const neko::ui::hintMsg &)> hintFunc = nullptr, std::function<void(const neko::ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         std::string resVer = (cfg.more.resourceVersion) ? std::string(cfg.more.resourceVersion) : std::string();
         if (resVer.empty()) {
             // Customize your installation logic, resource version needs to be stored after installation
@@ -26,7 +26,7 @@ namespace neko
             std::unique_lock<std::mutex> lock(mtx);
             while (!stop) {
                 try {
-                    loadFunc({ui::loadMsg::OnlyRaw, info::translations(info::lang.general.installMinecraft)});
+                    loadFunc({neko::ui::loadMsg::OnlyRaw, info::translations(info::lang.general.installMinecraft)});
                     installMinecraft("./.minecraft", "1.16.5", DownloadSource::Official, hintFunc, loadFunc, setLoadInfo);
                     cfg.more.resourceVersion = "v0.0.1";
                     cfg.save(exec::getConfigObj(), info::getConfigFileName(), cfg);

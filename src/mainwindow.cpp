@@ -13,7 +13,7 @@
 #include "library/nlohmann/json.hpp"
 
 #include <filesystem>
-namespace ui {
+namespace neko::ui {
 
     MainWindow::SettingPageOne::SettingPageOne(QWidget *parent) : QWidget(parent) {
         accountGroup = new QGroupBox(this);
@@ -256,7 +256,7 @@ namespace ui {
         pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
 
-    ui::MainWindow::SettingPageThree::SettingPageThree(QWidget *parent) : QWidget(parent) {
+    MainWindow::SettingPageThree::SettingPageThree(QWidget *parent) : QWidget(parent) {
         scrollContent = new QWidget();
         pageScrollArea = new QScrollArea(this);
         scrollLayout = new QVBoxLayout(scrollContent);
@@ -1390,6 +1390,6 @@ namespace ui {
         return QMainWindow::event(event);
     }
 
-} // namespace ui
+} // namespace neko::ui
 
 #include "neko/ui/moc_mainwindow.cpp"

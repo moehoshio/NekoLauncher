@@ -18,7 +18,7 @@
 
 namespace neko
 {
-    inline bool launcherMinecraftTokenValidate(std::function<void(const ui::hintMsg &)> hintFunc) {
+    inline bool launcherMinecraftTokenValidate(std::function<void(const neko::ui::hintMsg &)> hintFunc) {
         nlog::autoLog log{FI, LI, FN};
         network net;
         auto url = networkBase::buildUrl(neko::networkBase::Api::Authlib::validate, neko::networkBase::Api::Authlib::host);
@@ -69,7 +69,7 @@ namespace neko
         return true;
     }
 
-    inline void launcherMinecraftAuthlibAndPrefetchedCheck(std::function<void(const ui::hintMsg &)> hintFunc) {
+    inline void launcherMinecraftAuthlibAndPrefetchedCheck(std::function<void(const neko::ui::hintMsg &)> hintFunc) {
         nlog::autoLog log{FI, LI, FN};
         std::string authlibPrefetched = exec::getConfigObj().GetValue("minecraft", "authlibPrefetched", "");
         if (!authlibPrefetched.empty())
@@ -98,7 +98,7 @@ namespace neko
     }
 
     
-    inline State authLogin(const std::vector<std::string> &inData, std::function<void(const ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
+    inline State authLogin(const std::vector<std::string> &inData, std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
         nlog::autoLog log{FI, LI, FN};
         if (inData.size() < 2)
             return State::ActionNeeded;

@@ -13,7 +13,7 @@
 namespace neko
 {
         // Called when the user clicks.
-    inline void launcher(std::function<void(const ui::hintMsg &)> hintFunc,std::function<void()> onStart, std::function<void(int)> onExit) {
+    inline void launcher(std::function<void(const neko::ui::hintMsg &)> hintFunc,std::function<void()> onStart, std::function<void(int)> onExit) {
         nlog::autoLog log{FI, LI, FN};
         
         if constexpr (std::string_view("custom") == launcherMode) {
