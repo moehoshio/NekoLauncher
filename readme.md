@@ -65,9 +65,11 @@ build.bat
 cp CmakeListsCopy.txt CmakeLists.txt
 
 # fill path for your
-cmake . -B./build -DCMAKE_PREFIX_PATH="qt path and package" -DLIBRARY_DIRS="package path(opt)" -DQt6="qt path(opt)" -DCMAKE_BUILD_TYPE="Debug or Release (opt)"
+cmake . -B./build -DLIBRARY_DIRS="Package path (e.g /to/path/vcpkg/installed/x64-windows)" -DQt6_DIR="Qt path (e.g /to/path/Qt/6.6.1/msvc_2019_64)" -DCMAKE_BUILD_TYPE="Debug or Release(Default)"
 
 cmake --build ./build --config Release
+
+cmake --install ./build --config Release --prefix ~/NekoLc
 ```
 
 In addition, the working directory needs to contain the following files:  

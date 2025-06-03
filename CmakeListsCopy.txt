@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
-project(NekoLc)
+project(NekoLc LANGUAGES CXX)
 
+# Package path. e.g. vcpkg
+set(LIBRARY_DIRS "C:/dev/vcpkg/installed/x64-windows")
+# Qt path
+set(Qt6_DIR "C:/Qt/6.6.1/msvc2019_64")
+
+# Note: Use ':' as the separator on Unix systems
+set(CMAKE_PREFIX_PATH "${Qt6_DIR};${LIBRARY_DIRS}") 
+
+
+# Src files
 list(APPEND SRCFILES
-    
     # To ensure that qt moc can locate this file
     src/include/neko/log/logviewer.hpp 
     src/include/neko/ui/mainwindow.hpp
@@ -14,35 +23,33 @@ list(APPEND SRCFILES
     src/network.cpp
     src/info.cpp
     src/main.cpp
-
 )
 
-# package path
-set(LIBRARY_DIRS "C:/dev/vcpkg/installed/x64-windows")
-
-# qt path
-set(Qt6_DIR "C:/Qt/qt6.6/6.6.1/msvc2019_64")
-
-
-
+# Include directories
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
     ${CMAKE_SOURCE_DIR}/src/include/library
-    ${Qt6_DIR}/include
     ${LIBRARY_DIRS}/include
+    ${Qt6_DIR}/include
 )
 
-set(CMAKE_PREFIX_PATH "${Qt6_DIR};${LIBRARY_DIRS}")
-
-# Debug or Release
-set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_AUTOMOC ON)
 
+# If not specified, set the default build type to Release
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+
+# Find required packages
+# Note: Make sure you have installed the required packages via vcpkg or manually installed and linked them
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(boost_process REQUIRED CONFIG)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+
 
 # Get the git commit hash
 # This is used to set the GIT_BUILD_ID macro for the application
@@ -55,36 +62,83 @@ execute_process(
 add_definitions(-DGIT_BUILD_ID="${GIT_COMMIT_HASH}")
 
 
+
+# Add the executable target
 add_executable(NekoLc ${SRCFILES})
 
 
+# Set the target properties
 target_include_directories(NekoLc PRIVATE ${INCLUDE_DIRS})
 target_compile_features(NekoLc PRIVATE cxx_std_20)
 
-
-target_link_libraries(NekoLc PRIVATE 
-# qt
-Qt6::Core Qt6::Widgets Qt6::Gui
-# openssl
-OpenSSL::SSL OpenSSL::Crypto
-# libcurl
-CURL::libcurl
-# boost process
-Boost::process
+target_compile_options(NekoLc PRIVATE
+    $<$<CONFIG:Debug>:-DDEBUG>
 )
 
+
+
+# Link libraries
+target_link_libraries(NekoLc PRIVATE 
+    # Qt
+    Qt6::Core Qt6::Widgets Qt6::Gui
+    # OpenSSL
+    OpenSSL::SSL OpenSSL::Crypto
+    # libcurl
+    CURL::libcurl
+    # Boost
+    Boost::system Boost::process
+)
+
+
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+
     # Set not to use the console window And add icon resource
     if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
         set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
         target_sources(NekoLc PRIVATE resource/win/icon.rc)
     endif()
 
-elseif(CMAKE_SYSTEM_NAME STREQUAL "MacOS")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+
     # Set the application bundle properties for macOS
     set_target_properties(NekoLc PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
+        MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
     )
+    set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/mac/NekoLc.icns)
+    target_sources(NekoLc PRIVATE ${MACOSX_ICON})
+    set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+
+# For Linux ...
 
 endif() # os
+        
+
+
+# Install rules
+install(TARGETS NekoLc
+    RUNTIME DESTINATION .
+    BUNDLE DESTINATION .
+)
+
+# Install configuration and resource files
+install(FILES ${CMAKE_SOURCE_DIR}/src/config.ini
+    DESTINATION .
+)
+
+# Install language files
+install(FILES 
+    ${CMAKE_SOURCE_DIR}/src/lang/en.json
+    ${CMAKE_SOURCE_DIR}/src/lang/zh_tw.json
+    ${CMAKE_SOURCE_DIR}/src/lang/zh_cn.json
+    DESTINATION lang
+)
+
+# Install image files
+install(FILES ${CMAKE_SOURCE_DIR}/resource/img/loading.gif
+    DESTINATION img
+)

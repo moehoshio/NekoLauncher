@@ -65,9 +65,11 @@ build.bat
 cp CmakeListsCopy.txt CmakeLists.txt
 
 # 填寫你的路徑
-cmake . -B./build -DCMAKE_PREFIX_PATH="qt 路徑與套件" -DLIBRARY_DIRS="套件路徑(選填)" -DQt6="qt 路徑(選填)" -DCMAKE_BUILD_TYPE="Debug 或 Release (選填)"
+cmake . -B./build -DLIBRARY_DIRS="套件路徑 (列如：/to/path/vcpkg/installed/x64-windows)" -DQt6="Qt路徑 （列如：/to/path/Qt/6.6.1/msvc_2019_64）" -DCMAKE_BUILD_TYPE="Debug 或 Release(默認)"
 
 cmake --build ./build --config Release
+
+cmake --install ./build --config Release --prefix ~/NekoLc
 ```
 
 此外，工作目錄還需要包含以下檔案：  
