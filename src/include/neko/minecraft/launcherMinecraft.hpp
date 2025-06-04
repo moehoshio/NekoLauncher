@@ -276,7 +276,7 @@ namespace neko {
                     nlog::Err(FI, LI, "%s : faild to archives patch download , file : %s , url : %s ", FN, single.path.c_str(), single.url.c_str());
                     return false;
                 }
-                auto hash = exec::hashFile(single.path, exec::hashs::Algorithm::sha1);
+                auto hash = exec::hashFile(single.path, exec::hash::Algorithm::sha1);
                 if (hash != single.sha1) {
                     hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftPatchDownloadHash), "", 1});
                     nlog::Err(FI, LI, "%s : faild to archives patch download , file : %s , ex sha1 : %s , sha1 : %s , size : %zu , url : %s", FN, single.path.c_str(), hash.c_str(), single.sha1.c_str(), single.size, single.url.c_str());
@@ -287,7 +287,7 @@ namespace neko {
 
             for (const auto &it : vec) {
                 if (std::filesystem::exists(it.path)) {
-                    auto hash = exec::hashFile(it.path, exec::hashs::Algorithm::sha1);
+                    auto hash = exec::hashFile(it.path, exec::hash::Algorithm::sha1);
                     if (hash != it.sha1) {
                         nlog::Info(FI, LI, "%s : archives exists but hash not match , ex sha1 : %s , sha1 : %s ", FN, it.sha1.c_str(), hash.c_str());
                         if (!downloadTask(it))

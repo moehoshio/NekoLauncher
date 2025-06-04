@@ -56,7 +56,7 @@ SOFTWARE.
 #include <unordered_map>
 #endif
 
-namespace neko::operator {
+namespace neko::operator{
 
     constexpr inline decltype(auto) operator|(auto &&val, auto &&func) {
         return func(std::forward<decltype(val)>(val));
@@ -85,7 +85,7 @@ namespace neko::exec {
 
 #if defined(_USE_OPENSSL)
 
-    namespace hashs {
+    namespace hash {
         enum class Algorithm {
             none,
             md5,
@@ -93,73 +93,71 @@ namespace neko::exec {
             sha256,
             sha512
         };
+
+        inline std::unordered_map<hash::Algorithm, std::string> hashAlgorithmMap = {
+            {hash::Algorithm::md5, "md5"},
+            {hash::Algorithm::sha1, "sha1"},
+            {hash::Algorithm::sha256, "sha256"},
+            {hash::Algorithm::sha512, "sha512"}};
+
+        inline auto mapAlgorithm(const std::string &str) {
+            for (auto it : hashAlgorithmMap) {
+                if (it.second == str) {
+                    return it.first;
+                }
+            }
+            return hash::Algorithm::none;
+        }
+        inline auto mapAlgorithm(hash::Algorithm algortihm) {
+            for (auto it : hashAlgorithmMap) {
+                if (it.first == algortihm) {
+                    return it.second;
+                }
+            }
+            return std::string("unknown");
+        }
+
+        inline std::string hashStr(const std::string str, hash::Algorithm algorithm = hash::Algorithm::sha256) {
+            const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
+            unsigned char outBuf[128];
+            int condLen = 0;
+            switch (algorithm) {
+                case hash::Algorithm::sha1:
+                    SHA1(unsignedData, str.size(), outBuf);
+                    condLen = SHA_DIGEST_LENGTH;
+                    break;
+                case hash::Algorithm::sha256:
+                    SHA256(unsignedData, str.size(), outBuf);
+                    condLen = SHA256_DIGEST_LENGTH;
+                    break;
+                case hash::Algorithm::sha512:
+                    SHA512(unsignedData, str.size(), outBuf);
+                    condLen = SHA512_DIGEST_LENGTH;
+                    break;
+                case hash::Algorithm::md5:
+                    MD5(unsignedData, str.size(), outBuf);
+                    condLen = MD5_DIGEST_LENGTH;
+                    break;
+                default:
+                    break;
+            }
+            std::stringstream ssRes;
+            for (int i = 0; i < condLen; ++i) {
+                ssRes << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(outBuf[i]);
+            }
+            return ssRes.str();
+        }
+
+        inline std::string hashFile(const std::string &name, hash::Algorithm algorithm = hash::Algorithm::sha256) {
+            std::ifstream file(name, std::ios::binary);
+            std::string raw((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            return hashStr(raw, algorithm);
+        }
+
+        inline std::string hash(const std::string &hash, bool isFileName = false, hash::Algorithm algorithm = hash::Algorithm::sha256) {
+            return (isFileName) ? hashFile(hash, algorithm) : hashStr(hash, algorithm);
+        }
     } // namespace hashs
-
-    using namespace std::literals;
-    inline std::unordered_map<hashs::Algorithm, std::string> hashAlgorithmMap = {
-        {hashs::Algorithm::md5, "md5"s},
-        {hashs::Algorithm::sha1, "sha1"s},
-        {hashs::Algorithm::sha256, "sha256"s},
-        {hashs::Algorithm::sha512, "sha512"s}};
-
-    inline auto mapAlgorithm(const std::string &str) {
-        for (auto it : hashAlgorithmMap) {
-            if (it.second == str) {
-                return it.first;
-            }
-        }
-        return hashs::Algorithm::none;
-    }
-    inline auto mapAlgorithm(hashs::Algorithm algortihm) {
-        for (auto it : hashAlgorithmMap) {
-            if (it.first == algortihm) {
-                return it.second;
-            }
-        }
-        return std::string("unknown");
-    }
-
-    inline std::string hashStr(const std::string str, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
-        const unsigned char *unsignedData = reinterpret_cast<const unsigned char *>(str.c_str());
-        unsigned char outBuf[128];
-        int condLen = 0;
-        switch (algorithm) {
-            case hashs::Algorithm::sha1:
-                SHA1(unsignedData, str.size(), outBuf);
-                condLen = SHA_DIGEST_LENGTH;
-                break;
-            case hashs::Algorithm::sha256:
-                SHA256(unsignedData, str.size(), outBuf);
-                condLen = SHA256_DIGEST_LENGTH;
-                break;
-            case hashs::Algorithm::sha512:
-                SHA512(unsignedData, str.size(), outBuf);
-                condLen = SHA512_DIGEST_LENGTH;
-                break;
-            case hashs::Algorithm::md5:
-                MD5(unsignedData, str.size(), outBuf);
-                condLen = MD5_DIGEST_LENGTH;
-                break;
-            default:
-                break;
-        }
-        std::stringstream ssRes;
-        for (int i = 0; i < condLen; ++i) {
-            ssRes << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(outBuf[i]);
-        }
-        return ssRes.str();
-    }
-
-    inline std::string hashFile(const std::string &name, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
-        std::ifstream file(name, std::ios::binary);
-        std::string raw((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        return hashStr(raw, algorithm);
-    }
-
-    inline std::string hash(const std::string &hash, bool isFileName = false, hashs::Algorithm algorithm = hashs::Algorithm::sha256) {
-        return (isFileName) ? hashFile(hash, algorithm) : hashStr(hash, algorithm);
-    }
-
 #endif // use openssl
 
     inline std::string base64Chars =
