@@ -8,70 +8,86 @@
 
 #include <filesystem>
 
-namespace neko {
+namespace neko::init {
 
-    inline void setLog(int argc, char *argv[], ClientConfig cfg) {
+    inline void initLog(int argc, char *argv[], const ClientConfig& cfg) {
+
+        loguru::init(argc, argv);
+
         bool
             dev = cfg.dev.enable,
             debug = cfg.dev.debug;
-        if (!dev)
-            return;
 
-        // loguru::g_stderr_verbosity = loguru::Verbosity_OFF; // Avoid output to console
+        if (!std::filesystem::exists("logs")) {
+            std::filesystem::create_directory("logs");
+        }
 
-        if (!debug) {
-            std::string file_name = exec::sum<std::string>("logs/", exec::getTimeString(), ".log");
+        if (!dev) {
+            loguru::g_stderr_verbosity = loguru::Verbosity_OFF; // Avoid output to console
 
-            try {
-                oneIof file(file_name, file_name, std::ios::out);
-            } catch (...) {}
-
-            // If there is a callback, the user can be notified
-            (void)loguru::add_file(file_name.c_str(), loguru::Append, loguru::Verbosity_WARNING);
-
+            std::fstream file("logs/error.log", std::ios::out);
+            (void)loguru::add_file("logs/error.log", loguru::Append, loguru::Verbosity_ERROR);
             return;
         }
 
-        loguru::init(argc, argv);
-        const char *file_name[]{"logs/debug.log", "logs/new-debug.log"};
+        if (dev && !debug) {
+            std::string fileName = exec::sum<std::string>("logs/", exec::getTimeString(), ".log");
 
-        for (auto path : file_name) {
-            if (!std::filesystem::exists(std::filesystem::path(path))) {
-
-                try {
-                    oneIof file(path, path, std::ios::out);
-                } catch (...) {}
+            std::fstream file(fileName, std::ios::out);
+            if (file.is_open()) {
+                file.close();
             }
 
-            loguru::FileMode mode = (path == std::string_view("logs/new-debug.log")) ? loguru::Truncate : loguru::Append;
-            // If there is a callback, the user can be notified
-            (void)loguru::add_file(path, mode, loguru::Verbosity_6);
+            (void)loguru::add_file(file_name.c_str(), loguru::Append, loguru::Verbosity_INFO);
+            return;
+        }
+
+        if (dev && debug) {
+            loguru::g_stderr_verbosity = loguru::Verbosity_9; // Output to console
+
+            const char *debugFileName = "logs/debug.log";
+            const char *newDebugFileName = "logs/new-debug.log";
+
+            for (auto path : std::array{debugFileName, newDebugFileName}) {
+                if (!std::filesystem::exists(std::filesystem::path(path))) {
+                    std::fstream file(path, std::ios::out);
+                    if (file.is_open()) {
+                        file.close();
+                    }
+                }
+            }
+
+            (void)loguru::add_file(debugFileName, loguru::Append, loguru::Verbosity_9);
+            (void)loguru::add_file(newDebugFileName, loguru::Truncate, loguru::Verbosity_9);
+            return;
         }
     }
 
-    inline void setLogThreadName() {
+    inline void initThreadName() {
         size_t nums = exec::getThreadObj().get_thread_nums();
-        nlog::autoLog log{FI, LI, FN, "threadNums : " + std::to_string(nums)};
+        nlog::autoLog log{FI, LI, FN, "init threadNums : " + std::to_string(nums)};
 
         for (size_t i = 0; i < nums; ++i) {
             exec::getThreadObj().enqueue(
                 [i_str = std::to_string(i + 1)]() {
-
                     loguru::set_thread_name((std::string("thread ") + i_str).c_str());
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    
+                    // Wait some time to ensure the thread name is set
+                    // If a thread finishes its work too quickly, it may repeatedly enter work and prevent other threads from setting their names correctly
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100)); 
 
                     nlog::Info(FI, LI, "%s : Hello thread %s", FN, i_str.c_str());
                 });
         }
     }
 
-    inline void setThreadNums(ClientConfig cfg) {
-        if (cfg.net.thread > 0)
-            exec::getThreadObj().set_pool_size(static_cast<size_t>(cfg.net.thread));
-        nlog::Info(FI, LI, "%s : End. expect thread nums : %d ", FN, cfg.net.thread);
+    inline void setThreadNums(int nums) {
+        nlog::Info(FI, LI, "%s : set threadNums : %d (if nums <= 0, use hardware_concurrency)", FN, nums);
+        if (nums > 0)
+            exec::getThreadObj().set_pool_size(static_cast<size_t>(nums));
     }
 
-    inline void configInfoPrint(ClientConfig config) {
+    inline void configInfoPrint(const ClientConfig & config) {
         nlog::Info(FI, LI, "%s : config main : lang : %s , bgType : %s , bg : %s , windowSize : %s , launcherMode : %d ,  useSysWinodwFrame: %s , barKeepRight : %s ", FN, config.main.lang, config.main.bgType, config.main.bg, config.main.windowSize, config.main.launcherMode, exec::boolTo<const char *>(config.main.useSysWindowFrame), exec::boolTo<const char *>(config.main.barKeepRight));
         nlog::Info(FI, LI, "%s : config net : thread : %d , proxy : %s", FN, config.net.thread, config.net.proxy);
         nlog::Info(FI, LI, "%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ", FN, config.style.blurHint, config.style.blurValue, config.style.fontPointSize, config.style.fontFamilies);
@@ -82,20 +98,23 @@ namespace neko {
 
     inline auto autoInit(int argc, char *argv[]) {
 
-        if (exec::getConfigObj().LoadFile(info::getConfigFileName()) < 0)
-            oneIof o("loadConfigBad.txt"); // If there is a callback, the user can be notified
+        // If loading the configuration file fails, all options will use default values
+        exec::getConfigObj().LoadFile(info::getConfigFileName())
 
-        ClientConfig cfg(exec::getConfigObj());
+        neko::ClientConfig cfg(exec::getConfigObj());
 
-        setLog(argc, argv, cfg);
-        setThreadNums(cfg);
-        setLogThreadName();
+        initLog(argc, argv, cfg);
 
+        setThreadNums(cfg.net.thread);
+        initThreadName();
+
+        // Enable error logging
         nerr::Error::enableLogger = true;
+
         info::language(cfg.main.lang);
 
         configInfoPrint(cfg);
-        
-        return networkBase::init();
+
+        return neko::network::networkBase::init();
     };
-} // namespace neko
+} // namespace neko::init
