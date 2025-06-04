@@ -56,7 +56,7 @@ SOFTWARE.
 #include <unordered_map>
 #endif
 
-namespace neko {
+namespace neko::operator {
 
     constexpr inline decltype(auto) operator|(auto &&val, auto &&func) {
         return func(std::forward<decltype(val)>(val));
@@ -67,9 +67,9 @@ namespace neko {
         return func(std::forward<std::initializer_list<T>>(val));
     }
 
-} // namespace neko
+} // namespace neko::operator
 
-namespace exec {
+namespace neko::exec {
 
     // NekoLc Project Customization
     inline neko::ThreadPool &getThreadObj() {
@@ -401,4 +401,4 @@ namespace exec {
         }
         return v;
     }
-} // namespace exec
+} // namespace neko::exec
