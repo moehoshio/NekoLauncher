@@ -2,23 +2,20 @@
 
 #include "neko/function/exec.hpp"
 #include "neko/log/nlog.hpp"
-#include "neko/schema/nekodefine.hpp"
 #include "neko/schema/clientconfig.hpp"
+#include "neko/schema/nekodefine.hpp"
 
 #include "library/nlohmann/json.hpp"
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 
-namespace neko {
+namespace neko::info {
 
-    class info {
-    private:
-        struct Data {
+    namespace system {
 
-            constexpr static const char *version = NekoLcCoreVersionDefine;
-
-            constexpr static const char *configFileName = "config.ini";
+        struct PlatformInfo {
 
             constexpr static const char *osName =
 #if defined(_WIN32)
@@ -43,21 +40,20 @@ namespace neko {
 #else
                     "unknown";
 #endif
-        };
+        }; // class PlatformInfo
 
-    public:
-        inline static std::string tempDir(const std::string &setTempDir = "") {
+        inline std::string tempDir(const std::string &setTempDir = "") {
             static std::mutex mtx;
             std::lock_guard<std::mutex> lock(mtx);
 
-            auto init = []()-> std::string {
+            auto init = []() -> std::string {
                 ClientConfig cfg(exec::getConfigObj());
                 if (std::filesystem::is_directory(cfg.more.tempDir))
                     return std::string(cfg.more.tempDir) | exec::unifiedPaths;
                 else
                     return (std::filesystem::temp_directory_path().string() + "/Nekolc") | exec::unifiedPaths;
             };
-            
+
             static std::string tempDir = init();
 
             if (!setTempDir.empty() && std::filesystem::is_directory(setTempDir)) {
@@ -70,7 +66,7 @@ namespace neko {
             return tempDir;
         }
 
-        inline static std::string workPath(const std::string &setPath = "") {
+        inline std::string workPath(const std::string &setPath = "") {
             static std::mutex mtx;
             std::lock_guard<std::mutex> lock(mtx);
             if (!setPath.empty() && std::filesystem::is_directory(setPath))
@@ -79,7 +75,7 @@ namespace neko {
             return std::filesystem::current_path().string() | exec::unifiedPaths;
         }
 
-        inline static std::string getHome() {
+        inline std::string getHome() {
             const char *path = std::getenv(
 #ifdef _WIN32
                 "USERPROFILE"
@@ -92,43 +88,43 @@ namespace neko {
             return std::string();
         }
 
-        constexpr inline static auto getVersion() {
-            return Data::version;
+        constexpr inline const char * getOsName() {
+            return PlatformInfo::osName;
+        }
+
+        constexpr inline const char * getOsArch() {
+            return PlatformInfo::osArch;
+        }
+
+    } // namespace system
+
+    namespace app {
+
+        constexpr static const char *version = NekoLcCoreVersionDefine;
+
+        constexpr static const char *configFileName = "config.ini";
+
+        constexpr inline const char *getVersion() {
+            return version;
         };
 
-        inline static std::string getVersionS() {
-            return Data::version;
-        };
-        inline static std::string getResVersion() {
+        inline std::string getResVersion() {
             ClientConfig cfg(exec::getConfigObj());
             return cfg.more.resourceVersion;
         }
 
-        constexpr inline static auto getConfigFileName() {
-            return Data::configFileName;
+        constexpr inline const char *getConfigFileName() {
+            return configFileName;
         }
 
-        inline static std::string getConfigFileNameS() {
-            return Data::configFileName;
-        }
+    } // namespace app
 
-        constexpr inline static auto getOsName() {
-            return Data::osName;
-        }
-        inline static std::string getOsNameS() {
-            return Data::osName;
-        }
 
-        constexpr inline static auto getOsArch() {
-            return Data::osArch;
-        }
-        inline static std::string getOsArchS() {
-            return Data::osArch;
-        }
+    namespace lang {
 
         struct LanguageKey {
             struct General {
-                std::string
+                std::string_view
                     general = "general_general",
                     menu = "general_menu",
                     start = "general_start",
@@ -183,7 +179,7 @@ namespace neko {
                     installMinecraft = "general_installMinecraft";
             };
             struct Title {
-                std::string
+                std::string_view
                     error = "title_error",
                     warning = "title_warning",
                     maintenance = "title_maintenance",
@@ -193,12 +189,11 @@ namespace neko {
                     inputLogin = "title_inputLogin",
                     inputNotEnoughParameters = "title_inputNotEnoughParameters",
                     loginOrRegister = "title_loginOrRegister",
-                    logoutConfirm = "title_logoutConfirm"
-                    ;
+                    logoutConfirm = "title_logoutConfirm";
             };
 
             struct Loading {
-                std::string
+                std::string_view
                     maintenanceInfoReq = "loading_maintenanceInfoReq",
                     maintenanceInfoParse = "loading_maintenanceInfoParse",
                     downloadMaintenancePoster = "loading_downloadMaintenancePoster",
@@ -209,11 +204,11 @@ namespace neko {
                     downloadUpdate = "loading_downloadUpdate";
             };
             struct Network {
-                std::string
+                std::string_view
                     testtingNetwork = "network_testtingNetwork";
             };
             struct Error {
-                std::string
+                std::string_view
                     clickToRetry = "error_clickToRetry",
                     clickToQuit = "error_clickToQuit",
                     jsonParse = "error_jsonParse",
@@ -237,16 +232,17 @@ namespace neko {
                     minecraftMemoryNotEnough = "error_minecraftMemoryNotEnough";
             };
 
-            std::string language = "language";
+            std::string_view language = "language";
             General general;
             Title title;
             Loading loading;
             Network network;
             Error error;
         };
-        static LanguageKey lang;
 
-        inline static std::string language(const std::string &lang = "") {
+        constexpr inline LanguageKey lang;
+
+        inline std::string language(const std::string &lang = "") {
             static std::string preferredLanguage = "en";
 
             if (!lang.empty())
@@ -255,7 +251,7 @@ namespace neko {
             return preferredLanguage;
         }
 
-        inline static std::vector<std::string> getLanguages(const std::string &langPath = info::workPath() + "/lang/") {
+        inline std::vector<std::string> getLanguages(const std::string &langPath = info::workPath() + "/lang/") {
             std::vector<std::string> res;
             for (const auto &it : std::filesystem::directory_iterator(langPath)) {
                 if (it.is_regular_file() && exec::matchExtName(it.path().string(), "json")) {
@@ -267,8 +263,8 @@ namespace neko {
             return res;
         }
 
-        inline static nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langPath = info::workPath() + "/lang/") {
-            //cached lang
+        inline nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langPath = info::workPath() + "/lang/") {
+            // cached lang
             static std::string cachedLang;
             static std::string cachedLangPath;
             static nlohmann::json cachedJson;
@@ -289,7 +285,7 @@ namespace neko {
             return cachedJson;
         }
 
-        inline static std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
+        inline std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
             auto check = [&key](const nlohmann::json &obj) -> std::string {
                 if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
                     return "translation not found";
@@ -307,6 +303,6 @@ namespace neko {
             return res;
         }
 
-    }; // class info
+    } // namespace lang
 
-} // namespace neko
+} // namespace neko::info

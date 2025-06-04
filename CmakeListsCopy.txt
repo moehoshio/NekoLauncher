@@ -21,7 +21,6 @@ list(APPEND SRCFILES
     src/memoryinfo.cpp
     src/loguru.cpp
     src/network.cpp
-    src/info.cpp
     src/main.cpp
 )
 
