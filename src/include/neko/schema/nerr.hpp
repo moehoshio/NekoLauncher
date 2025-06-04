@@ -4,8 +4,9 @@
 
 #include <exception>
 
-// neko error
-namespace nerr {
+namespace nerr = neko::err;
+
+namespace neko::err {
 
 #if defined(nerrImpLoggerModeDefine) && __has_include("neko/log/nlog.hpp")
 #include "neko/log/nlog.hpp"
@@ -143,4 +144,4 @@ namespace nerr {
         ExternalLibrary(std::string Msg = "External library error!",bool logger = enableLogger) : Error(Msg,logger) {};
     };
 
-} // namespace nerr
+} // namespace neko::err
