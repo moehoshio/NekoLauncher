@@ -1,22 +1,64 @@
+/**
+ * @file info.hpp
+ * @brief Provides system, application and language information utilities.
+ * @author moehoshio
+ * @date 2025-06-05
+ *
+ * This header contains utilities for:
+ * - System information (OS, architecture, paths)
+ * - Application configuration and version information
+ * - Language/localization support
+ *
+ * @dependencies
+ * - exec.hpp: Used for path unification and file operations
+ * - nlog.hpp: Used for logging
+ * - clientconfig.hpp: Used for loading configuration
+ * - nekodefine.hpp: Contains version definitions
+ * - nlohmann/json.hpp: Used for JSON parsing in language support
+ */
 #pragma once
 
-#include "neko/function/exec.hpp"
+// Neko Modules
 #include "neko/log/nlog.hpp"
+
+#include "neko/function/exec.hpp"
+
 #include "neko/schema/clientconfig.hpp"
 #include "neko/schema/nekodefine.hpp"
 
 #include "library/nlohmann/json.hpp"
 
+// C++ Standard Library
 #include <filesystem>
 #include <string>
 #include <string_view>
 
+#include <optional>
+
+/**
+ * @namespace neko::info
+ * @brief Contains utilities for system, application and language information.
+ */
 namespace neko::info {
 
+    /**
+     * @namespace neko::info::system
+     * @brief System-related information and utilities.
+     */
     namespace system {
 
+        /**
+         * @struct PlatformInfo
+         * @brief Provides static platform identification information.
+         *
+         * Contains compile-time constants for operating system name and architecture.
+         */
         struct PlatformInfo {
 
+            /**
+             * @brief Operating system name identifier.
+             * @return String representing the OS ("windows", "osx", "linux", or "unknown")
+             */
             constexpr static const char *osName =
 #if defined(_WIN32)
                 "windows";
@@ -28,6 +70,10 @@ namespace neko::info {
                 "unknown";
 #endif
 
+            /**
+             * @brief CPU architecture identifier.
+             * @return String representing the architecture ("x64", "x86", "arm64", "arm", or "unknown")
+             */
             constexpr static const char *osArch =
 #if defined(__x86_64__) || defined(_M_X64)
                 "x64";
@@ -42,7 +88,15 @@ namespace neko::info {
 #endif
         }; // class PlatformInfo
 
-        inline std::string tempDir(const std::string &setTempDir = "") {
+        /**
+         * @brief Gets or sets the temporary directory path.
+         * @param setTempDir Optional parameter to set a new temporary directory.
+         * @return The current temporary directory path.
+         *
+         * @details Uses exec::unifiedPaths from exec.hpp for path normalization.
+         * Creates the directory if it doesn't exist.
+         */
+        inline std::string temporaryFolder(const std::string &setTempDir = "") {
             static std::mutex mtx;
             std::lock_guard<std::mutex> lock(mtx);
 
@@ -66,6 +120,13 @@ namespace neko::info {
             return tempDir;
         }
 
+        /**
+         * @brief Gets or sets the current working directory.
+         * @param setPath Optional parameter to set a new working directory.
+         * @return The current working directory path.
+         *
+         * @details Uses exec::unifiedPaths from exec.hpp for path normalization.
+         */
         inline std::string workPath(const std::string &setPath = "") {
             static std::mutex mtx;
             std::lock_guard<std::mutex> lock(mtx);
@@ -75,7 +136,14 @@ namespace neko::info {
             return std::filesystem::current_path().string() | exec::unifiedPaths;
         }
 
-        inline std::string getHome() {
+        /**
+         * @brief Gets the user's home directory.
+         * @return The path to the user's home directory.
+         *
+         * @details Uses exec::unifiedThePaths from exec.hpp for path normalization.
+         * Platform-specific implementation using environment variables.
+         */
+        inline std::optional<std::string> getHome() {
             const char *path = std::getenv(
 #ifdef _WIN32
                 "USERPROFILE"
@@ -85,44 +153,91 @@ namespace neko::info {
             );
             if (path)
                 return exec::unifiedThePaths<std::string>(path);
-            return std::string();
+            return std::nullopt;
         }
 
-        constexpr inline const char * getOsName() {
+        /**
+         * @brief Gets the operating system name.
+         * @return String identifier for the operating system.
+         */
+        constexpr inline const char *getOsName() {
             return PlatformInfo::osName;
         }
 
-        constexpr inline const char * getOsArch() {
+        /**
+         * @brief Gets the system architecture.
+         * @return String identifier for the CPU architecture.
+         */
+        constexpr inline const char *getOsArch() {
             return PlatformInfo::osArch;
         }
 
     } // namespace system
 
+    /**
+     * @namespace neko::info::app
+     * @brief Application-specific information and utilities.
+     */
     namespace app {
 
+        /**
+         * @brief The application version string.
+         * @details Defined in nekodefine.hpp.
+         */
         constexpr static const char *version = NekoLcCoreVersionDefine;
 
+        /**
+         * @brief The default configuration file name.
+         */
         constexpr static const char *configFileName = "config.ini";
 
+        /**
+         * @brief Gets the application version.
+         * @return The application version string.
+         */
         constexpr inline const char *getVersion() {
             return version;
         };
 
+        /**
+         * @brief Gets the resource version from configuration.
+         * @return The resource version string.
+         *
+         * @details Uses exec::getConfigObj from exec.hpp to access configuration.
+         */
         inline std::string getResVersion() {
             ClientConfig cfg(exec::getConfigObj());
             return cfg.more.resourceVersion;
         }
 
+        /**
+         * @brief Gets the configuration file name.
+         * @return The configuration file name.
+         */
         constexpr inline const char *getConfigFileName() {
             return configFileName;
         }
 
     } // namespace app
 
-
+    /**
+     * @namespace neko::info::lang
+     * @brief Language and localization utilities.
+     */
     namespace lang {
 
+        /**
+         * @struct LanguageKey
+         * @brief Contains all translation keys organized by category.
+         *
+         * Provides a structured way to access translation keys to ensure
+         * consistency across the application.
+         */
         struct LanguageKey {
+            /**
+             * @struct General
+             * @brief General-purpose UI translation keys.
+             */
             struct General {
                 std::string_view
                     general = "general_general",
@@ -178,6 +293,10 @@ namespace neko::info {
                     logoutConfirm = "general_logoutConfirm",
                     installMinecraft = "general_installMinecraft";
             };
+            /**
+             * @struct Title
+             * @brief Window and dialog title translation keys.
+             */
             struct Title {
                 std::string_view
                     error = "title_error",
@@ -192,6 +311,10 @@ namespace neko::info {
                     logoutConfirm = "title_logoutConfirm";
             };
 
+            /**
+             * @struct Loading
+             * @brief Loading-related message translation keys.
+             */
             struct Loading {
                 std::string_view
                     maintenanceInfoReq = "loading_maintenanceInfoReq",
@@ -203,10 +326,18 @@ namespace neko::info {
                     settingDownload = "loading_settingDownload",
                     downloadUpdate = "loading_downloadUpdate";
             };
+            /**
+             * @struct Network
+             * @brief Network-related message translation keys.
+             */
             struct Network {
                 std::string_view
                     testtingNetwork = "network_testtingNetwork";
             };
+            /**
+             * @struct Error
+             * @brief Error message translation keys.
+             */
             struct Error {
                 std::string_view
                     clickToRetry = "error_clickToRetry",
@@ -240,8 +371,18 @@ namespace neko::info {
             Error error;
         };
 
+        /**
+         * @brief Global language key instance.
+         */
         constexpr inline LanguageKey lang;
 
+        /**
+         * @brief Gets or sets the preferred language.
+         * @param lang Optional parameter to set a new preferred language.
+         * @return The current preferred language code.
+         *
+         * @details Defaults to "en" if no language is set.
+         */
         inline std::string language(const std::string &lang = "") {
             static std::string preferredLanguage = "en";
 
@@ -251,19 +392,47 @@ namespace neko::info {
             return preferredLanguage;
         }
 
-        inline std::vector<std::string> getLanguages(const std::string &langPath = info::workPath() + "/lang/") {
+        /**
+         * @brief Gets the path to the language directory.
+         * @return The path to the language directory.
+         *
+         * @details Uses info::workPath() from info.hpp to construct the path.
+         */
+        inline std::string getLanguageFolder() {
+            return info::system::workPath() + "/lang/";
+        }
+
+        /**
+         * @brief Gets a list of available language files.
+         * @param langPath Path to the directory containing language files.
+         * @return A vector of language codes.
+         *
+         * @details Uses exec::matchExtName from exec.hpp to filter JSON files.
+         * Uses nlog for logging information about found language files.
+         */
+        inline std::vector<std::string> getLanguages(const std::string &langPath = getLanguageFolder()) {
             std::vector<std::string> res;
             for (const auto &it : std::filesystem::directory_iterator(langPath)) {
                 if (it.is_regular_file() && exec::matchExtName(it.path().string(), "json")) {
                     std::string fileName = it.path().stem().string();
                     nlog::Info(FI, LI, "%s : lang file push : %s", FN, fileName.c_str());
-                    res.push_back(fileName | exec::move);
+                    res.push_back(fileName);
                 }
             }
             return res;
         }
 
-        inline nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langPath = info::workPath() + "/lang/") {
+        /**
+         * @brief Loads translation data from a language file.
+         * @param lang Language code to load.
+         * @param langPath Path to the directory containing language files.
+         * @return JSON object containing the translations.
+         *
+         * @details Caches the loaded language file to avoid repeated disk access.
+         * Falls back to an empty JSON object if the file cannot be loaded.
+         * Uses nlog for logging the loading process.
+         */
+        inline nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langPath = getLanguageFolder()) {
             // cached lang
             static std::string cachedLang;
             static std::string cachedLangPath;
@@ -285,6 +454,15 @@ namespace neko::info {
             return cachedJson;
         }
 
+        /**
+         * @brief Gets a translated string for a specific key.
+         * @param key The translation key to look up.
+         * @param langFile The JSON object containing translations.
+         * @return The translated string, or a fallback message if not found.
+         *
+         * @details Falls back to English if the key is not found in the specified language.
+         * Uses nlog for warning about missing translations.
+         */
         inline std::string translations(const std::string &key, const nlohmann::json &langFile = loadTranslations()) {
             auto check = [&key](const nlohmann::json &obj) -> std::string {
                 if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
@@ -296,7 +474,7 @@ namespace neko::info {
             auto res = check(langFile);
 
             if (res == "translation not found") {
-                nlog::Warn(FI, LI, "%s : faild to load key : %s for : %s , try to load default file", FN, key.c_str(), langFile.value("language", "Null").c_str());
+                nlog::Warn(FI, LI, "%s : Faild to load key : %s for : %s , try to load default file", FN, key.c_str(), langFile.value("language", "Empty lang").c_str());
                 return check(loadTranslations("en"));
             }
 
