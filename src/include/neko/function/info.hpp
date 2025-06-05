@@ -181,22 +181,11 @@ namespace neko::info {
     namespace app {
 
         /**
-         * @brief The application version string.
-         * @details Defined in nekodefine.hpp.
-         */
-        constexpr static const char *version = NekoLcCoreVersionDefine;
-
-        /**
-         * @brief The default configuration file name.
-         */
-        constexpr static const char *configFileName = "config.ini";
-
-        /**
          * @brief Gets the application version.
          * @return The application version string.
          */
         constexpr inline const char *getVersion() {
-            return version;
+            return schema::definitions::NekoLcCoreVersion;
         };
 
         /**
@@ -215,7 +204,7 @@ namespace neko::info {
          * @return The configuration file name.
          */
         constexpr inline const char *getConfigFileName() {
-            return configFileName;
+            return schema::definitions::clientConfigFileName;
         }
 
     } // namespace app

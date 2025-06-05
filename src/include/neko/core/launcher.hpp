@@ -16,7 +16,7 @@ namespace neko
     inline void launcher(std::function<void(const neko::ui::hintMsg &)> hintFunc,std::function<void()> onStart, std::function<void(int)> onExit) {
         nlog::autoLog log{FI, LI, FN};
         
-        if constexpr (std::string_view("custom") == launcherMode) {
+        if constexpr (std::string_view("custom") == schema::definitions::launcherMode) {
             // Custom launcher
             // auto customLauncher = exec::getConfigObj().getCustomLauncher();
             // if (customLauncher.empty()) {
@@ -27,7 +27,7 @@ namespace neko
             // launcherProcess(command, onStart, onExit);
         }
 
-        if constexpr (std::string_view("minecraft") == launcherMode) {
+        if constexpr (std::string_view("minecraft") == schema::definitions::launcherMode) {
             launcherMinecraftAuthlibAndPrefetchedCheck(hintFunc);
             if (!launcherMinecraftTokenValidate(hintFunc))
                 return;
