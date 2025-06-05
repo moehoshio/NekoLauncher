@@ -1,15 +1,28 @@
+/**
+ * @file autoinit.hpp
+ * @brief Initialization for NekoLauncher, including logging, thread pool, and configuration.
+ */
+
 #pragma once
 
 #include "neko/log/nlog.hpp"
 
+#include "neko/schema/types.hpp"
+#include "neko/schema/clientconfig.hpp"
+
 #include "neko/network/network.hpp"
 
-#include "neko/schema/clientconfig.hpp"
 
 #include <filesystem>
 
 namespace neko::init {
 
+    /**
+     * @brief Initialize the logging system based on configuration.
+     * @param argc Argument count from main().
+     * @param argv Argument vector from main().
+     * @param cfg Client configuration.
+     */
     inline void initLog(int argc, char *argv[], const ClientConfig& cfg) {
 
         loguru::init(argc, argv);
@@ -45,8 +58,8 @@ namespace neko::init {
         if (dev && debug) {
             loguru::g_stderr_verbosity = loguru::Verbosity_9; // Output to console
 
-            const char *debugFileName = "logs/debug.log";
-            const char *newDebugFileName = "logs/new-debug.log";
+            neko::cstr debugFileName = "logs/debug.log";
+            neko::cstr newDebugFileName = "logs/new-debug.log";
 
             for (auto path : std::array{debugFileName, newDebugFileName}) {
                 if (!std::filesystem::exists(std::filesystem::path(path))) {
@@ -63,11 +76,14 @@ namespace neko::init {
         }
     }
 
+    /**
+     * @brief Initialize thread names for the thread pool.
+     */
     inline void initThreadName() {
-        size_t nums = exec::getThreadObj().get_thread_nums();
+        neko::uint64 nums = exec::getThreadObj().get_thread_nums();
         nlog::autoLog log{FI, LI, FN, "init threadNums : " + std::to_string(nums)};
 
-        for (size_t i = 0; i < nums; ++i) {
+        for (neko::uint64 i = 0; i < nums; ++i) {
             exec::getThreadObj().enqueue(
                 [i_str = std::to_string(i + 1)]() {
                     loguru::set_thread_name((std::string("thread ") + i_str).c_str());
@@ -81,21 +97,36 @@ namespace neko::init {
         }
     }
 
+    /**
+     * @brief Set the number of threads in the thread pool.
+     * @param nums Number of threads to set. If <= 0, use hardware_concurrency.
+     */
     inline void setThreadNums(int nums) {
         nlog::Info(FI, LI, "%s : set threadNums : %d (if nums <= 0, use hardware_concurrency)", FN, nums);
         if (nums > 0)
-            exec::getThreadObj().set_pool_size(static_cast<size_t>(nums));
+            exec::getThreadObj().set_pool_size(static_cast<neko::uint64>(nums));
     }
 
+    /**
+     * @brief Print configuration information to the log.
+     * @param config The client configuration to print.
+     */
     inline void configInfoPrint(const ClientConfig & config) {
-        nlog::Info(FI, LI, "%s : config main : lang : %s , bgType : %s , bg : %s , windowSize : %s , launcherMode : %d ,  useSysWinodwFrame: %s , barKeepRight : %s ", FN, config.main.lang, config.main.bgType, config.main.bg, config.main.windowSize, config.main.launcherMode, exec::boolTo<const char *>(config.main.useSysWindowFrame), exec::boolTo<const char *>(config.main.barKeepRight));
+        nlog::Info(FI, LI, "%s : config main : lang : %s , bgType : %s , bg : %s , windowSize : %s , launcherMode : %d ,  useSysWinodwFrame: %s , barKeepRight : %s ", FN, config.main.lang, config.main.bgType, config.main.bg, config.main.windowSize, config.main.launcherMode, exec::boolTo<neko::cstr >(config.main.useSysWindowFrame), exec::boolTo<neko::cstr >(config.main.barKeepRight));
         nlog::Info(FI, LI, "%s : config net : thread : %d , proxy : %s", FN, config.net.thread, config.net.proxy);
         nlog::Info(FI, LI, "%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ", FN, config.style.blurHint, config.style.blurValue, config.style.fontPointSize, config.style.fontFamilies);
-        nlog::Info(FI, LI, "%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ", FN, exec::boolTo<const char *>(config.dev.enable), exec::boolTo<const char *>(config.dev.debug), config.dev.server, exec::boolTo<const char *>(config.dev.tls));
+        nlog::Info(FI, LI, "%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ", FN, exec::boolTo<neko::cstr >(config.dev.enable), exec::boolTo<neko::cstr >(config.dev.debug), config.dev.server, exec::boolTo<neko::cstr >(config.dev.tls));
         nlog::Info(FI, LI, "%s : config minecraft : account : %s , name : %s , uuid : %s , authlibPrefetched : %s ", FN, config.minecraft.account, config.minecraft.displayName, config.minecraft.uuid, config.minecraft.authlibPrefetched);
         nlog::Info(FI, LI, "%s : config more : temp : %s , resVersion : %s", FN, config.more.tempDir, config.more.resourceVersion);
     }
 
+    /**
+     * @brief Automatic initialization: configuration, logging, thread pool, language, etc.
+     * @param argc Number of arguments from main().
+     * @param argv Argument array from main().
+     * @return std::future<void> - Returns a std::future object indicating whether the network module initialization is complete.
+     * This function initializes the network module, sets global configuration, and tests the host.
+     */
     inline auto autoInit(int argc, char *argv[]) {
 
         // If loading the configuration file fails, all options will use default values
@@ -115,6 +146,6 @@ namespace neko::init {
 
         configInfoPrint(cfg);
 
-        return neko::network::networkBase::init();
+        return neko::network::NetworkBase::initialize();
     };
 } // namespace neko::init
