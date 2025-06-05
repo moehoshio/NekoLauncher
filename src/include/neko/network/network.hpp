@@ -8,6 +8,7 @@
 #pragma once
 
 // Neko Module
+#include "neko/schema/types.hpp"
 #include "neko/schema/nekodefine.hpp"
 
 // C++ STL
@@ -20,17 +21,14 @@
 
 #include <fstream>
 
-using CURL = void;
 
-namespace neko {
-
-
-    /**
-     * @defgroup network Network Module
-     * @brief This module provides network request handling functionality.
-     * @details The Network module provides classes and functions for making network requests, handling responses, and managing network configurations.
-     */
-    namespace network {
+/**
+ * @defgroup network Network Module
+ * @brief This module provides network request handling functionality.
+ * @details The Network module provides classes and functions for making network requests, handling responses, and managing network configurations.
+ * @namespace neko::network
+ */
+namespace neko::network {
 
         /**
          * @class NetworkBase
@@ -45,29 +43,29 @@ namespace neko {
         public:
             // API Definition
             struct Api {
-                constexpr static const char *hostList[] = {NetWorkHostListDefine};
+                constexpr static neko::cstr hostList[] = schema::definitions::NetWorkHostList;
 
                 // NekoLc API endpoints
-                constexpr static const char *mainenance = "/v1/api/maintenance";
-                constexpr static const char *checkUpdates = "/v1/api/checkUpdates";
-                constexpr static const char *feedback = "/v1/api/feedbacklog";
-                constexpr static const char *testing = "/v1/testing/ping";
+                constexpr static neko::cstr mainenance = "/v1/api/maintenance";
+                constexpr static neko::cstr checkUpdates = "/v1/api/checkUpdates";
+                constexpr static neko::cstr feedback = "/v1/api/feedbacklog";
+                constexpr static neko::cstr testing = "/v1/testing/ping";
 
                 // Minecraft Authlib Injector API endpoints
                 struct Authlib {
-                    constexpr static const char *host = NetWorkAuthlibHostDefine;
-                    constexpr static const char *root = "/api/yggdrasil";
-                    constexpr static const char *authenticate = "/api/yggdrasil/authserver/authenticate";
-                    constexpr static const char *refresh = "/api/yggdrasil/authserver/refresh";
-                    constexpr static const char *validate = "/api/yggdrasil/authserver/validate";
-                    constexpr static const char *invalidate = "/api/yggdrasil/authserver/invalidate";
-                    constexpr static const char *signout = "/api/yggdrasil/authserver/signout";
+                    constexpr static neko::cstr host = schema::definitions::NetWorkAuthlibHost;
+                    constexpr static neko::cstr root = "/api/yggdrasil";
+                    constexpr static neko::cstr authenticate = "/api/yggdrasil/authserver/authenticate";
+                    constexpr static neko::cstr refresh = "/api/yggdrasil/authserver/refresh";
+                    constexpr static neko::cstr validate = "/api/yggdrasil/authserver/validate";
+                    constexpr static neko::cstr invalidate = "/api/yggdrasil/authserver/invalidate";
+                    constexpr static neko::cstr signout = "/api/yggdrasil/authserver/signout";
 
                     struct Injector {
-                        constexpr static const char *downloadHost = "authlib-injector.yushi.moe";
-                        constexpr static const char *getVersionsList = "/artifacts.json";
-                        constexpr static const char *latest = "/artifact/latest.json";
-                        constexpr static const char *baseRoot = "/artifact"; // + /{build_number}.json
+                        constexpr static neko::cstr downloadHost = "authlib-injector.yushi.moe";
+                        constexpr static neko::cstr getVersionsList = "/artifacts.json";
+                        constexpr static neko::cstr latest = "/artifact/latest.json";
+                        constexpr static neko::cstr baseRoot = "/artifact"; // + /{build_number}.json
                     };
                     Injector injector;
                 };
@@ -96,7 +94,6 @@ namespace neko {
              * @brief Initialize the network module
              * @return std::future<void> - A future that will be ready when initialization is complete.
              * This function initializes the network module, including setting up global configurations and testing the host.
-             * It should be called before any network operations are performed.
              **/
             inline static std::future<void> initialize();
 
@@ -343,6 +340,8 @@ namespace neko {
             std::vector<int> successCodes = {200, 206};
         };
 
+        using CURL = void; // Placeholder for the actual CURL type, which is defined in the libcurl library.
+
         /**
          * @class Network
          * @brief Network request handling class that provides various network request methods.
@@ -455,5 +454,4 @@ namespace neko {
             void logRequestInfo(const RequestConfig &config);
         };
 
-    } // namespace network
-} // namespace neko
+} // namespace neko::network
