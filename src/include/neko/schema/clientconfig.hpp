@@ -1,46 +1,78 @@
-// client config class
+/**
+ * @file clientconfig.hpp
+ * @brief Client configuration class definition for NekoLauncher
+ */
 #pragma once
+
+#include "neko/schema/types.hpp"
 
 #include "library/SimpleIni/SimpleIni.h"
 
 namespace neko {
+    /**
+     * @brief Configuration structure for the NekoLauncher client
+     * 
+     * Stores all settings and preferences for the launcher application
+     */
     struct ClientConfig {
+        /**
+         * @brief Main launcher configuration settings
+         */
         struct Main {
-            const char *lang;
-            const char *bgType;
-            const char *bg;
-            const char *windowSize;
+            neko::cstr lang;
+            neko::cstr bgType;
+            neko::cstr bg;
+            neko::cstr windowSize;
             long launcherMode;
             bool useSysWindowFrame;
             bool barKeepRight;
         };
+
+        /**
+         * @brief Style and appearance settings
+         */
         struct Style {
             long blurHint;
             long blurValue;
             long fontPointSize;
-            const char *fontFamilies;
+            neko::cstr fontFamilies;
         };
 
+        /**
+         * @brief Network configuration settings
+         */
         struct Net {
             long thread;
-            const char *proxy;
+            neko::cstr proxy;
         };
+
+        /**
+         * @brief Developer options
+         */
         struct Dev {
             bool enable;
             bool debug;
-            const char *server;
+            neko::cstr server;
             bool tls;
         };
+
+        /**
+         * @brief Additional configuration options
+         */
         struct More {
-            const char *tempDir;
-            const char *resourceVersion;
+            neko::cstr tempDir;
+            neko::cstr resourceVersion;
         };
+
+        /**
+         * @brief Minecraft account settings
+         */
         struct Minecraft {
-            const char *account;
-            const char *displayName;
-            const char *uuid;
-            const char *accessToken;
-            const char *authlibPrefetched;
+            neko::cstr account;
+            neko::cstr displayName;
+            neko::cstr uuid;
+            neko::cstr accessToken;
+            neko::cstr authlibPrefetched;
         };
 
         Main main;
@@ -49,13 +81,22 @@ namespace neko {
         Dev dev;
         More more;
         Minecraft minecraft;
+
+        ClientConfig() = default;
+        ~ClientConfig() = default;
+
+        /**
+         * @brief Constructor to initialize from a SimpleIni configuration
+         * 
+         * @param cfg SimpleIni configuration object to load settings from
+         */
         ClientConfig(const CSimpleIniA &cfg) {
             main = Main{
-                cfg.GetValue("main","language","en"),
-                cfg.GetValue("main","backgroundType","image"),
+                cfg.GetValue("main", "language", "en"),
+                cfg.GetValue("main", "backgroundType", "image"),
                 cfg.GetValue("main", "background", "img/bg.png"),
                 cfg.GetValue("main", "windowSize", ""),
-                cfg.GetLongValue("main","launcherMode",1),
+                cfg.GetLongValue("main", "launcherMode", 1),
                 cfg.GetBoolValue("main", "useSystemWindowFrame", true),
                 cfg.GetBoolValue("main", "barKeepRight", true)};
             style = Style{
@@ -73,46 +114,53 @@ namespace neko {
                 cfg.GetBoolValue("dev", "tls", true)};
             more = More{
                 cfg.GetValue("more", "customTempDir", ""),
-                cfg.GetValue("more","resourceVersion","")};
+                cfg.GetValue("more", "resourceVersion", "")};
             minecraft = Minecraft{
-                cfg.GetValue("minecraft","account",""),
-                cfg.GetValue("minecraft","displayName",""),
-                cfg.GetValue("minecraft","uuid",""),
-                cfg.GetValue("minecraft","accessToken",""),
-                cfg.GetValue("minecraft","authlibPrefetched","")};
+                cfg.GetValue("minecraft", "account", ""),
+                cfg.GetValue("minecraft", "displayName", ""),
+                cfg.GetValue("minecraft", "uuid", ""),
+                cfg.GetValue("minecraft", "accessToken", ""),
+                cfg.GetValue("minecraft", "authlibPrefetched", "")};
         }
-    static void save(CSimpleIniA &saveCfg,const char * fileName,ClientConfig nowConfig){
-        saveCfg.SetValue("main","language",nowConfig.main.lang);
-        saveCfg.SetValue("main","backgroundType",nowConfig.main.bgType);
-        saveCfg.SetValue("main","background",nowConfig.main.bg);
-        saveCfg.SetValue("main","windowSize",nowConfig.main.windowSize);
-        saveCfg.SetLongValue("main","launcherMode",nowConfig.main.launcherMode);
-        saveCfg.SetBoolValue("main","useSystemWindowFrame",nowConfig.main.useSysWindowFrame);
-        saveCfg.SetBoolValue("main","barKeepRight",nowConfig.main.barKeepRight);
 
-        saveCfg.SetLongValue("style","blurHint",nowConfig.style.blurHint);
-        saveCfg.SetLongValue("style","blurValue",nowConfig.style.blurValue);
-        saveCfg.SetLongValue("style","fontPointSize",nowConfig.style.fontPointSize);
-        saveCfg.SetValue("style","fontFamilies",nowConfig.style.fontFamilies);
+        /**
+         * @brief Save the current configuration to a file
+         * 
+         * @param saveCfg SimpleIni configuration object to save settings to
+         * @param fileName Path to the file where configuration will be saved
+         */
+        void save(CSimpleIniA &saveCfg, neko::cstr fileName) const {
+            saveCfg.SetValue("main", "language", main.lang);
+            saveCfg.SetValue("main", "backgroundType", main.bgType);
+            saveCfg.SetValue("main", "background", main.bg);
+            saveCfg.SetValue("main", "windowSize", main.windowSize);
+            saveCfg.SetLongValue("main", "launcherMode", main.launcherMode);
+            saveCfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
+            saveCfg.SetBoolValue("main", "barKeepRight", main.barKeepRight);
 
-        saveCfg.SetLongValue("net","thread",nowConfig.net.thread);
-        saveCfg.SetValue("net","proxy",nowConfig.net.proxy);
+            saveCfg.SetLongValue("style", "blurHint", style.blurHint);
+            saveCfg.SetLongValue("style", "blurValue", style.blurValue);
+            saveCfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
+            saveCfg.SetValue("style", "fontFamilies", style.fontFamilies);
 
-        saveCfg.SetBoolValue("dev","enable",nowConfig.dev.enable);
-        saveCfg.SetBoolValue("dev","debug",nowConfig.dev.debug);
-        saveCfg.SetValue("dev","server",nowConfig.dev.server);
-        saveCfg.SetBoolValue("dev","tls",nowConfig.dev.tls);
+            saveCfg.SetLongValue("net", "thread", net.thread);
+            saveCfg.SetValue("net", "proxy", net.proxy);
 
-        saveCfg.SetValue("more","customTempDir",nowConfig.more.tempDir);
-        saveCfg.SetValue("more","resourceVersion",nowConfig.more.resourceVersion);
+            saveCfg.SetBoolValue("dev", "enable", dev.enable);
+            saveCfg.SetBoolValue("dev", "debug", dev.debug);
+            saveCfg.SetValue("dev", "server", dev.server);
+            saveCfg.SetBoolValue("dev", "tls", dev.tls);
 
-        saveCfg.SetValue("minecraft","account",nowConfig.minecraft.account);
-        saveCfg.SetValue("minecraft","displayName",nowConfig.minecraft.displayName);
-        saveCfg.SetValue("minecraft","uuid",nowConfig.minecraft.uuid);
-        saveCfg.SetValue("minecraft","accessToken",nowConfig.minecraft.accessToken);
-        saveCfg.SetValue("minecraft","authlibPrefetched",nowConfig.minecraft.authlibPrefetched);
+            saveCfg.SetValue("more", "customTempDir", more.tempDir);
+            saveCfg.SetValue("more", "resourceVersion", more.resourceVersion);
 
-        saveCfg.SaveFile(fileName);
-    };
+            saveCfg.SetValue("minecraft", "account", minecraft.account);
+            saveCfg.SetValue("minecraft", "displayName", minecraft.displayName);
+            saveCfg.SetValue("minecraft", "uuid", minecraft.uuid);
+            saveCfg.SetValue("minecraft", "accessToken", minecraft.accessToken);
+            saveCfg.SetValue("minecraft", "authlibPrefetched", minecraft.authlibPrefetched);
+
+            saveCfg.SaveFile(fileName);
+        }
     };
 } // namespace neko
