@@ -19,9 +19,6 @@
  */
 #pragma once
 
-#include "library/SimpleIni/SimpleIni.h"
-#include "library/threadpool.hpp"
-
 // C++ Standard Library
 #include <algorithm>
 #include <chrono>
@@ -88,24 +85,6 @@ namespace neko::operator{
  * @brief Execution and utility functions for the Neko launcher.
  */
 namespace neko::exec {
-
-    /**
-     * @brief Gets the global thread pool instance.
-     * @return Reference to the global thread pool object.
-     */
-    inline neko::ThreadPool &getThreadObj() {
-        static neko::ThreadPool obj;
-        return obj;
-    };
-
-    /**
-     * @brief Gets the global configuration object.
-     * @return Reference to the global SimpleIni configuration object.
-     */
-    inline CSimpleIniA &getConfigObj() {
-        static CSimpleIniA obj;
-        return obj;
-    }
 
 #if defined(_USE_OPENSSL)
     /**
