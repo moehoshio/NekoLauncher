@@ -1,92 +1,77 @@
 #pragma once
 
-// core version , any string
-#define NekoLcCoreVersionDefine "v0.0.1"
+#include "neko/schema/types.hpp"
 
-// server list ,  e.g "api.example.com","api.example.org","" ...
-#define NetWorkHostListDefine "api.example.com","www.example.org"
+#include <array>
+#include <string_view>
 
-// Option: `minecraft`. Used in the `launcher` function in core.hpp
-constexpr const char *launcherMode = "minecraft"; 
+namespace neko::schema {
 
+    /**
+     * @brief This namespace contains global definitions and constants used throughout the Neko framework.
+     * @namespace neko::schema
+     * @ingroup schema
+     */
+    namespace definitions {
 
+        constexpr neko::cstr NekoLcCoreVersion = "v0.0.1";
 
+        constexpr neko::cstr NetWorkHostList[] = {"api.example.com", "www.example.org"};
 
-// authlib host , e.g "auth.example.com"
-#define NetWorkAuthlibHostDefine "skin.example.org"
+        constexpr neko::cstr NetWorkAuthlibHost = "skin.example.org";
+
+        constexpr neko::cstr launcherMode = "minecraft";
+
+        constexpr neko::cstr clientConfigFileName = "config.ini";
+
+        // Unique identifier for the build
+#if defined(GIT_BUILD_ID)
+        constexpr inline const std::string_view build_id = GIT_BUILD_ID;
+#else
+
+        // A constexpr function to generate a unique identifier based on the current time, date, and file.
+        namespace constexprBuildId {
+
+            constexpr char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            constexpr neko::uint64 charset_size = sizeof(charset) - 1;
+
+            constexpr neko::uint32 constexpr_hash(neko::cstr str, int h = 0) {
+                return !str[h] ? 5381 : (constexpr_hash(str, h + 1) * 33) ^ str[h];
+            }
+
+            constexpr neko::uint32 combine_hashes(neko::uint32 a, neko::uint32 b) {
+                return a ^ (b + 0x9e3779b9 + (a << 6) + (a >> 2));
+            }
+
+            constexpr char pick_char(neko::uint32 &seed) {
+                seed = seed * 1664525u + 1013904223u;
+                return charset[seed % charset_size];
+            }
+
+            template <neko::uint64 N>
+            constexpr auto make_identifier(neko::cstr time_str, neko::cstr date_str, neko::cstr file_str) {
+                std::array<char, N + 1> arr{};
+                neko::uint32 seed = combine_hashes(
+                    combine_hashes(constexpr_hash(time_str), constexpr_hash(date_str)),
+                    constexpr_hash(file_str));
+                for (neko::uint64 i = 0; i < N; ++i) {
+                    arr[i] = pick_char(seed);
+                }
+                arr[N] = '\0';
+                return arr;
+            }
+
+            constexpr auto build_id_array = make_identifier<10>(__TIME__, __DATE__, __FILE__);
+
+        } // namespace constexprBuildId
+
+        constexpr std::string_view build_id(constexprBuildId::build_id_array.data(), 10);
+
+#endif // Git_BUILD_ID
+
+    } // namespace definitions
+
+} // namespace neko::schema
 
 // Import the logging module for nerr exceptions , in nerr.hpp
 #define nerrImpLoggerModeDefine true
-
-
-
-
-// unique identifier for the build
-#include <string_view>
-
-#if defined(GIT_BUILD_ID)
-constexpr inline const std::string_view build_id = GIT_BUILD_ID;
-#else
-
-#include <array>
-
-namespace constexprBuildId {
-
-    // A constexpr function to generate a unique identifier based on the current time, date, and file.
-    
-    constexpr char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    constexpr std::size_t charset_size = sizeof(charset) - 1;
-
-    constexpr unsigned int constexpr_hash(const char *str, int h = 0) {
-        return !str[h] ? 5381 : (constexpr_hash(str, h + 1) * 33) ^ str[h];
-    }
-
-    constexpr unsigned int combine_hashes(unsigned int a, unsigned int b) {
-        return a ^ (b + 0x9e3779b9 + (a << 6) + (a >> 2));
-    }
-
-    constexpr char pick_char(unsigned int &seed) {
-        seed = seed * 1664525u + 1013904223u;
-        return charset[seed % charset_size];
-    }
-
-    template <std::size_t N>
-    constexpr auto make_identifier(const char *time_str, const char *date_str, const char *file_str) {
-        std::array<char, N + 1> arr{};
-        unsigned int seed = combine_hashes(
-            combine_hashes(constexpr_hash(time_str), constexpr_hash(date_str)),
-            constexpr_hash(file_str));
-        for (std::size_t i = 0; i < N; ++i) {
-            arr[i] = pick_char(seed);
-        }
-        arr[N] = '\0';
-        return arr;
-    }
-    
-    constexpr auto build_id_array = make_identifier<10>(__TIME__, __DATE__, __FILE__);
-
-} //namespace constexprBuildId
-
-constexpr std::string_view build_id(constexprBuildId::build_id_array.data(), 10);
-
-#endif //Git_BUILD_ID
-
-
-using cstr = const char *;
-
-using uint_64 =  unsigned long long;
-using uint_32 = unsigned int;
-using uint_16 = unsigned short;
-
-using int_64 = long long;
-using int_32 = int;
-using int_16 = short;
-
-using uint = uint_32;
-
-// Define a convenient macro for printing logs
-#define FN __FUNCTION__
-
-#define FI __FILE__
-
-#define LI __LINE__
