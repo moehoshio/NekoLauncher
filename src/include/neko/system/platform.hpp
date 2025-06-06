@@ -1,11 +1,26 @@
+/**
+ * @file platform.hpp
+ * @author moehoshio
+ * @date 2025/06/07
+ * @brief Provides platform-related information and utility functions, including OS/architecture identification, temporary/work/home directory helpers.
+ *
+ * This file is defined under the neko::system namespace and contains the PlatformInfo structure and several platform utility functions.
+ */
+
 #pragma once
+
+#include "neko/schema/types.hpp"
+
+// Unified paths utility
+#include "neko/function/exec.hpp"
+
 #include <filesystem>
 #include <optional>
 #include <string>
 
 /**
  * @namespace neko::system
- * @brief System-related information and utilities.
+ * @brief Provides system-related information and utility functions.
  */
 namespace neko::system {
 
@@ -13,15 +28,15 @@ namespace neko::system {
      * @struct PlatformInfo
      * @brief Provides static platform identification information.
      *
-     * Contains compile-time constants for operating system name and architecture.
+     * Contains compile-time constants for operating system name and CPU architecture.
      */
     struct PlatformInfo {
 
         /**
          * @brief Operating system name identifier.
-         * @return String representing the OS ("windows", "osx", "linux", or "unknown")
+         * @details Possible values: "windows", "osx", "linux", or "unknown".
          */
-        constexpr static const char *osName =
+        constexpr static neko::cstr osName =
 #if defined(_WIN32)
             "windows";
 #elif defined(__APPLE__)
@@ -34,9 +49,9 @@ namespace neko::system {
 
         /**
          * @brief CPU architecture identifier.
-         * @return String representing the architecture ("x64", "x86", "arm64", "arm", or "unknown")
+         * @details Possible values: "x64", "x86", "arm64", "arm", or "unknown".
          */
-        constexpr static const char *osArch =
+        constexpr static neko::cstr osArch =
 #if defined(__x86_64__) || defined(_M_X64)
             "x64";
 #elif defined(__i386__) || defined(_M_IX86)
@@ -51,12 +66,14 @@ namespace neko::system {
     }; // class PlatformInfo
 
     /**
-     * @brief Gets or sets the temporary directory path.
-     * @param setTempDir Optional parameter to set a new temporary directory.
-     * @return The current temporary directory path.
+     * @brief Get or set the temporary directory path.
+     * @param setTempDir [optional] Specify a new temporary directory path. If empty, only returns the current setting.
+     * @return std::string The current temporary directory path (normalized).
      *
-     * @details Uses exec::unifiedPaths from exec.hpp for path normalization.
-     * Creates the directory if it doesn't exist.
+     * @details
+     * - Uses exec::unifiedPaths for path normalization.
+     * - Automatically creates the directory if it does not exist.
+     * - Prefers ClientConfig setting if available, otherwise uses the system default temp directory.
      */
     inline std::string temporaryFolder(const std::string &setTempDir = "") {
         static std::mutex mtx;
@@ -83,11 +100,13 @@ namespace neko::system {
     }
 
     /**
-     * @brief Gets or sets the current working directory.
-     * @param setPath Optional parameter to set a new working directory.
-     * @return The current working directory path.
+     * @brief Get or set the current working directory.
+     * @param setPath [optional] Specify a new working directory path. If empty, only returns the current directory.
+     * @return std::string The current working directory path (normalized).
      *
-     * @details Uses exec::unifiedPaths from exec.hpp for path normalization.
+     * @details
+     * - Uses exec::unifiedPaths for path normalization.
+     * - Changes working directory if setPath is valid.
      */
     inline std::string workPath(const std::string &setPath = "") {
         static std::mutex mtx;
@@ -99,14 +118,15 @@ namespace neko::system {
     }
 
     /**
-     * @brief Gets the user's home directory.
-     * @return The path to the user's home directory.
+     * @brief Get the user's home directory path.
+     * @return std::optional<std::string> Returns the home directory path (normalized) if successful, otherwise std::nullopt.
      *
-     * @details Uses exec::unifiedThePaths from exec.hpp for path normalization.
-     * Platform-specific implementation using environment variables.
+     * @details
+     * - Uses exec::unifiedThePaths for path normalization.
+     * - Automatically selects the environment variable by platform (Windows: USERPROFILE, others: HOME).
      */
     inline std::optional<std::string> getHome() {
-        const char *path = std::getenv(
+        neko::cstr path = std::getenv(
 #ifdef _WIN32
             "USERPROFILE"
 #else
@@ -119,18 +139,18 @@ namespace neko::system {
     }
 
     /**
-     * @brief Gets the operating system name.
-     * @return String identifier for the operating system.
+     * @brief Get the operating system name identifier.
+     * @return const char* OS name.
      */
-    constexpr inline const char *getOsName() {
+    constexpr inline neko::cstr getOsName() {
         return PlatformInfo::osName;
     }
 
     /**
-     * @brief Gets the system architecture.
-     * @return String identifier for the CPU architecture.
+     * @brief Get the system CPU architecture identifier.
+     * @return const char* Architecture name.
      */
-    constexpr inline const char *getOsArch() {
+    constexpr inline neko::cstr getOsArch() {
         return PlatformInfo::osArch;
     }
 
