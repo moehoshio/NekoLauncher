@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <string>
+#include <sstream>
 
 namespace neko::system {
 
@@ -30,7 +31,12 @@ namespace neko::system {
          * @brief Convert MemoryInfo to string representation.
          * @return String describing total and free memory.
          */
-        std::string toString() const;
+        std::string toString() const {
+            std::ostringstream oss;
+            oss << "Total: " << totalBytes / (1024 * 1024) << " MB, "
+                << "Free: " << freeBytes / (1024 * 1024) << " MB";
+            return oss.str();
+        }
     };
 
     /**

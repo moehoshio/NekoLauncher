@@ -18,11 +18,26 @@ list(APPEND SRCFILES
 
     src/mainwindow.cpp
     src/launcherProcess.cpp
-    src/memoryinfo.cpp
     src/loguru.cpp
     src/network.cpp
     src/main.cpp
 )
+
+# Platform-specific source files
+if(WIN32)
+    list(APPEND SRCFILES
+        src/platform/windows/memoryinfo_windows.cpp
+    )
+elseif(APPLE)
+    list(APPEND SRCFILES 
+        src/platform/unix/macos/memoryinfo_macos.cpp
+    )
+elseif(UNIX)
+    list(APPEND SRCFILES 
+        src/platform/unix/linux/memoryinfo_linux.cpp
+    )
+endif()
+
 
 # Include directories
 list(APPEND INCLUDE_DIRS
