@@ -12,7 +12,7 @@
 #include "library/nlohmann/json.hpp"
 
 
-namespace neko {
+namespace neko::minecraft {
 
     inline void launcherMinecraft(ClientConfig cfg, std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void()> onStart, std::function<void(int)> onExit) {
         nlog::autoLog log{FI, LI, FN};
@@ -485,4 +485,4 @@ namespace neko {
             std::filesystem::current_path(std::filesystem::current_path().parent_path());
         }
     }
-} // namespace neko
+} // namespace neko::minecraft

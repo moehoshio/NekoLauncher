@@ -12,12 +12,11 @@
 
 #include "library/nlohmann/json.hpp"
 
+#include <functional>
 #include <string>
 #include <string_view>
-#include <functional>
 
-namespace neko
-{
+namespace neko::minecraft {
     inline bool launcherMinecraftTokenValidate(std::function<void(const neko::ui::hintMsg &)> hintFunc) {
         nlog::autoLog log{FI, LI, FN};
         network net;
@@ -97,7 +96,6 @@ namespace neko
         exec::getConfigObj().SetValue("minecraft", "authlibPrefetched", authlibPrefetched.c_str());
     }
 
-    
     inline State authLogin(const std::vector<std::string> &inData, std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
         nlog::autoLog log{FI, LI, FN};
         if (inData.size() < 2)
@@ -144,5 +142,5 @@ namespace neko
 
         return State::Completed;
     }
-    
-} // namespace neko
+
+} // namespace neko::minecraft
