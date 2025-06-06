@@ -142,7 +142,7 @@ namespace neko::system {
      * @brief Get the operating system name identifier.
      * @return const char* OS name.
      */
-    constexpr inline neko::cstr getOsName() {
+    constexpr neko::cstr getOsName() {
         return PlatformInfo::osName;
     }
 
@@ -150,7 +150,7 @@ namespace neko::system {
      * @brief Get the system CPU architecture identifier.
      * @return const char* Architecture name.
      */
-    constexpr inline neko::cstr getOsArch() {
+    constexpr neko::cstr getOsArch() {
         return PlatformInfo::osArch;
     }
 
