@@ -6,16 +6,16 @@
 #include "neko/minecraft/account.hpp"
 #include "neko/minecraft/launcherMinecraft.hpp"
 
+#include <functional>
 #include <string>
 #include <string_view>
-#include <functional>
 
-namespace neko
-{
-        // Called when the user clicks.
-    inline void launcher(std::function<void(const neko::ui::hintMsg &)> hintFunc,std::function<void()> onStart, std::function<void(int)> onExit) {
+namespace neko::core {
+
+    // Called when the user clicks.
+    inline void launcher(std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void()> onStart, std::function<void(int)> onExit) {
         nlog::autoLog log{FI, LI, FN};
-        
+
         if constexpr (std::string_view("custom") == schema::definitions::launcherMode) {
             // Custom launcher
             // auto customLauncher = exec::getConfigObj().getCustomLauncher();
@@ -33,7 +33,5 @@ namespace neko
                 return;
             launcherMinecraft(exec::getConfigObj(), hintFunc, onStart, onExit);
         }
-
-        
     }
-} // namespace neko
+} // namespace neko::core

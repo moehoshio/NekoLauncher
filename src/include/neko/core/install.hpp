@@ -1,21 +1,21 @@
 
 #include "neko/log/nlog.hpp"
-#include "neko/schema/wmsg.hpp"
 #include "neko/schema/clientconfig.hpp"
+#include "neko/schema/wmsg.hpp"
 
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
 
 #include "neko/minecraft/installMinecraft.hpp"
 
+#include <condition_variable>
+#include <filesystem>
 #include <mutex>
 #include <string>
 #include <string_view>
-#include <condition_variable>
-#include <filesystem>
 
-namespace neko
-{
+namespace neko::core {
+
     inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const neko::ui::hintMsg &)> hintFunc = nullptr, std::function<void(const neko::ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
         std::string resVer = (cfg.more.resourceVersion) ? std::string(cfg.more.resourceVersion) : std::string();
         if (resVer.empty()) {
@@ -43,4 +43,4 @@ namespace neko
             }
         }
     }
-} // namespace neko
+} // namespace neko::core
