@@ -13,7 +13,6 @@
 
 #include "library/nlohmann/json.hpp"
 
-
 #include <QtCore/QUrl>
 #include <QtWidgets/QApplication>
 // openurl
@@ -28,13 +27,7 @@
 #include <string>
 #include <string_view>
 
-namespace neko {
-
-    enum class State {
-        Completed, // Operation finished successfully, no further action needed
-        ActionNeeded, // Action required from user or system
-        RetryRequired, // Temporary failure, should retry later
-    };
+namespace neko::core {
 
     struct UpdateInfo {
         std::string Title,
@@ -156,7 +149,7 @@ namespace neko {
 
             if (i == 4)
                 return State::ActionNeeded;
-            
+
             // Wait for the user to click the button or timeout after 6 seconds
             condVar.wait_for(lock, std::chrono::seconds(6));
 
@@ -179,7 +172,7 @@ namespace neko {
         }
 
         auto jsonData = rawJsonData["maintenanceInformation"];
-        
+
         bool enable = jsonData["enable"].get<bool>();
         nlog::Info(FI, LI, "%s : maintenance enable : %s", FN, exec::boolTo<const char *>(enable));
         if (!enable)
@@ -195,9 +188,9 @@ namespace neko {
         auto fileName = downloadPoster(hintFunc, poster);
 
         neko::ui::hintMsg hmsg{info::translations(info::lang.title.maintenance), msg, fileName, 1, [link](bool) {
-                             QDesktopServices::openUrl(QUrl(link.c_str()));
-                             QApplication::quit();
-                         }};
+                                   QDesktopServices::openUrl(QUrl(link.c_str()));
+                                   QApplication::quit();
+                               }};
         hintFunc(hmsg);
         return State::ActionNeeded;
     }
@@ -472,5 +465,4 @@ namespace neko {
         }
     }
 
-
-} // namespace neko
+} // namespace neko::core
