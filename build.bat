@@ -55,3 +55,6 @@ echo "You can find the installed files in %INSTALL_PATH%"
 echo "Please press any key to exit..."
 
 pause
+
+explorer "%INSTALL_PATH%"
+exit /b 0
