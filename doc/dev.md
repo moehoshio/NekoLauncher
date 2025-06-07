@@ -4,6 +4,7 @@
 [Definitions and Interfaces](#definitions-and-interfaces)  
 [Examples](#examples)  
 [Server](server.md)  
+[Error] (error.md)  
 
 ## Style Guide
 

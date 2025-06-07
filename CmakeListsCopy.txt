@@ -13,7 +13,7 @@ set(CMAKE_PREFIX_PATH "${Qt6_DIR};${LIBRARY_DIRS}")
 # Src files
 list(APPEND SRCFILES
     # To ensure that qt moc can locate this file
-    src/include/neko/log/logviewer.hpp 
+    src/include/neko/ui/logviewer.hpp 
     src/include/neko/ui/mainwindow.hpp
 
     src/mainwindow.cpp
@@ -38,7 +38,6 @@ elseif(UNIX)
     )
 endif()
 
-
 # Include directories
 list(APPEND INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/include
@@ -55,11 +54,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-
 # Find required packages
 # Note: Make sure you have installed the required packages via vcpkg or manually installed and linked them
-find_package(Boost REQUIRED COMPONENTS system)
 find_package(boost_process REQUIRED CONFIG)
+find_package(boost_stacktrace REQUIRED CONFIG)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
@@ -80,7 +78,6 @@ add_definitions(-DGIT_BUILD_ID="${GIT_COMMIT_HASH}")
 # Add the executable target
 add_executable(NekoLc ${SRCFILES})
 
-
 # Set the target properties
 target_include_directories(NekoLc PRIVATE ${INCLUDE_DIRS})
 target_compile_features(NekoLc PRIVATE cxx_std_20)
@@ -100,7 +97,7 @@ target_link_libraries(NekoLc PRIVATE
     # libcurl
     CURL::libcurl
     # Boost
-    Boost::system Boost::process
+    Boost::system Boost::process Boost::stacktrace
 )
 
 

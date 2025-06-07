@@ -8,235 +8,372 @@
 #include "neko/schema/types.hpp"
 
 #include <exception>
+#include <nested_exception>
+#include <string>
 
-#if defined(nerrImpLoggerModeDefine) && __has_include("neko/log/nlog.hpp")
-#include "neko/log/nlog.hpp"
+#include <boost/stacktrace.hpp>
+
+
+#if defined(__has_builtin)
+#if __has_builtin(__builtin_FILE) && __has_builtin(__builtin_LINE) && __has_builtin(__builtin_FUNCTION)
+#define NEKO_HAS_BUILTIN_LOCATION 1
 #endif
+#endif
+
+#if !defined(NEKO_HAS_BUILTIN_LOCATION)
+#if defined(_MSC_VER) && _MSC_VER >= 1929 // MSVC 2019 v16.10+
+#define NEKO_HAS_BUILTIN_LOCATION 1
+#endif
+#endif
+
+#if defined(__cpp_lib_source_location) && __cpp_lib_source_location >= 201907L
+#include <source_location>
+#define NEKO_HAS_STD_SOURCE_LOCATION 1
+#endif
+
+static_assert(NEKO_HAS_BUILTIN_LOCATION || NEKO_HAS_STD_SOURCE_LOCATION, "Error handling requires either __builtin_* or std::source_location(c++20) support.");
 
 namespace nerr = neko::err;
 
 namespace neko::err {
 
     /**
-     * @brief Base error class extending std::exception
-     * 
-     * Provides basic error handling functionality for all derived error types
+     * @brief Stores extended error information such as line, file, and function name.
      */
-    struct Error : public std::exception {
+    struct ErrorExtensionInfo {
+        neko::uint32 line = 0;
+        neko::cstr file = nullptr;
+        neko::cstr funcName = nullptr;
 
+#if defined(NEKO_HAS_BUILTIN_LOCATION)
         /**
-         * @brief Global default value for whether to enable error logging
+         * @brief Constructs ErrorExtensionInfo with line, file, and function name.
+         * @note Uses __builtin_LINE(), __builtin_FILE(), and __builtin_FUNCTION() as default values.
+         * @note Note: These are not part of the standard library, but are available in newer compilers.
+         * @note Supported compilers: GCC, Clang, MSVC (VS2019 v16.10+)
          */
-        inline static bool enableLogger = false;
+        constexpr ErrorExtensionInfo(neko::uint32 Line = __builtin_LINE(), neko::cstr File = __builtin_FILE(), neko::cstr FuncName = __builtin_FUNCTION()) noexcept
+            : line(Line), file(File), funcName(FuncName) {}
+#else
+        constexpr ErrorExtensionInfo(
+            const std::source_location &loc = std::source_location::current()) noexcept
+            : line(loc.line()), file(loc.file_name()), funcName(loc.function_name()) {}
+#endif
+        constexpr neko::uint32 getline() const noexcept { return line; }
+        constexpr neko::cstr getFile() const noexcept { return file; }
+        constexpr neko::cstr getFuncName() const noexcept { return funcName; }
+        constexpr bool hasInfo() const noexcept {
+            return (line != 0 && file != nullptr) || funcName != nullptr;
+        }
+    };
 
+    /**
+     * @brief Base error class extending std::exception and std::nested_exception.
+     *
+     * Provides basic error handling functionality for all derived error types.
+     * Stores error message, extension info, and stack trace.
+     */
+    class Error : public std::exception, public std::nested_exception {
+    private:
         std::string msg;
-        neko::cstr fileName;
-        neko::uint32 line;
-        neko::cstr funcName;
+        ErrorExtensionInfo extInfo;
+        boost::stacktrace::stacktrace trace;
+
+    public:
+        /**
+         * @brief Construct an Error with a message and extension info.
+         * @param Msg Error message.
+         * @param ExtInfo Extended error information.
+         */
+        explicit Error(const std::string &Msg, const ErrorExtensionInfo &ExtInfo) noexcept
+            : msg(Msg), extInfo(ExtInfo),
+              trace(boost::stacktrace::stacktrace()) {};
 
         /**
-         * @brief Constructor with detailed error information
-         * 
-         * @param Msg Error message
-         * @param fileName Source file name
-         * @param line Line number
-         * @param funcName Function name
-         * @param logger Whether to log this error
+         * @brief Construct an Error with a message.
+         * @param Msg Error message.
          */
-        Error(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = enableLogger) noexcept : msg(Msg), fileName(fileName), line(line), funcName(funcName) {
-#if defined(nerrImpLoggerModeDefine)
-            if (logger)
-                nlog::Err(fileName, line, "%s : %s", funcName, msg.c_str());
-#endif
-        };
-        
-        /**
-         * @brief Simplified constructor with only an error message
-         * 
-         * @param Msg Error message
-         * @param logger Whether to log this error
-         */
-        Error(std::string Msg, bool logger = enableLogger) noexcept : msg(Msg) {
-#if defined(nerrImpLoggerModeDefine)
-            if (logger)
-                nlog::Err(fileName, line, "%s : %s", funcName, msg.c_str());
-#endif
-        };
+        explicit Error(const std::string &Msg) noexcept
+            : msg(Msg),
+              trace(boost::stacktrace::stacktrace()) {};
 
         /**
-         * @brief Get the error message
-         * 
-         * @return C-style string containing the error message
+         * @brief Construct an Error with a C-string message.
+         * @param Msg Error message.
          */
-        inline neko::cstr what() const noexcept { return msg.c_str(); };
+        explicit Error(neko::cstr Msg) noexcept
+            : msg(Msg ? Msg : ""),
+              trace(boost::stacktrace::stacktrace()) {};
+
+        /**
+         * @brief Get the error message.
+         * @return Error message as a C-string.
+         */
+        neko::cstr what() const noexcept override {
+            return msg.c_str();
+        }
+
+        /**
+         * @brief Check if extra error info is available.
+         * @return True if extension info is present.
+         */
+        bool hasExtraInfo() const noexcept {
+            return extInfo.hasInfo();
+        }
+
+        /**
+         * @brief Check if a stack trace is available.
+         * @return True if stack trace is not empty.
+         */
+        bool hasStackTrace() const noexcept {
+            return !trace.empty();
+        }
+
+        /**
+         * @brief Get the extended error information.
+         * @return Reference to ErrorExtensionInfo.
+         */
+        const ErrorExtensionInfo &getExtensionInfo() const noexcept {
+            return extInfo;
+        }
+
+        /**
+         * @brief Get the line number where the error occurred.
+         * @return Line number.
+         */
+        neko::uint32 getLine() const noexcept {
+            return extInfo.getline();
+        }
+        /**
+         * @brief Get the file name where the error occurred.
+         * @return File name as a C-string.
+         */
+        neko::cstr getFile() const noexcept {
+            return extInfo.getFile();
+        }
+        /**
+         * @brief Get the function name where the error occurred.
+         * @return Function name as a C-string.
+         */
+        neko::cstr getFuncName() const noexcept {
+            return extInfo.getFuncName();
+        }
+        /**
+         * @brief Get the error message as a string.
+         * @return Error message.
+         */
+        const std::string &getMessage() const noexcept {
+            return msg;
+        }
+        /**
+         * @brief Get a formatted stack trace as a string
+         * @param format Optional format string to customize output
+         * Supports placeholders:
+         * - {index}: Frame index (0-based)
+         * - {name}: Function name
+         * - {source_file}: Source file name
+         * - {source_line}: Source line number
+         * @return Formatted stack trace string
+         * @note If format is empty, returns the raw stack trace as a string.
+         * If no stack trace is available, returns a default message.
+         * @note The format string is not validated, so ensure it contains valid placeholders.
+         */
+        std::string getStackTraceStr(std::string_view format = "") const {
+            if (trace.empty()) {
+                return "No stack trace available.";
+            }
+
+            std::ostringstream oss;
+
+            if (format.empty()) {
+                oss << trace;
+                return oss.str();
+            }
+
+            for (std::size_t i = 0; i < trace.size(); ++i) {
+                const auto &frame = trace[i];
+                std::string line(format);
+                auto replace = [&](const std::string &key, const std::string &value) {
+                    size_t pos = 0;
+                    while ((pos = line.find(key, pos)) != std::string::npos) {
+                        line.replace(pos, key.length(), value);
+                        pos += value.length();
+                    }
+                };
+                replace("{index}", std::to_string(i));
+                replace("{name}", frame.name());
+                replace("{source_file}", frame.source_file());
+                replace("{source_line}", std::to_string(frame.source_line()));
+                oss << line << '\n';
+            }
+            return oss.str();
+        }
+
+        /**
+         * @brief Get the stack trace object.
+         * @return Reference to boost::stacktrace::stacktrace.
+         */
+        const boost::stacktrace::stacktrace &getStackTrace() const noexcept { return trace; }
     };
 
     /**
-     * @brief Error indicating that an object already exists
+     * @brief Exception for already existing objects.
      */
-    struct TheSame : public Error {
-        TheSame(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        TheSame(std::string Msg = "The same thing already exists!", bool logger = enableLogger) : Error(Msg, logger) {};
+    struct AlreadyExists : public Error {
+        explicit AlreadyExists(const std::string &Msg = "Object already exists!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that an operation timed out
-     */
-    struct TimeOut : public Error {
-        TimeOut(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        TimeOut(std::string Msg = "Operation timed out!", bool logger = enableLogger) : Error(Msg, logger) {};
-    };
-
-    /**
-     * @brief Error indicating that an invalid argument was provided
+     * @brief Exception for invalid arguments.
      */
     struct InvalidArgument : public Error {
-        InvalidArgument(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        InvalidArgument(std::string Msg = "Invalid argument!", bool logger = enableLogger) : Error(Msg, logger) {};
+        explicit InvalidArgument(const std::string &Msg = "Invalid argument!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that an object is in an invalid state
+     * @brief Exception for system errors.
      */
-    struct InvalidState : public Error {
-        InvalidState(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        InvalidState(std::string Msg = "Invalid state!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class SystemError : public Error {
+    public:
+        explicit SystemError(const std::string &Msg = "System error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that an operation is invalid in the current context
+     * @brief Exception for file-related errors.
      */
-    struct InvalidOperation : public Error {
-        InvalidOperation(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        InvalidOperation(std::string Msg = "Invalid operation!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class FileError : public SystemError {
+    public:
+        explicit FileError(const std::string &Msg = "File error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : SystemError(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that a type is invalid
+     * @brief Exception for network-related errors.
      */
-    struct InvalidType : public Error {
-        InvalidType(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        InvalidType(std::string Msg = "Invalid type!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class NetworkError : public SystemError {
+    public:
+        explicit NetworkError(const std::string &Msg = "Network error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : SystemError(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that a value is invalid
+     * @brief Exception for database-related errors.
      */
-    struct InvalidValue : public Error {
-        InvalidValue(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        InvalidValue(std::string Msg = "Invalid value!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class DatabaseError : public SystemError {
+    public:
+        explicit DatabaseError(const std::string &Msg = "Database error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : SystemError(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a file reading problem
+     * @brief Exception for external library errors.
      */
-    struct FileRead : public Error {
-        FileRead(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        FileRead(std::string Msg = "File read error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class ExternalLibraryError : public SystemError {
+    public:
+        explicit ExternalLibraryError(const std::string &Msg = "External library error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : SystemError(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a file opening problem
+     * @brief Exception for out-of-memory errors.
      */
-    struct FileOpen : public Error {
-        FileOpen(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        FileOpen(std::string Msg = "File open error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class OutOfMemoryError : public Error {
+    public:
+        explicit OutOfMemoryError(const std::string &Msg = "Out of memory!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a file writing problem
+     * @brief Exception for unimplemented features.
      */
-    struct FileWrite : public Error {
-        FileWrite(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        FileWrite(std::string Msg = "File write error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class NotImplementedError : public Error {
+    public:
+        explicit NotImplementedError(const std::string &Msg = "Not implemented!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that a file was not found
+     * @brief Exception for configuration errors.
      */
-    struct FileNotFound : public Error {
-        FileNotFound(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        FileNotFound(std::string Msg = "File not found!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class ConfigError : public Error {
+    public:
+        explicit ConfigError(const std::string &Msg = "Configuration error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a network connection problem
+     * @brief Exception for parsing errors.
      */
-    struct NetworkConnection : public Error {
-        NetworkConnection(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        NetworkConnection(std::string Msg = "Network connection error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class ParseError : public Error {
+    public:
+        explicit ParseError(const std::string &Msg = "Parse error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a network timeout
+     * @brief Exception for concurrency errors.
      */
-    struct NetworkTimeout : public Error {
-        NetworkTimeout(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        NetworkTimeout(std::string Msg = "Network timeout!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class ConcurrencyError : public Error {
+    public:
+        explicit ConcurrencyError(const std::string &Msg = "Concurrency error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a network protocol problem
+     * @brief Exception for assertion failures.
      */
-    struct NetworkProtocol : public Error {
-        NetworkProtocol(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        NetworkProtocol(std::string Msg = "Network protocol error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class AssertionError : public Error {
+    public:
+        explicit AssertionError(const std::string &Msg = "Assertion failed!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a database connection problem
+     * @brief Exception for invalid operations.
      */
-    struct DatabaseConnection : public Error {
-        DatabaseConnection(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        DatabaseConnection(std::string Msg = "Database connection error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class InvalidOperation : public Error {
+    public:
+        explicit InvalidOperation(const std::string &Msg = "Invalid operation!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a database query problem
+     * @brief Exception for permission denied errors.
      */
-    struct DatabaseQuery : public Error {
-        DatabaseQuery(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        DatabaseQuery(std::string Msg = "Database query error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class PermissionDeniedError : public Error {
+    public:
+        explicit PermissionDeniedError(const std::string &Msg = "Permission denied!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating a database write problem
+     * @brief Exception for timeout errors.
      */
-    struct DatabaseWrite : public Error {
-        DatabaseWrite(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        DatabaseWrite(std::string Msg = "Database write error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class TimeoutError : public Error {
+    public:
+        explicit TimeoutError(const std::string &Msg = "Timeout!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating an authentication failure
+     * @brief Exception for logic errors.
      */
-    struct AuthFailure : public Error {
-        AuthFailure(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        AuthFailure(std::string Msg = "Authentication failure!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class LogicError : public Error {
+    public:
+        explicit LogicError(const std::string &Msg = "Logic error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
     /**
-     * @brief Error indicating that an operation was denied due to insufficient permissions
+     * @brief Exception for runtime errors.
      */
-    struct PermissionDenied : public Error {
-        PermissionDenied(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        PermissionDenied(std::string Msg = "Permission denied!", bool logger = enableLogger) : Error(Msg, logger) {};
-    };
-
-    /**
-     * @brief Error indicating a hardware failure
-     */
-    struct HardwareFailure : public Error {
-        HardwareFailure(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        HardwareFailure(std::string Msg = "Hardware failure!", bool logger = enableLogger) : Error(Msg, logger) {};
-    };
-
-    /**
-     * @brief Error indicating a problem with an external library
-     */
-    struct ExternalLibrary : public Error {
-        ExternalLibrary(std::string Msg, neko::cstr fileName, neko::uint32 line, neko::cstr funcName, bool logger = Error::enableLogger) noexcept : Error(Msg, fileName, line, funcName, logger) {};
-        ExternalLibrary(std::string Msg = "External library error!", bool logger = enableLogger) : Error(Msg, logger) {};
+    class RuntimeError : public Error {
+    public:
+        explicit RuntimeError(const std::string &Msg = "Runtime error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+            : Error(Msg, ExtInfo) {}
     };
 
 } // namespace neko::err

@@ -41,6 +41,7 @@ cmake 3.20 or above (3.29 is the tested version)
 libcurl 8.1 is the tested version  
 openssl 3.4 is the tested version  
 boost.process 1.86.0 is the testd version  
+boost.stacktrace 1.86.0 is the testd version  
 
 Already included in the project dependencies:  
 

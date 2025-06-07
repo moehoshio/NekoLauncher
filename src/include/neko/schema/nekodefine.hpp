@@ -72,6 +72,3 @@ namespace neko::schema {
     } // namespace definitions
 
 } // namespace neko::schema
-
-// Import the logging module for nerr exceptions , in nerr.hpp
-#define nerrImpLoggerModeDefine true

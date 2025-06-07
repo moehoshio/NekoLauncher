@@ -41,6 +41,7 @@ cmake 3.20 以上（3.29 为测试版本）
 libcurl 8.1 为测试版本  
 openssl 3.4 为测试版本  
 boost.process 1.86.0 为测试版本  
+boost.stacktrace 1.86.0 为测试版本  
 
 项目已内建以下依赖库：  
 
