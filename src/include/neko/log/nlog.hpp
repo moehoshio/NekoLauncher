@@ -10,13 +10,7 @@
 #include "library/loguru.hpp"
 
 #include <string>
-
-// Define a convenient macro for printing logs
-#define FN __FUNCTION__
-
-#define FI __FILE__
-
-#define LI __LINE__
+#include <source_location>
 
 // neko log
 namespace nlog = neko::log;
@@ -100,8 +94,8 @@ namespace neko::log {
          * @param startMsg Entry message (default: "Enter").
          * @param endMsg Exit message (default: "End").
          */
-        autoLog(neko::cstr file, neko::uint32 line, std::string name, std::string startMsg = "Enter", std::string endMsg = "End")
-            : file(file), line(line), name(name), startMsg(startMsg), endMsg(endMsg) {
+        autoLog(neko::cstr File = std::source_location::current().file_name(), neko::uint32 Line = std::source_location::current().line(), std::string Name = std::source_location::current().function_name(), std::string StartMsg = "Enter", std::string EndMsg = "End")
+            : file(File), line(Line), name(Name), startMsg(StartMsg), endMsg(EndMsg) {
             Info(file, line, "%s : %s", this->name.c_str(), this->startMsg.c_str());
         }
 
