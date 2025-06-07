@@ -1,18 +1,22 @@
 #include "neko/ui/mainwindow.hpp"
-// #include "mainwindow.hpp"
+
+#include "neko/schema/state.hpp"
+#include "neko/schema/wmsg.hpp"
+#include "neko/schema/clientconfig.hpp"
 
 #include "neko/core/core.hpp"
 #include "neko/core/launcher.hpp"
+#include "neko/core/resources.hpp"
 
 #include "neko/minecraft/account.hpp"
 
-#include "neko/function/autoinit.hpp"
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
 
 #include "library/nlohmann/json.hpp"
 
 #include <filesystem>
+
 namespace neko::ui {
 
     MainWindow::SettingPageOne::SettingPageOne(QWidget *parent) : QWidget(parent) {
@@ -1058,7 +1062,7 @@ namespace neko::ui {
                 setting->page3->devServerEdit->show();
             }
         });
-        connect(headbar->toolbar, &ToolBar::request_move_window,
+        connect(headbar->toolbar, &ToolBar::requestMoveWindow,
                 [=, this] {
                     this->windowHandle()->startSystemMove();
                 });
