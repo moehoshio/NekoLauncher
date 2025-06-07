@@ -9,29 +9,10 @@
 
 #include <exception>
 #include <nested_exception>
+#include <source_location>
 #include <string>
 
 #include <boost/stacktrace.hpp>
-
-
-#if defined(__has_builtin)
-#if __has_builtin(__builtin_FILE) && __has_builtin(__builtin_LINE) && __has_builtin(__builtin_FUNCTION)
-#define NEKO_HAS_BUILTIN_LOCATION 1
-#endif
-#endif
-
-#if !defined(NEKO_HAS_BUILTIN_LOCATION)
-#if defined(_MSC_VER) && _MSC_VER >= 1929 // MSVC 2019 v16.10+
-#define NEKO_HAS_BUILTIN_LOCATION 1
-#endif
-#endif
-
-#if defined(__cpp_lib_source_location) && __cpp_lib_source_location >= 201907L
-#include <source_location>
-#define NEKO_HAS_STD_SOURCE_LOCATION 1
-#endif
-
-static_assert(NEKO_HAS_BUILTIN_LOCATION || NEKO_HAS_STD_SOURCE_LOCATION, "Error handling requires either __builtin_* or std::source_location(c++20) support.");
 
 namespace nerr = neko::err;
 
@@ -45,20 +26,13 @@ namespace neko::err {
         neko::cstr file = nullptr;
         neko::cstr funcName = nullptr;
 
-#if defined(NEKO_HAS_BUILTIN_LOCATION)
         /**
          * @brief Constructs ErrorExtensionInfo with line, file, and function name.
-         * @note Uses __builtin_LINE(), __builtin_FILE(), and __builtin_FUNCTION() as default values.
-         * @note Note: These are not part of the standard library, but are available in newer compilers.
-         * @note Supported compilers: GCC, Clang, MSVC (VS2019 v16.10+)
          */
-        constexpr ErrorExtensionInfo(neko::uint32 Line = __builtin_LINE(), neko::cstr File = __builtin_FILE(), neko::cstr FuncName = __builtin_FUNCTION()) noexcept
-            : line(Line), file(File), funcName(FuncName) {}
-#else
         constexpr ErrorExtensionInfo(
             const std::source_location &loc = std::source_location::current()) noexcept
             : line(loc.line()), file(loc.file_name()), funcName(loc.function_name()) {}
-#endif
+
         constexpr neko::uint32 getline() const noexcept { return line; }
         constexpr neko::cstr getFile() const noexcept { return file; }
         constexpr neko::cstr getFuncName() const noexcept { return funcName; }
