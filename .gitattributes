@@ -1,0 +1,10 @@
+# All text files to LF
+* text=auto eol=lf
+*.md text eol=lf
+
+# Windows batch to CRLF
+*.bat text eol=crlf
+
+# ignore binary files
+*.png binary
+*.jpg binary
