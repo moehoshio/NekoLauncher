@@ -1,11 +1,13 @@
 #pragma once
+#include "neko/function/info.hpp"
 
 #include "neko/schema/wmsg.hpp"
+#include "neko/schema/state.hpp"
 #include "neko/schema/clientconfig.hpp"
-#include "neko/function/info.hpp"
 
 
 #include <string>
+#include <vector>
 
 
 #include <QtWidgets/QApplication>
@@ -116,12 +118,6 @@ namespace neko::ui {
 
     class MainWindow : public QMainWindow {
         Q_OBJECT
-    public:
-        enum class pageState {
-            index,
-            setting,
-            loading
-        };
 
     private:
         struct SettingPageOne : public QWidget {

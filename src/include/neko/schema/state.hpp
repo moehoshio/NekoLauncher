@@ -9,7 +9,14 @@ namespace neko {
             ActionNeeded,  // Action required from user or system
             RetryRequired, // Temporary failure, should retry later
         };
-        
     } // namespace types
+
+    namespace ui {
+        enum class pageState {
+            index,
+            setting,
+            loading
+        };
+    } // namespace ui
 
 } // namespace neko
