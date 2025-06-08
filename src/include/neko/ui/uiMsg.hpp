@@ -1,5 +1,5 @@
 /**
- * @file wmsg.hpp
+ * @file uiMsg.hpp
  * @brief Header file defining structures for ui messages in the Neko ui module.
  * This file contains structures for input messages, loading messages, and hint messages.
  * These structures are used to manage user interactions and display messages in the UI.
