@@ -5,8 +5,9 @@
 #include <QtWidgets/QLabel>
 
 namespace neko::ui {
-    struct Index : public QWidget {
-        Index(QWidget *parent = nullptr) : QWidget(parent) {
+    
+    struct HomePage : public QWidget {
+        HomePage(QWidget *parent = nullptr) : QWidget(parent) {
             startButton = new QPushButton(this);
             menuButton = new QPushButton(this);
             versionText = new QLabel(this);
