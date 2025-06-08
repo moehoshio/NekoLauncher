@@ -1,4 +1,5 @@
 #pragma once
+
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QTabWidget>
@@ -196,8 +197,8 @@ namespace neko::ui {
         SettingPageThree(QWidget *parent = nullptr);
     };
 
-    struct Setting : public QWidget {
-        Setting(QWidget *parent = nullptr);
+    struct SettingPage : public QWidget {
+        SettingPage(QWidget *parent = nullptr);
 
         QTabWidget *tabWidget;
         SettingPageOne *page1;
