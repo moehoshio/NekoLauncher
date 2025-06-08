@@ -13,19 +13,19 @@
 
 namespace neko::ui {
 
-    class LogViewer : public QWidget {
+    class LogViewerWindow : public QWidget {
         Q_OBJECT
 
     private:
         QTextEdit *textEdit;
 
     public:
-        explicit LogViewer(QWidget *parent = nullptr)
+        explicit LogViewerWindow(QWidget *parent = nullptr)
             : QWidget(parent), textEdit(new QTextEdit(this)) {
             initialize();
         }
 
-        explicit LogViewer(const QString &filePath, QWidget *parent = nullptr)
+        explicit LogViewerWindow(const QString &filePath, QWidget *parent = nullptr)
             : QWidget(parent), textEdit(new QTextEdit(this)) {
             initialize();
             loadLogFile(filePath);
