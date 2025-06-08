@@ -11,12 +11,4 @@ namespace neko {
         };
     } // namespace types
 
-    namespace ui {
-        enum class pageState {
-            index,
-            setting,
-            loading
-        };
-    } // namespace ui
-
 } // namespace neko
