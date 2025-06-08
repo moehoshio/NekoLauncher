@@ -1,13 +1,15 @@
 /**
  * @file wmsg.hpp
- * @brief Header file defining structures for window messages in the Neko UI framework.
+ * @brief Header file defining structures for ui messages in the Neko ui module.
  * This file contains structures for input messages, loading messages, and hint messages.
  * These structures are used to manage user interactions and display messages in the UI.
  */
 
 #pragma once
 
-// Structure definition for window messages
+// Structure definition for ui messages
+
+#include "neko/schema/types.hpp"
 
 #include <functional>
 #include <string>
@@ -37,7 +39,7 @@ namespace neko::ui {
         /**
          * @brief Each string represents a line, returned by getLines method, maintaining the same order as input.
          */
-        std::vector<std::string> lines;
+        std::vector<std::string> lineText;
 
         /**
          * @brief Callback function for the cancel or confirm button click.
@@ -49,13 +51,13 @@ namespace neko::ui {
     };
 
     /**
-     * @brief Structure representing a loading message window.
+     * @brief Structure representing a loading message page.
      */
-    struct loadMsg {
+    struct LoadMsg {
         /**
          * @brief Enum for the type of loading message to display.
          */
-        enum Type {
+        enum class Type {
             OnlyRaw,  /**< Only show loading icon and process text */
             Text,     /**< Show text widget, process, and loading icon */
             Progress, /**< Show progress bar, process, and loading icon */
@@ -65,7 +67,7 @@ namespace neko::ui {
         /**
          * @brief Show type.
          */
-        Type type;
+        Type type = Type::OnlyRaw;
 
         /**
          * @brief Process text, default is "loading...".
@@ -93,19 +95,26 @@ namespace neko::ui {
         std::string poster;
 
         /**
+         * @brief Path to the loading icon (gif).
+         * This icon is displayed during the loading process.
+         */
+        std::string icon = "img/loading.gif"; /**< Path to the loading icon (gif) */
+
+
+        /**
          * @brief Speed of the loading icon (gif) animation in milliseconds.
          */
-        int speed = 100;
+        neko::uint32 speed = 100;
 
         /**
          * @brief Current progress value.
          */
-        int progressVal;
+        neko::uint32 progressVal = 0;
 
         /**
          * @brief Maximum progress value.
          */
-        int progressMax;
+        neko::uint32 progressMax = 0;
 
         // loadMsg(Type type ,const std::string &process ,const std::string &h1,const std::string &h2,const std::string &msg,const std::string &poster,int speed,int progressVal,int progressMax) :  type(type) , process(process), h1(h1),h2(h2),msg(msg),poster(poster),speed(speed),progressVal(progressVal),progressMax(progressMax){};
     };
@@ -113,7 +122,7 @@ namespace neko::ui {
     /**
      * @brief Structure representing a hint or alert message dialog.
      */
-    struct hintMsg {
+    struct HintMsg {
         /**
          * @brief The title of the hint dialog.
          */
@@ -130,20 +139,26 @@ namespace neko::ui {
         std::string poster;
 
         /**
-         * @brief Number of buttons to display.
-         * 1: only OK button
-         * 2: OK and Cancel button
-         * other value: default show two buttons
+         * @brief Text labels for each button in the dialog.
+         * Each element in the vector represents one button.
          */
-        int buttonNum = 1;
+        std::vector<std::string> buttonText;
 
         /**
          * @brief Callback function after clicking the button.
          * If using a radio button, the returned boolean value can be ignored.
-         * @param bool True if confirmed, false if cancelled.
+         * @param uint32 The callback parameter indicates which button the user clicked; the index id corresponds
+         * @param uint32 to the order of the buttonText vector.
          * default is an empty function that does nothing.
          */
-        std::function<void(bool)> callback = [](bool) {};
+        std::function<void(neko::uint32)> callback = [](neko::uint32) {};
+
+        /**
+         * @brief Number of auto close seconds.
+         * If set to 0, the dialog will not auto close.
+         * If set to a positive value, the dialog will close automatically after that many seconds.
+         */
+        neko::uint32 autoClose = 0; // auto close time in seconds, default is 0 (no auto close)
 
         // hintMsg(const std::string & title,const std::string &msg,const std::string &poster,int buttonType,std::function<void(bool)> callback) : title(title),msg(msg),poster(poster),buttonType(buttonType),callback(callback){};
     };
