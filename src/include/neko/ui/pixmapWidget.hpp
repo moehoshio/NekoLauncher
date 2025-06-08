@@ -1,5 +1,8 @@
+#pragma once
+
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
+#include <QtGui/QPainter>
 #include <QtWidgets/QWidget>
 
 #include <filesystem>
