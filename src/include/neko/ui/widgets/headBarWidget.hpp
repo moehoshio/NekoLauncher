@@ -1,13 +1,20 @@
 #pragma once
+
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QAction>
+
+#include <QtWidgets/QDragEnterEvent>
+#include <QtWidgets/QDragMoveEvent>
+
+#include <QtCore/QEvent>
 
 namespace neko::ui {
-    
-    class ToolBar : public QToolBar {
+
+    class ToolBarWidget : public QToolBar {
         Q_OBJECT
     public:
-        explicit ToolBar(QWidget *parent = nullptr) : QToolBar(parent) {
+        explicit ToolBarWidget(QWidget *parent = nullptr) : QToolBar(parent) {
             setMovable(false);
             setFloatable(false);
             setAcceptDrops(true);
@@ -30,5 +37,16 @@ namespace neko::ui {
 
     signals:
         void requestMoveWindow();
+    };
+
+    struct HeadBarWidget : public QWidget {
+        ToolBarWidget *toolbar;
+        QAction *close_;
+        QAction *minimize;
+        QAction *maximize;
+        QAction *sp1;
+        QAction *sp2;
+        QWidget *spacer;
+        HeadBarWidget(QWidget *parent = nullptr);
     };
 } // namespace neko::ui
