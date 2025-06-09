@@ -1,6 +1,6 @@
 /**
- * @file nerr.hpp
- * @brief Error handling classes for the NekoLauncher
+ * @file exception.hpp
+ * @brief Exception classes for the NekoLauncher
  */
 #pragma once
 
@@ -14,14 +14,12 @@
 
 #include <boost/stacktrace.hpp>
 
-namespace nerr = neko::err;
-
-namespace neko::err {
+namespace neko::ex {
 
     /**
-     * @brief Stores extended error information such as line, file, and function name.
+     * @brief Stores extended exception information such as line, file, and function name.
      */
-    struct ErrorExtensionInfo {
+    struct ExceptionExtensionInfo {
         neko::uint32 line = 0;
         neko::cstr file = nullptr;
         neko::cstr funcName = nullptr;
@@ -29,7 +27,7 @@ namespace neko::err {
         /**
          * @brief Constructs ErrorExtensionInfo with line, file, and function name.
          */
-        constexpr ErrorExtensionInfo(
+        constexpr ExceptionExtensionInfo(
             const std::source_location &loc = std::source_location::current()) noexcept
             : line(loc.line()), file(loc.file_name()), funcName(loc.function_name()) {}
 
@@ -47,35 +45,35 @@ namespace neko::err {
      * Provides basic error handling functionality for all derived error types.
      * Stores error message, extension info, and stack trace.
      */
-    class Error : public std::exception, public std::nested_exception {
+    class Exception : public std::exception, public std::nested_exception {
     private:
         std::string msg;
-        ErrorExtensionInfo extInfo;
+        ExceptionExtensionInfo extInfo;
         boost::stacktrace::stacktrace trace;
 
     public:
         /**
-         * @brief Construct an Error with a message and extension info.
+         * @brief Construct an Exception with a message and extension info.
          * @param Msg Error message.
          * @param ExtInfo Extended error information.
          */
-        explicit Error(const std::string &Msg, const ErrorExtensionInfo &ExtInfo) noexcept
+        explicit Exception(const std::string &Msg, const ExceptionExtensionInfo &ExtInfo) noexcept
             : msg(Msg), extInfo(ExtInfo),
               trace(boost::stacktrace::stacktrace()) {};
 
         /**
-         * @brief Construct an Error with a message.
+         * @brief Construct an Exception with a message.
          * @param Msg Error message.
          */
-        explicit Error(const std::string &Msg) noexcept
+        explicit Exception(const std::string &Msg) noexcept
             : msg(Msg),
               trace(boost::stacktrace::stacktrace()) {};
 
         /**
-         * @brief Construct an Error with a C-string message.
+         * @brief Construct an Exception with a C-string message.
          * @param Msg Error message.
          */
-        explicit Error(neko::cstr Msg) noexcept
+        explicit Exception(neko::cstr Msg) noexcept
             : msg(Msg ? Msg : ""),
               trace(boost::stacktrace::stacktrace()) {};
 
@@ -107,7 +105,7 @@ namespace neko::err {
          * @brief Get the extended error information.
          * @return Reference to ErrorExtensionInfo.
          */
-        const ErrorExtensionInfo &getExtensionInfo() const noexcept {
+        const ExceptionExtensionInfo &getExtensionInfo() const noexcept {
             return extInfo;
         }
 
@@ -193,26 +191,26 @@ namespace neko::err {
     /**
      * @brief Exception for already existing objects.
      */
-    struct AlreadyExists : public Error {
-        explicit AlreadyExists(const std::string &Msg = "Object already exists!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+    struct AlreadyExists : public Exception {
+        explicit AlreadyExists(const std::string &Msg = "Object already exists!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for invalid arguments.
      */
-    struct InvalidArgument : public Error {
-        explicit InvalidArgument(const std::string &Msg = "Invalid argument!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+    struct InvalidArgument : public Exception {
+        explicit InvalidArgument(const std::string &Msg = "Invalid argument!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for system errors.
      */
-    class SystemError : public Error {
+    class SystemError : public Exception {
     public:
-        explicit SystemError(const std::string &Msg = "System error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit SystemError(const std::string &Msg = "System error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
@@ -220,7 +218,7 @@ namespace neko::err {
      */
     class FileError : public SystemError {
     public:
-        explicit FileError(const std::string &Msg = "File error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+        explicit FileError(const std::string &Msg = "File error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : SystemError(Msg, ExtInfo) {}
     };
 
@@ -229,7 +227,7 @@ namespace neko::err {
      */
     class NetworkError : public SystemError {
     public:
-        explicit NetworkError(const std::string &Msg = "Network error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+        explicit NetworkError(const std::string &Msg = "Network error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : SystemError(Msg, ExtInfo) {}
     };
 
@@ -238,7 +236,7 @@ namespace neko::err {
      */
     class DatabaseError : public SystemError {
     public:
-        explicit DatabaseError(const std::string &Msg = "Database error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+        explicit DatabaseError(const std::string &Msg = "Database error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : SystemError(Msg, ExtInfo) {}
     };
 
@@ -247,107 +245,107 @@ namespace neko::err {
      */
     class ExternalLibraryError : public SystemError {
     public:
-        explicit ExternalLibraryError(const std::string &Msg = "External library error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
+        explicit ExternalLibraryError(const std::string &Msg = "External library error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : SystemError(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for out-of-memory errors.
      */
-    class OutOfMemoryError : public Error {
+    class OutOfMemoryError : public Exception {
     public:
-        explicit OutOfMemoryError(const std::string &Msg = "Out of memory!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit OutOfMemoryError(const std::string &Msg = "Out of memory!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for unimplemented features.
      */
-    class NotImplementedError : public Error {
+    class NotImplemented : public Exception {
     public:
-        explicit NotImplementedError(const std::string &Msg = "Not implemented!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit NotImplemented(const std::string &Msg = "Not implemented!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for configuration errors.
      */
-    class ConfigError : public Error {
+    class Config : public Exception {
     public:
-        explicit ConfigError(const std::string &Msg = "Configuration error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Config(const std::string &Msg = "Configuration error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for parsing errors.
      */
-    class ParseError : public Error {
+    class Parse : public Exception {
     public:
-        explicit ParseError(const std::string &Msg = "Parse error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Parse(const std::string &Msg = "Parse error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for concurrency errors.
      */
-    class ConcurrencyError : public Error {
+    class Concurrency : public Exception {
     public:
-        explicit ConcurrencyError(const std::string &Msg = "Concurrency error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Concurrency(const std::string &Msg = "Concurrency error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for assertion failures.
      */
-    class AssertionError : public Error {
+    class Assertion : public Exception {
     public:
-        explicit AssertionError(const std::string &Msg = "Assertion failed!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Assertion(const std::string &Msg = "Assertion failed!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for invalid operations.
      */
-    class InvalidOperation : public Error {
+    class InvalidOperation : public Exception {
     public:
-        explicit InvalidOperation(const std::string &Msg = "Invalid operation!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit InvalidOperation(const std::string &Msg = "Invalid operation!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for permission denied errors.
      */
-    class PermissionDeniedError : public Error {
+    class PermissionDenied : public Exception {
     public:
-        explicit PermissionDeniedError(const std::string &Msg = "Permission denied!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit PermissionDenied(const std::string &Msg = "Permission denied!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for timeout errors.
      */
-    class TimeoutError : public Error {
+    class Timeout : public Exception {
     public:
-        explicit TimeoutError(const std::string &Msg = "Timeout!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Timeout(const std::string &Msg = "Timeout!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for logic errors.
      */
-    class LogicError : public Error {
+    class Logic : public Exception {
     public:
-        explicit LogicError(const std::string &Msg = "Logic error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Logic(const std::string &Msg = "Logic error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
     /**
      * @brief Exception for runtime errors.
      */
-    class RuntimeError : public Error {
+    class Runtime : public Exception {
     public:
-        explicit RuntimeError(const std::string &Msg = "Runtime error!", const ErrorExtensionInfo &ExtInfo = {}) noexcept
-            : Error(Msg, ExtInfo) {}
+        explicit Runtime(const std::string &Msg = "Runtime error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
     };
 
-} // namespace neko::err
+} // namespace neko::ex
