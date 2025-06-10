@@ -2,6 +2,8 @@
 
 #include "neko/ui/uiMsg.hpp"
 
+#include "neko/ui/theme.hpp"
+
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include <QtWidgets/QDialogButtonBox>
@@ -14,72 +16,33 @@
 
 #include <memory>
 #include <string_view>
+#include <vector>
 
 namespace neko::ui {
 
-    struct HintDialog : public QWidget {
-
+    class HintDialog : public QWidget {
+        
+    private:
         QWidget *centralWidget;
         PixmapWidget *poster;
         QVBoxLayout *centralWidgetLayout;
         QFrame *line;
-        QPushButton *button;
-        QDialogButtonBox *dialogButton;
+        std::vector<QPushButton *> buttons;
         QLabel *title;
         QLabel *msg;
+        QDialogButtonBox *dialogButton;
 
+    public:
         HintDialog(QWidget *parent = nullptr);
 
-        void setupButton(QPushButton *btn, const std::function<void(bool)> &callback, std::shared_ptr<bool> did) {
-            btn->show();
-            if (!callback)
-                return;
-            connect(btn, &QPushButton::clicked, this, [=, this] {
-                if (!*did) {
-                    callback(true);
-                    *did = true;
-                }
-            });
-        }
+        void showHint(const HintMsg &m);
 
-        void setupButton(QDialogButtonBox *btnBox, const std::function<void(bool)> &callback, std::shared_ptr<bool> did) {
-            btnBox->show();
-            if (!callback)
-                return;
-            connect(btnBox, &QDialogButtonBox::accepted, this, [=, this] {
-                if (!*did) {
-                    callback(true);
-                    *did = true;
-                }
-            });
-            connect(btnBox, &QDialogButtonBox::rejected, this, [=, this] {
-                if (!*did) {
-                    callback(false);
-                    *did = true;
-                }
-            });
-        }
+        void setupFont(QFont font,QFont titleFont);
+        void setupStyle(const Theme &theme);
 
-        void showHint(const hintMsg &m) {
-            this->show();
-            this->title->setText(QString::fromStdString(m.title));
-            this->msg->setText(QString::fromStdString(m.msg));
-            if (poster && !m.poster.empty())
-                this->poster->setPixmap(std::string_view(m.poster));
-            auto did = std::make_shared<bool>(false);
-            if (m.buttonNum == 1) {
-                setupButton(button, m.callback, did);
-                dialogButton->hide();
-            } else {
-                button->hide();
-                setupButton(dialogButton, m.callback, did);
-            }
-            if (!m.callback)
-                return;
-            connect(this, &QWidget::destroyed, this, [m, did](QObject *) {
-                if (!*did && m.callback)
-                    m.callback(false);
-            });
-        }
+        void resetState();
+        void resetButtons();
+
+        void resizeItems(int windowWidth, int windowHeight);
     };
 } // namespace neko::ui
