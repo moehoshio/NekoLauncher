@@ -1,7 +1,9 @@
 #pragma once
 
-#include "neko/ui/widgets/pixmapWidget.hpp"
+#include "neko/schema/types.hpp"
+#include "neko/ui/theme.hpp"
 #include "neko/ui/uiMsg.hpp"
+#include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include <QtGui/QMovie>
 #include <QtWidgets/QLabel>
@@ -11,63 +13,40 @@
 
 namespace neko::ui {
 
-    struct LoadingPage : public QWidget {
-        LoadingPage(QWidget *parent = nullptr);
+    class LoadingPage : public QWidget {
+        Q_OBJECT
+    private:
         QProgressBar *progressBar;
         PixmapWidget *poster;
         QWidget *textLayoutWidget;
         QVBoxLayout *textLayout;
-        QLabel *titleH1;
-        QLabel *titleH2;
+        QLabel *h1Title;
+        QLabel *h2TitleH2;
         QLabel *text;
         QLabel *loadingLabel;
         QMovie *loadingMv;
         QLabel *process;
 
-        inline void showLoad(const loadMsg &m) {
-            process->setText(m.process.c_str());
+    public:
+        LoadingPage(QWidget *parent = nullptr);
 
-            if (m.type == loadMsg::Type::Text || m.type == loadMsg::Type::All) {
-                titleH1->setText(m.h1.c_str());
-                titleH2->setText(m.h2.c_str());
-                text->setText(m.msg.c_str());
-            }
+        void showLoad(const LoadMsg &m);
 
-            if (m.type == loadMsg::Type::Progress || m.type == loadMsg::Type::All) {
-                progressBar->setMaximum(m.progressMax);
-                progressBar->setValue(m.progressVal);
-            }
+        void setLoadingVal(neko::uint32 val) {
+            progressBar->setValue(val);
+        };
+        void setLoadingNow(neko::cstr msg) {
+            process->setText(msg);
+        };
 
-            if (!m.poster.empty()) {
-                poster->setPixmap(m.poster.c_str());
-                poster->show();
-            } else {
-                poster->hide();
-            }
+        void hideLoad();
 
-            if (loadingMv->speed() != m.speed)
-                loadingMv->setSpeed(m.speed);
+        void setupStyle(const Theme &theme);
+        void setupFont(QFont text, QFont h1Font, QFont h2Font);
+        void resizeItems(int windowWidth, int windowHeight);
 
-            switch (m.type) {
-                case loadMsg::Type::Text:
-                    progressBar->hide();
-                    textLayoutWidget->show();
-                    break;
-                case loadMsg::Type::Progress:
-                    progressBar->show();
-                    textLayoutWidget->hide();
-                    break;
-                case loadMsg::Type::OnlyRaw:
-                    progressBar->hide();
-                    textLayoutWidget->hide();
-                    break;
-                case loadMsg::Type::All:
-                    progressBar->show();
-                    textLayoutWidget->show();
-                    break;
-                default:
-                    break;
-            }
-        }
+    signals:
+        void setLoadingValD(neko::uint32 val);
+        void setLoadingNowD(neko::cstr msg);
     };
 } // namespace neko::ui

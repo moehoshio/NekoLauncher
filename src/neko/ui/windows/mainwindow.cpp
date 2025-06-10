@@ -334,44 +334,6 @@ namespace neko::ui {
         closeButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DockWidgetCloseButton));
     };
 
-    MainWindow::LoadingPage::LoadingPage(QWidget *parent) : QWidget(parent) {
-        textLayoutWidget = new QWidget(this);
-        textLayout = new QVBoxLayout(textLayoutWidget);
-        poster = new PixmapWidget(this);
-        process = new QLabel(this);
-        progressBar = new QProgressBar(this);
-        loadingLabel = new QLabel(this);
-        loadingMv = new QMovie("./img/loading.gif");
-        titleH1 = new QLabel(textLayoutWidget);
-        titleH2 = new QLabel(textLayoutWidget);
-        text = new QLabel(textLayoutWidget);
-
-        textLayout->addWidget(titleH1);
-        textLayout->addWidget(titleH2);
-        textLayout->addWidget(text);
-        textLayoutWidget->setLayout(textLayout);
-
-        progressBar->setTextVisible(true);
-        progressBar->setAlignment(Qt::AlignCenter);
-        progressBar->setOrientation(Qt::Horizontal);
-        progressBar->setInvertedAppearance(false);
-
-        text->setWordWrap(true);
-        process->setWordWrap(true);
-        text->setOpenExternalLinks(true);
-
-        loadingMv->start();
-        loadingLabel->setAttribute(Qt::WA_NoSystemBackground);
-        loadingLabel->setMovie(loadingMv);
-        loadingLabel->setScaledContents(true);
-        poster->lower();
-
-        for (auto it : std::vector<QLabel *>{titleH1, titleH2, text}) {
-            it->setAlignment(Qt::AlignCenter);
-        }
-        showLoad({loadMsg::OnlyRaw});
-    }
-
     MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
 
         toolbar = new ToolBar(this);

@@ -101,7 +101,7 @@ namespace neko::ui {
         std::string icon = "img/loading.gif"; /**< Path to the loading icon (gif) */
 
         /**
-         * @brief Speed of the loading icon (gif) animation in milliseconds.
+         * @brief Speed of the loading icon (gif) animation in Percent
          */
         neko::uint32 speed = 100;
 
