@@ -166,14 +166,14 @@ namespace neko::ui {
     };
 
     /**
-     * @struct choiceMsg
+     * @struct ChoiceMsg
      * @brief Represents a message dialog with multiple selectable choices.
      *
      * This structure is used to display a dialog with a title, message content, and a set of selectable choices.
      * Each element in the `choices` vector represents a choice column, and each `std::string` within a column
      * represents a specific selectable option in that column.
      */
-    struct choiceMsg {
+    struct ChoiceMsg {
         /**
          * @brief The title of the choice dialog.
          */
