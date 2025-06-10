@@ -14,7 +14,6 @@ namespace neko::ui {
         std::string_view name;
         ThemeType type;
         std::string_view backgroundColor;
-        std::string_view secondaryColor; // Secondary color, e.g. button background
         std::string_view textColor;      // Main text and button text
         std::string_view accentColor;    // Accent color, for buttons, focus, links, etc.
         std::string_view hoverColor;     // For mouse hover
@@ -44,10 +43,6 @@ namespace neko::ui {
 
         Theme &setBackgroundColor(std::string_view bgColor) {
             backgroundColor = bgColor;
-            return *this;
-        }
-        Theme &setSecondaryColor(std::string_view secColor) {
-            secondaryColor = secColor;
             return *this;
         }
         Theme &setTextColor(std::string_view txtColor) {
@@ -101,7 +96,6 @@ namespace neko::ui {
         "Light",
         ThemeType::Light,
         "rgba(255,255,255,1)", // backgroundColor
-        "rgba(240,240,240,1)", // secondaryColor
         "rgba(0,0,0,1)",       // textColor
         "rgba(0,123,255,1)",   // accentColor
         "rgba(224,224,224,1)", // hoverColor
@@ -119,7 +113,6 @@ namespace neko::ui {
         "Dark",
         ThemeType::Dark,
         "rgba(24,26,27,1)",    // backgroundColor
-        "rgba(240,240,240,1)", // secondaryColor
         "rgba(245,246,250,1)", // textColor
         "rgba(79,142,247,1)",  // accentColor
         "rgba(35,39,42,1)",    // hoverColor
@@ -137,9 +130,8 @@ namespace neko::ui {
         "Home",
         ThemeType::Custom,
         "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255))", // backgroundColor
-        "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100))", // secondaryColor
         "rgba(50,50,50,1)",    // textColor
-        "rgb(224, 100, 255)", // accentColor
+        "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100))", // accentColor
         "rgba(200,200,200,1)", // hoverColor
         "rgba(180,180,180,1)", // selectedColor
         "rgba(150,150,150,1)", // disabledColor
