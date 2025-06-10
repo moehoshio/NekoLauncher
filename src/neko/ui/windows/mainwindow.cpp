@@ -334,21 +334,6 @@ namespace neko::ui {
         closeButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DockWidgetCloseButton));
     };
 
-    MainWindow::HeadBar::HeadBar(QWidget *parent) : QWidget(parent) {
-
-        toolbar = new ToolBar(this);
-        spacer = new QWidget(toolbar);
-        close_ = new QAction(toolbar);
-        minimize = new QAction(toolbar);
-        maximize = new QAction(toolbar);
-
-        sp1 = toolbar->addSeparator();
-        sp2 = toolbar->addSeparator();
-
-        spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
-        spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    }
-
     void MainWindow::resizeItem() {
 
         bgWidget->setGeometry(-12, -12, width() + 50, height() + 20);
@@ -541,10 +526,6 @@ namespace neko::ui {
         loading->progressBar->setFormat("%v/%m");
         setting->page3->devOptLoadingPage->setText("update");
         setting->page3->devOptHintPage->setText("hint");
-
-        headbar->close_->setText(neko::info::translations(neko::info::lang.general.close).c_str());
-        headbar->minimize->setText(neko::info::translations(neko::info::lang.general.minimize).c_str());
-        headbar->maximize->setText(neko::info::translations(neko::info::lang.general.maximize).c_str());
 
         hintWidget->button->setText(neko::info::translations(neko::info::lang.general.ok).c_str());
 
@@ -1248,7 +1229,7 @@ namespace neko::ui {
                 auto p = dynamic_cast<QHoverEvent *>(event)->pos();
                 bool pointXGreaterWidthBorder = (p.x() > width() - border);
                 bool pointXLessWidthBorder = (p.x() < border);
-                bool pointYGreaterHeightToolBar = (p.y() > headbar->toolbar->height());
+                bool pointYGreaterHeightToolBar = (p.y() > headbar->height());
                 bool pointYGreaterHeightBorder = (p.y() > height() - border);
                 if (pointYGreaterHeightBorder) {
                     if (pointXLessWidthBorder) {

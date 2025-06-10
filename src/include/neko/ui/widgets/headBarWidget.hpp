@@ -1,4 +1,5 @@
 #pragma once
+#include "neko/ui/theme.hpp"
 
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
@@ -39,14 +40,24 @@ namespace neko::ui {
         void requestMoveWindow();
     };
 
-    struct HeadBarWidget : public QWidget {
+    class HeadBarWidget : public QWidget {
+    private:
         ToolBarWidget *toolbar;
-        QAction *close_;
+        QAction *closeAction;
         QAction *minimize;
         QAction *maximize;
         QAction *sp1;
         QAction *sp2;
         QWidget *spacer;
-        HeadBarWidget(QWidget *parent = nullptr);
+    public:
+        // Ensure the correct parent object; the parent must be a top-level window!
+        HeadBarWidget(QWidget *parent);
+
+        void setupStyle(const Theme& theme);
+        void setupText();
+        // Ensure the correct parent object; it sets the parent's window flags to show and hide the system window frame.
+        void showHeadBar();
+        void hideHeadBar();
+        void setHeadBarAlignmentRight(bool keepRight = false);
     };
 } // namespace neko::ui
