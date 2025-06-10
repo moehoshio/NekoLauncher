@@ -93,6 +93,7 @@ namespace neko::info {
             struct General {
                 std::string_view
                     general = "general_general",
+                    input = "general_input",
                     menu = "general_menu",
                     start = "general_start",
                     ok = "general_ok",

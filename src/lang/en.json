@@ -13,11 +13,12 @@
     "title_logoutConfirm":"Logout confirmation",
 
     "general_general":"general",
+    "general_input":"input",
     "general_menu":"MENU",
     "general_start":"START",
     "general_ok":"ok",
     "general_setting":"setting",
-    "genreal_lang":"language",
+    "general_lang":"language",
     "general_close":"close",
     "general_maximize":"maximize",
     "general_minimize":"minimize",

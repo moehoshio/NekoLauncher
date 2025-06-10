@@ -13,11 +13,12 @@
     "title_logoutConfirm":"登出確認",
 
     "general_general":"一般",
+    "general_input":"輸入",
     "general_menu":"MENU",
     "general_start":"START",
     "general_ok":"確認",
     "general_setting":"設定",
-    "genreal_lang":"語言",
+    "general_lang":"語言",
     "general_close":"關閉",
     "general_maximize":"最大化",
     "general_minimize":"最小化",
