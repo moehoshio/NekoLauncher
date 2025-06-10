@@ -6,7 +6,6 @@
 #include <QtWidgets/QWidget>
 
 #include <filesystem>
-#include <string>
 #include <string_view>
 
 namespace neko::ui {
@@ -45,6 +44,13 @@ namespace neko::ui {
             if (ok)
                 update();
             return ok;
+        }
+
+        void clearPixmap() {
+            if (!bg.isNull()) {
+                bg = QPixmap();
+                update();
+            }
         }
 
     protected:
