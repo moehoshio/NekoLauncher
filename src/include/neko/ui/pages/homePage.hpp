@@ -6,18 +6,20 @@
 
 namespace neko::ui {
     
-    struct HomePage : public QWidget {
-        HomePage(QWidget *parent = nullptr) : QWidget(parent) {
-            startButton = new QPushButton(this);
-            menuButton = new QPushButton(this);
-            versionText = new QLabel(this);
-            versionText->setWordWrap(true);
-            startButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
-            menuButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
-        };
-
+    class HomePage : public QWidget {
+    private:
         QPushButton *startButton;
         QPushButton *menuButton;
         QLabel *versionText;
+    public:
+        HomePage(QWidget *parent = nullptr);
+
+        void setupStyle(const Theme &theme);
+        void setupText();
+
+        void setupFont(QFont text, QFont h1Font, QFont h2Font);
+
+        void resizeItems(int windowWidth, int windowHeight);
+
     };
 } // namespace neko::ui
