@@ -100,7 +100,6 @@ namespace neko::ui {
          */
         std::string icon = "img/loading.gif"; /**< Path to the loading icon (gif) */
 
-
         /**
          * @brief Speed of the loading icon (gif) animation in milliseconds.
          */
@@ -145,22 +144,62 @@ namespace neko::ui {
         std::vector<std::string> buttonText;
 
         /**
-         * @brief Callback function after clicking the button.
-         * If using a radio button, the returned boolean value can be ignored.
-         * @param uint32 The callback parameter indicates which button the user clicked; the index id corresponds
+         * @brief Callback function after clicking a button.
+         * If using radio buttons, the returned boolean value can be ignored.
+         * @param uint32 The callback parameter indicates which button the user clicked; the index corresponds
          * @param uint32 to the order of the buttonText vector.
-         * default is an empty function that does nothing.
+         * @param uint32 If the dialog auto-closes or the window is closed (process ends), the default value 0 is returned.
          */
-        std::function<void(neko::uint32)> callback = [](neko::uint32) {};
+        std::function<void(neko::uint32)> callback = nullptr;
 
         /**
-         * @brief Number of auto close seconds.
+         * @brief Number of auto close millisecond
          * If set to 0, the dialog will not auto close.
-         * If set to a positive value, the dialog will close automatically after that many seconds.
+         * If set to a positive value, the dialog will close automatically after that many millisecond.
+         * @note Auto close will pass 0 to the callback function.
          */
-        neko::uint32 autoClose = 0; // auto close time in seconds, default is 0 (no auto close)
+        neko::uint32 autoClose = 0;
+
+        neko::uint32 defaultButtonIndex = 0; /**< Default button index, used when autoClose is set */
 
         // hintMsg(const std::string & title,const std::string &msg,const std::string &poster,int buttonType,std::function<void(bool)> callback) : title(title),msg(msg),poster(poster),buttonType(buttonType),callback(callback){};
+    };
+
+    /**
+     * @struct choiceMsg
+     * @brief Represents a message dialog with multiple selectable choices.
+     *
+     * This structure is used to display a dialog with a title, message content, and a set of selectable choices.
+     * Each element in the `choices` vector represents a choice column, and each `std::string` within a column
+     * represents a specific selectable option in that column.
+     */
+    struct choiceMsg {
+        /**
+         * @brief The title of the choice dialog.
+         */
+        std::string title;
+
+        /**
+         * @brief The main message content.
+         */
+        std::string msg;
+
+        /**
+         * @brief Path to the background image (poster).
+         */
+        std::string poster;
+
+        /**
+         * @brief A two-dimensional vector where each inner vector represents a choice column,
+         * and each string in the inner vector is a specific option within that column.
+         */
+        std::vector<std::vector<std::string>> choices;
+
+        /**
+         * @brief Callback function for the cancel or confirm button click.
+         * @param bool True if confirmed, false if cancelled.
+         */
+        std::function<void(bool)> callback = nullptr;
     };
 
 } // namespace neko::ui
