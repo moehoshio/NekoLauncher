@@ -45,7 +45,7 @@ namespace neko::ui {
     }
     void HintDialog::setupStyle(const Theme &theme) {
 
-        this->setStyleSheet(
+        centralWidget->setStyleSheet(
             QString(
                 "QWidget { background-color: %1; }"
                 "QLabel { color: %2; }"
@@ -82,11 +82,11 @@ namespace neko::ui {
         this->show();
         title->setText(QString::fromStdString(m.title));
         msg->setText(QString::fromStdString(m.msg));
-        if (m.poster.empty())
+        if (!m.poster.empty())
             (void)poster->setPixmap(std::string_view(m.poster));
 
         // If no buttons, add the default button
-        if (m.buttonText.empty() || m.buttonText.size() <= 0) {
+        if (m.buttonText.empty()) {
             auto btn = new QPushButton(neko::info::translations(neko::info::lang.general.ok), this);
             buttons.push_back(btn);
             dialogButton->addButton(btn, QDialogButtonBox::ActionRole);
