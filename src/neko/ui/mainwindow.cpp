@@ -386,63 +386,6 @@ namespace neko::ui {
         spacer->setStyleSheet("background-color: rgba(245,245,245,230)");
         spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
-    MainWindow::HintWindow::HintWindow(QWidget *parent) : QWidget(parent) {
-        poster = new PixmapWidget(this);
-        centralWidget = new QWidget(this);
-        centralWidgetLayout = new QVBoxLayout(centralWidget);
-        title = new QLabel(centralWidget);
-        line = new QFrame(centralWidget);
-        button = new QPushButton(centralWidget);
-        dialogButton = new QDialogButtonBox(centralWidget);
-        msg = new QLabel(centralWidget);
-
-        centralWidgetLayout->addWidget(title);
-        centralWidgetLayout->addWidget(line);
-        centralWidgetLayout->addWidget(msg);
-        centralWidgetLayout->addWidget(button);
-        centralWidgetLayout->addWidget(dialogButton);
-        centralWidgetLayout->setStretchFactor(msg, 2);
-        centralWidget->setLayout(centralWidgetLayout);
-        line->setFrameShape(QFrame::HLine);
-        line->setFrameShadow(QFrame::Sunken);
-        msg->setWordWrap(true);
-        button->hide();
-        dialogButton->hide();
-        poster->lower();
-        dialogButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        dialogButton->setStandardButtons(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
-    }
-
-    MainWindow::InputPage::InputPage(QWidget *parent) : QWidget(parent) {
-        gridLayout = new QGridLayout();
-        poster = new PixmapWidget(this);
-        centralWidget = new QWidget();
-        centralWidgetLayout = new QVBoxLayout(centralWidget);
-        dialogButton = new QDialogButtonBox(centralWidget);
-        title = new QLabel(centralWidget);
-        msg = new QLabel(centralWidget);
-        gridLayout->setRowStretch(0, 3);
-        gridLayout->setColumnStretch(0, 3);
-        gridLayout->setRowStretch(1, 3);
-        gridLayout->setColumnStretch(1, 3);
-        gridLayout->setRowStretch(2, 3);
-        gridLayout->setColumnStretch(2, 3);
-        gridLayout->setColumnStretch(3, 3);
-        gridLayout->setColumnStretch(4, 3);
-
-        this->setLayout(gridLayout);
-        gridLayout->addWidget(centralWidget, 1, 2);
-
-        centralWidget->setSizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
-        title->setAlignment(Qt::AlignCenter);
-        centralWidgetLayout->addWidget(title);
-        centralWidgetLayout->addWidget(msg);
-        centralWidgetLayout->setStretchFactor(msg, 0.5);
-        centralWidgetLayout->addSpacing(12);
-        centralWidget->setLayout(centralWidgetLayout);
-        dialogButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        dialogButton->setStandardButtons(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
-    }
 
     void MainWindow::resizeItem() {
 
