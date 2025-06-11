@@ -129,7 +129,7 @@ namespace neko {
 
                     RequestConfig config;
                     config.url = url;
-                    config.method = NetworkBase::RequestType::Get;
+                    config.method = RequestType::Get;
                     config.requestId = "testing - " + std::string(it);
 
                     auto result = net.executeWithRetry(config, 2, std::chrono::milliseconds(50), {200});
