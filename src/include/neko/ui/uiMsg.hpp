@@ -156,7 +156,7 @@ namespace neko::ui {
          * @brief Number of auto close millisecond
          * If set to 0, the dialog will not auto close.
          * If set to a positive value, the dialog will close automatically after that many millisecond.
-         * @note Auto close will pass 0 to the callback function.
+         * @note Auto close will pass defaultButtonIndex to the callback function.
          */
         neko::uint32 autoClose = 0;
 
