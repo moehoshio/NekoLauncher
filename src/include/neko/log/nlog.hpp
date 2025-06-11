@@ -12,10 +12,10 @@
 #include <string>
 #include <source_location>
 
-// neko log
-namespace nlog = neko::log;
 
 namespace neko::log {
+
+    using srcLoc = std::source_location;
 
     /**
      * @brief Log an info message with formatting.
@@ -94,7 +94,7 @@ namespace neko::log {
          * @param startMsg Entry message (default: "Enter").
          * @param endMsg Exit message (default: "End").
          */
-        autoLog(neko::cstr File = std::source_location::current().file_name(), neko::uint32 Line = std::source_location::current().line(), std::string Name = std::source_location::current().function_name(), std::string StartMsg = "Enter", std::string EndMsg = "End")
+        autoLog( std::string StartMsg = "Enter", std::string EndMsg = "End", srcLoc File = srcLoc::current().file_name(), srcLoc Line = srcLoc::current().line(), std::string Name = srcLoc::current().function_name())
             : file(File), line(Line), name(Name), startMsg(StartMsg), endMsg(EndMsg) {
             Info(file, line, "%s : %s", this->name.c_str(), this->startMsg.c_str());
         }
@@ -107,3 +107,7 @@ namespace neko::log {
         }
     };
 } // namespace neko::log
+
+
+// neko log
+namespace nlog = neko::log;
