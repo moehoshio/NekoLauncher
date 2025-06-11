@@ -17,6 +17,8 @@
     "general_menu":"MENU",
     "general_start":"START",
     "general_ok":"確認",
+    "general_cancel":"取消",
+    "general_retry":"重試",
     "general_setting":"設定",
     "general_lang":"語言",
     "general_close":"關閉",

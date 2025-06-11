@@ -17,6 +17,8 @@
     "general_menu":"MENU",
     "general_start":"START",
     "general_ok":"ok",
+    "general_cancel":"cancel",
+    "general_retry":"retry",
     "general_setting":"setting",
     "general_lang":"language",
     "general_close":"close",

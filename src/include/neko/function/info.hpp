@@ -20,8 +20,11 @@
 // Neko Modules
 #include "neko/log/nlog.hpp"
 
+#include "neko/core/resources.hpp"
+
 #include "neko/function/exec.hpp"
 
+#include "neko/schema/types.hpp"
 #include "neko/schema/clientconfig.hpp"
 #include "neko/schema/nekodefine.hpp"
 
@@ -47,7 +50,7 @@ namespace neko::info {
          * @brief Gets the application version.
          * @return The application version string.
          */
-        constexpr inline const char *getVersion() {
+        constexpr inline neko::cstr getVersion() {
             return schema::definitions::NekoLcCoreVersion;
         };
 
@@ -55,10 +58,10 @@ namespace neko::info {
          * @brief Gets the resource version from configuration.
          * @return The resource version string.
          *
-         * @details Uses exec::getConfigObj from exec.hpp to access configuration.
+         * @details Uses core::getConfigObj from resources.hpp to access configuration.
          */
         inline std::string getResVersion() {
-            ClientConfig cfg(exec::getConfigObj());
+            ClientConfig cfg(core::getConfigObj());
             return cfg.more.resourceVersion;
         }
 
@@ -66,7 +69,7 @@ namespace neko::info {
          * @brief Gets the configuration file name.
          * @return The configuration file name.
          */
-        constexpr inline const char *getConfigFileName() {
+        constexpr inline neko::cstr getConfigFileName() {
             return schema::definitions::clientConfigFileName;
         }
 
@@ -97,6 +100,8 @@ namespace neko::info {
                     menu = "general_menu",
                     start = "general_start",
                     ok = "general_ok",
+                    cancel = "general_cancel",
+                    retry = "general_retry",
                     setting = "general_setting",
                     lang = "genreal_lang",
                     close = "general_close",
@@ -296,7 +301,7 @@ namespace neko::info {
                 std::ifstream i;
                 if (std::filesystem::exists(fileName) && [&i, &fileName] {i.open(fileName); return i.is_open(); }()) {
                     auto j = nlohmann::json::parse(i, nullptr, false);
-                    nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<const char *>(i.is_open()), exec::boolTo<const char *>(j.is_discarded()));
+                    nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<neko::cstr >(i.is_open()), exec::boolTo<neko::cstr >(j.is_discarded()));
                     cachedJson = j;
                 } else {
                     cachedJson = nlohmann::json::object();
