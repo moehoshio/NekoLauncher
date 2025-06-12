@@ -99,7 +99,7 @@ namespace neko::core {
     }
 
     // Check maintenance information, if the server is in maintenance mode, it will return State::ActionNeeded, otherwise State::Completed.
-    inline State checkMaintenance(std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::loadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
+    inline State checkMaintenance(std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
         log::autoLog log;
 
         if (showLoading) {
@@ -251,7 +251,7 @@ namespace neko::core {
 
         nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : res : %s ", log::srcLoc::current().function_name(), result.c_str());
         auto rawJsonData = nlohmann::json::parse(result, nullptr, false);
-        if (rawJsonData.is_discarded() && !rawJsonData.contains("updateInformation")) {
+        if (rawJsonData.is_discarded() || !rawJsonData.contains("updateInformation")) {
             nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : failed to update parse!", log::srcLoc::current().function_name());
             return {};
         }
@@ -283,7 +283,7 @@ namespace neko::core {
         return info;
     }
 
-    inline State autoUpdate(std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::loadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
+    inline State autoUpdate(std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
         nlog::autoLog log;
         std::string checkUpdateResult;
 
@@ -330,7 +330,8 @@ namespace neko::core {
         }
 
         neko::ui::LoadMsg lmsg{neko::ui::LoadMsg::All, info::lang::translations(info::lang::LanguageKey::Loading.settingDownload), data.Title, data.time, data.msg, posterPath, "img/loading.gif", 100, 0, data.urls.size()};
-        showLoading(lmsg);
+        if (showLoading)
+            showLoading(lmsg);
 
         std::vector<std::future<neko::State>> result;
         std::atomic<int> progress(0);
@@ -368,43 +369,47 @@ namespace neko::core {
                     return State::RetryRequired;
                 }
                 ++progress;
-                setLoadingVal(progress.load());
-                return State::Completed;
-            };
-
-            auto checkHash = [=, &progress](const std::string &file, const std::string &exHash, const std::string hashAlgortihm) {
-                auto hash = exec::hashFile(file, exec::mapAlgorithm(hashAlgortihm));
-                if (hash == exHash) {
-                    nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Everything is OK , file : %s  hash is matching", log::srcLoc::current().function_name(), file.c_str());
-                    ++progress;
+                if (setLoadingVal)
                     setLoadingVal(progress.load());
-                    return State::Completed;
-                } else {
-                    nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", log::srcLoc::current().function_name(), file.c_str(), exHash.c_str(), hash.c_str());
-                    return State::RetryRequired;
-                }
-            };
-
-            // push task
-            for (size_t i = 0; i < data.urls.size(); ++i) {
-                result.push_back(exec::getThreadObj().enqueue([=, &stop] {
-                    if (stop.load())
-                        return State::ActionNeeded;
-
-                    auto state1 = downloadTask(i, data.urls[i]);
-                    if (state1 != State::Completed)
-                        return state1;
-
-                    return checkHash(data.urls[i].name, data.urls[i].hash, data.urls[i].hashAlgorithm);
-                }));
+                return State::Completed;
             }
+        };
 
-            // check result
-            for (auto &it : result) {
+        auto checkHash = [=, &progress](const std::string &file, const std::string &exHash, const std::string hashAlgortihm) {
+            auto hash = exec::hashFile(file, exec::mapAlgorithm(hashAlgortihm));
+            if (hash == exHash) {
+                nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Everything is OK , file : %s  hash is matching", log::srcLoc::current().function_name(), file.c_str());
+                ++progress;
+                if (setLoadingVal)
+                    setLoadingVal(progress.load());
+                return State::Completed;
+            } else {
+                nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", log::srcLoc::current().function_name(), file.c_str(), exHash.c_str(), hash.c_str());
+                return State::RetryRequired;
+            }
+        };
 
-                if (it.get() != State::Completed) {
-                    stop.store(true);
-                    showHint({info::lang::translations(info::lang::LanguageKey::Title.error), info::lang::translations(info::lang::LanguageKey::Error.downloadUpdate), "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::cancel)}, [=](neko::uint32 checkId) {
+        // push task
+        for (size_t i = 0; i < data.urls.size(); ++i) {
+            result.push_back(exec::getThreadObj().enqueue([=, &stop] {
+                if (stop.load())
+                    return State::ActionNeeded;
+
+                auto state1 = downloadTask(i, data.urls[i]);
+                if (state1 != State::Completed)
+                    return state1;
+
+                return checkHash(data.urls[i].name, data.urls[i].hash, data.urls[i].hashAlgorithm);
+            }));
+        }
+
+        // check result
+        for (auto &it : result) {
+
+            if (it.get() != State::Completed) {
+                stop.store(true);
+                if (showHint)
+                    showHint({info::lang::translations(info::lang::LanguageKey::Title::error), info::lang::translations(info::lang::LanguageKey::Error.downloadUpdate), "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::cancel)}, [=](neko::uint32 checkId) {
                                   if (checkId == 0) {
                                       core::getThreadPool().enqueue([=] {
                                           autoUpdate(showHint, showLoading, setLoadingVal, setLoadingNow);
@@ -413,65 +418,64 @@ namespace neko::core {
                                       QApplication::quit();
                                   }
                               }});
-                    return State::ActionNeeded;
-                }
+                return State::ActionNeeded;
             }
-
-            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : update is ok", log::srcLoc::current().function_name());
-
-            bool needExecUpdate = false;
-
-            std::string updateTempPath = system::temporaryFolder() + "/update_" + exec::generateRandomString(10);
-            std::filesystem::copy(system::workPath() + "/update", updateTempPath + "/update");
-
-            std::string cmd = updateTempPath + "/update " + system::workPath();
-
-            for (const auto &it : data.urls) {
-                if (it.temp) {
-                    if (!needExecUpdate)
-                        needExecUpdate = true;
-                    cmd += (" " + it.name);
-                }
-            }
-            if (!data.resVersion.empty()) {
-                ClientConfig cfg(core::getConfigObj());
-                cfg.more.resourceVersion = data.resVersion.c_str();
-                cfg.save(core::getConfigObj(), info::app::getConfigFileName());
-                nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : save resource version : %s", log::srcLoc::current().function_name(), data.resVersion.c_str());
-            }
-
-            if (needExecUpdate) {
-                nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : need exec update", log::srcLoc::current().function_name());
-                std::mutex mtx;
-                std::condition_variable condVar;
-                std::unique_lock<std::mutex> lock(mtx);
-
-                auto execUpdate = [=, &condVar](bool) {
-                    condVar.notify_all();
-                    QApplication::quit();
-                };
-
-                hintFunc({info::translations(info::lang.title.reStart), info::translations(info::lang.general.updateOverReStart), "", 1, execUpdate});
-                auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
-
-                if (resState == std::cv_status::timeout) {
-                    QApplication::quit();
-                }
-                launcherNewProcess(cmd);
-            }
-
-            return State::Completed;
         }
 
-        inline void
-        feedbackLog(const std::string &feedback) {
-            nlog::autoLog log;
-            network::Network net;
-            auto url = net.buildUrl(network::networkBase::Api::feedback);
-            nlohmann::json dataJson = {
-                {"feedbacklog", {{"coreVersion", info::app::getVersion()}, {"resourceVersion", info::app::getResVersion()}, {"os", info::app::getOsName()}, {"language", info::lang::language()}, {"timestamp", exec::getTimestamp()}, {"content", feedback}}}
+        nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : update is ok", log::srcLoc::current().function_name());
+
+        bool needExecUpdate = false;
+
+        std::string updateTempPath = system::temporaryFolder() + "/update_" + exec::generateRandomString(10);
+        std::filesystem::copy(system::workPath() + "/update", updateTempPath + "/update");
+
+        std::string cmd = updateTempPath + "/update " + system::workPath();
+
+        for (const auto &it : data.urls) {
+            if (it.temp) {
+                if (!needExecUpdate)
+                    needExecUpdate = true;
+                cmd += (" " + it.name);
             }
-        };
+        }
+        if (!data.resVersion.empty()) {
+            ClientConfig cfg(core::getConfigObj());
+            cfg.more.resourceVersion = data.resVersion.c_str();
+            cfg.save(core::getConfigObj(), info::app::getConfigFileName());
+            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : save resource version : %s", log::srcLoc::current().function_name(), data.resVersion.c_str());
+        }
+
+        if (needExecUpdate) {
+            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : need exec update", log::srcLoc::current().function_name());
+            std::mutex mtx;
+            std::condition_variable condVar;
+            std::unique_lock<std::mutex> lock(mtx);
+
+            auto execUpdate = [=, &condVar](bool) {
+                condVar.notify_all();
+                QApplication::quit();
+            };
+
+            if (showHint)
+                showHint({info::lang::translations(info::lang::LanguageKey::Title::reStart), info::lang::translations(info::lang::LanguageKey::General::updateOverReStart), "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::ok)}, execUpdate});
+            auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
+
+            if (resState == std::cv_status::timeout) {
+                QApplication::quit();
+            }
+            launcherNewProcess(cmd);
+        }
+
+        return State::Completed;
+    }
+
+    inline void feedbackLog(const std::string &feedback) {
+        nlog::autoLog log;
+        network::Network net;
+        auto url = net.buildUrl(network::NetworkBase::Api::feedback);
+        nlohmann::json dataJson = {
+            {"feedbacklog", {{"coreVersion", info::app::getVersion()}, {"resourceVersion", info::app::getResVersion()}, {"os", info::app::getOsName()}, {"language", info::lang::language()}, {"timestamp", exec::getTimestamp()}, {"content", feedback}}}};
+
         network::RequestConfig reqConfig;
         reqConfig.setUrl(url)
             .setMethod(network::RequestType::Post)
@@ -482,7 +486,7 @@ namespace neko::core {
 
         if (!res.isSuccess()) {
             throw ex::NetworkError(
-                (res.statusCode() == 429) ? "Too Many Request , try again later" : ("Failed to feedback log , code : " + std::to_string(res.statusCode())) ,ex::ExceptionExtensionInfo{});
+                (res.statusCode() == 429) ? "Too Many Request , try again later" : ("Failed to feedback log , code : " + std::to_string(res.statusCode())), ex::ExceptionExtensionInfo{});
         }
     }
 
