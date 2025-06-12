@@ -283,7 +283,7 @@ namespace neko::network {
             postData = d;
             return *this;
         }
-        RequestConfig &setOutputFile(const std::string &f) {
+        RequestConfig &setFileName(const std::string &f) {
             fileName = f;
             return *this;
         }
