@@ -15,7 +15,7 @@
 
 namespace neko::log {
 
-    using srcLoc = std::source_location;
+    using SrcLoc = std::source_location;
 
     /**
      * @brief Log an info message with formatting.
@@ -94,7 +94,7 @@ namespace neko::log {
          * @param startMsg Entry message (default: "Enter").
          * @param endMsg Exit message (default: "End").
          */
-        autoLog( std::string StartMsg = "Enter", std::string EndMsg = "End", srcLoc File = srcLoc::current().file_name(), srcLoc Line = srcLoc::current().line(), std::string Name = srcLoc::current().function_name())
+        autoLog( std::string StartMsg = "Enter", std::string EndMsg = "End", SrcLoc File = SrcLoc::current().file_name(), SrcLoc Line = SrcLoc::current().line(), std::string Name = SrcLoc::current().function_name())
             : file(File), line(Line), name(Name), startMsg(StartMsg), endMsg(EndMsg) {
             Info(file, line, "%s : %s", this->name.c_str(), this->startMsg.c_str());
         }

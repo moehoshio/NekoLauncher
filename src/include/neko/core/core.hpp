@@ -86,7 +86,7 @@ namespace neko::core {
             network::RequestConfig reqConfig;
 
             reqConfig.setUrl(url)
-                .setOutputFile(fileName)
+                .setFileName(fileName)
                 .setMethod(network::RequestType::DownloadFile)
                 .setRequestId("poster-" + exec::generateRandomString(6));
             auto res = net.execute(reqConfig);
@@ -134,7 +134,7 @@ namespace neko::core {
                 break;
             }
             auto quitHint = std::function<void(neko::uint32)>([](neko::uint32) {
-                log::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Retried multiple times but still unable to establish a connection. Exit", log::srcLoc::current().function_name());
+                log::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : Retried multiple times but still unable to establish a connection. Exit", log::SrcLoc::current().function_name());
                 QApplication::quit();
             });
 
@@ -163,16 +163,16 @@ namespace neko::core {
                 return State::ActionNeeded;
         }
 
-        nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : res : %s", log::srcLoc::current().function_name(), res.c_str());
+        nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : res : %s", log::SrcLoc::current().function_name(), res.c_str());
         if (setLoadingNow)
             setLoadingNow(info::translations(info::lang::LanguageKey::Loading::maintenanceInfoParse).c_str());
 
         auto rawJsonData = nlohmann::json::parse(response, nullptr, false);
         if (rawJsonData.is_discarded() || !rawJsonData.contains("maintenanceInformation")) {
-            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : failed to maintenance parse!", log::srcLoc::current().function_name());
+            nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : failed to maintenance parse!", log::SrcLoc::current().function_name());
             if (showHint)
                 showHint({info::translations(info::lang::LanguageKey::Title::error), info::translations(info::lang::LanguageKey::Error::maintenanceInfoParse), "", {info::lang::translations(info::lang::LanguageKey::General::ok)}, [](neko::uint32) {
-                              nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : click , quit programs", log::srcLoc::current().function_name());
+                              nlog::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : click , quit programs", log::SrcLoc::current().function_name());
                               QApplication::quit();
                           }});
             return State::RetryRequired;
@@ -181,7 +181,7 @@ namespace neko::core {
         auto jsonData = rawJsonData["maintenanceInformation"];
 
         bool enable = jsonData["enable"].get<bool>();
-        nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : maintenance enable : %s", log::srcLoc::current().function_name(), exec::boolTo<neko::cstr>(enable));
+        nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : maintenance enable : %s", log::SrcLoc::current().function_name(), exec::boolTo<neko::cstr>(enable));
         if (!enable)
             return State::Completed;
 
@@ -225,8 +225,8 @@ namespace neko::core {
         auto res = net.execute(reqConfig);
 
         if (!res.isSuccess()) {
-            nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : failed to check update , code : %d , error : %s", log::srcLoc::current().function_name(), res.statusCode, res.errorMessage.c_str());
-            nlog::Debug(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : res : %s , detailedErrorMessage : %s ", log::srcLoc::current().function_name(), res.content.c_str(), res.detailedErrorMessage.c_str());
+            nlog::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : failed to check update , code : %d , error : %s", log::SrcLoc::current().function_name(), res.statusCode, res.errorMessage.c_str());
+            nlog::Debug(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : res : %s , detailedErrorMessage : %s ", log::SrcLoc::current().function_name(), res.content.c_str(), res.detailedErrorMessage.c_str());
             if (res.statusCode == 429) {
                 return State::RetryRequired;
             } else {
@@ -238,7 +238,7 @@ namespace neko::core {
             return State::Completed;
         if (res.hasContent() && res.code == 200) {
             result = res.content;
-            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : check update success, res : %s", log::srcLoc::current().function_name(), result.c_str());
+            nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : check update success, res : %s", log::SrcLoc::current().function_name(), result.c_str());
             return State::ActionNeeded;
         }
 
@@ -249,10 +249,10 @@ namespace neko::core {
     inline UpdateInfo parseUpdate(const std::string &result) {
         nlog::autoLog log;
 
-        nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : res : %s ", log::srcLoc::current().function_name(), result.c_str());
+        nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : res : %s ", log::SrcLoc::current().function_name(), result.c_str());
         auto rawJsonData = nlohmann::json::parse(result, nullptr, false);
         if (rawJsonData.is_discarded() || !rawJsonData.contains("updateInformation")) {
-            nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : failed to update parse!", log::srcLoc::current().function_name());
+            nlog::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : failed to update parse!", log::SrcLoc::current().function_name());
             return {};
         }
         auto jsonData = rawJsonData["updateInformation"];
@@ -277,7 +277,7 @@ namespace neko::core {
         }
 
         if (info.urls.empty()) {
-            nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : urls is empty!", log::srcLoc::current().function_name());
+            nlog::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : urls is empty!", log::SrcLoc::current().function_name());
             return {};
         }
         return info;
@@ -355,7 +355,7 @@ namespace neko::core {
             network::RequestConfig reqConfig;
             reqConfig.setUrl(info.url)
                 .setMethod(network::RequestType::DownloadFile)
-                .setOutputFile(info.name)
+                .setFileName(info.name)
                 .setRequestId("update-" + std::to_string(id) + "-" + exec::generateRandomString(6));
 
             if (stop.load())
@@ -378,13 +378,13 @@ namespace neko::core {
         auto checkHash = [=, &progress](const std::string &file, const std::string &exHash, const std::string hashAlgortihm) {
             auto hash = exec::hashFile(file, exec::mapAlgorithm(hashAlgortihm));
             if (hash == exHash) {
-                nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Everything is OK , file : %s  hash is matching", log::srcLoc::current().function_name(), file.c_str());
+                nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : Everything is OK , file : %s  hash is matching", log::SrcLoc::current().function_name(), file.c_str());
                 ++progress;
                 if (setLoadingVal)
                     setLoadingVal(progress.load());
                 return State::Completed;
             } else {
-                nlog::Err(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", log::srcLoc::current().function_name(), file.c_str(), exHash.c_str(), hash.c_str());
+                nlog::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : Hash Non-matching : file : %s  expect hash : %s , real hash : %s", log::SrcLoc::current().function_name(), file.c_str(), exHash.c_str(), hash.c_str());
                 return State::RetryRequired;
             }
         };
@@ -422,7 +422,7 @@ namespace neko::core {
             }
         }
 
-        nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : update is ok", log::srcLoc::current().function_name());
+        nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : update is ok", log::SrcLoc::current().function_name());
 
         bool needExecUpdate = false;
 
@@ -442,11 +442,11 @@ namespace neko::core {
             ClientConfig cfg(core::getConfigObj());
             cfg.more.resourceVersion = data.resVersion.c_str();
             cfg.save(core::getConfigObj(), info::app::getConfigFileName());
-            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : save resource version : %s", log::srcLoc::current().function_name(), data.resVersion.c_str());
+            nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : save resource version : %s", log::SrcLoc::current().function_name(), data.resVersion.c_str());
         }
 
         if (needExecUpdate) {
-            nlog::Info(log::srcLoc::current().file_name(), log::srcLoc::current().line(), "%s : need exec update", log::srcLoc::current().function_name());
+            nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : need exec update", log::SrcLoc::current().function_name());
             std::mutex mtx;
             std::condition_variable condVar;
             std::unique_lock<std::mutex> lock(mtx);
