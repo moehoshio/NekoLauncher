@@ -1,4 +1,5 @@
 #pragma once
+#include "neko/log/nlog.hpp"
 
 #include <string>
 #include <string_view>
@@ -16,7 +17,7 @@ namespace neko::minecraft {
         {DownloadSource::BMCLAPI, "BMCLAPI"}};
 
     inline std::string getMinecraftListUrl(DownloadSource downloadSource = DownloadSource::Official) {
-        nlog::autoLog log{FI, LI, FN};
+        nlog::autoLog log;
 
         static const std::map<DownloadSource, std::string_view> urlMap = {
             {DownloadSource::Official, "https://piston-meta.mojang.com/mc/game/version_manifest.json"},
