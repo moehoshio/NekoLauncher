@@ -1,7 +1,12 @@
-
 #include "neko/log/nlog.hpp"
+
 #include "neko/schema/clientconfig.hpp"
-#include "neko/schema/wmsg.hpp"
+#include "neko/schema/exception.hpp"
+#include "neko/schema/types.hpp"
+
+#include "neko/ui/uiMsg.hpp"
+
+#include "neko/core/resources.hpp"
 
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
@@ -9,35 +14,45 @@
 #include "neko/minecraft/installMinecraft.hpp"
 
 #include <condition_variable>
-#include <filesystem>
 #include <mutex>
 #include <string>
-#include <string_view>
 
 namespace neko::core {
 
-    inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const neko::ui::hintMsg &)> hintFunc = nullptr, std::function<void(const neko::ui::loadMsg &)> loadFunc = nullptr, std::function<void(unsigned int val, const char *msg)> setLoadInfo = nullptr) {
+    inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
+        log::autoLog log;
         std::string resVer = (cfg.more.resourceVersion) ? std::string(cfg.more.resourceVersion) : std::string();
         if (resVer.empty()) {
             // Customize your installation logic, resource version needs to be stored after installation
-            bool stop = false;
+            std::atomic<bool> stop(false);
             std::mutex mtx;
             std::condition_variable condVar;
             std::unique_lock<std::mutex> lock(mtx);
-            while (!stop) {
+            while (!stop.load()) {
                 try {
-                    loadFunc({neko::ui::loadMsg::OnlyRaw, info::translations(info::lang.general.installMinecraft)});
-                    installMinecraft("./.minecraft", "1.16.5", DownloadSource::Official, hintFunc, loadFunc, setLoadInfo);
+                    if (showLoading)
+                        showLoading({neko::ui::LoadMsg::Type::OnlyRaw, info::lang::translations(info::lang::LanguageKey::General::installMinecraft)});
+                    minecraft::installMinecraft("./.minecraft", "1.16.5", DownloadSource::Official, showHint, showLoading, setLoadingVal);
                     cfg.more.resourceVersion = "v0.0.1";
-                    cfg.save(exec::getConfigObj(), info::getConfigFileName(), cfg);
-                } catch (const nerr::Error &e) {
-                    hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.installMinecraft) + e.msg, "", 2, [&mtx, &condVar, &stop](bool check) {
-                                  if (!check) {
-                                      stop = true;
-                                      QApplication::quit();
-                                  }
-                                  condVar.notify_all();
-                              }});
+                    cfg.save(core::getConfigObj(), info::app::getConfigFileName());
+                    break; // Installation successful, exit loop
+                } catch (const ex::Exception &e) {
+                    auto debugMsg = std::string(e.msg);
+                    try {
+                        std::rethrow_if_nested(e);
+                    } catch (const std::exception &nested) {
+                        debugMsg += exec::sum<std::string>("\nNested: ", nested.what());
+                    } catch (...) {
+                        debugMsg += "\nNested: <unknown exception>";
+                    }
+                    if (showHint)
+                        showHint({info::lang::translations(info::lang::LanguageKey::Title::error), info::lang::translations(info::lang::LanguageKey::Error::installMinecraft) + e.msg + debugMsg, "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::cancel)}, [&mtx, &condVar, &stop](neko::uint32 checkId) {
+                                      if (checkId == 1) {
+                                          stop = true;
+                                          QApplication::quit();
+                                      }
+                                      condVar.notify_all();
+                                  }});
                 }
                 condVar.wait(lock);
             }
