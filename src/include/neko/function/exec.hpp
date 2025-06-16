@@ -59,7 +59,7 @@ namespace neko::ops {
      * @return Result of applying the function to the value
      */
     template <typename T, typename F>
-        requires requires(T &&v, F &&f) { { std::forward<F>(f)(std::forward<T>(v)) }; }
+        requires(T &&v, F &&f) { { std::forward<F>(f)(std::forward<T>(v)) }; }
     constexpr decltype(auto) operator|(T &&val, F &&func) {
         return std::forward<F>(func)(std::forward<T>(val));
     }
@@ -73,7 +73,7 @@ namespace neko::ops {
      * @return Result of applying the function to the initializer list
      */
     template <typename T, typename F>
-        requires requires(const std::initializer_list<T> &val, F &&f) { { std::forward<F>(f)(val) }; }
+        requires(const std::initializer_list<T> &val, F &&f) { { std::forward<F>(f)(val) }; }
     constexpr decltype(auto) operator|(const std::initializer_list<T> &val, F &&func) {
         return std::forward<F>(func)(val);
     }
@@ -409,7 +409,7 @@ namespace neko::exec {
      * @param d Value to copy
      * @return Copy of the value
      */
-    constexpr inline auto copy(const auto &d) {
+    constexpr auto copy(const auto &d) {
         return std::decay_t<decltype(d)>(d);
     };
 
@@ -431,7 +431,7 @@ namespace neko::exec {
      * @param args Values to sum
      * @return Sum of all arguments
      */
-    constexpr inline decltype(auto) sum(auto &&...args) {
+    constexpr auto sum(auto &&...args) {
         static_assert(sizeof...(args) > 0, "sum requires at least one argument");
         return (args + ...);
     };
@@ -441,7 +441,7 @@ namespace neko::exec {
      * @param args Values to multiply
      * @return Product of all arguments
      */
-    constexpr inline decltype(auto) product(auto &&...args) {
+    constexpr auto product(auto &&...args) {
         static_assert(sizeof...(args) > 0, "product requires at least one argument");
         return (args * ...);
     };
@@ -451,7 +451,7 @@ namespace neko::exec {
      * @param args Boolean values to check
      * @return true if all arguments are true, false otherwise
      */
-    constexpr inline bool allTrue(auto &&...args) {
+    constexpr bool allTrue(auto &&...args) {
         return (true && ... && args);
     };
 
@@ -460,7 +460,7 @@ namespace neko::exec {
      * @param args Boolean values to check
      * @return true if any argument is true, false otherwise
      */
-    constexpr inline bool anyTrue(auto &&...args) {
+    constexpr bool anyTrue(auto &&...args) {
         return (false || ... || args);
     };
 
@@ -598,7 +598,7 @@ namespace neko::exec {
      * @param str String to check
      * @return true if the string is a valid URL, false otherwise
      */
-    inline bool isUrl(std::string_view str) {
+    inline bool isUrl(const std::string & str) {
         static const std::regex url_regex("(http|https)://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?");
         return std::regex_match(str, url_regex);
     };
@@ -608,7 +608,7 @@ namespace neko::exec {
      * @param address String to check
      * @return true if the string is a valid proxy address, false otherwise
      */
-    inline bool isProxyAddress(std::string_view address) {
+    inline bool isProxyAddress(const std::string & address) {
         static const std::regex proxyRegex(R"((http|https|socks5|socks4)://([\w.-]+)(:\d+))");
         return std::regex_match(address, proxyRegex);
     };
