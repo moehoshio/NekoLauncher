@@ -44,11 +44,11 @@
 #endif
 
 /**
- * @namespace neko::operator
+ * @namespace neko::ops
  * @brief Contains operator overloads for functional programming style operations.
  * @note This conflicts with the syntax of std::ranges::views. Use namespace qualification if necessary.
  */
-namespace neko::operator{
+namespace neko::ops {
 
     /**
      * @brief Pipe operator for functional composition.
@@ -78,7 +78,7 @@ namespace neko::operator{
         return std::forward<F>(func)(val);
     }
 
-} // namespace neko::operator
+} // namespace neko::ops
 
 /**
  * @namespace neko::exec
