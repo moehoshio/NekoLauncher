@@ -239,4 +239,27 @@ namespace neko::util::detect {
         throw ex::FileError(oss.str(), ex::ExceptionExtensionInfo{});
     }
 
+    /**
+     * @brief Check if a file is of a specific type based on its filename and extension.
+     * This function checks if the file's extension matches any of the target types.
+     * @param filename The name of the file to check.
+     * @param targetType A vector of target types to match against. 
+     * For example, {"TXT", "CSV"} to check if the file is a text or CSV file.
+     * @param caseSensitive Whether to perform case-sensitive matching. Default is false.
+     * @return True if the file's type matches any of the target types, false otherwise.
+     */
+    inline bool isTargetFileType(const std::string &filename, const std::vector<std::string> &targetType, bool caseSensitive = false) {
+        std::string detectedType = detectFileType(filename);
+        if (!caseSensitive) {
+            std::transform(detectedType.begin(), detectedType.end(), detectedType.begin(), ::toupper);
+        }
+        return std::find_if(targetType.begin(), targetType.end(), [&](const std::string &type) {
+            std::string target = type;
+            if (!caseSensitive) {
+                std::transform(target.begin(), target.end(), target.begin(), ::toupper);
+            }
+            return detectedType == target;
+        }) != targetType.end();
+    }
+
 } // namespace neko::util::detect
