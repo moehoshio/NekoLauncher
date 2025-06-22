@@ -84,8 +84,8 @@ namespace neko::ui {
 
         QGraphicsBlurEffect *m_pBlurEffect;
 
-        QFont f;
-        int blurVal;
+        QFont font;
+        int blurValue;
 
         pageState state;
         pageState oldState;
@@ -93,21 +93,21 @@ namespace neko::ui {
     protected:
         void closeEvent(QCloseEvent *event) override;
 
-        inline void dragEnterEvent(QDragEnterEvent *p_event) override {
+        void dragEnterEvent(QDragEnterEvent *p_event) override {
 
             p_event->acceptProposedAction();
         }
 
-        inline void dragMoveEvent(QDragMoveEvent *p_event) override {
+        void dragMoveEvent(QDragMoveEvent *p_event) override {
 
             p_event->acceptProposedAction();
         }
 
-        inline void dropEvent(QDropEvent *p_event) override {
+        void dropEvent(QDropEvent *p_event) override {
             p_event->acceptProposedAction();
         }
 
-        inline void keyPressEvent(QKeyEvent *event) override {
+        void keyPressEvent(QKeyEvent *event) override {
             QWidget *currentFocus = focusWidget();
 
             switch (event->key()) {
@@ -128,7 +128,7 @@ namespace neko::ui {
         void resizeEvent(QResizeEvent *event) override;
 
     public:
-        void resizeItem();
+        void resizeItems();
 
         void setupSize();
 

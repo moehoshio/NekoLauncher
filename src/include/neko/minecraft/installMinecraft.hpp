@@ -4,7 +4,7 @@
 #include "neko/schema/clientconfig.hpp"
 #include "neko/schema/nerr.hpp"
 #include "neko/schema/types.hpp"
-#include "neko/schema/wmsg.hpp"
+#include "neko/ui/uiMsg.hpp"
 
 #include "neko/network/network.hpp"
 

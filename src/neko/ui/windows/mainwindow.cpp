@@ -1,114 +1,50 @@
-#include "neko/ui/mainwindow.hpp"
+#include "neko/ui/windows/mainWindow.hpp"
 
-#include "neko/schema/state.hpp"
-#include "neko/schema/wmsg.hpp"
-#include "neko/schema/clientconfig.hpp"
+// #include "neko/schema/clientconfig.hpp"
+// #include "neko/schema/state.hpp"
+// #include "neko/ui/uiMsg.hpp"
 
-#include "neko/core/core.hpp"
-#include "neko/core/launcher.hpp"
-#include "neko/core/resources.hpp"
+// #include "neko/core/core.hpp"
+// #include "neko/core/launcher.hpp"
+// #include "neko/core/resources.hpp"
 
-#include "neko/minecraft/account.hpp"
+// #include "neko/minecraft/account.hpp"
 
-#include "neko/function/exec.hpp"
-#include "neko/function/info.hpp"
+// #include "neko/function/exec.hpp"
+// #include "neko/function/info.hpp"
 
-#include "library/nlohmann/json.hpp"
+// #include "library/nlohmann/json.hpp"
 
-#include <filesystem>
+// #include <filesystem>
 
 namespace neko::ui {
 
-    void MainWindow::resizeItem() {
+    void MainWindow::resizeItems() {
 
-        int h1;
-        if (setting->page2->winSysFrameCheckBox->isChecked())
-            h1 = this->height();
+        resize(size());
+
+        int realWindowHeight;
+        if (headBarWidget->isVisible())
+            realWindowHeight = this->height() - headBarWidget->height();
         else
-            h1 = this->height() - headbar->height();
+            realWindowHeight = this->height();
 
-        if (hintWidget->isVisible()) {
-            hintWidget->resize(width(), h1);
-            hintWidget->poster->setGeometry(0, 0, this->width(), this->height());
-            hintWidget->centralWidget->setGeometry(width() * 0.225, h1 * 0.255, width() * 0.55, h1 * 0.49);
-        }
-        if (input->isVisible()) {
-            input->resize(width(), h1);
-            input->poster->setGeometry(0, 0, this->width(), this->height());
-        }
+        hintDialog->resizeItems(width(), realWindowHeight);        
+        inputDialog->resizeItems(width(), realWindowHeight);
 
-        switch (state) {
-            case pageState::index:
-                index->resize(size());
-
-                index->versionText->setGeometry(QRect(8, h1 - std::max<double>(h1 * 0.01, 65), std::max<double>(width() * 0.12, 180), std::max<double>(h1 * 0.1, 65)));
-                index->startButton->setGeometry(QRect(this->size().width() * 0.33, h1 * 0.78, this->size().width() * 0.36, h1 * 0.18));
-                index->menuButton->setGeometry(QRect(this->size().width() * 0.82, h1 * 0.82, this->size().width() * 0.15, h1 * 0.1));
-
-                break;
-            case pageState::setting: {
-                setting->resize(size());
-                setting->page1->accountGroup->setGeometry(QRect(setting->page1->width() * 0.1, setting->page1->height() * 0.05, width() * 0.8, height() * 0.2));
-                setting->page1->accountLogInOutLayoutWidget->setGeometry(QRect(0, 0, width() * 0.8, height() * 0.2));
-                setting->page2->setGeometry(QRect(0, 0, width(), (setting->page2->winSysFrameCheckBox->isChecked()) ? height() : height() - headbar->height()));
-                setting->page2->scrollContent->setGeometry(QRect(0, 0, width(), (setting->page2->winSysFrameCheckBox->isChecked()) ? height() * 2 : height() * 2 - headbar->height()));
-                setting->page2->pageScrollArea->setGeometry(QRect(0, 0, width(), (setting->page2->winSysFrameCheckBox->isChecked()) ? height() - 8 : height() - 8 - headbar->height()));
-                setting->page3->scrollContent->setGeometry(QRect(0, 0, width(), height() * 2));
-                setting->page3->pageScrollArea->setGeometry(QRect(0, 0, width(), height() - 8));
-                setting->page2->styleBlurEffectRadiusSlider->setMaximumWidth(width() * 0.5);
-                setting->page2->stylePointSizeEditLine->setMaximumWidth(width() * 0.5);
-                setting->page2->stylePointSizeEditFontBox->setMaximumWidth(width() * 0.32);
-
-                for (auto setOneTabGroupMMSize : std::vector<QWidget *>{setting->page2->generalGroup, setting->page2->moreGroup, setting->page2->lcGroup}) {
-                    setOneTabGroupMMSize->setMinimumHeight(std::max<double>(110, height() * 0.18));
-                    setOneTabGroupMMSize->setMaximumHeight(std::max<double>(680, height() * 0.5));
-                }
-                for (auto setTwoTabGroupMMSize : std::vector<QWidget *>{setting->page2->bgGroup, setting->page2->winGroup, setting->page2->netGroup, setting->page3->devOptGroup}) {
-                    setTwoTabGroupMMSize->setMinimumHeight(std::max<double>(220, height() * 0.35));
-                    setTwoTabGroupMMSize->setMaximumHeight(std::max<double>(680, height() * 0.75));
-                }
-                for (auto setThreeTabGroupMMSize : std::vector<QWidget *>{setting->page2->styleGroup}) {
-                    setThreeTabGroupMMSize->setMinimumHeight(std::max<double>(330, height() * 0.5));
-                    setThreeTabGroupMMSize->setMaximumHeight(std::max<double>(900, height() * 0.9));
-                }
-                for (auto setOptBSize : std::vector<QWidget *>{setting->page2->langSelectLayoutWidget, setting->page2->bgSelectLayoutWidget, setting->page2->bgInputLayoutWidget, setting->page2->winSelectLayoutWidget, setting->page2->winSizeEditLayoutWidget, setting->page2->styleBlurEffectRadiusLayoutWidget, setting->page2->styleBlurEffectSelectLayoutWidget, setting->page2->stylePointSizeEditLayoutWidget, setting->page2->lcWindowSetLayoutWidget, setting->page2->netProxyLayoutWidget, setting->page2->netThreadLayoutWidget, setting->page2->moreTempLayoutWidget, setting->page3->devOptCheckLayoutWidget, setting->page3->devServerInputLayoutWidget}) {
-                    setOptBSize->setBaseSize(width() * 0.7, height() * 0.2);
-                }
-
-                break;
-            }
-            case pageState::loading: {
-                loading->resize(size());
-
-                int lwh = std::max<double>(width() * 0.07, h1 * 0.08);
-                loading->loadingLabel->setGeometry(3, h1 * 0.78, lwh, lwh);
-                loading->textLayoutWidget->setGeometry(width() * 0.25, h1 * 0.15, width() * 0.5, h1 * 0.6);
-                loading->progressBar->setGeometry(width() * 0.25, h1 * 0.85, width() * 0.5, h1 * 0.08);
-                loading->poster->setGeometry(0, 0, width(), h1);
-                loading->process->setGeometry(5, h1 * 0.88, width() * 0.3, h1 * 0.1);
-
-                break;
-            }
-            default:
-                break;
-        }
+        homePage->resizeItems(width(), realWindowHeight);
+        settingPage->resizeItems(width(), realWindowHeight);
+        loadingPage->resizeItems(width(), realWindowHeight);
+        
     }
     void MainWindow::resizeEvent(QResizeEvent *event) {
-
         resizeItem();
         QWidget::resizeEvent(event);
     }
 
     void MainWindow::setupSize() {
+        // initial window size
         this->resize(scrSize.width() * 0.45, scrSize.height() * 0.45);
-
-        for (auto setSubWindowSize : std::vector<QWidget *>{
-                 widget, setting, hintWidget}) {
-            setSubWindowSize->setMinimumSize(scrSize.width() * 0.35, scrSize.height() * 0.35);
-            setSubWindowSize->setMaximumSize(scrSize);
-        }
-
-        setting->closeButton->setMinimumSize(25, 25);
 
         setting->page2->bgInputToolButton->setMinimumSize(30, 30);
         setting->page2->moreTempTool->setMinimumSize(30, 30);
@@ -379,42 +315,47 @@ namespace neko::ui {
             updatePage(state, oldState);
         });
         connect(setting->page1->accountLogInOutButton, &QPushButton::clicked, [=, this] {
-            auto logoutFunc = [=, this]() {
-                exec::getThreadObj().enqueue([] {
-                    exec::getConfigObj().SetValue("minecraft", "accessToken", "");
-                    exec::getConfigObj().SetValue("minecraft", "uuid", "");
-                    exec::getConfigObj().SetValue("minecraft", "account", "");
-                    exec::getConfigObj().SetValue("minecraft", "displayName", "");
+ auto logoutFunc = [=, this]() {
+                core::getThreadPool().enqueue([] {
+                    neko::ClientConfig cfg(core::getConfigObj());
 
-                    auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::invalidate, neko::networkBase::Api::Authlib::host);
+                    auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::invalidate, network::NetworkBase::Api::Authlib::host);
                     nlohmann::json json = {
-                        {"accessToken", exec::getConfigObj().GetValue("minecraft", "accessToken", "")}};
+                        {"accessToken", cfg.minecraft.accessToken}};
                     auto data = json.dump();
-                    neko::network net;
-                    int code = 0;
-                    decltype(net)::Args args{url.c_str(), nullptr, &code};
-                    args.data = data.c_str();
-                    args.header = "Content-Type: application/json";
-                    net.Do(neko::networkBase::Opt::postText, args);
+
+                    network::Network net;
+                    network::RequestConfig reqConfig;
+                    reqConfig.setUrl(url)
+                        .setMethod(network::RequestType::Post)
+                        .setData(data)
+                        .setHeader("Content-Type: application/json")
+                        .setRequestId("logout-" + exec::generateRandomString(10));
+                    (void)net.execute(reqConfig);
+
+                    cfg.minecraft.account = "";
+                    cfg.minecraft.playerName = "";
+                    cfg.minecraft.accessToken = "";
+                    cfg.minecraft.uuid = "";
+
+                    cfg.save(core::getConfigObj(), info::app::getConfigFileName());
                 });
-                setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());
-                setting->page1->accountLogInOutInfoText->setText(neko::info::translations(neko::info::lang.general.notLogin).c_str());
+                isAccountLogIn = false;
+                accountLogInOutButton->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.login)));
+                accountLogInOutInfoText->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.notLogin)));
             };
 
             // logout
-            if (setting->page1->accountLogInOutButton->text() != neko::info::translations(neko::info::lang.general.login).c_str()) {
-                showHint({
-                    neko::info::translations(neko::info::lang.title.logoutConfirm),
-                    neko::info::translations(neko::info::lang.general.logoutConfirm),
-                    "",
-                    2,
-                    [=,this](bool checkOpt1) {
-                        if (!checkOpt1) {
-                            return;
-                        }
-                        logoutFunc();
-                    }
-                });
+            if (isAccountLogIn) {
+                showHint({neko::info::translations(neko::info::lang.title.logoutConfirm),
+                          neko::info::translations(neko::info::lang.general.logoutConfirm),
+                          "",
+                          2,
+                          [=, this](bool checkLogout) {
+                              if (checkLogout) {
+                                  logoutFunc();
+                              }
+                          }});
                 return;
             }
 
@@ -422,7 +363,7 @@ namespace neko::ui {
                 neko::launcherMinecraftAuthlibAndPrefetchedCheck([=, this](const ui::hintMsg &m) {
                     emit this->showHintD(m);
                 });
-                neko::ClientConfig cfg(exec::getConfigObj());
+                neko::ClientConfig cfg(core::getConfigObj());
                 nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
 
                 if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
@@ -460,6 +401,7 @@ namespace neko::ui {
                                });
                            }});
             };
+
 
             // login
             showHint({neko::info::translations(neko::info::lang.title.loginOrRegister), neko::info::translations(neko::info::lang.general.loginOrRegister), "", 2, [=, this](bool checkOpt1) {
@@ -765,8 +707,8 @@ namespace neko::ui {
             setting->page3->devServerEdit->show();
         }
 
-        if (!std::string(config.minecraft.account).empty() && !std::string(config.minecraft.displayName).empty()) {
-            setting->page1->accountLogInOutInfoText->setText(config.minecraft.displayName);
+        if (!std::string(config.minecraft.account).empty() && !std::string(config.minecraft.playerName).empty()) {
+            setting->page1->accountLogInOutInfoText->setText(config.minecraft.playerName);
             setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.logout).c_str());
         } else {
             setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.login).c_str());

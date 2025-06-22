@@ -3,7 +3,7 @@
 
 #include "neko/core/core.hpp"
 
-#include "neko/schema/wmsg.hpp"
+#include "neko/ui/uiMsg.hpp"
 
 #include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"

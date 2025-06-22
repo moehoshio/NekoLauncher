@@ -1,7 +1,10 @@
 #pragma once
+
 #include "neko/log/nlog.hpp"
 
-#include "neko/schema/wmsg.hpp"
+#include "neko/ui/uiMsg.hpp"
+
+#include "neko/schema/nekodefine.hpp"
 
 #include "neko/minecraft/account.hpp"
 #include "neko/minecraft/launcherMinecraft.hpp"
@@ -13,8 +16,8 @@
 namespace neko::core {
 
     // Called when the user clicks.
-    inline void launcher(std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void()> onStart, std::function<void(int)> onExit) {
-        nlog::autoLog log{FI, LI, FN};
+    inline void launcher(std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void()> onStart = nullptr, std::function<void(int)> onExit = nullptr) {
+        nlog::autoLog log;
 
         if constexpr (std::string_view("custom") == schema::definitions::launcherMode) {
             // Custom launcher
@@ -28,10 +31,10 @@ namespace neko::core {
         }
 
         if constexpr (std::string_view("minecraft") == schema::definitions::launcherMode) {
-            launcherMinecraftAuthlibAndPrefetchedCheck(hintFunc);
-            if (!launcherMinecraftTokenValidate(hintFunc))
+            minecraft::launcherMinecraftAuthlibAndPrefetchedCheck(showHint);
+            if (!minecraft::launcherMinecraftTokenValidate(showHint))
                 return;
-            launcherMinecraft(exec::getConfigObj(), hintFunc, onStart, onExit);
+            minecraft::launcherMinecraft(exec::getConfigObj(), showHint, onStart, onExit);
         }
     }
 } // namespace neko::core

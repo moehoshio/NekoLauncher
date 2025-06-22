@@ -89,6 +89,24 @@ namespace neko::info {
          * consistency across the application.
          */
         struct LanguageKey {
+
+            struct Button {
+                std::string_view
+                    ok = "button_ok",
+                    cancel = "button_cancel",
+                    retry = "button_retry",
+                    close = "button_close",
+                    start = "button_start",
+                    menu = "button_menu",
+                    maximize = "button_maximize",
+                    minimize = "button_minimize",
+                    login = "button_login",
+                    logout = "button_logout",
+                    account = "button_account",
+                    setting = "button_setting",
+                    more = "button_more";
+            };
+
             /**
              * @struct General
              * @brief General-purpose UI translation keys.
@@ -97,18 +115,8 @@ namespace neko::info {
                 std::string_view
                     general = "general_general",
                     input = "general_input",
-                    menu = "general_menu",
-                    start = "general_start",
-                    ok = "general_ok",
-                    cancel = "general_cancel",
-                    retry = "general_retry",
                     setting = "general_setting",
-                    lang = "genreal_lang",
-                    close = "general_close",
-                    maximize = "general_maximize",
-                    minimize = "general_minimize",
-                    login = "general_login",
-                    logout = "general_logout",
+                    lang = "general_lang",
                     account = "general_account",
                     username = "general_username",
                     password = "general_password",
@@ -271,7 +279,7 @@ namespace neko::info {
         inline std::vector<std::string> getLanguages(const std::string &langPath = getLanguageFolder()) {
             std::vector<std::string> res;
             for (const auto &it : std::filesystem::directory_iterator(langPath)) {
-                if (it.is_regular_file() && exec::matchExtName(it.path().string(), "json")) {
+                if (it.is_regular_file() && exec::matchExtensionName(it.path().string(), "json")) {
                     std::string fileName = it.path().stem().string();
                     nlog::Info(FI, LI, "%s : lang file push : %s", FN, fileName.c_str());
                     res.push_back(fileName);
