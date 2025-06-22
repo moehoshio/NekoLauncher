@@ -74,21 +74,38 @@ namespace neko::network {
                     constexpr static neko::cstr getVersionsList = "/artifacts.json";
                     constexpr static neko::cstr latest = "/artifact/latest.json";
                     constexpr static neko::cstr baseRoot = "/artifact"; // + /{build_number}.json
-                };
-                Injector injector;
-            };
-            Authlib authlib;
-        };
+                } injector;
+            } authlib;
+        } constexpr static api;
+
+        struct HeaderGlobal {
+            constexpr static neko::cstr jsonContentType = "application/json";
+            constexpr static neko::cstr textContentType = "text/plain";
+            constexpr static neko::cstr multipartContentType = "multipart/form-data";
+            constexpr static neko::cstr xmlContentType = "application/xml";
+            constexpr static neko::cstr htmlContentType = "text/html";
+            constexpr static neko::cstr pngContentType = "image/png";
+            constexpr static neko::cstr jpegContentType = "image/jpeg";
+            constexpr static neko::cstr gifContentType = "image/gif";
+            constexpr static neko::cstr svgContentType = "image/svg+xml";
+
+            constexpr static neko::cstr jsonContentTypeHeader = "Content-Type: application/json";
+            constexpr static neko::cstr textContentTypeHeader = "Content-Type: text/plain";
+            constexpr static neko::cstr multipartContentTypeHeader = "Content-Type: multipart/form-data";
+            constexpr static neko::cstr xmlContentTypeHeader = "Content-Type: application/xml";
+            constexpr static neko::cstr htmlContentTypeHeader = "Content-Type: text/html";
+            constexpr static neko::cstr pngContentTypeHeader = "Content-Type: image/png";
+            constexpr static neko::cstr jpegContentTypeHeader = "Content-Type: image/jpeg";
+            constexpr static neko::cstr gifContentTypeHeader = "Content-Type: image/gif";
+            constexpr static neko::cstr svgContentTypeHeader = "Content-Type: image/svg+xml";
+        } constexpr static headers;
 
         struct NetConfig {
             std::string userAgent;
             std::string proxy;
             std::string host;
             std::string protocol;
-        };
-
-        inline static NetConfig globalConfig;
-        constexpr inline static Api api;
+        } inline static globalConfig;
 
         /**
          * @brief Initialize the network module
