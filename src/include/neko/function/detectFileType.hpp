@@ -233,7 +233,7 @@ namespace neko::util::detect {
         std::ostringstream oss;
         oss << "Unknown file type: " << std::uppercase << std::hex;
         for (size_t i = 0; i < std::min(bytesRead, size_t(16)); ++i) {
-            oss << std::setw(2) << std::setfill('0') << static_cast<neko::uint>(buffer[i]) << ' ';
+            oss << std::setw(2) << std::setfill('0') << static_cast<neko::uint32>(buffer[i]) << ' ';
         }
 
         throw ex::FileError(oss.str(), ex::ExceptionExtensionInfo{});
