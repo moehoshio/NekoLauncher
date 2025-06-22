@@ -1,105 +1,165 @@
 #pragma once
-#include "neko/log/nlog.hpp"
 
 #include "neko/core/core.hpp"
+#include "neko/core/resources.hpp"
 
-#include "neko/ui/uiMsg.hpp"
+#include "neko/schema/exception.hpp"
+#include "neko/log/nlog.hpp"
 
-#include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
+#include "neko/function/utilities.hpp"
 
 #include "neko/network/network.hpp"
 
 #include "library/nlohmann/json.hpp"
 
-#include <functional>
 #include <string>
 #include <string_view>
 
-namespace neko::minecraft {
-    inline bool launcherMinecraftTokenValidate(std::function<void(const neko::ui::hintMsg &)> hintFunc) {
-        nlog::autoLog log{FI, LI, FN};
-        network net;
-        auto url = networkBase::buildUrl(neko::networkBase::Api::Authlib::validate, neko::networkBase::Api::Authlib::host);
+/**
+ * @brief Minecraft account-related functions.
+ * @namespace neko::minecraft::account
+ */
+namespace neko::minecraft::account {
 
-        nlohmann::json json = {{"accessToken", exec::getConfigObj().GetValue("minecraft", "accessToken", "")}};
-        auto data = json.dump();
-        int code = 0;
-        decltype(net)::Args args{url.c_str(), nullptr, &code};
-        args.data = data.c_str();
-        args.header = "Content-Type: application/json";
-        net.Do(networkBase::Opt::postText, args);
-        if (code != 204) {
-            nlog::Info(FI, LI, "%s : token is not validate", FN);
-            auto refUrl = networkBase::buildUrl(neko::networkBase::Api::Authlib::refresh, neko::networkBase::Api::Authlib::host);
-            int refCode = 0;
-            nlohmann::json refJson = {
-                {"accessToken", exec::getConfigObj().GetValue("minecraft", "accessToken", "")}, {"requestUser", false}};
-            auto refData = refJson.dump();
-            decltype(net)::Args refArgs{refUrl.c_str(), nullptr, &refCode};
-            refArgs.data = refData.c_str();
-            refArgs.header = "Content-Type: application/json";
-            auto res = net.get(networkBase::Opt::postText, refArgs);
-            auto jsonData = nlohmann::json::parse(res, nullptr, false);
-            if (jsonData.is_discarded()) {
-                hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.tokenJsonParse), "", 1});
-                nlog::Err(FI, LI, "%s : faild to token json parse", FN);
-                return false;
-            }
-            auto error = jsonData.value("error", ""),
-                 errorMsg = jsonData.value("errorMessage", "");
-            if (!error.empty() || !errorMsg.empty()) {
-                hintFunc({error, errorMsg, "", 1});
-                return false;
-            }
+    /**
+     * @brief Refreshes the Minecraft launcher token.
+     * @throws ex::NetworkError if the token refresh fails or the network request encounters an error.
+     * @throws ex::Parse if the response from the server cannot be parsed.
+     * @details This function checks if the current Minecraft token is valid. If it is not valid, it attempts to refresh the token using the Authlib API. If the refresh is successful,
+     * it updates the token and player information in the client configuration. If any errors occur during the process, appropriate exceptions are thrown with detailed error messages.
+     */
+    inline void launcherMinecraftTokenRefresh() {
+        log::autoLog log;
 
-            auto accessToken = jsonData["accessToken"].get<std::string>();
-            std::string uuid;
-            std::string name;
-            if (!jsonData["selectedProfile"].empty()) {
-                uuid = jsonData["selectedProfile"].value("id", "");
-                name = jsonData["selectedProfile"].value("name", "");
+        network::Network net;
+        auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::validate, network::NetworkBase::Api::Authlib::host);
 
-                exec::getConfigObj().SetValue("minecraft", "uuid", uuid.c_str());
-                exec::getConfigObj().SetValue("minecraft", "displayName", name.c_str());
-            }
-            exec::getConfigObj().SetValue("minecraft", "accessToken", accessToken.c_str());
+        ClientConfig clientConfig(core::getConfigObj());
+
+        nlohmann::json json = {{"accessToken", clientConfig.minecraft.accessToken}};
+
+        network::RequestConfig reqConfig;
+        reqConfig.setUrl(url)
+            .setMethod(network::RequestType::Post)
+            .setHeader(network::NetworkBase::HeaderGlobal::jsonContentTypeHeader)
+            .setData(json.dump());
+
+        auto result = net.execute(reqConfig);
+        if (!result.hasError && result.statusCode == 204) {
+            log::Info("Token is valid");
+            return;
         }
-        return true;
+
+        log::Info("token is not validate");
+
+        auto refUrl = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::refresh, network::NetworkBase::Api::Authlib::host);
+
+        nlohmann::json refJson = {
+            {"accessToken", clientConfig.minecraft.accessToken}, {"requestUser", false}};
+
+        reqConfig.setUrl(refUrl)
+            .setMethod(network::RequestType::Post)
+            .setHeader(network::NetworkBase::HeaderGlobal::jsonContentTypeHeader)
+            .setData(refJson.dump());
+
+        auto refResult = net.execute(reqConfig);
+
+        if (!refResult.isSuccess() || !refResult.hasContent()) {
+            log::Err(log::SrcLoc::current(), "Failed to refresh token: %s", refResult.errorMessage.c_str());
+            throw ex::NetworkError("Failed to refresh token", ex::ExceptionExtensionInfo{});
+        }
+
+        nlohmann::json refJsonData;
+        try {
+            refJsonData = nlohmann::json::parse(refResult.content);
+        } catch (const nlohmann::json::parse_error &e) {
+            log::Err(log::SrcLoc::current(), "Failed to parse refresh token response: %s", e.what());
+            throw ex::Parse("Failed to parse refresh token response : " + std::string(e.what()), ex::ExceptionExtensionInfo{});
+        }
+
+        auto error = refJsonData.value("error", ""),
+             errorMsg = refJsonData.value("errorMessage", "");
+        if (!error.empty() || !errorMsg.empty()) {
+            log::Err(log::SrcLoc::current(), "Error refreshing token: %s - %s", error.c_str(), errorMsg.c_str());
+            throw ex::NetworkError("Error refreshing token: " + error + " - " + errorMsg, ex::ExceptionExtensionInfo{});
+        }
+
+        if (!refJsonData.contains("accessToken")) {
+            log::Err("Missing accessToken in response");
+            throw ex::Parse("Missing accessToken in response", ex::ExceptionExtensionInfo{});
+        }
+
+        std::string
+            accessToken = refJsonData["accessToken"].get<std::string>(),
+            uuid,
+            name;
+
+        if (refJsonData.contains("selectedProfile") && refJsonData["selectedProfile"].is_object()) {
+            uuid = refJsonData["selectedProfile"].value("id", "");
+            name = refJsonData["selectedProfile"].value("name", "");
+
+            clientConfig.minecraft.uuid = uuid.c_str();
+            clientConfig.minecraft.playerName = name.c_str();
+        }
+        clientConfig.minecraft.accessToken = accessToken.c_str();
+        clientConfig.save(core::getConfigObj(), info::app::getConfigFileName());
     }
 
-    inline void launcherMinecraftAuthlibAndPrefetchedCheck(std::function<void(const neko::ui::hintMsg &)> hintFunc) {
-        nlog::autoLog log{FI, LI, FN};
-        std::string authlibPrefetched = exec::getConfigObj().GetValue("minecraft", "authlibPrefetched", "");
+    /**
+     * @brief This function checks if the Minecraft authlib prefetch data is already stored in the client configuration. If it is not, it attempts to fetch the data from the network.
+     * @throws ex::NetworkError if the token refresh fails or the network request encounters an error.
+     * @throws ex::Parse if the response from the server cannot be parsed.
+     */
+    inline void launcherMinecraftAuthlibAndPrefetchedCheck() {
+        log::autoLog log;
+        ClientConfig clientConfig(core::getConfigObj());
+        std::string authlibPrefetched = clientConfig.minecraft.authlibPrefetched;
         if (!authlibPrefetched.empty())
             return;
 
-        auto url = networkBase::buildUrl(neko::networkBase::Api::Authlib::root, neko::networkBase::Api::Authlib::host);
-        network net;
-        int code = 0;
-        decltype(net)::Args args{url.c_str(), nullptr, &code};
-        auto res = net.autoRetryGet(networkBase::Opt::getContent, {args});
+        auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::root, network::NetworkBase::Api::Authlib::host);
+        network::Network net;
 
-        if (res.empty()) {
-            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.minecraftAuthlibConnection), "", 1});
-            nlog::Err(FI, LI, "%s : faild to connection authlib server!", FN);
-            return;
+        network::RequestConfig reqConfig{
+            .url = url,
+            .method = network::RequestType::Get,
+        };
+        auto result = net.execute(reqConfig);
+        if (!result.isSuccess() || !result.hasContent()) {
+            log::Err(log::SrcLoc::current(), "Failed to fetch authlib data: %s", result.errorMessage.c_str());
+            throw ex::NetworkError("Failed to fetch authlib data", ex::ExceptionExtensionInfo{});
         }
 
-        auto resJson = nlohmann::json::parse(res, nullptr, false);
-        if (resJson.is_discarded()) {
-            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.apiMetaParse), "", 1});
-            nlog::Err(FI, LI, "%s : faild to api mete data parse", FN);
-            return;
+        nlohmann::json resJson;
+        try {
+            resJson = nlohmann::json::parse(result.content);
+        } catch (const nlohmann::json::parse_error &e) {
+            log::Err(log::SrcLoc::current(), "Failed to parse authlib response: %s", e.what());
+            throw ex::Parse("Failed to parse authlib response: " + std::string(e.what()), ex::ExceptionExtensionInfo{});
         }
-        authlibPrefetched = exec::base64Encode(res);
-        exec::getConfigObj().SetValue("minecraft", "authlibPrefetched", authlibPrefetched.c_str());
+        authlibPrefetched = util::base64::base64Encode(resJson.dump());
+        clientConfig.minecraft.authlibPrefetched = authlibPrefetched.c_str();
+        clientConfig.save(core::getConfigObj(), info::app::getConfigFileName());
     }
 
-    inline State authLogin(const std::vector<std::string> &inData, std::function<void(const neko::ui::hintMsg &)> hintFunc, std::function<void(const std::string &)> callBack) {
-        nlog::autoLog log{FI, LI, FN};
-        if (inData.size() < 2)
-            return State::ActionNeeded;
+    struct LoginResult {
+        std::string error;
+        std::string name;
+    };
+    /**
+     * @brief Authenticates a user with the API.
+     * @param inData The input data containing username and password.
+     * @return The result of the authentication attempt.
+     * @note If the returned .error is not empty, it indicates failure and contains the error message.
+     */
+    inline LoginResult authLogin(const std::vector<std::string> &inData) noexcept {
+        log::autoLog log;
+        LoginResult result;
+        if (inData.size() < 2) {
+            result.error = info::lang::translations(info::lang::LanguageKey::Error::invalidInput);
+            return result;
+        }
 
         nlohmann::json json = {
             {"username", inData[0]},
@@ -108,39 +168,57 @@ namespace neko::minecraft {
             {"agent", {{"name", "Minecraft"}, {"version", 1}}}};
 
         auto data = json.dump();
-        auto url = neko::networkBase::buildUrl(neko::networkBase::Api::Authlib::authenticate, neko::networkBase::Api::Authlib::host);
-        neko::network net;
-        int code = 0;
-        decltype(net)::Args args{url.c_str(), nullptr, &code};
-        args.header = "Content-Type: application/json";
-        args.data = data.c_str();
-        auto res = net.get(neko::networkBase::Opt::postText, args);
-        auto resData = nlohmann::json::parse(res, nullptr, false);
+        auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::authenticate, network::NetworkBase::Api::Authlib::host);
+        network::Network net;
+        network::NetworkResult reqConfig;
+        reqConfig.setUrl(url)
+            .setMethod(network::RequestType::Post)
+            .setHeader(network::NetworkBase::HeaderGlobal::jsonContentTypeHeader)
+            .setData(data);
 
-        if (resData.is_discarded()) {
-            hintFunc({info::translations(info::lang.title.error), info::translations(info::lang.error.jsonParse), "", 1});
-            return State::ActionNeeded;
+        auto result = net.execute(reqConfig);
+
+        if (!result.isSuccess() || !result.hasContent()) {
+            log::Err(log::SrcLoc::current(), "Failed to authenticate: %s", result.errorMessage.c_str());
+            result.error = info::lang::translations(info::lang::LanguageKey::Error::networkError);
+            return result;
+        }
+
+        nlohmann::json resData;
+        try {
+            resData = nlohmann::json::parse(result.content);
+        } catch (const nlohmann::json::parse_error &e) {
+            log::Err(log::SrcLoc::current(), "Failed to parse authentication response: %s", e.what());
+            result.error = info::lang::translations(info::lang::LanguageKey::Error::jsonParse) + e.what();
+            return result;
         }
 
         auto error = resData.value("error", ""),
              errorMsg = resData.value("errorMessage", "");
         if (!error.empty() || !errorMsg.empty()) {
-            hintFunc({error, errorMsg, "", 1});
-            return State::RetryRequired;
+            result.error = error + errorMsg;
+            return result;
+        }
+
+        if (!resData.contains("accessToken") || !resData.contains("selectedProfile") || !resData["selectedProfile"].is_object()) {
+            log::Err(log::SrcLoc::current(), "Missing accessToken in response");
+            result.error = info::lang::translations(info::lang::LanguageKey::Error::missingAccessToken) + result.error;
+            return result;
         }
 
         auto accessToken = resData.value("accessToken", "");
         auto uuid = resData["selectedProfile"].value("id", "");
         auto name = resData["selectedProfile"].value("name", "");
 
-        exec::getConfigObj().SetValue("minecraft", "accessToken", accessToken.c_str());
-        exec::getConfigObj().SetValue("minecraft", "uuid", uuid.c_str());
-        exec::getConfigObj().SetValue("minecraft", "account", inData[0].c_str());
-        exec::getConfigObj().SetValue("minecraft", "displayName", name.c_str());
+        ClientConfig clientConfig(core::getConfigObj());
+        clientConfig.minecraft.accessToken = accessToken.c_str();
+        clientConfig.minecraft.uuid = uuid.c_str();
+        clientConfig.minecraft.playerName = name.c_str();
+        clientConfig.minecraft.account = inData[0].c_str();
+        clientConfig.save(core::getConfigObj(), info::app::getConfigFileName());
 
-        callBack(name);
-
-        return State::Completed;
+        result.name = name;
+        return result;
     }
 
-} // namespace neko::minecraft
+} // namespace neko::minecraft::account
