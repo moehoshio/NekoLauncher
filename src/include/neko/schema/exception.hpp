@@ -4,15 +4,17 @@
  */
 #pragma once
 
-#include "neko/schema/nekodefine.hpp"
 #include "neko/schema/types.hpp"
 
 #include <exception>
-#include <nested_exception>
 #include <source_location>
+#include <sstream>
 #include <string>
-
+#if defined(USE_BOOST_STACKTRACE) && __has_include("boost/stacktrace.hpp")
 #include <boost/stacktrace.hpp>
+#else
+#undef USE_BOOST_STACKTRACE
+#endif
 
 namespace neko::ex {
 
@@ -49,33 +51,44 @@ namespace neko::ex {
     private:
         std::string msg;
         ExceptionExtensionInfo extInfo;
+#if defined(USE_BOOST_STACKTRACE)
         boost::stacktrace::stacktrace trace;
+#else
+        struct stacktrace {
+            bool empty() const { return true; }
+        };
+        stacktrace trace;
+#endif
 
     public:
+#if defined(USE_BOOST_STACKTRACE)
         /**
          * @brief Construct an Exception with a message and extension info.
          * @param Msg Error message.
          * @param ExtInfo Extended error information.
          */
         explicit Exception(const std::string &Msg, const ExceptionExtensionInfo &ExtInfo) noexcept
-            : msg(Msg), extInfo(ExtInfo),
-              trace(boost::stacktrace::stacktrace()) {};
-
+            : msg(Msg), extInfo(ExtInfo), trace(boost::stacktrace::stacktrace()) {}
         /**
          * @brief Construct an Exception with a message.
          * @param Msg Error message.
          */
         explicit Exception(const std::string &Msg) noexcept
-            : msg(Msg),
-              trace(boost::stacktrace::stacktrace()) {};
-
+            : msg(Msg), trace(boost::stacktrace::stacktrace()) {}
         /**
          * @brief Construct an Exception with a C-string message.
          * @param Msg Error message.
          */
         explicit Exception(neko::cstr Msg) noexcept
-            : msg(Msg ? Msg : ""),
-              trace(boost::stacktrace::stacktrace()) {};
+            : msg(Msg ? Msg : ""), trace(boost::stacktrace::stacktrace()) {}
+#else
+        explicit Exception(const std::string &Msg, const ExceptionExtensionInfo &ExtInfo) noexcept
+            : msg(Msg), extInfo(ExtInfo) {}
+        explicit Exception(const std::string &Msg) noexcept
+            : msg(Msg) {}
+        explicit Exception(neko::cstr Msg) noexcept
+            : msg(Msg ? Msg : "") {}
+#endif
 
         /**
          * @brief Get the error message.
@@ -137,6 +150,8 @@ namespace neko::ex {
         const std::string &getMessage() const noexcept {
             return msg;
         }
+
+#if defined(USE_BOOST_STACKTRACE)
         /**
          * @brief Get a formatted stack trace as a string
          * @param format Optional format string to customize output
@@ -186,6 +201,7 @@ namespace neko::ex {
          * @return Reference to boost::stacktrace::stacktrace.
          */
         const boost::stacktrace::stacktrace &getStackTrace() const noexcept { return trace; }
+#endif
     };
 
     /**
@@ -250,11 +266,11 @@ namespace neko::ex {
     };
 
     /**
-     * @brief Exception for out-of-memory errors.
+     * @brief Exception for out-of-range errors.
      */
-    class OutOfMemoryError : public Exception {
+    class OutOfRange : public Exception {
     public:
-        explicit OutOfMemoryError(const std::string &Msg = "Out of memory!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+        explicit OutOfRange(const std::string &Msg = "Out of range!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : Exception(Msg, ExtInfo) {}
     };
 
