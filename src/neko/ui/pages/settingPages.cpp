@@ -1,5 +1,19 @@
 #include "neko/ui/pages/settingPages.hpp"
+#include "neko/ui/theme.hpp"
+#include "neko/ui/uiMsg.hpp"
+
+#include "neko/core/resources.hpp"
+#include "neko/schema/clientconfig.hpp"
+
+#include "neko/network/network.hpp"
+
+#include "neko/function/exec.hpp"
+#include "neko/function/info.hpp"
+
+#include "nlohmann/json.hpp"
+
 #include <QtGui/QValidator>
+
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
@@ -29,7 +43,111 @@ namespace neko::ui {
         accountLogInOutLayout->addWidget(accountLogInOutButton);
         accountLogInOutLayoutWidget->setLayout(accountLogInOutLayout);
     }
+
+    void SettingPageOne::setupConnects(std::function<void(const InputMsg &)> inputDialog, std::function<void(const HintMsg &)> hintDialog) {
+
+        connect(accountLogInOutButton, &QPushButton::clicked, [&, this]() {
+            auto logoutFunc = [=, this]() {
+                core::getThreadPool().enqueue([] {
+                    neko::ClientConfig cfg(core::getConfigObj());
+
+                    auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::invalidate, network::NetworkBase::Api::Authlib::host);
+                    nlohmann::json json = {
+                        {"accessToken", cfg.minecraft.accessToken}};
+                    auto data = json.dump();
+
+                    network::Network net;
+                    network::RequestConfig reqConfig;
+                    reqConfig.setUrl(url)
+                        .setMethod(network::RequestType::Post)
+                        .setData(data)
+                        .setHeader("Content-Type: application/json")
+                        .setRequestId("logout-" + exec::generateRandomString(10));
+                    (void)net.execute(reqConfig);
+
+                    cfg.minecraft.account = "";
+                    cfg.minecraft.playerName = "";
+                    cfg.minecraft.accessToken = "";
+                    cfg.minecraft.uuid = "";
+
+                    cfg.save(core::getConfigObj(), info::app::getConfigFileName());
+                });
+                isAccountLogIn = false;
+
+                accountLogInOutButton->setText(QString::fromStdString(info::lang::translations(info::lang::lang.general.login)));
+                accountLogInOutInfoText->setText(QString::fromStdString(info::lang::translations(info::lang::lang.general.notLogin)));
+            };
+
+            // logout
+            if (isAccountLogIn) {
+                hintDialog({info::lang::translations(info::lang::lang.title.logoutConfirm),
+                            info::lang::translations(info::lang::lang.general.logoutConfirm),
+                            "",
+                            std::vector<std::string>{
+                                info::lang::lang.general.ok,
+                                info::lang::lang.general.cancel},
+                            [=, this](neko::uint32 checkId) {
+                                if (checkId == 0) { // 0 is the index for "OK"
+                                    logoutFunc();
+                                }
+                            }});
+                return;
+            }
+
+            auto registerFunc = [=, this]() {
+                try {
+                    neko::launcherMinecraftAuthlibAndPrefetchedCheck();
+                } catch (const std::exception &e) {
+                    hintDialog({info::lang::translations(info::lang::lang.title.error),
+                                info::lang::translations(info::lang::lang.error.exception),
+                                e.what(),
+                                1});
+                    return;
+                }
+
+                neko::ClientConfig cfg(core::getConfigObj());
+                nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
+
+                if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
+                    std::string url = authlibData["meta"]["links"]["register"];
+                    QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
+                }
+            };
+
+            auto loginFunc = [=, this]() {
+                showInput({info::lang::translations(info::lang::lang.title.inputLogin),
+                           "",
+                           "",
+                           {info::lang::translations(info::lang::lang.general.username), info::lang::translations(info::lang::lang.general.password)},
+                           [=, this](bool check) {
+                               if (!check) {
+                                   hideInput();
+                                   return;
+                               }
+
+                               auto inData = getInput();
+                               if (inData.size() != 2) {
+                                   showHint({info::lang::translations(info::lang::lang.title.inputNotEnoughParameters), info::lang::translations(info::lang::lang.general.notEnoughParameters), "", 1});
+                                   return;
+                               }
+                               auto hintFunc = [=, this](const ui::hintMsg &m) {
+                                   emit this->showHintD(m);
+                               };
+                               auto callBack = [=, this](const std::string &name) {
+                                   emit this->loginStatusChangeD(name);
+                               };
+                               exec::getThreadObj().enqueue([=, this] {
+                                   if (neko::authLogin(inData, hintFunc, callBack) == neko::State::Completed) {
+                                       emit this->hideInputD();
+                                   }
+                               });
+                           }});
+            };
+        });
+    }
+
     void SettingPageOne::setupStyle(const Theme &theme) {
+        this->setAttribute(Qt::WA_TranslucentBackground, true);
         this->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
         accountGroup->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
         accountLogInOutInfoText->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
@@ -38,7 +156,11 @@ namespace neko::ui {
     void SettingPageOne::setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font) {
         accountGroup->setFont(h2Font);
         accountLogInOutInfoText->setFont(text);
-        accountLogInOutButton->setFont(h1Font);
+        accountLogInOutButton->setFont(text);
+    }
+
+    void SettingPageOne::setupSize() {
+        accountLogInOutButton->setMinimumHeight(50);
     }
 
     void SettingPageOne::resizeItems(int windowWidth, int windowHeight) {
@@ -136,7 +258,8 @@ namespace neko::ui {
           moreTempText(new QLabel(moreTempLayoutWidget)),
           moreTempEdit(new QLineEdit(moreTempLayoutWidget)),
           moreTempTool(new QToolButton(moreTempLayoutWidget)) {
-        for (const auto &it : neko::info::getLanguages()) {
+        // Set up the layout and widgets
+        for (const auto &it : info::lang::getLanguages()) {
             langSelectBox->addItem(it.c_str());
         }
         langSelectLayout->addWidget(langSelectText);
@@ -357,12 +480,14 @@ namespace neko::ui {
         m_scrollArea->setWidgetResizable(true);
         m_scrollAreaLayout->addWidget(m_scrollArea);
 
-        m_tabWidget->addTab(m_page1, neko::info::translations(neko::info::lang.general.account).c_str());
-        m_tabWidget->addTab(m_page2, neko::info::translations(neko::info::lang.general.general).c_str());
+        m_tabWidget->addTab(m_page1, info::lang::translations(info::lang::lang.general.account).c_str());
+        m_tabWidget->addTab(m_page2, info::lang::translations(info::lang::lang.general.general).c_str());
         m_tabWidget->addTab(m_page3, "more");
 
         m_tabWidget->setCornerWidget(m_closeButton, Qt::TopRightCorner);
         m_closeButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DockWidgetCloseButton));
+
+        m_closeButton->setMinimumSize(25, 25);
     }
     void SettingPage::setupStyle(const Theme &theme) {
         m_tabWidget->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
@@ -382,14 +507,18 @@ namespace neko::ui {
             m_page3->setupFont(text, h1Font, h2Font);
     }
     void SettingPage::resizeItems(int windowWidth, int windowHeight) {
-        if (!isVisible()) return;
+        if (!isVisible())
+            return;
 
         m_scrollArea->setGeometry(0, 0, windowWidth, windowHeight);
         m_tabWidget->setGeometry(0, 0, windowWidth, windowHeight);
 
-        if (m_page1) m_page1->resizeItems(windowWidth, windowHeight);
-        if (m_page2) m_page2->resizeItems(windowWidth, windowHeight);
-        if (m_page3) m_page3->resizeItems(windowWidth, windowHeight);
+        if (m_page1)
+            m_page1->resizeItems(windowWidth, windowHeight);
+        if (m_page2)
+            m_page2->resizeItems(windowWidth, windowHeight);
+        if (m_page3)
+            m_page3->resizeItems(windowWidth, windowHeight);
     }
 
 } // namespace neko::ui

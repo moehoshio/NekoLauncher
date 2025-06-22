@@ -1,5 +1,7 @@
 #pragma once
 
+#include "neko/ui/uiMsg.hpp"
+
 #include <QtGui/QValidator>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
@@ -18,6 +20,8 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
+#include <functional>
+
 namespace neko::ui {
 
     class SettingPageOne : public QWidget {
@@ -30,12 +34,21 @@ namespace neko::ui {
         QLabel *accountLogInOutInfoText;
         QPushButton *accountLogInOutButton;
 
+        bool isAccountLogIn = true;
+
     public:
         explicit SettingPageOne(QWidget *parent = nullptr);
 
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
         void resizeItems(int windowWidth, int windowHeight);
+        void setupSize();
+
+        void setupConnects(std::function<void(const InputMsg&)> inputDialog,std::function<void(const HintMsg&)> hintDialog);
+
+        bool getIsAccountLogIn() const {
+            return isAccountLogIn;
+        }
     };
 
     class SettingPageTwo : public QWidget {
@@ -130,8 +143,10 @@ namespace neko::ui {
     public:
         explicit SettingPageTwo(QWidget *parent = nullptr);
 
+        bool getWinSysFrameIsChecked() const;
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
+        void setupSize();
         void resizeItems(int windowWidth, int windowHeight);
     };
 
@@ -160,6 +175,7 @@ namespace neko::ui {
 
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
+        void setupSize();
         void resizeItems(int windowWidth, int windowHeight);
     };
 
@@ -177,14 +193,9 @@ namespace neko::ui {
     public:
         explicit SettingPage(QWidget *parent = nullptr);
 
-        SettingPageOne *page1() const;
-        SettingPageTwo *page2() const;
-        SettingPageThree *page3() const;
-        QTabWidget *tabWidget() const;
-        QToolButton *closeButton() const;
-
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
+        void setupSize();
         void resizeItems(int windowWidth, int windowHeight);
     };
 
