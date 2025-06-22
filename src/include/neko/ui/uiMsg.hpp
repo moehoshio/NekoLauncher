@@ -37,7 +37,7 @@ namespace neko::ui {
         std::string poster;
 
         /**
-         * @brief Each string represents a line, returned by getLines method, maintaining the same order as input.
+         * @brief Each string represents a line, returned by getLines method ( in ui::InputDialog::getLines), maintaining the same order as input.
          */
         std::vector<std::string> lineText;
 
@@ -47,7 +47,29 @@ namespace neko::ui {
          */
         std::function<void(bool)> callback;
 
-        // InputMsg(const std::string & title ,const std::string & msg ,const std::string & poster,const std::vector<std::string> & lines,std::function<void(bool)> callBack) : title(title) , msg(msg),poster(poster),lines(lines),callback(callBack){};
+        InputMsg(const std::string &title = "", const std::string &msg = "", const std::string &poster = "", const std::vector<std::string> &lineText = {}, std::function<void(bool)> callback = nullptr)
+            : title(title), msg(msg), poster(poster), lineText(lineText), callback(callback) {}
+
+        InputMsg &setTitle(const std::string &newTitle) {
+            title = newTitle;
+            return *this;
+        }
+        InputMsg &setMsg(const std::string &newMsg) {
+            msg = newMsg;
+            return *this;
+        }
+        InputMsg &setPoster(const std::string &newPoster) {
+            poster = newPoster;
+            return *this;
+        }
+        InputMsg &setLineText(const std::vector<std::string> &newLineText) {
+            lineText = newLineText;
+            return *this;
+        }
+        InputMsg &setCallback(std::function<void(bool)> newCallback) {
+            callback = newCallback;
+            return *this;
+        }
     };
 
     /**
@@ -115,7 +137,49 @@ namespace neko::ui {
          */
         neko::uint32 progressMax = 0;
 
-        // loadMsg(Type type ,const std::string &process ,const std::string &h1,const std::string &h2,const std::string &msg,const std::string &poster,int speed,int progressVal,int progressMax) :  type(type) , process(process), h1(h1),h2(h2),msg(msg),poster(poster),speed(speed),progressVal(progressVal),progressMax(progressMax){};
+        LoadMsg(Type type = Type::OnlyRaw, const std::string &process = "loading...", const std::string &h1 = "", const std::string &h2 = "", const std::string &msg = "", const std::string &poster = "", const std::string &icon = "img/loading.gif", neko::uint32 speed = 100, neko::uint32 progressVal = 0, neko::uint32 progressMax = 0)
+            : type(type), process(process), h1(h1), h2(h2), msg(msg), poster(poster), icon(icon), speed(speed), progressVal(progressVal), progressMax(progressMax) {}
+
+        LoadMsg &setType(Type newType) {
+            type = newType;
+            return *this;
+        }
+        LoadMsg &setProcess(const std::string &newProcess) {
+            process = newProcess;
+            return *this;
+        }
+        LoadMsg &setH1(const std::string &newH1) {
+            h1 = newH1;
+            return *this;
+        }
+        LoadMsg &setH2(const std::string &newH2) {
+            h2 = newH2;
+            return *this;
+        }
+        LoadMsg &setMsg(const std::string &newMsg) {
+            msg = newMsg;
+            return *this;
+        }
+        LoadMsg &setPoster(const std::string &newPoster) {
+            poster = newPoster;
+            return *this;
+        }
+        LoadMsg &setIcon(const std::string &newIcon) {
+            icon = newIcon;
+            return *this;
+        }
+        LoadMsg &setSpeed(neko::uint32 newSpeed) {
+            speed = newSpeed;
+            return *this;
+        }
+        LoadMsg &setProgressVal(neko::uint32 newProgressVal) {
+            progressVal = newProgressVal;
+            return *this;
+        }
+        LoadMsg &setProgressMax(neko::uint32 newProgressMax) {
+            progressMax = newProgressMax;
+            return *this;
+        }
     };
 
     /**
@@ -162,7 +226,36 @@ namespace neko::ui {
 
         neko::uint32 defaultButtonIndex = 0; /**< Default button index, used when autoClose is set */
 
-        // hintMsg(const std::string & title,const std::string &msg,const std::string &poster,int buttonType,std::function<void(bool)> callback) : title(title),msg(msg),poster(poster),buttonType(buttonType),callback(callback){};
+        HintMsg(const std::string &title = "", const std::string &msg = "", const std::string &poster = "", const std::vector<std::string> &buttonText = {}, std::function<void(neko::uint32)> callback = nullptr, neko::uint32 autoClose = 0, neko::uint32 defaultButtonIndex = 0)
+            : title(title), msg(msg), poster(poster), buttonText(buttonText), callback(callback), autoClose(autoClose), defaultButtonIndex(defaultButtonIndex) {}
+        HintMsg &setTitle(const std::string &newTitle) {
+            title = newTitle;
+            return *this;
+        }
+        HintMsg &setMsg(const std::string &newMsg) {
+            msg = newMsg;
+            return *this;
+        }
+        HintMsg &setPoster(const std::string &newPoster) {
+            poster = newPoster;
+            return *this;
+        }
+        HintMsg &setButtonText(const std::vector<std::string> &newButtonText) {
+            buttonText = newButtonText;
+            return *this;
+        }
+        HintMsg &setCallback(std::function<void(neko::uint32)> newCallback) {
+            callback = newCallback;
+            return *this;
+        }
+        HintMsg &setAutoClose(neko::uint32 newAutoClose) {
+            autoClose = newAutoClose;
+            return *this;
+        }
+        HintMsg &setDefaultButtonIndex(neko::uint32 newDefaultButtonIndex) {
+            defaultButtonIndex = newDefaultButtonIndex;
+            return *this;
+        }
     };
 
     /**
@@ -200,6 +293,29 @@ namespace neko::ui {
          * @param bool True if confirmed, false if cancelled.
          */
         std::function<void(bool)> callback = nullptr;
+
+        ChoiceMsg(const std::string &title = "", const std::string &msg = "", const std::string &poster = "", const std::vector<std::vector<std::string>> &choices = {}, std::function<void(bool)> callback = nullptr)
+            : title(title), msg(msg), poster(poster), choices(choices), callback(callback) {}
+        ChoiceMsg &setTitle(const std::string &newTitle) {
+            title = newTitle;
+            return *this;
+        }
+        ChoiceMsg &setMsg(const std::string &newMsg) {
+            msg = newMsg;
+            return *this;
+        }
+        ChoiceMsg &setPoster(const std::string &newPoster) {
+            poster = newPoster;
+            return *this;
+        }
+        ChoiceMsg &setChoices(const std::vector<std::vector<std::string>> &newChoices) {
+            choices = newChoices;
+            return *this;
+        }
+        ChoiceMsg &setCallback(std::function<void(bool)> newCallback) {
+            callback = newCallback;
+            return *this;
+        }
     };
 
 } // namespace neko::ui
