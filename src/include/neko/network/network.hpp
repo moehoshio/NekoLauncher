@@ -70,6 +70,7 @@ namespace neko::network {
 
                 struct Injector {
                     constexpr static neko::cstr downloadHost = "authlib-injector.yushi.moe";
+                    constexpr static neko::cstr bmclapiDownloadHost = "bmclapi2.bangbang93.com/mirrors/authlib-injector";
                     constexpr static neko::cstr getVersionsList = "/artifacts.json";
                     constexpr static neko::cstr latest = "/artifact/latest.json";
                     constexpr static neko::cstr baseRoot = "/artifact"; // + /{build_number}.json
