@@ -12,7 +12,7 @@
 #include "neko/schema/types.hpp"
 
 // Unified paths utility
-#include "neko/function/exec.hpp"
+#include "neko/function/utilities.hpp"
 
 #include <filesystem>
 #include <optional>
@@ -71,7 +71,7 @@ namespace neko::system {
      * @return std::string The current temporary directory path (normalized).
      *
      * @details
-     * - Uses exec::unifiedPaths for path normalization.
+     * - Uses exec::unifiedPath for path normalization.
      * - Automatically creates the directory if it does not exist.
      * - Prefers ClientConfig setting if available, otherwise uses the system default temp directory.
      */
@@ -79,18 +79,20 @@ namespace neko::system {
         static std::mutex mtx;
         std::lock_guard<std::mutex> lock(mtx);
 
+        using namespace neko::ops::pipe;
+
         auto init = []() -> std::string {
             ClientConfig cfg(exec::getConfigObj());
             if (std::filesystem::is_directory(cfg.more.tempDir))
-                return std::string(cfg.more.tempDir) | exec::unifiedPaths;
+                return std::string(cfg.more.tempDir) | util::unifiedPath;
             else
-                return (std::filesystem::temp_directory_path().string() + "/Nekolc") | exec::unifiedPaths;
+                return (std::filesystem::temp_directory_path().string() + "/Nekolc") | util::unifiedPath;
         };
 
         static std::string tempDir = init();
 
         if (!setTempDir.empty() && std::filesystem::is_directory(setTempDir)) {
-            tempDir = setTempDir | exec::unifiedPaths;
+            tempDir = setTempDir | util::unifiedPath;
         }
 
         if (!std::filesystem::exists(tempDir))
@@ -105,7 +107,7 @@ namespace neko::system {
      * @return std::string The current working directory path (normalized).
      *
      * @details
-     * - Uses exec::unifiedPaths for path normalization.
+     * - Uses exec::unifiedPath for path normalization.
      * - Changes working directory if setPath is valid.
      */
     inline std::string workPath(const std::string &setPath = "") {
@@ -114,7 +116,9 @@ namespace neko::system {
         if (!setPath.empty() && std::filesystem::is_directory(setPath))
             std::filesystem::current_path(setPath);
 
-        return std::filesystem::current_path().string() | exec::unifiedPaths;
+        using namespace neko::ops::pipe;
+
+        return std::filesystem::current_path().string() | util::unifiedPath;
     }
 
     /**
@@ -153,5 +157,7 @@ namespace neko::system {
     constexpr neko::cstr getOsArch() {
         return PlatformInfo::osArch;
     }
+
+    std::string getOsVersion();
 
 } // namespace neko::system
