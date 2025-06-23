@@ -24,9 +24,9 @@
 
 #include "neko/function/exec.hpp"
 
-#include "neko/schema/types.hpp"
 #include "neko/schema/clientconfig.hpp"
 #include "neko/schema/nekodefine.hpp"
+#include "neko/schema/types.hpp"
 
 #include "library/nlohmann/json.hpp"
 
@@ -208,14 +208,23 @@ namespace neko::info {
                 std::string_view
                     clickToRetry = "error_clickToRetry",
                     clickToQuit = "error_clickToQuit",
+                    
+                    unexpected = "error_unexpected",
+                    unknownError = "error_unknownError",
+                    networkError = "error_networkError",
+                    missingAccessToken = "error_missingAccessToken",
+                    invalidInput = "error_invalidInput",
                     jsonParse = "error_jsonParse",
                     tokenJsonParse = "error_tokenJsonParse",
                     apiMetaParse = "error_apiMetaParse",
                     networkConnectionRetryMax = "error_networkConnectionRetryMax",
+
                     maintenanceInfoReq = "error_maintenanceInfoReq",
                     maintenanceInfoParse = "error_maintenanceInfoParse",
+
                     downloadPoster = "error_downloadPoster",
                     downloadUpdate = "error_downloadUpdate",
+                    //Minecraft
                     installMinecraft = "error_installMinecraft",
                     minecraftVersionEmpty = "error_minecraftVersionEmpty",
                     minecraftVersionParse = "error_minecraftVersionParse",
@@ -226,7 +235,13 @@ namespace neko::info {
                     minecraftAuthlibJsonParse = "error_minecraftAuthlibJsonParse",
                     minecraftAuthlibDownload = "error_minecraftAuthlibDownload",
                     minecraftAuthlibDownloadHash = "error_minecraftAuthlibDownloadHash",
-                    minecraftMemoryNotEnough = "error_minecraftMemoryNotEnough";
+                    minecraftMemoryNotEnough = "error_minecraftMemoryNotEnough",
+                    minecraftVersionKeyOutOfRange = "error_minecraftVersionKeyOutOfRange",
+                    minecraftFileError = "error_minecraftFileError",
+                    minecraftException = "error_minecraftException",
+                    minecraftNetworkError = "error_minecraftNetworkError",
+                    minecraftUnexpected = "error_minecraftUnexpected",
+                    minecraftUnknownError = "error_minecraftUnknownError";
             };
 
             std::string_view language = "language";
@@ -309,7 +324,7 @@ namespace neko::info {
                 std::ifstream i;
                 if (std::filesystem::exists(fileName) && [&i, &fileName] {i.open(fileName); return i.is_open(); }()) {
                     auto j = nlohmann::json::parse(i, nullptr, false);
-                    nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<neko::cstr >(i.is_open()), exec::boolTo<neko::cstr >(j.is_discarded()));
+                    nlog::Info(FI, LI, "%s : lang : %s , is open : %s , json is discarded : %s ", FN, lang.c_str(), exec::boolTo<neko::cstr>(i.is_open()), exec::boolTo<neko::cstr>(j.is_discarded()));
                     cachedJson = j;
                 } else {
                     cachedJson = nlohmann::json::object();

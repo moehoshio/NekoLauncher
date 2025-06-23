@@ -12,6 +12,20 @@
     "title_loginOrRegister":"您有賬戶嗎?",
     "title_logoutConfirm":"登出確認",
 
+    "button_ok": "確認",
+    "button_cancel": "取消",
+    "button_retry": "重試",
+    "button_close": "關閉",
+    "button_start": "開始",
+    "button_menu": "選單",
+    "button_maximize": "最大化",
+    "button_minimize": "最小化",
+    "button_login": "登入",
+    "button_logout": "登出",
+    "button_account": "帳戶",
+    "button_setting": "設定",
+    "button_more": "更多",
+
     "general_general":"一般",
     "general_input":"輸入",
     "general_menu":"MENU",
@@ -78,9 +92,13 @@
     "loading_settingDownload": "設定下載...",
     "loading_downloadUpdate":"下載更新..",
 
-
     "network_testtingNetwork": "測試網路連通...",
 
+    "error_unexpected": "發生非預期錯誤。",
+    "error_unknownError": "發生未知錯誤。",
+    "error_networkError": "發生網路錯誤。",
+    "error_missingAccessToken": "缺少存取權杖。",
+    "error_invalidInput": "輸入無效。",
     "error_clickToRetry": "點擊重試",
     "error_clickToQuit": "點擊退出",
     "error_jsonParse":"解析json失敗！",
@@ -93,17 +111,24 @@
     "error_downloadUpdate":"下載更新失敗！\n點擊重試",
 
     "error_installMinecraft":"安裝Minecraft時發生錯誤！",
-
     "error_minecraftVersionEmpty":"遊戲版本字串是空的！",
     "error_minecraftVersionParse":"解析json失敗！\n檔案可能損壞",
     "error_minecraftAuthlibConnection":"連接authlib伺服器失敗！",
     "error_minecraftPatchDownload":"檔案修復下載失敗！",
     "error_minecraftPatchDownloadHash":"下載的檔案與期望雜湊值不匹配！",
-
     "error_minecraftGetAuthlibVersion":"在下載 authlib injector 時\n取得版本資訊失敗！",
     "error_minecraftAuthlibJsonParse":"在下載 authlib injector 時\n解析版本資訊失敗！",
     "error_minecraftAuthlibDownload":"在下載 authlib injector 時\n下載檔案失敗！",
     "error_minecraftAuthlibDownloadHash":"在下載 authlib injector 時\n下載的檔案與期望雜湊值不匹配！",
+    "error_minecraftMemoryNotEnough" : "記憶體不滿足最低要求!\n請檢查您的系統配置，最少需要可用記憶體：",
+    "error_minecraftVersionKeyOutOfRange": "Minecraft 版本鍵值超出範圍！\n請檢查您的 Minecraft 版本設定。\n重新安裝可能可以解決此問題。",
+    "error_minecraftFileError": "存取 Minecraft 檔案時發生錯誤。\n請檢查您的檔案系統與權限。",
+    "error_minecraftNetworkError": "啟動 Minecraft 時發生網路錯誤。\n請檢查您的網路連線並重試。",
+    "error_minecraftException": "啟動 Minecraft 時發生非預期錯誤。\n請檢查日誌以取得更多資訊。",
+    "error_minecraftUnexpected": "Minecraft 啟動過程中發生非預期錯誤。\n請檢查日誌以取得更多資訊。",
+    "error_minecraftUnknownError": "Minecraft 啟動過程中發生未知錯誤。\n請檢查日誌以取得更多資訊。"
 
-    "error_minecraftMemoryNotEnough" : "記憶體不滿足最低要求!\n請檢查您的系統配置，最少需要可用記憶體："
+    
+
+
 }

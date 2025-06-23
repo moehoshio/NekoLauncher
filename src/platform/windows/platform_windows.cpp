@@ -7,10 +7,10 @@ namespace neko::system {
         OSVERSIONINFOEX info = {0};
         info.dwOSVersionInfoSize = sizeof(info);
         if (GetVersionEx((OSVERSIONINFO *)&info)) {
-            char buf[64];
-            snprintf(buf, sizeof(buf), "%lu.%lu.%lu",
+            std::vector<char> buf(64);
+            snprintf(buf.data(), buf.size(), "%lu.%lu.%lu",
                      info.dwMajorVersion, info.dwMinorVersion, info.dwBuildNumber);
-            return buf;
+            return std::string(buf.data());
         }
         return "";
     }
