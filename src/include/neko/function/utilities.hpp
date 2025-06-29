@@ -121,8 +121,8 @@ namespace neko::ops {
             if (opt)
                 return f(*opt);
             using OptType = std::decay_t<decltype(opt)>;
-            if constexpr (requires { RetType{}; })
-                return RetType{};
+            if constexpr (requires { OptType{}; })
+                return OptType{};
             else
                 return {};
         }
@@ -435,43 +435,170 @@ namespace neko::util {
      * @brief Time-related utilities.
      */
     namespace time {
+
         /**
-         * @brief Gets the current system time.
-         * @return Current time as a time_t value
+         * @brief Converts std::time_t to local std::tm.
+         * @param t Utc timestamp
+         * @return Local std::tm structure
          */
-        inline std::time_t getTime() {
+        inline std::tm toLocalTm(std::time_t t) {
+            std::tm tmResult = {};
+#if defined(_WIN32) || defined(_WIN64)
+            localtime_s(&tmResult, &t);
+#else
+            localtime_r(&t, &tmResult);
+#endif
+            return tmResult;
+        }
+
+        /**
+         * @brief Converts std::time_t to UTC std::tm.
+         * @param t Utc timestamp
+         * @return UTC std::tm structure
+         */
+        inline std::tm toUtcTm(std::time_t t) {
+            std::tm tmResult = {};
+#if defined(_WIN32) || defined(_WIN64)
+            gmtime_s(&tmResult, &t);
+#else
+            gmtime_r(&t, &tmResult);
+#endif
+            return tmResult;
+        }
+
+
+        /**
+         * @brief Converts std::tm to utc std::time_t.
+         * @param tm Local time structure
+         * @return Utc time_t value
+         */
+        inline std::time_t toUtcTimeT(const std::tm &tm) {
+            std::tm tmCopy = tm;
+#if defined(_WIN32) || defined(_WIN64)
+            return _mkgmtime(&tmCopy);
+#else
+            return timegm(&tmCopy);
+#endif
+        }
+
+        /**
+         * @brief Gets the current system time in UTCZ.
+         * @return Current time as a time stamp value in UTCZ
+         */
+        inline std::time_t getUtcNow() {
             auto now = std::chrono::system_clock::now();
             return std::chrono::system_clock::to_time_t(now);
         }
 
         /**
-         * @brief Formats the current time as a string.
-         * @param format Format string for strftime
-         * @return Formatted time string
+         * @brief Gets the current UTC timestamp as a string.
+         * @param t Utc timestamp to convert, defaults to current time
+         * @return String representation of the timestamp
          */
-        inline std::string getTimeString(std::string_view format = "%Y-%m-%d-%H-%M-%S") {
-            auto currentTime = getTime();
-            std::tm tmResult;
-
-#if defined(_WIN32) || defined(_WIN64)
-            localtime_s(&tmResult, &currentTime);
-#else
-            localtime_r(&currentTime, &tmResult);
-#endif
-
-            std::array<char, 128> timeString{};
-            if (std::strftime(timeString.data(), timeString.size(), format.data(), &tmResult) == 0) {
-                return std::string();
-            }
-            return std::string(timeString.data());
+        inline std::string getTimestamp(std::time_t t = getUtcNow()) {
+            return std::to_string(t);
         }
 
         /**
-         * @brief Gets the current time as a timestamp string.
-         * @return Current time as a string of seconds since epoch
+         * @brief Gets the current local time as a formatted string.
+         * @param format Format string for strftime
+         * @param utcT Utc timestamp to convert, defaults to current time
+         * @return Formatted local time string, or std::nullopt on failure
          */
-        inline std::string getTimestamp() {
-            return std::to_string(getTime());
+        inline std::optional<std::string> getLocalTimeString(std::string_view format = "%Y-%m-%d-%H-%M-%S", std::time_t utcT = getUtcNow()) {
+            std::tm tmResult = toLocalTm(utcT);
+
+            std::array<char, 128> timeString{};
+            if (std::strftime(timeString.data(), timeString.size(), format.data(), &tmResult) > 0) {
+                return std::string(timeString.data());
+            }
+            return std::nullopt;
+        }
+
+        /**
+         * @brief Formats the current time as an ISO 8601 string in UTCZ.
+         * @param utcT Utc timestamp to format, defaults to current time
+         * @return Formatted time string in ISO 8601 format (e.g., "2024-06-07T15:04:05Z")
+         */
+        inline std::optional<std::string> getUtcZTimeString(std::time_t utcT = getUtcNow()) {
+            std::tm tmResult = toUtcTm(utcT);
+
+            std::array<char, 128> timeString{};
+            if (std::strftime(timeString.data(), timeString.size(), "%Y-%m-%dT%H:%M:%SZ", &tmResult) > 0) {
+                return std::string(timeString.data());
+            }
+            return std::nullopt;
+        }
+
+        /**
+         * @brief Parses an ISO 8601 formatted string (e.g., "2024-06-07T15:04:05Z") to std::tm (UTC).
+         * @param iso8601 ISO 8601 formatted string. format: "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+hh:mm" (included +hhmm/-hhmm)
+         * @return std::optional<std::tm> Parsed UTC time structure, std::nullopt if parsing fails
+         */
+        inline std::optional<std::time_t> parseToUTCTime(const std::string &iso8601) {
+            std::tm tmResult = {};
+            std::regex r(R"((\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|([+-])(\d{2}):?(\d{2}))?)");
+            std::smatch m;
+
+            if (!std::regex_match(iso8601, m, r) || m.size() < 7) {
+                return std::nullopt;
+            }
+
+            // At least require <YYYY>-<MM>-<DD>T/t<HH>:<MM>:<SS>Z = size 6(+1)
+            tmResult.tm_year = std::stoi(m[1]) - 1900;
+            tmResult.tm_mon = std::stoi(m[2]) - 1;
+            tmResult.tm_mday = std::stoi(m[3]);
+            tmResult.tm_hour = std::stoi(m[4]);
+            tmResult.tm_min = std::stoi(m[5]);
+            tmResult.tm_sec = std::stoi(m[6]);
+            tmResult.tm_isdst = 0;
+
+            // Zero timezone offset
+            if (!m[7].matched || (m[7].matched && m[7] == "Z")) {
+                return toUtcTimeT(tmResult);
+            }
+
+            // <YYYY>-<MM>-<DD>T/t<HH>:<MM>:<SS><+><hh>:<mm> = size 10(+1)
+            if (m[8].matched && m[9].matched && m[10].matched) {
+                int sign = (m[8] == "+") ? 1 : -1;
+                int offset_hour = std::stoi(m[9]);
+                int offset_min = std::stoi(m[10]);
+                int offset_sec = sign * (offset_hour * 3600 + offset_min * 60);
+
+                std::time_t t = toUtcTimeT(tmResult);
+                // Subtract the timezone offset to get UTC time
+                t -= offset_sec;
+                tmResult = toUtcTm(t);
+                return toUtcTimeT(tmResult);
+            }
+
+            return std::nullopt; // Unable to parse timezone offset
+        }
+
+        /**
+         * @brief Parses an ISO 8601 formatted string (e.g., "2024-06-07T15:04:05Z") to a UTC 0 time string.
+         * @param iso8601 ISO 8601 formatted string. format: "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+hh:mm" (included +hhmm/-hhmm)
+         * @return std::optional<std::string> Parsed UTC 0 time string, std::nullopt if parsing fails
+         */
+        inline std::optional<std::string> parseToUTCTimeString(const std::string &iso8601) {
+            auto utcTime = parseToUTCTime(iso8601);
+            if (!utcTime) {
+                return std::nullopt;
+            }
+            return getUtcZTimeString(utcTime.value());
+        }
+
+        /**
+         * @brief Parses an ISO 8601 formatted string (e.g., "2024-06-07T15:04:05Z") to a local time string.
+         * @param iso8601 ISO 8601 formatted string. format: "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+hh:mm" (included +hhmm/-hhmm)
+         * @return std::optional<std::string> Parsed local time string, std::nullopt if parsing fails
+         */
+        inline std::optional<std::string> parseToLocalTimeString(const std::string &iso8601) {
+            auto utcTime = parseToUTCTime(iso8601);
+            if (!utcTime) {
+                return std::nullopt;
+            }
+            return getTimeString("%Y-%m-%d %H:%M:%S", utcTime.value());
         }
     } // namespace time
 
@@ -535,7 +662,7 @@ namespace neko::util {
             std::string to_hash(reinterpret_cast<const char *>(ns_bytes.data()), ns_bytes.size());
             to_hash += name;
 
-            std::string md5hex = hashString(to_hash, hash::Algorithm::md5);
+            std::string md5hex = hashs::hash(to_hash, hashs::Algorithm::md5);
 
             std::array<uint8_t, 16> hash_bytes{};
             for (int i = 0; i < 16; ++i) {
@@ -763,7 +890,7 @@ namespace neko::util {
          * @returns If no match is found, returns std::nullopt.
          */
         inline std::optional<ResolutionMatch> matchResolution(const std::string &str) {
-            static const std::regex r(R"((\d{2,5})[xX×](\d{2,5}))");
+            static const std::regex r(R"((\d{2,5})[xX](\d{2,5}))");
             std::smatch match;
             if (std::regex_search(str, match, r)) {
                 if (match.size() == 3) {
