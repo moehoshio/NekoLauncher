@@ -43,7 +43,7 @@ namespace neko{
 class ThreadPool {
 public:
     explicit ThreadPool(std::size_t threads
-        = (std::max)(2u, std::thread::hardware_concurrency() ));
+        = (std::max)(2u, std::thread::hardware_concurrency()));
 
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
@@ -125,8 +125,6 @@ inline ThreadPool::ThreadPool(std::size_t threads)
         start_worker(i, lock);
 }
 
-
-// 取得目前任務數量
 inline std::size_t ThreadPool::get_task_count() const
 {
     std::unique_lock<std::mutex> lock(const_cast<std::mutex&>(queue_mutex));

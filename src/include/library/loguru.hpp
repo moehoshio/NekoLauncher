@@ -956,7 +956,7 @@ namespace loguru
 	Any file that include some.hpp:
 		void foo(MySmallType small, const MyBigType& big)
 		{
-			ERROR_CONTEXT("Small", small); // Copy ´small` by value.
+			ERROR_CONTEXT("Small", small); // Copy `small` by value.
 			ERROR_CONTEXT("Big",   &big);  // `big` should not change during this scope!
 			....
 		}
