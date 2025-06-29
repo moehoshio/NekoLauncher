@@ -76,13 +76,11 @@ namespace neko::ui {
             dialogButton, &QDialogButtonBox::accepted, [=, this, did] {
                 m.callback(true);
                 *did = true;
-                disconnect(dialogButton);
             });
         connect(
             dialogButton, &QDialogButtonBox::rejected, [=, this, did] {
                 m.callback(false);
                 *did = true;
-                disconnect(dialogButton);
             });
 
         connect(this, &QWidget::destroyed, [=, did](QObject *) {
