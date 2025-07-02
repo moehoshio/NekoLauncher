@@ -17,12 +17,17 @@ namespace neko::schema {
         constexpr neko::cstr NekoLcCoreVersion = "v0.0.1";
 
         constexpr neko::cstr NetWorkHostList[] = {"api.example.com", "www.example.org"};
-
+        
         constexpr neko::cstr NetWorkAuthlibHost = "skin.example.org";
+
+        // URL for the remote configuration file
+        constexpr neko::cstr NetWorkRemoteConfigUrl = "https://config.example.com/remote-config.json";
 
         constexpr neko::cstr launcherMode = "minecraft";
 
         constexpr neko::cstr clientConfigFileName = "config.ini";
+
+        constexpr neko::uint64 NetWorkHostListSize = sizeof(NetWorkHostList) / sizeof(NetWorkHostList[0]);
 
         // Unique identifier for the build
 #if defined(GIT_BUILD_ID)

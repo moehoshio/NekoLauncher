@@ -6,7 +6,7 @@
 
 #include "neko/log/nlog.hpp"
 
-#include "neko/function/exec.hpp"
+#include "neko/function/utilities.hpp"
 #include "neko/function/info.hpp"
 
 // libcurl
@@ -86,44 +86,42 @@ namespace neko {
         }
 
         void NetworkBase::logDebug(const std::string &message) {
-            bool dev = exec::getConfigObj().GetBoolValue("dev", "enable", false),
-                 debug = exec::getConfigObj().GetBoolValue("dev", "debug", false);
-            if (dev && debug) {
+            neko::ClientConfig cfg(core::getConfigObj());
+            if (cfg.dev.enable && cfg.dev.debug) {
                 nlog::Debug(FI, LI, "Network [Debug]: %s", message.c_str());
             }
         }
 
         std::future<void> NetworkBase::initialize() {
+            
+            neko::ClientConfig cfg(core::getConfigObj());
 
-            std::string proxy = exec::getConfigObj().GetValue("net", "proxy", "true");
+            std::string proxy(cfg.net.proxy);
             // "" or true or proxyAdd, otherwise set ""
-            bool proxyUnexpected = exec::allTrue((proxy != ""), (proxy != "true"), !exec::isProxyAddress(proxy));
+            bool proxyUnexpected = util::logic::allTrue((proxy != ""), (proxy != "true"), !util::check::isProxyAddress(proxy));
             if (proxyUnexpected)
                 proxy = "";
-
-            bool dev = exec::getConfigObj().GetBoolValue("dev", "enable", false),
-                 tls = exec::getConfigObj().GetBoolValue("dev", "tls", true);
 
             NetworkBase::globalConfig = {
                 "NekoLc/" + info::getVersion() + " (" + info::getOsNameS() + "; Build " + std::string(build_id) + ")",
                 proxy,
-                NetworkBase::api.hostList[0],
-                (dev == true && tls == false) ? "http://" : "https://"};
+                schema::definitions::NetWorkHostList[0],
+                (cfg.dev.enable == true && cfg.dev.tls == false) ? "http://" : "https://"};
 
             logInfo(
                 "NetworkBase::initialize() : ",
                 "Proxy: " + globalConfig.proxy +
-                    ", Dev: " + (dev ? "true" : "false") +
-                    ", TLS: " + (tls ? "true" : "false") +
+                    ", Dev: " + util::logic::boolTo(cfg.dev.enable) +
+                    ", TLS: " + util::logic::boolTo(cfg.dev.tls) +
                     ", Protocol: " + globalConfig.protocol +
                     ", UserAgent: " + globalConfig.userAgent);
 
-            return exec::getThreadObj().enqueue([]() {
+            return core::getThreadPool().enqueue([]() {
                 logInfo(
                     "NetworkBase::initialize() : ",
                     "Starting network test...");
 
-                for (auto it : NetworkBase::Api::hostList) {
+                for (auto it : schema::definitions::NetWorkHostList) {
                     Network net;
                     std::string url = NetworkBase::buildUrl(NetworkBase::api.testing, it);
 
@@ -147,7 +145,7 @@ namespace neko {
                         "NetworkBase::initialize() : ",
                         "Testing okay, host: ", it, ", statusCode: ", std::to_string(result.statusCode));
                     NetworkBase::globalConfig.host = std::string(it);
-                    return;
+                    NetworkBase::api.hostList.push_back(std::string(it));
                 }
                 logError(
                     "NetworkBase::initialize() : ",
@@ -767,7 +765,7 @@ namespace neko {
                 std::string range = std::to_string(startByte) + "-" + std::to_string(endByte);
                 // Use more identifiable temporary filename, including part of original filename
                 std::string baseName = std::filesystem::path(config.config.fileName).filename().string();
-                std::string tempFileName = info::tempDir() + "/" + baseName + "." +
+                std::string tempFileName = info::tempFolder() + "/" + baseName + "." +
                                            config.config.requestId.substr(0, 8) + "." +
                                            std::to_string(i);
                 std::string segmentId = config.config.requestId + "-" + std::to_string(i);

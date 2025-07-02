@@ -50,10 +50,11 @@ namespace neko::network {
     public:
         // API Definition
         struct Api {
-            constexpr static neko::cstr hostList[] = schema::definitions::NetWorkHostList;
+
+            static std::vector<std::string> hostList;
 
             // NekoLc API endpoints
-            constexpr static neko::cstr mainenance = "/v1/api/maintenance";
+            constexpr static neko::cstr maintenance = "/v1/api/maintenance";
             constexpr static neko::cstr checkUpdates = "/v1/api/checkUpdates";
             constexpr static neko::cstr feedback = "/v1/api/feedbacklog";
             constexpr static neko::cstr testing = "/v1/testing/ping";
@@ -119,6 +120,19 @@ namespace neko::network {
          * @return std::string - The system proxy settings, or an empty string if no proxy is set.
          * **/
         static std::optional<std::string> getSysProxy();
+
+        /**
+         * @brief Get an available host from the host list.
+         * @return std::string - The first available host from Api::hostList, or an empty string if none are available.
+         */
+        static std::string getAvailableHost() {
+            for (const auto &host : Api::hostList) {
+                if (!host.empty()) {
+                    return host;
+                }
+            }
+            return std::string();
+        }
 
         /**
          * @brief Build a complete URL from the given path, host, and protocol.
