@@ -72,28 +72,7 @@ namespace neko::ui {
             using namespace neko::info;
             auto logoutFunc = [=, this]() {
                 core::getThreadPool().enqueue([] {
-                    neko::ClientConfig cfg(core::getConfigObj());
-
-                    auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::invalidate, network::NetworkBase::Api::Authlib::host);
-                    nlohmann::json json = {
-                        {"accessToken", cfg.minecraft.accessToken}};
-                    auto data = json.dump();
-
-                    network::Network net;
-                    network::RequestConfig reqConfig;
-                    reqConfig.setUrl(url)
-                        .setMethod(network::RequestType::Post)
-                        .setData(data)
-                        .setHeader("Content-Type: application/json")
-                        .setRequestId("logout-" + util::random::generateRandomString(10));
-                    (void)net.execute(reqConfig);
-
-                    cfg.minecraft.account = "";
-                    cfg.minecraft.playerName = "";
-                    cfg.minecraft.accessToken = "";
-                    cfg.minecraft.uuid = "";
-
-                    cfg.save(core::getConfigObj(), app::getConfigFileName());
+                    neko::minecraft::account::authLogout();
                 });
                 isLogIn = false;
 

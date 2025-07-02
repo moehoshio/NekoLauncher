@@ -3,8 +3,8 @@
 #include "neko/core/core.hpp"
 #include "neko/core/resources.hpp"
 
-#include "neko/schema/exception.hpp"
 #include "neko/log/nlog.hpp"
+#include "neko/schema/exception.hpp"
 
 #include "neko/function/info.hpp"
 #include "neko/function/utilities.hpp"
@@ -219,6 +219,32 @@ namespace neko::minecraft::account {
 
         result.name = name;
         return result;
+    }
+
+    inline void authLogout() noexcept {
+        log::autoLog log;
+        neko::ClientConfig cfg(core::getConfigObj());
+
+        auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::invalidate, network::NetworkBase::Api::Authlib::host);
+        nlohmann::json json = {
+            {"accessToken", cfg.minecraft.accessToken}};
+        auto data = json.dump();
+
+        network::Network net;
+        network::RequestConfig reqConfig;
+        reqConfig.setUrl(url)
+            .setMethod(network::RequestType::Post)
+            .setData(data)
+            .setHeader("Content-Type: application/json")
+            .setRequestId("logout-" + util::random::generateRandomString(10));
+        (void)net.execute(reqConfig);
+
+        cfg.minecraft.account = "";
+        cfg.minecraft.playerName = "";
+        cfg.minecraft.accessToken = "";
+        cfg.minecraft.uuid = "";
+
+        cfg.save(core::getConfigObj(), app::getConfigFileName());
     }
 
 } // namespace neko::minecraft::account

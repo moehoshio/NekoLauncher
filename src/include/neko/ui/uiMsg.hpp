@@ -136,6 +136,7 @@ namespace neko::ui {
         /**
          * @brief Text labels for each button in the dialog.
          * Each element in the vector represents one button.
+         * Can be empty, in which case a default 'ok' button will be created.
          */
         std::vector<std::string> buttonText;
 
