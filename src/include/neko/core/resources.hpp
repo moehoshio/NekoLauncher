@@ -2,6 +2,7 @@
 
 #include "library/SimpleIni/SimpleIni.h"
 #include "library/threadpool.hpp"
+#include "neko/event/event.hpp"
 
 namespace neko::core {
 
@@ -30,6 +31,15 @@ namespace neko::core {
             static CSimpleIniA instance;
             return instance;
         }
+
+        /**
+         * @brief Gets the global event loop instance.
+         * @return Reference to the global event loop object.
+         */
+        static event::EventLoop& getEventLoop() {
+            static event::EventLoop instance;
+            return instance;
+        }
     };
 
     /**
@@ -50,6 +60,14 @@ namespace neko::core {
      */
     inline CSimpleIniA& getConfigObj() {
         return Resources::getConfigObj();
+    }
+
+    /**
+     * @brief Gets the global event loop instance.
+     * @return Reference to the global event loop object.
+     */
+    inline event::EventLoop& getEventLoop() {
+        return Resources::getEventLoop();
     }
 
 } // namespace neko::core
