@@ -5,19 +5,28 @@
 #include "neko/core/resources.hpp"
 #include "neko/schema/clientconfig.hpp"
 
-#include "neko/network/network.hpp"
+#include "neko/event/event.hpp"
 
-#include "neko/function/exec.hpp"
 #include "neko/function/info.hpp"
+#include "neko/function/utilities.hpp"
+
+#include "neko/minecraft/account.hpp"
+
+#include "neko/system/platform.hpp"
+
+#include "neko/network/network.hpp"
 
 #include "nlohmann/json.hpp"
 
 #include <QtGui/QValidator>
 
+#include <QtCore/QElapsedTimer>
+
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QDialogButtonBox>
+#include <QtWidgets/QFileDialog>
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QLabel>
@@ -31,7 +40,7 @@
 namespace neko::ui {
 
     // --- SettingPageOne ---
-    SettingPageOne::SettingPageOne(QWidget *parent)
+    SettingPageOne::SettingPageOne(neko::ClientConfig cfg, QWidget *parent)
         : QWidget(parent),
           accountGroup(new QGroupBox(this)),
           accountGroupLayout(new QVBoxLayout(accountGroup)),
@@ -42,11 +51,25 @@ namespace neko::ui {
         accountLogInOutLayout->addWidget(accountLogInOutInfoText);
         accountLogInOutLayout->addWidget(accountLogInOutButton);
         accountLogInOutLayoutWidget->setLayout(accountLogInOutLayout);
+
+        setupConfig(cfg);
     }
 
-    void SettingPageOne::setupConnects(std::function<void(const InputMsg &)> inputDialog, std::function<void(const HintMsg &)> hintDialog) {
+    void SettingPageOne::setupConfig(neko::ClientConfig cfg) {
+        isLogIn = util::logic::allTrue(
+            cfg.minecraft.playerName,
+            cfg.minecraft.account,
+            cfg.minecraft.accessToken,
+            cfg.minecraft.uuid);
+        using namespace neko::info;
+        accountLogInOutButton->setText(QString::fromStdString(isLogIn.load() ? lang::tr(lang::Keys::Button::logout) : lang::tr(lang::Keys::Button::login)));
+        accountLogInOutInfoText->setText(QString::fromStdString(isLogIn.load() ? cfg.minecraft.playerName : lang::tr(lang::Keys::Auth::notLogin)));
+    }
 
-        connect(accountLogInOutButton, &QPushButton::clicked, [&, this]() {
+    void SettingPageOne::setupConnects(std::function<void(const HintMsg &)> hintDialog, std::function<void(const InputMsg &)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput) {
+
+        connect(accountLogInOutButton, &QPushButton::clicked, [&, this] {
+            using namespace neko::info;
             auto logoutFunc = [=, this]() {
                 core::getThreadPool().enqueue([] {
                     neko::ClientConfig cfg(core::getConfigObj());
@@ -62,7 +85,7 @@ namespace neko::ui {
                         .setMethod(network::RequestType::Post)
                         .setData(data)
                         .setHeader("Content-Type: application/json")
-                        .setRequestId("logout-" + exec::generateRandomString(10));
+                        .setRequestId("logout-" + util::random::generateRandomString(10));
                     (void)net.execute(reqConfig);
 
                     cfg.minecraft.account = "";
@@ -70,79 +93,141 @@ namespace neko::ui {
                     cfg.minecraft.accessToken = "";
                     cfg.minecraft.uuid = "";
 
-                    cfg.save(core::getConfigObj(), info::app::getConfigFileName());
+                    cfg.save(core::getConfigObj(), app::getConfigFileName());
                 });
-                isAccountLogIn = false;
+                isLogIn = false;
 
-                accountLogInOutButton->setText(QString::fromStdString(info::lang::translations(info::lang::lang.general.login)));
-                accountLogInOutInfoText->setText(QString::fromStdString(info::lang::translations(info::lang::lang.general.notLogin)));
+                accountLogInOutButton->setText(QString::fromStdString(lang::tr(lang::Keys::Button::login)));
+                accountLogInOutInfoText->setText(QString::fromStdString(lang::tr(lang::Keys::Auth::notLogin)));
             };
 
             // logout
-            if (isAccountLogIn) {
-                hintDialog({info::lang::translations(info::lang::lang.title.logoutConfirm),
-                            info::lang::translations(info::lang::lang.general.logoutConfirm),
-                            "",
-                            std::vector<std::string>{
-                                info::lang::lang.general.ok,
-                                info::lang::lang.general.cancel},
-                            [=, this](neko::uint32 checkId) {
-                                if (checkId == 0) { // 0 is the index for "OK"
-                                    logoutFunc();
-                                }
-                            }});
+            if (isLogIn.load()) {
+                hintDialog(ui::HintMsg{
+                    .title = lang::tr(lang::Keys::Title::logoutConfirm),
+                    .msg = lang::tr(lang::Keys::Auth::logoutConfirm),
+                    .poster = "",
+                    .buttonText = {lang::tr(lang::Keys::Button::ok),
+                                   lang::tr(lang::Keys::Button::cancel)},
+                    .callback = [logoutFunc](neko::uint32 checkId) {
+                        if (checkId == 0) { // 0 is the index for "OK"
+                            logoutFunc();
+                        }
+                    }});
                 return;
             }
 
-            auto registerFunc = [=, this]() {
-                try {
-                    neko::launcherMinecraftAuthlibAndPrefetchedCheck();
-                } catch (const std::exception &e) {
-                    hintDialog({info::lang::translations(info::lang::lang.title.error),
-                                info::lang::translations(info::lang::lang.error.exception),
-                                e.what(),
-                                1});
-                    return;
-                }
-
+            auto registerFunc = [] {
                 neko::ClientConfig cfg(core::getConfigObj());
-                nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
+                try {
+                    neko::minecraft::account::launcherMinecraftAuthlibAndPrefetchedCheck();
 
-                if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
-                    std::string url = authlibData["meta"]["links"]["register"];
+                    nlohmann::json authlibData = nlohmann::json::parse(util::base64::base64Decode(cfg.minecraft.authlibPrefetched));
+
+                    std::string url = authlibData["meta"]["links"]["register"].get<std::string>();
                     QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
+                } catch (const ex::NetworkError &e) {
+                    hintDialog(ui::HintMsg{
+                        .title = lang::tr(lang::Keys::Title::networkError),
+                        .msg = lang::tr(lang::Keys::Network::networkError),
+                        .poster = "",
+                        .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                    return;
+                } catch (const ex::Parse &e) {
+                    hintDialog(ui::HintMsg{
+                        .title = lang::tr(lang::Keys::Title::parseError),
+                        .msg = lang::tr(lang::Keys::Error::jsonParse),
+                        .poster = "",
+                        .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                    return;
+                } catch (const nlohmann::json::parse_error &e) {
+                    hintDialog(ui::HintMsg{
+                        .title = lang::tr(lang::Keys::Title::parseError),
+                        .msg = lang::tr(lang::Keys::Error::jsonParse),
+                        .poster = "",
+                        .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                    return;
+                } catch (const nlohmann::json::out_of_range &e) {
+                    hintDialog(ui::HintMsg{
+                        .title = lang::tr(lang::Keys::Title::error),
+                        .msg = lang::tr(lang::Keys::Auth::noRegisterLink),
+                        .poster = "",
+                        .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                    return;
+                } catch (const std::exception &e) {
+                    hintDialog(ui::HintMsg{
+                        .title = lang::tr(lang::Keys::Title::error),
+                        .msg = e.what(),
+                        .poster = "",
+                        .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                    return;
                 }
             };
 
             auto loginFunc = [=, this]() {
-                showInput({info::lang::translations(info::lang::lang.title.inputLogin),
-                           "",
-                           "",
-                           {info::lang::translations(info::lang::lang.general.username), info::lang::translations(info::lang::lang.general.password)},
-                           [=, this](bool check) {
-                               if (!check) {
-                                   hideInput();
-                                   return;
-                               }
+                inputDialog(ui::InputMsg{
+                    .title = lang::tr(lang::Keys::Title::inputLogin),
+                    .msg = lang::tr(lang::Keys::Auth::needLogin),
+                    .poster = "",
+                    .lineText = {
+                        lang::tr(lang::Keys::General::username),
+                        lang::tr(lang::Keys::General::password)},
+                    .callback = [=](bool check) {
+                        if (!check) {
+                            hideInput();
+                            return;
+                        }
+                        auto inData = getInputLines();
+                        for (const auto &line : inData) {
+                            if (line.empty()) {
+                                hintDialog(ui::HintMsg{
+                                    .title = lang::tr(lang::Keys::Title::inputNotEnoughParameters),
+                                    .msg = lang::tr(lang::Keys::General::notEnoughParameters),
+                                    .poster = "",
+                                    .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                                return;
+                            }
+                        }
 
-                               auto inData = getInput();
-                               if (inData.size() != 2) {
-                                   showHint({info::lang::translations(info::lang::lang.title.inputNotEnoughParameters), info::lang::translations(info::lang::lang.general.notEnoughParameters), "", 1});
-                                   return;
-                               }
-                               auto hintFunc = [=, this](const ui::hintMsg &m) {
-                                   emit this->showHintD(m);
-                               };
-                               auto callBack = [=, this](const std::string &name) {
-                                   emit this->loginStatusChangeD(name);
-                               };
-                               exec::getThreadObj().enqueue([=, this] {
-                                   if (neko::authLogin(inData, hintFunc, callBack) == neko::State::Completed) {
-                                       emit this->hideInputD();
-                                   }
-                               });
-                           }});
+                        auto callBack = [this](const std::string &name) {
+                            emit this->setAccountLogInD(name);
+                        };
+                        core::getThreadPool().enqueue([=, this] {
+                            auto result = minecraft::account::authLogin(inData);
+                            if (!result.error.empty()) {
+                                hintDialog(ui::HintMsg{
+                                    .title = lang::tr(lang::Keys::Title::error),
+                                    .msg = result.error,
+                                    .poster = "",
+                                    .buttonText = {lang::tr(lang::Keys::Button::ok)}});
+                                return;
+                            }
+                            callBack(result.name);
+                        });
+                    }});
             };
+
+            // login or register
+            hintDialog(ui::HintMsg{
+                .title = lang::tr(lang::Keys::Title::loginOrRegister),
+                .msg = lang::tr(lang::Keys::Auth::loginOrRegister),
+                .poster = "",
+                .buttonText = {lang::tr(lang::Keys::Button::login),
+                               lang::tr(lang::Keys::Button::Register),
+                               lang::tr(lang::Keys::Button::cancel)},
+                .callback = [=](neko::uint32 checkId) {
+                    if (checkId == 0) { // 0 is the index for "Login"
+                        loginFunc();
+                    } else if (checkId == 1) { // 1 is the index for "Register"
+                        registerFunc();
+                    }
+                }});
+        }); // Connect the account login/logout button
+
+        connect(this, &SettingPageOne::setAccountLogInD, [=, this](std::string name) {
+            isLogIn = true;
+            accountLogInOutButton->setText(QString::fromStdString(info::lang::tr(info::lang::Keys::Button::logout)));
+            accountLogInOutInfoText->setText(QString::fromStdString(name));
         });
     }
 
@@ -159,11 +244,30 @@ namespace neko::ui {
         accountLogInOutButton->setFont(text);
     }
 
+    void SettingPageOne::setupText() {
+        using namespace neko::info;
+        neko::ClientConfig cfg(core::getConfigObj());
+        std::string accountInfo = cfg.minecraft.account ? cfg.minecraft.playerName : "";
+        std::string accessTokenInfo = cfg.minecraft.accessToken ? cfg.minecraft.accessToken : "";
+        isLogIn = !accountInfo.empty() && !accessTokenInfo.empty();
+        if (isLogIn.load()) {
+            accountLogInOutInfoText->setText(QString::fromStdString(accountInfo));
+            accountLogInOutButton->setText(QString::fromStdString(lang::tr(lang::Keys::Button::logout)));
+        } else {
+            // Not logged in
+            accountLogInOutInfoText->setText(QString::fromStdString(lang::tr(lang::Keys::Auth::notLogin)));
+            accountLogInOutButton->setText(QString::fromStdString(lang::tr(lang::Keys::Button::login)));
+        }
+    }
+
     void SettingPageOne::setupSize() {
         accountLogInOutButton->setMinimumHeight(50);
     }
 
     void SettingPageOne::resizeItems(int windowWidth, int windowHeight) {
+        if (!isVisible()) {
+            return;
+        }
 
         int groupW = windowWidth * 0.8;
         int groupH = windowHeight * 0.2;
@@ -178,7 +282,7 @@ namespace neko::ui {
     }
 
     // --- SettingPageTwo ---
-    SettingPageTwo::SettingPageTwo(QWidget *parent)
+    SettingPageTwo::SettingPageTwo(neko::ClientConfig cfg, QWidget *parent)
         : QWidget(parent),
           pageScrollArea(new QScrollArea(this)),
           scrollContent(new QWidget()),
@@ -236,10 +340,10 @@ namespace neko::ui {
           winSizeEditHeight(new QLineEdit(winSizeEditLayoutWidget)),
           lcGroup(new QGroupBox(scrollContent)),
           lcGroupLayout(new QVBoxLayout(lcGroup)),
-          lcWindowSetLayoutWidget(new QWidget(lcGroup)),
-          lcWindowSetLayout(new QHBoxLayout(lcWindowSetLayoutWidget)),
-          lcWindowSetText(new QLabel(lcWindowSetLayoutWidget)),
-          lcWindowSetBox(new QComboBox(lcWindowSetLayoutWidget)),
+          lcMethodSetLayoutWidget(new QWidget(lcGroup)),
+          lcMethodSetLayout(new QHBoxLayout(lcMethodSetLayoutWidget)),
+          lcMethodSetText(new QLabel(lcMethodSetLayoutWidget)),
+          lcMethodSetBox(new QComboBox(lcMethodSetLayoutWidget)),
           netGroup(new QGroupBox(scrollContent)),
           netGroupLayout(new QVBoxLayout(netGroup)),
           netProxyLayoutWidget(new QWidget(netGroup)),
@@ -248,7 +352,7 @@ namespace neko::ui {
           netProxyEdit(new QLineEdit(netProxyLayoutWidget)),
           netThreadLayoutWidget(new QWidget(netGroup)),
           netThreadLayout(new QHBoxLayout(netThreadLayoutWidget)),
-          netThreadNotAutoEnable(new QCheckBox(netThreadLayoutWidget)),
+          netThreadAutoEnable(new QCheckBox(netThreadLayoutWidget)),
           netThreadSetNums(new QLineEdit(netThreadLayoutWidget)),
           netThreadSetNumsValidator(new QIntValidator(1, 256, netThreadLayoutWidget)),
           moreGroup(new QGroupBox(scrollContent)),
@@ -260,7 +364,7 @@ namespace neko::ui {
           moreTempTool(new QToolButton(moreTempLayoutWidget)) {
         // Set up the layout and widgets
         for (const auto &it : info::lang::getLanguages()) {
-            langSelectBox->addItem(it.c_str());
+            langSelectBox->addItem(QString::fromStdString(it));
         }
         langSelectLayout->addWidget(langSelectText);
         langSelectLayout->addWidget(langSelectBox);
@@ -310,7 +414,7 @@ namespace neko::ui {
         styleBlurEffectRadiusLayout->addWidget(styleBlurEffectRadiusSlider);
         styleBlurEffectRadiusLayout->addWidget(styleBlurEffectRadiusSpacing);
         styleBlurEffectRadiusSlider->setOrientation(Qt::Horizontal);
-        styleBlurEffectRadiusSlider->setRange(0, 22);
+        styleBlurEffectRadiusSlider->setRange(0, 99);
 
         stylePointSizeEditLayoutWidget->setLayout(stylePointSizeEditLayout);
         stylePointSizeEditLayout->addWidget(stylePointSizeEditText);
@@ -331,18 +435,20 @@ namespace neko::ui {
         winSizeEditLayout->addWidget(winSizeEditWidth);
         winSizeEditLayout->addWidget(winSizeEditTextX);
         winSizeEditLayout->addWidget(winSizeEditHeight);
+        winSizeEditWidth->setValidator(new QIntValidator(1, 9999, winSizeEditLayoutWidget));
+        winSizeEditHeight->setValidator(new QIntValidator(1, 9999, winSizeEditLayoutWidget));
 
         lcGroup->setLayout(lcGroupLayout);
 
-        lcGroupLayout->addWidget(lcWindowSetLayoutWidget);
-        lcWindowSetLayoutWidget->setLayout(lcWindowSetLayout);
+        lcGroupLayout->addWidget(lcMethodSetLayoutWidget);
+        lcMethodSetLayoutWidget->setLayout(lcMethodSetLayout);
 
-        lcWindowSetLayout->addWidget(lcWindowSetText);
-        lcWindowSetLayout->addWidget(lcWindowSetBox);
+        lcMethodSetLayout->addWidget(lcMethodSetText);
+        lcMethodSetLayout->addWidget(lcMethodSetBox);
 
-        lcWindowSetBox->addItem("");
-        lcWindowSetBox->addItem("");
-        lcWindowSetBox->addItem("");
+        lcMethodSetBox->addItem("");
+        lcMethodSetBox->addItem("");
+        lcMethodSetBox->addItem("");
 
         netGroup->setLayout(netGroupLayout);
 
@@ -355,7 +461,7 @@ namespace neko::ui {
         netProxyLayout->addWidget(netProxyEdit);
         netProxyEdit->hide();
 
-        netThreadLayout->addWidget(netThreadNotAutoEnable);
+        netThreadLayout->addWidget(netThreadAutoEnable);
         netThreadLayout->addWidget(netThreadSetNums);
         netThreadLayoutWidget->setLayout(netThreadLayout);
 
@@ -384,6 +490,227 @@ namespace neko::ui {
         pageScrollArea->setWidgetResizable(true);
         pageScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+        setupConfig(cfg);
+    }
+
+    void SettingPageTwo::setupConfig(neko::ClientConfig cfg) {
+
+        langSelectBox->setCurrentText(cfg.main.lang);
+
+        bgSelectRadioNone->setChecked(cfg.main.background == std::string("none"));
+        bgSelectRadioImage->setChecked(cfg.main.background != std::string("none"));
+        bgInputLineEdit->setText(cfg.main.background);
+
+        styleBlurEffectSelectRadioPerformance->setChecked(cfg.style.blurEffect == std::string("performance"));
+        styleBlurEffectSelectRadioQuality->setChecked(cfg.style.blurEffect == std::string("quality"));
+        styleBlurEffectSelectRadioAnimation->setChecked(cfg.style.blurEffect == std::string("animation"));
+        styleBlurEffectRadiusSlider->setValue(cfg.style.blurRadius);
+
+        stylePointSizeEditLine->setText(QString::number(cfg.style.fontPointSize));
+        stylePointSizeEditFontBox->setCurrentFont(QFont(cfg.style.fontFamilies));
+
+        winSysFrameCheckBox->setChecked(cfg.main.useSysWindowFrame);
+        winBarKeepRightCheckBox->setChecked(cfg.main.headBarKeepRight);
+        auto res = util::check::matchResolution(cfg.main.windowSize);
+        if (res.has_value()) {
+            winSizeEditWidth->setText(QString::number(res->width));
+            winSizeEditHeight->setText(QString::number(res->height));
+        }
+
+        lcMethodSetBox->setCurrentIndex(static_cast<int>(cfg.main.launcherMethod));
+
+        netProxyEnable->setChecked();
+        netProxyEdit->setText(QString::fromStdString(cfg.net.proxy));
+
+        netThreadAutoEnable->setChecked(cfg.net.threadAutoEnable);
+        netThreadSetNums->setText(QString::number(cfg.net.threadNums));
+    }
+
+    void SettingPageTwo::setupConnects(std::function<void(const HintMsg &)> hintDialog, std::function<void(const InputMsg &)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput) {
+        static QElapsedTimer inputHintTimer;
+        auto inputHint = [&inputHintTimer, hintDialog](const std::string &title, const std::string &msg) {
+            if (!hintDialog)
+                return;
+            if (!inputHintTimer.isValid() || inputHintTimer.elapsed() > 2000) {
+                inputHintTimer.restart();
+                hintDialog(ui::HintMsg{
+                    .title = title,
+                    .msg = msg,
+                    .poster = "",
+                    .buttonText = {info::lang::tr(info::lang::Keys::Button::ok)}});
+            }
+        };
+
+        connect(langSelectBox, &QComboBox::currentTextChanged, [this](const QString &language) {
+            std::string lang = language.toStdString();
+            info::lang::language(lang);
+            core::getThreadPool().enqueue([lang] {
+                neko::ClientConfig cfg(core::getConfigObj());
+                cfg.main.lang = lang.c_str();
+                cfg.save(core::getConfigObj());
+            });
+            emit this->languageChanged(lang);
+        });
+
+        connect(bgSelectButtonGroup, &QButtonGroup::buttonClicked, [this](QAbstractButton *button) {
+            int id = bgSelectButtonGroup->id(button);
+            emit this->backgroundSelectChanged(id);
+        });
+
+        connect(bgInputLineEdit, &QLineEdit::editingFinished, [this]() {
+            emit this->backgroundImageChanged(bgInputLineEdit->text().toStdString());
+        });
+
+        connect(bgInputToolButton, &QToolButton::clicked, [this]() {
+            QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.jpeg *.bmp *.webp)"));
+            if (!fileName.isEmpty()) {
+                bgInputLineEdit->setText(fileName);
+                emit this->backgroundImageChanged(fileName.toStdString());
+            }
+        });
+
+        connect(styleBlurEffectButtonGroup, &QButtonGroup::buttonClicked, [this](QAbstractButton *button) {
+            int id = styleBlurEffectButtonGroup->id(button);
+            emit this->styleBlurEffectChanged(id);
+        });
+
+        connect(styleBlurEffectRadiusSlider, &QSlider::valueChanged, [this](int value) {
+            emit this->styleBlurEffectRadiusChanged(value);
+        });
+
+        connect(stylePointSizeEditLine, &QLineEdit::editingFinished, [=, this]() {
+            bool ok;
+            int size = stylePointSizeEditLine->text().toInt(&ok);
+            if (ok) {
+                emit this->styleFontChanged(size, stylePointSizeEditFontBox->currentFont());
+            } else {
+                inputHint(
+                    info::lang::tr(info::lang::Keys::Title::error),
+                    info::lang::tr(info::lang::Keys::Error::invalidInput));
+            }
+        });
+
+        connect(stylePointSizeEditFontBox, &QFontComboBox::currentFontChanged, [this](const QFont &font) {
+            emit this->styleFontChanged(stylePointSizeEditLine->text().toInt(), font);
+        });
+
+        connect(winSysFrameCheckBox, &QCheckBox::toggled, [this](bool checked) {
+            emit this->winSysFrameChanged(checked);
+        });
+
+        connect(winBarKeepRightCheckBox, &QCheckBox::toggled, [this](bool checked) {
+            emit this->winBarKeepRightChanged(checked);
+        });
+
+        connect(winSizeEditWidth, &QLineEdit::editingFinished, [=, this]() {
+            bool ok;
+            int width = winSizeEditWidth->text().toInt(&ok);
+            if (ok) {
+                emit this->winSizeChanged(width, winSizeEditHeight->text().toInt());
+            } else {
+                inputHint(
+                    info::lang::tr(info::lang::Keys::Title::error),
+                    info::lang::tr(info::lang::Keys::Error::invalidInput));
+            }
+        });
+
+        connect(winSizeEditHeight, &QLineEdit::editingFinished, [=, this]() {
+            bool ok;
+            int height = winSizeEditHeight->text().toInt(&ok);
+            if (ok) {
+                emit this->winSizeChanged(winSizeEditWidth->text().toInt(), height);
+            } else {
+                inputHint(
+                    info::lang::tr(info::lang::Keys::Title::error),
+                    info::lang::tr(info::lang::Keys::Error::invalidInput));
+            }
+        });
+
+        connect(netProxyEnable, &QCheckBox::toggled, [this](bool checked) {
+            netProxyEdit->setVisible(checked);
+            std::string proxy;
+            if (checked) {
+                std::string proxyText = netProxyEdit->text().toStdString();
+                if (!proxyText.empty() && util::check::isProxyAddress(proxyText))
+                    proxy = proxyText;
+                else
+                    proxy = "true";
+            } else {
+                proxy = "";
+            }
+            network::NetworkBase::globalConfig.proxy = proxy;
+        });
+
+        connect(netProxyEdit, &QLineEdit::editingFinished, [this]() {
+            std::string proxyText = netProxyEdit->text().toStdString();
+            if (!proxyText.empty() && util::check::isProxyAddress(proxyText)) {
+                network::NetworkBase::globalConfig.proxy = proxyText;
+            }
+        });
+
+        connect(netThreadAutoEnable, &QCheckBox::toggled, [=, this](bool checked) {
+            netThreadSetNums->setVisible(!checked);
+
+            neko::ClientConfig cfg(core::getConfigObj());
+            if (checked) {
+                if (cfg.net.thread != 0) {
+                    cfg.net.thread = 0;
+                    cfg.save(core::getConfigObj());
+                    inputHint(
+                        info::lang::tr(info::lang::Keys::Title::incomplete),
+                        info::lang::tr(info::lang::Keys::General::incompleteApplied));
+                }
+            } else {
+                bool ok;
+                auto threadCount = netThreadSetNums->text().toUInt(&ok);
+                if (ok) {
+                    cfg.net.thread = static_cast<long>(threadCount);
+                    cfg.save(core::getConfigObj());
+                    inputHint(
+                        info::lang::tr(info::lang::Keys::Title::incomplete),
+                        info::lang::tr(info::lang::Keys::General::incompleteApplied));
+                } else {
+                    inputHint(
+                        info::lang::tr(info::lang::Keys::Title::error),
+                        info::lang::tr(info::lang::Keys::General::invalidInput));
+                }
+            }
+        });
+
+        connect(netThreadSetNums, &QLineEdit::editingFinished, [this]() {
+            bool ok;
+            auto threadCount = netThreadSetNums->text().toUInt(&ok);
+            if (ok) {
+                neko::ClientConfig cfg(core::getConfigObj());
+                cfg.net.thread = static_cast<long>(threadCount);
+                cfg.save(core::getConfigObj());
+            } else {
+                inputHint(
+                    info::lang::tr(info::lang::Keys::Title::error),
+                    info::lang::tr(info::lang::Keys::General::invalidInput));
+            }
+        });
+
+        connect(moreTempEdit, &QLineEdit::editingFinished, [=, this]() {
+            std::string tempPath = moreTempEdit->text().toStdString();
+            if (!tempPath.empty() && std::filesystem::is_directory(tempPath)) {
+                neko::ClientConfig cfg(core::getConfigObj());
+                system::temporaryFolder(dir);
+                cfg.other.tempFolder = dir.c_str();
+                cfg.save(core::getConfigObj());
+            } else {
+                inputHint(
+                    info::lang::tr(info::lang::Keys::Title::error),
+                    info::lang::tr(info::lang::Keys::General::invalidInput));
+            }
+        });
+
+        connect(moreTempTool, &QToolButton::clicked, [=, this]() {
+            std::string dir = QFileDialog::getExistingDirectory(this).toStdString();
+            moreTempEdit->setText(QString::fromStdString(dir));
+            emit this->moreTempEdit->editingFinished()
+        });
     }
 
     void SettingPageTwo::resizeItems(int windowWidth, int windowHeight) {
@@ -394,32 +721,178 @@ namespace neko::ui {
         pageScrollArea->setGeometry(0, 0, scrollW, scrollH);
         scrollContent->setGeometry(0, 0, scrollW, scrollH * 2);
 
-        // Example: 調整部分重要元件寬度
         styleBlurEffectRadiusSlider->setMaximumWidth(windowWidth * 0.5);
         stylePointSizeEditLine->setMaximumWidth(windowWidth * 0.5);
         stylePointSizeEditFontBox->setMaximumWidth(windowWidth * 0.32);
 
-        // 分組高度調整
-        for (auto group : std::vector<QWidget *>{generalGroup, moreGroup, lcGroup}) {
+        // group widget height adjustment
+        for (auto group : std::array{generalGroup, moreGroup, lcGroup}) {
             group->setMinimumHeight(std::max<double>(110, windowHeight * 0.18));
             group->setMaximumHeight(std::max<double>(680, windowHeight * 0.5));
         }
-        for (auto group : std::vector<QWidget *>{bgGroup, winGroup, netGroup}) {
+        for (auto group : std::array{bgGroup, winGroup, netGroup}) {
             group->setMinimumHeight(std::max<double>(220, windowHeight * 0.35));
             group->setMaximumHeight(std::max<double>(680, windowHeight * 0.75));
         }
-        for (auto group : std::vector<QWidget *>{styleGroup}) {
+        for (auto group : std::array{styleGroup}) {
             group->setMinimumHeight(std::max<double>(330, windowHeight * 0.5));
             group->setMaximumHeight(std::max<double>(900, windowHeight * 0.9));
         }
-        // 內部 layout widget 基本尺寸
-        for (auto widget : std::vector<QWidget *>{langSelectLayoutWidget, bgSelectLayoutWidget, bgInputLayoutWidget, winSelectLayoutWidget, winSizeEditLayoutWidget, styleBlurEffectRadiusLayoutWidget, styleBlurEffectSelectLayoutWidget, stylePointSizeEditLayoutWidget, lcWindowSetLayoutWidget, netProxyLayoutWidget, netThreadLayoutWidget, moreTempLayoutWidget}) {
+        // layout widget height adjustment
+        for (auto widget : std::array{langSelectLayoutWidget, bgSelectLayoutWidget, bgInputLayoutWidget, winSelectLayoutWidget, winSizeEditLayoutWidget, styleBlurEffectRadiusLayoutWidget, styleBlurEffectSelectLayoutWidget, stylePointSizeEditLayoutWidget, lcMethodSetLayoutWidget, netProxyLayoutWidget, netThreadLayoutWidget, moreTempLayoutWidget}) {
+            widget->setBaseSize(windowWidth * 0.7, windowHeight * 0.2);
+        }
+    }
+
+    void SettingPageTwo::setupStyle(const Theme &theme) {
+        this->setAttribute(Qt::WA_TranslucentBackground, true);
+        this->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
+        scrollContent->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
+        scrollLayout->setContentsMargins(0, 0, 0, 0);
+        scrollLayout->setSpacing(0);
+        scrollLayout->setAlignment(Qt::AlignTop);
+
+        for (auto it : std::array{langSelectText, bgSelectText, bgInputText, styleBlurEffectSelectText, styleBlurEffectRadiusText, stylePointSizeEditText, winSizeEditText, winSizeEditTextX, lcMethodSetText, netProxyEnable->text(), netThreadAutoEnable->text(), moreTempText}) {
+            it->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        }
+        for (auto it : std::array{langSelectBox, bgInputLineEdit, bgInputToolButton, styleBlurEffectRadiusSlider, stylePointSizeEditLine, stylePointSizeEditFontBox, winSizeEditWidth, winSizeEditHeight, lcMethodSetBox, netProxyEdit, netThreadSetNums, moreTempEdit}) {
+            it->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        }
+        for (auto it : std::array{bgSelectRadioNone, bgSelectRadioImage, styleBlurEffectSelectRadioPerformance, styleBlurEffectSelectRadioQuality, styleBlurEffectSelectRadioAnimation, winSysFrameCheckBox, winBarKeepRightCheckBox}) {
+            it->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        }
+        for (auto it : std::array{generalGroup, bgGroup, styleGroup, winGroup, lcGroup, netGroup, moreGroup}) {
+            it->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        }
+        for (auto it : std::array{langSelectLayoutWidget, bgSelectLayoutWidget, bgInputLayoutWidget, styleBlurEffectSelectLayoutWidget, styleBlurEffectRadiusLayoutWidget,
+                                  stylePointSizeEditLayoutWidget, winSelectLayoutWidget, winSizeEditLayoutWidget,
+                                  lcMethodSetLayoutWidget, netProxyLayoutWidget, netThreadLayoutWidget, moreTempLayoutWidget}) {
+            it->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
+        }
+    }
+
+    void SettingPageTwo::setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font) {
+        for (auto it : std::array{langSelectText, bgSelectText, bgInputText, styleBlurEffectSelectText, styleBlurEffectRadiusText, stylePointSizeEditText, winSizeEditText, winSizeEditTextX, lcMethodSetText, netProxyEnable->text(), netThreadAutoEnable->text(), moreTempText}) {
+            it->setFont(h2Font);
+        }
+        for (auto it : std::array{langSelectBox, bgInputLineEdit, bgInputToolButton, styleBlurEffectRadiusSlider, stylePointSizeEditLine, stylePointSizeEditFontBox, winSizeEditWidth, winSizeEditHeight, lcMethodSetBox, netProxyEdit, netThreadSetNums, moreTempEdit}) {
+            it->setFont(text);
+        }
+        for (auto it : std::array{bgSelectRadioNone, bgSelectRadioImage, styleBlurEffectSelectRadioPerformance, styleBlurEffectSelectRadioQuality,
+                                  styleBlurEffectSelectRadioAnimation, winSysFrameCheckBox, winBarKeepRightCheckBox}) {
+            it->setFont(text);
+        }
+        for (auto it : std::array{generalGroup, bgGroup, styleGroup, winGroup, lcGroup, netGroup, moreGroup}) {
+            it->setFont(h1Font);
+        }
+    }
+
+    void SettingPageTwo::setupText() {
+        using namespace neko::info;
+        langSelectText->setText(QString::fromStdString(lang::tr(Keys::General::language)));
+        bgSelectText->setText(QString::fromStdString(lang::tr(Keys::General::background)));
+        styleBlurEffectSelectText->setText(QString::fromStdString(lang::tr(Keys::Style::blurEffectSelect)));
+        styleBlurEffectRadiusText->setText(QString::fromStdString(lang::tr(Keys::Style::blurEffectRadius)));
+        stylePointSizeEditText->setText(QString::fromStdString(lang::tr(Keys::Style::pointSizeEdit)));
+        winSizeEditText->setText(QString::fromStdString(lang::tr(Keys::General::windowSizeEdit)));
+
+        generalGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::general)));
+        bgGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::background)));
+        styleGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::style)));
+        winGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::window)));
+        lcGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::launcher)));
+        netGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::network)));
+        moreGroup->setTitle(QString::fromStdString(lang::tr(Keys::General::more)));
+
+        bgSelectRadioNone->setText(QString::fromStdString(lang::tr(Keys::General::none)));
+        bgSelectRadioImage->setText(QString::fromStdString(lang::tr(Keys::General::image)));
+        bgInputText->setText(QString::fromStdString(lang::tr(Keys::General::setting)));
+        bgInputToolButton->setText(QStringLiteral("..."));
+
+        styleBlurEffectSelectRadioAnimation->setText(QString::fromStdString(lang::tr(Keys::General::animation)));
+        styleBlurEffectSelectRadioPerformance->setText(QString::fromStdString(lang::tr(Keys::General::performance)));
+        styleBlurEffectSelectRadioQuality->setText(QString::fromStdString(lang::tr(Keys::General::quality)));
+
+        lcMethodSetText->setText(QString::fromStdString(lang::tr(Keys::General::launcherMethod)));
+        lcMethodSetBox->setItemText(0, QString::fromStdString(lang::tr(Keys::General::keepWindow)));
+        lcMethodSetBox->setItemText(1, QString::fromStdString(lang::tr(Keys::General::endProcess)));
+        lcMethodSetBox->setItemText(2, QString::fromStdString(lang::tr(Keys::General::hideAndOverReShow)));
+
+        winSizeEditTextX->setText(QStringLiteral("x"));
+        winSysFrameCheckBox->setText(QString::fromStdString(lang::tr(Keys::General::useSystemWindowFrame)));
+        winBarKeepRightCheckBox->setText(QString::fromStdString(lang::tr(Keys::General::headBarKeepRight)));
+
+        netProxyEnable->setText(QString::fromStdString(lang::tr(Keys::General::proxy)));
+        netThreadAutoEnable->setText(QString::fromStdString(lang::tr(Keys::General::notAutoSetThreadNums)));
+
+        moreTempText->setText(QString::fromStdString(lang::tr(Keys::General::customTempDir)));
+        moreTempTool->setText(QStringLiteral("..."));
+
+        // placeholder text
+        bgInputLineEdit->setPlaceholderText(QStringLiteral("img/bg.png"));
+        stylePointSizeEditLine->setPlaceholderText(QString::fromStdString(lang::tr(Keys::General::pointSize)));
+        winSizeEditWidth->setPlaceholderText(QString::fromStdString(lang::tr(Keys::General::width)));
+        winSizeEditHeight->setPlaceholderText(QString::fromStdString(lang::tr(Keys::General::height)));
+        netProxyEdit->setPlaceholderText(QString::fromStdString(lang::tr(Keys::General::proxyPlaceholder)));
+        moreTempEdit->setPlaceholderText(QString::fromStdString(lang::tr(Keys::General::tempFolder)));
+    }
+
+    void SettingPageTwo::setupSize() {
+
+        for (auto group : std::array{generalGroup, moreGroup, lcGroup}) {
+            group->setMinimumHeight(110);
+            group->setMaximumHeight(680);
+        }
+        for (auto group : std::array{bgGroup, winGroup, netGroup}) {
+            group->setMinimumHeight(220);
+            group->setMaximumHeight(680);
+        }
+        for (auto group : std::array{styleGroup}) {
+            group->setMinimumHeight(330);
+            group->setMaximumHeight(900);
+        }
+        for (auto widget : std::array{langSelectLayoutWidget, bgSelectLayoutWidget, bgInputLayoutWidget, winSelectLayoutWidget, winSizeEditLayoutWidget, styleBlurEffectRadiusLayoutWidget, styleBlurEffectSelectLayoutWidget, stylePointSizeEditLayoutWidget, lcMethodSetLayoutWidget, netProxyLayoutWidget, netThreadLayoutWidget, moreTempLayoutWidget}) {
+            widget->setMinimumHeight(30);
+        }
+    }
+
+    void SettingPageTwo::resizeItems(int windowWidth, int windowHeight) {
+
+        int scrollW = windowWidth;
+        int scrollH = windowHeight;
+
+        pageScrollArea->setGeometry(0, 0, scrollW, scrollH);
+        scrollContent->setGeometry(0, 0, scrollW, scrollH * 2);
+
+        styleBlurEffectRadiusSlider->setMaximumWidth(windowWidth * 0.5);
+        stylePointSizeEditLine->setMaximumWidth(windowWidth * 0.5);
+        stylePointSizeEditFontBox->setMaximumWidth(windowWidth * 0.32);
+
+        // group widget height adjustment
+        for (auto group : std::array{generalGroup, moreGroup, lcGroup}) {
+            group->setMinimumHeight(std::max<double>(110, windowHeight * 0.18));
+            group->setMaximumHeight(std::max<double>(680, windowHeight * 0.5));
+        }
+        for (auto group : std::array{bgGroup, winGroup, netGroup}) {
+            group->setMinimumHeight(std::max<double>(220, windowHeight * 0.35));
+            group->setMaximumHeight(std::max<double>(680, windowHeight * 0.75));
+        }
+        for (auto group : std::array{styleGroup}) {
+            group->setMinimumHeight(std::max<double>(330, windowHeight * 0.5));
+            group->setMaximumHeight(std::max<double>(900, windowHeight * 0.9));
+        }
+        // layout widget height adjustment
+        for (auto widget : std::array{langSelectLayoutWidget, bgSelectLayoutWidget, bgInputLayoutWidget, winSelectLayoutWidget, winSizeEditLayoutWidget,
+                                      styleBlurEffectRadiusLayoutWidget, styleBlurEffectSelectLayoutWidget,
+                                      stylePointSizeEditLayoutWidget, lcMethodSetLayoutWidget,
+                                      netProxyLayoutWidget, netThreadLayoutWidget,
+                                      moreTempLayoutWidget}) {
             widget->setBaseSize(windowWidth * 0.7, windowHeight * 0.2);
         }
     }
 
     // --- SettingPageThree ---
-    SettingPageThree::SettingPageThree(QWidget *parent)
+    SettingPageThree::SettingPageThree(neko::ClientConfig cfg, QWidget *parent)
         : QWidget(parent),
           pageScrollArea(new QScrollArea(this)),
           scrollContent(new QWidget()),
@@ -432,7 +905,7 @@ namespace neko::ui {
           devOptDebug(new QCheckBox(devOptCheckLayoutWidget)),
           devOptTls(new QCheckBox(devOptCheckLayoutWidget)),
           devOptLoadingPage(new QCheckBox(devOptCheckLayoutWidget)),
-          devOptHintPage(new QCheckBox(devOptCheckLayoutWidget)),
+          devOptHintDialog(new QCheckBox(devOptCheckLayoutWidget)),
           devServerInputLayoutWidget(new QWidget(devOptGroup)),
           devServerInputLayout(new QHBoxLayout(devServerInputLayoutWidget)),
           devServerAuto(new QCheckBox(devServerInputLayoutWidget)),
@@ -441,7 +914,7 @@ namespace neko::ui {
         devOptCheckLayout->addWidget(devOptDebug);
         devOptCheckLayout->addWidget(devOptTls);
         devOptCheckLayout->addWidget(devOptLoadingPage);
-        devOptCheckLayout->addWidget(devOptHintPage);
+        devOptCheckLayout->addWidget(devOptHintDialog);
         devOptCheckLayoutWidget->setLayout(devOptCheckLayout);
 
         devServerInputLayout->addWidget(devServerAuto);
@@ -461,16 +934,124 @@ namespace neko::ui {
         pageScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
         devOptLoadingPage->hide();
-        devOptHintPage->hide();
+        devOptHintDialog->hide();
+
+        setupConfig(cfg);
+    }
+
+    SettingPageThree::setupConfig(neko::ClientConfig cfg) {
+        devOptEnable->setChecked(cfg.dev.enable);
+        devOptDebug->setChecked(cfg.dev.debug);
+        devOptTls->setChecked(cfg.dev.tls);
+
+        std::string server = cfg.dev.server ? cfg.dev.server : "auto";
+        devServerAuto->setChecked(server.empty() || server == "auto");
+        if (devServerAuto->isChecked()) {
+            devServerEdit->setText(QString::fromStdString("auto"));
+        } else {
+            devServerEdit->setText(QString::fromStdString(server));
+        }
+    }
+
+    SettingPageThree::setupConnects(std::function<void(const HintMsg &)> hintDialog, std::function<void(const InputMsg &)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput) {
+        connect(devOptEnable, &QCheckBox::toggled, [this](bool checked) {
+            core::getThreadPool().enqueue([checked] {
+                neko::ClientConfig cfg(core::getConfigObj());
+                cfg.dev.enable = checked;
+                cfg.save(core::getConfigObj());
+            });
+        });
+
+        connect(devOptDebug, &QCheckBox::toggled, [this](bool checked) {
+            core::getThreadPool().enqueue([checked] {
+                neko::ClientConfig cfg(core::getConfigObj());
+                cfg.dev.debug = checked;
+                cfg.save(core::getConfigObj());
+            });
+        });
+
+        connect(devOptTls, &QCheckBox::toggled, [this](bool checked) {
+            core::getThreadPool().enqueue([checked] {
+                neko::ClientConfig cfg(core::getConfigObj());
+                cfg.dev.tls = checked;
+                cfg.save(core::getConfigObj());
+            });
+        });
+
+        connect(devServerAuto, &QCheckBox::toggled, [this](bool checked) {
+            devServerEdit->setEnabled(!checked);
+            if (checked) {
+                devServerEdit->setText(QString::fromStdString("auto"));
+            }
+            emit this->devServerAutoChanged(checked);
+        });
+
+        connect(devServerEdit, &QLineEdit::editingFinished, [this]() {
+            std::string server = devServerEdit->text().toStdString();
+            if (server.empty() || server == "auto") {
+                emit this->devServerChanged("auto");
+            } else {
+                emit this->devServerChanged(server);
+            }
+        });
+    }
+
+    SettingPageThree::setupStyle(const Theme &theme) {
+        this->setAttribute(Qt::WA_TranslucentBackground, true);
+        this->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
+        scrollContent->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
+        scrollLayout->setContentsMargins(0, 0, 0, 0);
+        scrollLayout->setSpacing(0);
+        scrollLayout->setAlignment(Qt::AlignTop);
+
+        devOptGroup->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devOptEnable->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devOptDebug->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devOptTls->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devOptLoadingPage->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devOptHintDialog->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devServerAuto->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+        devServerEdit->setStyleSheet(QString("color: %1;").arg(QString::fromUtf8(theme.textColor.data(), theme.textColor.size())));
+
+        devOptGroupLayout->setContentsMargins(10, 10, 10, 10);
+    }
+
+    SettingPageThree::setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font) {
+        devOptGroup->setFont(h1Font);
+        devOptEnable->setFont(text);
+        devOptDebug->setFont(text);
+        devOptTls->setFont(text);
+        devOptLoadingPage->setFont(text);
+        devOptHintDialog->setFont(text);
+        devServerAuto->setFont(text);
+        devServerEdit->setFont(text);
+    }
+
+    SettingPageThree::setupSize() {
+        devOptGroup->setMinimumHeight(150);
+        devOptGroup->setMaximumHeight(300);
+        devOptCheckLayoutWidget->setMinimumHeight(30);
+        devServerInputLayoutWidget->setMinimumHeight(30);
+    }
+
+    SettingPageThree::resizeItems(int windowWidth, int windowHeight) {
+        int scrollW = windowWidth;
+        int scrollH = windowHeight;
+
+        pageScrollArea->setGeometry(0, 0, scrollW, scrollH);
+        scrollContent->setGeometry(0, 0, scrollW, scrollH * 2);
+
+        devOptGroup->setMinimumHeight(std::max<double>(150, windowHeight * 0.2));
+        devOptGroup->setMaximumHeight(std::max<double>(300, windowHeight * 0.4));
     }
 
     // --- SettingPage ---
-    SettingPage::SettingPage(QWidget *parent)
+    SettingPage::SettingPage(neko::ClientConfig cfg, QWidget *parent)
         : QWidget(parent),
           m_tabWidget(new QTabWidget(this)),
-          m_page1(new SettingPageOne(this)),
-          m_page2(new SettingPageTwo(this)),
-          m_page3(new SettingPageThree(this)),
+          m_page1(new SettingPageOne(cfg, this)),
+          m_page2(new SettingPageTwo(cfg, this)),
+          m_page3(new SettingPageThree(cfg, this)),
           m_scrollArea(new QScrollArea),
           m_scrollAreaLayout(new QVBoxLayout(this)),
           m_closeButton(new QToolButton(m_tabWidget)) {
@@ -480,31 +1061,71 @@ namespace neko::ui {
         m_scrollArea->setWidgetResizable(true);
         m_scrollAreaLayout->addWidget(m_scrollArea);
 
-        m_tabWidget->addTab(m_page1, info::lang::translations(info::lang::lang.general.account).c_str());
-        m_tabWidget->addTab(m_page2, info::lang::translations(info::lang::lang.general.general).c_str());
-        m_tabWidget->addTab(m_page3, "more");
+        m_tabWidget->addTab(m_page1, info::lang::tr(info::lang::lang.general.account).c_str());
+        m_tabWidget->addTab(m_page2, info::lang::tr(info::lang::lang.general.general).c_str());
+        m_tabWidget->addTab(m_page3, "dev");
 
         m_tabWidget->setCornerWidget(m_closeButton, Qt::TopRightCorner);
         m_closeButton->setIcon(QApplication::style()->standardIcon(QStyle::SP_DockWidgetCloseButton));
 
         m_closeButton->setMinimumSize(25, 25);
+
+        setupConfig(cfg);
+    }
+
+    void SettingPage::setupConfig(neko::ClientConfig cfg) {
+
+        for (auto tab : std::array{m_page1, m_page2, m_page3}) {
+            if (tab) {
+                tab->setupConfig(cfg);
+            }
+        }
+    }
+    void SettingPage::setupConnects(std::function<void(const HintMsg &)> hintDialog, std::function<void(const InputMsg &)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput) {
+        for (auto tab : std::array{m_page1, m_page2, m_page3}) {
+            if (tab) {
+                tab->setupConnects(hintDialog, inputDialog, getInputLines, hideInput);
+            }
+        }
+        connect(m_closeButton, &QToolButton::clicked, [this]() {
+            this->hide();
+            emit this->closeRequested();
+        });
+
+        // SettingPageOne signals forwards
+        if (m_page1) {
+            connect(m_page1, &SettingPageOne::setAccountLogInD, this, &SettingPage::setAccountLogInD);
+        }
+
+        // SettingPageTwo signals forwards
+        if (m_page2) {
+            connect(m_page2, &SettingPageTwo::languageChanged, this, &SettingPage::languageChanged);
+            connect(m_page2, &SettingPageTwo::backgroundSelectChanged, this, &SettingPage::backgroundSelectChanged);
+            connect(m_page2, &SettingPageTwo::backgroundImageChanged, this, &SettingPage::backgroundImageChanged);
+            connect(m_page2, &SettingPageTwo::styleBlurEffectChanged, this, &SettingPage::styleBlurEffectChanged);
+            connect(m_page2, &SettingPageTwo::styleBlurEffectRadiusChanged, this, &SettingPage::styleBlurEffectRadiusChanged);
+            connect(m_page2, &SettingPageTwo::styleFontChanged, this, &SettingPage::styleFontChanged);
+            connect(m_page2, &SettingPageTwo::winSysFrameChanged, this, &SettingPage::winSysFrameChanged);
+            connect(m_page2, &SettingPageTwo::winBarKeepRightChanged, this, &SettingPage::winBarKeepRightChanged);
+            connect(m_page2, &SettingPageTwo::winSizeChanged, this, &SettingPage::winSizeChanged);
+        }
+
     }
     void SettingPage::setupStyle(const Theme &theme) {
         m_tabWidget->setStyleSheet(QString("background-color: %1;").arg(QString::fromUtf8(theme.backgroundColor.data(), theme.backgroundColor.size())));
-        if (m_page1)
-            m_page1->setupStyle(theme);
-        if (m_page2)
-            m_page2->setupStyle(theme);
-        if (m_page3)
-            m_page3->setupStyle(theme);
+
+        for (auto tab : std::array{m_page1, m_page2, m_page3}) {
+            if (tab) {
+                tab->setupStyle(theme);
+            }
+        }
     }
     void SettingPage::setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font) {
-        if (m_page1)
-            m_page1->setupFont(text, h1Font, h2Font);
-        if (m_page2)
-            m_page2->setupFont(text, h1Font, h2Font);
-        if (m_page3)
-            m_page3->setupFont(text, h1Font, h2Font);
+        for (auto tab : std::array{m_page1, m_page2, m_page3}) {
+            if (tab) {
+                tab->setupFont(text, h1Font, h2Font);
+            }
+        }
     }
     void SettingPage::resizeItems(int windowWidth, int windowHeight) {
         if (!isVisible())
@@ -513,12 +1134,11 @@ namespace neko::ui {
         m_scrollArea->setGeometry(0, 0, windowWidth, windowHeight);
         m_tabWidget->setGeometry(0, 0, windowWidth, windowHeight);
 
-        if (m_page1)
-            m_page1->resizeItems(windowWidth, windowHeight);
-        if (m_page2)
-            m_page2->resizeItems(windowWidth, windowHeight);
-        if (m_page3)
-            m_page3->resizeItems(windowWidth, windowHeight);
+        for (auto tab : std::array{m_page1, m_page2, m_page3}) {
+            if (tab) {
+                tab->resizeItems(windowWidth, windowHeight);
+            }
+        }
     }
 
 } // namespace neko::ui

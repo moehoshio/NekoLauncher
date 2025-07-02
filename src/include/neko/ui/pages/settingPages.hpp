@@ -21,6 +21,7 @@
 #include <QtWidgets/QWidget>
 
 #include <functional>
+#include <atomic>
 
 namespace neko::ui {
 
@@ -34,21 +35,26 @@ namespace neko::ui {
         QLabel *accountLogInOutInfoText;
         QPushButton *accountLogInOutButton;
 
-        bool isAccountLogIn = true;
+        std::atomic<bool> isLogIn;
 
     public:
-        explicit SettingPageOne(QWidget *parent = nullptr);
+        explicit SettingPageOne(neko::ClientConfig cfg, QWidget *parent = nullptr);
+
+        void setupConfig(neko::ClientConfig cfg);
+        void setupConnects(std::function<void(const HintMsg&)> hintDialog,std::function<void(const InputMsg&)> inputDialog,std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput);
 
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
-        void resizeItems(int windowWidth, int windowHeight);
+        void setupText();
+
         void setupSize();
+        void resizeItems(int windowWidth, int windowHeight);
 
-        void setupConnects(std::function<void(const InputMsg&)> inputDialog,std::function<void(const HintMsg&)> hintDialog);
-
-        bool getIsAccountLogIn() const {
-            return isAccountLogIn;
+        bool isAccountLogIn() const {
+            return isLogIn.load();
         }
+    signals:
+        void setAccountLogInD(std::string name);
     };
 
     class SettingPageTwo : public QWidget {
@@ -115,10 +121,10 @@ namespace neko::ui {
 
         QGroupBox *lcGroup;
         QVBoxLayout *lcGroupLayout;
-        QWidget *lcWindowSetLayoutWidget;
-        QHBoxLayout *lcWindowSetLayout;
-        QLabel *lcWindowSetText;
-        QComboBox *lcWindowSetBox;
+        QWidget *lcMethodSetLayoutWidget;
+        QHBoxLayout *lcMethodSetLayout;
+        QLabel *lcMethodSetText;
+        QComboBox *lcMethodSetBox;
 
         QGroupBox *netGroup;
         QVBoxLayout *netGroupLayout;
@@ -128,7 +134,7 @@ namespace neko::ui {
         QLineEdit *netProxyEdit;
         QWidget *netThreadLayoutWidget;
         QHBoxLayout *netThreadLayout;
-        QCheckBox *netThreadNotAutoEnable;
+        QCheckBox *netThreadAutoEnable;
         QLineEdit *netThreadSetNums;
         QValidator *netThreadSetNumsValidator;
 
@@ -139,16 +145,38 @@ namespace neko::ui {
         QLabel *moreTempText;
         QLineEdit *moreTempEdit;
         QToolButton *moreTempTool;
+        std::atomic<bool> moreTempDialogOpen = false;
 
     public:
-        explicit SettingPageTwo(QWidget *parent = nullptr);
+        explicit SettingPageTwo(neko::ClientConfig cfg, QWidget *parent = nullptr);
+        
+        void setupConfig(neko::ClientConfig cfg);
 
-        bool getWinSysFrameIsChecked() const;
+        void setupConnects(std::function<void(const HintMsg&)> hintDialog, std::function<void(const InputMsg&)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput);
+
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
+        void setupText();
+        
+
         void setupSize();
         void resizeItems(int windowWidth, int windowHeight);
+
+    signals:
+        void languageChanged(const std::string &lang);
+        
+        void backgroundSelectChanged(int selectType);
+        void backgroundImageChanged(const std::string& filePath);
+
+        void styleBlurEffectChanged(int effect);
+        void styleBlurEffectRadiusChanged(int radius);
+        void styleFontChanged(int size, const QFont &font);
+
+        void winSysFrameChanged(bool enabled);
+        void winBarKeepRightChanged(bool enabled);
+        void winSizeChanged(int width, int height);
     };
+
 
     class SettingPageThree : public QWidget {
         Q_OBJECT
@@ -164,17 +192,22 @@ namespace neko::ui {
         QCheckBox *devOptDebug;
         QCheckBox *devOptTls;
         QCheckBox *devOptLoadingPage;
-        QCheckBox *devOptHintPage;
+        QCheckBox *devOptHintDialog;
         QWidget *devServerInputLayoutWidget;
         QHBoxLayout *devServerInputLayout;
         QCheckBox *devServerAuto;
         QLineEdit *devServerEdit;
 
     public:
-        explicit SettingPageThree(QWidget *parent = nullptr);
+        explicit SettingPageThree(neko::ClientConfig cfg, QWidget *parent = nullptr);
+
+        void setupConfig(neko::ClientConfig cfg);
+
+        void setupConnects(std::function<void(const HintMsg&)> hintDialog, std::function<void(const InputMsg&)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput);
 
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
+
         void setupSize();
         void resizeItems(int windowWidth, int windowHeight);
     };
@@ -191,12 +224,34 @@ namespace neko::ui {
         QVBoxLayout *m_scrollAreaLayout;
 
     public:
-        explicit SettingPage(QWidget *parent = nullptr);
+        explicit SettingPage(neko::ClientConfig cfg, QWidget *parent = nullptr);
+
+        void setupConfig(neko::ClientConfig cfg);
+
+        void setupConnects(std::function<void(const HintMsg&)> hintDialog, std::function<void(const InputMsg&)> inputDialog, std::function<std::vector<std::string>()> getInputLines, std::function<void()> hideInput);
 
         void setupStyle(const Theme &theme);
         void setupFont(const QFont &text, const QFont &h1Font, const QFont &h2Font);
+
         void setupSize();
         void resizeItems(int windowWidth, int windowHeight);
+
+    signals:
+        void closeRequested(); /**< Signal emitted when the close button is clicked */
+
+        // SettingPageOne signals forwards
+        void setAccountLogInD(std::string name);
+
+        // SettingPageTwo signals forwards
+        void languageChanged(const std::string &lang);
+        void backgroundSelectChanged(int selectType);
+        void backgroundImageChanged(const std::string& filePath);
+        void styleBlurEffectChanged(int effect);
+        void styleBlurEffectRadiusChanged(int radius);
+        void styleFontChanged(int size, const QFont &font);
+        void winSysFrameChanged(bool enabled);
+        void winBarKeepRightChanged(bool enabled);
+        void winSizeChanged(int width, int height);
     };
 
 } // namespace neko::ui
