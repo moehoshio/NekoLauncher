@@ -62,7 +62,7 @@ namespace neko::info {
          */
         inline std::string getResVersion() {
             ClientConfig cfg(core::getConfigObj());
-            return cfg.more.resourceVersion;
+            return cfg.other.resourceVersion;
         }
 
         /**
@@ -107,7 +107,7 @@ namespace neko::info {
                     uninstall = "button_uninstall",
                     patch = "button_patch",
                     setting = "button_setting",
-                    more = "button_more";
+                    other = "button_other",;
             } button;
 
             /**
@@ -130,7 +130,7 @@ namespace neko::info {
                     launcher = "general_launcher",
                     network = "general_network",
                     proxy = "general_proxy",
-                    more = "general_more",
+                    other = "general_other",
                     none = "general_none",
                     image = "general_image",
                     type = "general_type",
@@ -138,21 +138,21 @@ namespace neko::info {
                     width = "general_width",
                     height = "general_height",
                     size = "general_windowSize",
-                    blurHint = "general_blurHint",
+                    blurEffect = "general_blurEffect",
                     animation = "general_animation",
                     performance = "general_performance",
                     quality = "general_quality",
-                    blurValue = "general_blurValue",
-                    launcherMode = "general_launcherMode",
+                    blurRadius = "general_blurRadius",
+                    launcherMethod = "general_launcherMethod",
                     keepWindow = "general_keepWindow",
                     endProcess = "general_endProcess",
-                    barKeepRight = "general_barKeepRight",
+                    headBarKeepRight = "general_headBarKeepRight",
                     customTempDir = "general_customTempDir",
                     hideAndOverReShow = "general_hideAndOverReShow",
                     useSystemWindowFrame = "general_useSystemWindowFrame",
                     notAutoSetThreadNums = "general_notAutoSetThreadNums",
                     pointSize = "general_pointSize",
-                    tempDir = "general_tempDir",
+                    tempFolder = "general_tempFolder",
                     proxyPlaceholder = "general_proxyPlaceholder",
                     notEnoughParameters = "general_notEnoughParameters",
                     incompleteApplied = "general_incompleteApplied";
