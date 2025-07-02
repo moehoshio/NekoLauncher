@@ -383,7 +383,7 @@ namespace neko::util {
          * @param rFalse Value to return if v is false
          * @return rTrue if v is true, rFalse otherwise
          */
-        template <typename T = std::string_view>
+        template <typename T = std::string>
         constexpr T boolTo(bool v, const T &rTrue = T("true"), const T &rFalse = T("false")) {
             return ((v) ? rTrue : rFalse);
         };
