@@ -49,13 +49,12 @@ namespace neko::ui {
         QAction *sp1;
         QAction *sp2;
         QWidget *spacer;
+        QWidget *topWindow;
     public:
-        // Ensure the correct parent object; the parent must be a top-level window!
-        HeadBarWidget(QWidget *parent);
+        HeadBarWidget(QWidget *topWin, QWidget *parent = nullptr);
 
         void setupStyle(const Theme& theme);
         void setupText();
-        // Ensure the correct parent object; it sets the parent's window flags to show and hide the system window frame.
         void showHeadBar();
         void hideHeadBar();
         void setHeadBarAlignmentRight(bool keepRight = false);
