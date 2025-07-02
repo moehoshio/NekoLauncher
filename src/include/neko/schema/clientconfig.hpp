@@ -8,6 +8,8 @@
 
 #include "library/SimpleIni/SimpleIni.h"
 
+#include <shared_mutex>
+
 namespace neko {
     /**
      * @brief Configuration structure for the NekoLauncher client
@@ -20,23 +22,23 @@ namespace neko {
          */
         struct Main {
             neko::cstr lang;
-            neko::cstr bgType;
-            neko::cstr bg;
+            neko::cstr backgroundType;
+            neko::cstr background;
             neko::cstr windowSize;
-            long launcherMode;
+            long launcherMethod;
             bool useSysWindowFrame;
-            bool barKeepRight;
-        };
+            bool headBarKeepRight;
+        } main;
 
         /**
          * @brief Style and appearance settings
          */
         struct Style {
-            long blurHint;
-            long blurValue;
+            neko::cstr blurEffect;
+            long blurRadius;
             long fontPointSize;
             neko::cstr fontFamilies;
-        };
+        } style;
 
         /**
          * @brief Network configuration settings
@@ -44,7 +46,7 @@ namespace neko {
         struct Net {
             long thread;
             neko::cstr proxy;
-        };
+        } net;
 
         /**
          * @brief Developer options
@@ -54,15 +56,15 @@ namespace neko {
             bool debug;
             neko::cstr server;
             bool tls;
-        };
+        } dev;
 
         /**
          * @brief Additional configuration options
          */
-        struct More {
-            neko::cstr tempDir;
+        struct Other {
+            neko::cstr tempFolder;
             neko::cstr resourceVersion;
-        };
+        } other;
 
         /**
          * @brief Minecraft settings
@@ -70,6 +72,7 @@ namespace neko {
         struct Minecraft {
             neko::cstr minecraftFolder;
             neko::cstr javaPath; // Path to the Java executable
+            neko::cstr downloadSource;
 
             neko::cstr playerName;
             neko::cstr account;
@@ -91,14 +94,9 @@ namespace neko {
             neko::cstr customResolution;  // Custom resolution for Minecraft, if any. for example, "1920x1080"
             neko::cstr joinServerAddress; // Address of the server to join
             neko::cstr joinServerPort;    // Port of the server to join
-        };
+        } minecraft;
 
-        Main main;
-        Style style;
-        Net net;
-        Dev dev;
-        More more;
-        Minecraft minecraft;
+        static std::shared_mutex configMutex;
 
         ClientConfig() = default;
         ~ClientConfig() = default;
@@ -109,16 +107,17 @@ namespace neko {
          * @param cfg SimpleIni configuration object to load settings from
          */
         ClientConfig(const CSimpleIniA &cfg) {
+            std::shared_lock lock(configMutex);
             main.lang = cfg.GetValue("main", "language", "en");
-            main.bgType = cfg.GetValue("main", "backgroundType", "image");
-            main.bg = cfg.GetValue("main", "background", "img/bg.png");
+            main.backgroundType = cfg.GetValue("main", "backgroundType", "image");
+            main.background = cfg.GetValue("main", "background", "img/bg.png");
             main.windowSize = cfg.GetValue("main", "windowSize", "");
-            main.launcherMode = cfg.GetLongValue("main", "launcherMode", 1);
+            main.launcherMethod = cfg.GetLongValue("main", "launcherMethod", 1);
             main.useSysWindowFrame = cfg.GetBoolValue("main", "useSystemWindowFrame", true);
-            main.barKeepRight = cfg.GetBoolValue("main", "barKeepRight", true);
+            main.headBarKeepRight = cfg.GetBoolValue("main", "headBarKeepRight", true);
 
-            style.blurHint = cfg.GetLongValue("style", "blurHint", 1);
-            style.blurValue = cfg.GetLongValue("style", "blurValue", 10);
+            style.blurEffect = cfg.GetLongValue("style", "blurEffect", 1);
+            style.blurRadius = cfg.GetLongValue("style", "blurRadius", 10);
             style.fontPointSize = cfg.GetLongValue("style", "fontPointSize", 10);
             style.fontFamilies = cfg.GetValue("style", "fontFamilies", "");
 
@@ -130,11 +129,12 @@ namespace neko {
             dev.server = cfg.GetValue("dev", "server", "auto");
             dev.tls = cfg.GetBoolValue("dev", "tls", true);
 
-            more.tempDir = cfg.GetValue("more", "customTempDir", "");
-            more.resourceVersion = cfg.GetValue("more", "resourceVersion", "");
+            other.tempFolder = cfg.GetValue("other", "customTempDir", "");
+            other.resourceVersion = cfg.GetValue("other", "resourceVersion", "");
 
             minecraft.minecraftFolder = cfg.GetValue("minecraft", "minecraftFolder", "./.minecraft");
             minecraft.javaPath = cfg.GetValue("minecraft", "javaPath", "");
+            minecraft.downloadSource = cfg.GetValue("minecraft", "downloadSource", "Official");
 
             minecraft.playerName = cfg.GetValue("minecraft", "playerName", "");
             minecraft.account = cfg.GetValue("minecraft", "account", "");
@@ -159,22 +159,23 @@ namespace neko {
         }
 
         /**
-         * @brief Save the current configuration to a file
+         * @brief Save the current configuration
          *
          * @param saveCfg SimpleIni configuration object to save settings to
-         * @param fileName Path to the file where configuration will be saved
+         * @param fileName Path to the file where configuration will be saved. nullptr or empty string means no file saving
          */
-        void save(CSimpleIniA &saveCfg, neko::cstr fileName) const {
+        void save(CSimpleIniA &saveCfg, neko::cstr fileName = nullptr) const {
+            std::unique_lock lock(configMutex);
             saveCfg.SetValue("main", "language", main.lang);
-            saveCfg.SetValue("main", "backgroundType", main.bgType);
-            saveCfg.SetValue("main", "background", main.bg);
+            saveCfg.SetValue("main", "backgroundType", main.backgroundType);
+            saveCfg.SetValue("main", "background", main.background);
             saveCfg.SetValue("main", "windowSize", main.windowSize);
-            saveCfg.SetLongValue("main", "launcherMode", main.launcherMode);
+            saveCfg.SetLongValue("main", "launcherMethod", main.launcherMethod);
             saveCfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
-            saveCfg.SetBoolValue("main", "barKeepRight", main.barKeepRight);
+            saveCfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
 
-            saveCfg.SetLongValue("style", "blurHint", style.blurHint);
-            saveCfg.SetLongValue("style", "blurValue", style.blurValue);
+            saveCfg.SetLongValue("style", "blurEffect", style.blurEffect);
+            saveCfg.SetLongValue("style", "blurRadius", style.blurRadius);
             saveCfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
             saveCfg.SetValue("style", "fontFamilies", style.fontFamilies);
 
@@ -186,11 +187,12 @@ namespace neko {
             saveCfg.SetValue("dev", "server", dev.server);
             saveCfg.SetBoolValue("dev", "tls", dev.tls);
 
-            saveCfg.SetValue("more", "customTempDir", more.tempDir);
-            saveCfg.SetValue("more", "resourceVersion", more.resourceVersion);
+            saveCfg.SetValue("other", "customTempDir", other.tempFolder);
+            saveCfg.SetValue("other", "resourceVersion", other.resourceVersion);
 
             saveCfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder);
             saveCfg.SetValue("minecraft", "javaPath", minecraft.javaPath);
+            saveCfg.SetValue("minecraft", "downloadSource", minecraft.downloadSource);
 
             saveCfg.SetValue("minecraft", "playerName", minecraft.playerName);
             saveCfg.SetValue("minecraft", "account", minecraft.account);
@@ -214,7 +216,10 @@ namespace neko {
             saveCfg.SetValue("minecraft", "joinServerPort", minecraft.joinServerPort);
 
             // Save the configuration to the specified file
-            saveCfg.SaveFile(fileName);
+            if (fileName && fileName[0] != '\0') {
+                saveCfg.SaveFile(fileName);
+            }
+            
         }
     };
 } // namespace neko
