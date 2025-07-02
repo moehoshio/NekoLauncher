@@ -21,7 +21,7 @@ namespace neko::core {
 
     inline void checkAndAutoInstall(ClientConfig cfg, std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
         log::autoLog log;
-        std::string resVer = (cfg.more.resourceVersion) ? std::string(cfg.more.resourceVersion) : std::string();
+        std::string resVer = (cfg.other.resourceVersion) ? std::string(cfg.other.resourceVersion) : std::string();
         if (resVer.empty()) {
             // Customize your installation logic, resource version needs to be stored after installation
             std::atomic<bool> stop(false);
@@ -31,9 +31,9 @@ namespace neko::core {
             while (!stop.load()) {
                 try {
                     if (showLoading)
-                        showLoading({neko::ui::LoadMsg::Type::OnlyRaw, info::lang::translations(info::lang::LanguageKey::General::installMinecraft)});
+                        showLoading({neko::ui::LoadMsg::Type::OnlyRaw, info::lang::tr(info::lang::Keys::General::installMinecraft)});
                     minecraft::installMinecraft("./.minecraft", "1.16.5", DownloadSource::Official, showHint, showLoading, setLoadingVal);
-                    cfg.more.resourceVersion = "v0.0.1";
+                    cfg.other.resourceVersion = "v0.0.1";
                     cfg.save(core::getConfigObj(), info::app::getConfigFileName());
                     break; // Installation successful, exit loop
                 } catch (const ex::Exception &e) {
@@ -48,7 +48,7 @@ namespace neko::core {
                     log::Err(e.getFile() ,e.getLine(), "%s : installMinecraft Failed : %s",e.getFuncName(), e.msg.c_str());
                     log::Debug(e.getFile() ,e.getLine(), "%s : Debug installMinecraft : DebugMsg : %s , StackTrace : %s",e.getFuncName(), debugMsg.c_str(),e.getStackTraceStr().c_str());
                     if (showHint)
-                        showHint({info::lang::translations(info::lang::LanguageKey::Title::error), info::lang::translations(info::lang::LanguageKey::Error::installMinecraft) + e.msg + debugMsg, "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::cancel)}, [&mtx, &condVar, &stop](neko::uint32 checkId) {
+                        showHint({info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::installMinecraft) + e.msg + debugMsg, "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::cancel)}, [&mtx, &condVar, &stop](neko::uint32 checkId) {
                                       if (checkId == 1) {
                                           stop = true;
                                           QApplication::quit();

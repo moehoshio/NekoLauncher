@@ -87,7 +87,7 @@ namespace neko::ui {
 
         // If no buttons, add the default button
         if (m.buttonText.empty()) {
-            auto btn = new QPushButton(neko::info::translations(neko::info::lang.general.ok), this);
+            auto btn = new QPushButton(neko::info::tr(neko::info::lang.general.ok), this);
             buttons.push_back(btn);
             dialogButton->addButton(btn, QDialogButtonBox::ActionRole);
             btn->setDefault(true);

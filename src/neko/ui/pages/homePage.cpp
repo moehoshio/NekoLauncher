@@ -27,8 +27,8 @@ namespace neko::ui {
         versionText->setFont(text);
     }
     void HomePage::setupText() {
-        startButton->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.start)));
-        menuButton->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.menu)));
+        startButton->setText(QString::fromStdString(neko::info::tr(neko::info::lang.general.start)));
+        menuButton->setText(QString::fromStdString(neko::info::tr(neko::info::lang.general.menu)));
 
         versionText->setText(
             QString("core: %1\nres: %2")

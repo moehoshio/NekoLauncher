@@ -103,7 +103,7 @@ namespace neko::core {
         log::autoLog log;
 
         if (showLoading) {
-            showLoading({neko::ui::LoadMsg::Type::OnlyRaw, info::translations(info::lang::LanguageKey::Loading::maintenanceInfoReq)});
+            showLoading({neko::ui::LoadMsg::Type::OnlyRaw, info::lang::tr(info::lang::Keys::Loading::maintenanceInfoReq)});
         }
 
         std::string response;
@@ -119,7 +119,7 @@ namespace neko::core {
 
             nlohmann::json dataJson = {
                 {"queryMaintenance", {{"os", system::getOsName()}, {"language", info::lang::language()}}}};
-            auto url = net.buildUrl(network::NetworkBase::Api::mainenance);
+            auto url = net.buildUrl(network::NetworkBase::Api::maintenance);
             auto data = dataJson.dump();
             network::RequestConfig reqConfig;
             reqConfig.setUrl(url)
@@ -150,14 +150,14 @@ namespace neko::core {
             res.errorMessage;
             res.statusCode;
 
-            std::string msg = info::lang::translations((i == 4) ? info::lang::LanguageKey::Error::networkConnectionRetryMax : info::lang::LanguageKey::Error::maintenanceInfoReq) + res.errorMessage + "\n" + info::lang::translations((i == 4) ? info::lang::LanguageKey::Error::clickToQuit : info::lang::LanguageKey::Error::clickToRetry);
+            std::string msg = info::lang::tr((i == 4) ? info::lang::Keys::Error::networkConnectionRetryMax : info::lang::Keys::Error::maintenanceInfoReq) + res.errorMessage + "\n" + info::lang::tr((i == 4) ? info::lang::Keys::Error::clickToQuit : info::lang::Keys::Error::clickToRetry);
             std::vector<std::string> buttons = (i == 4) ? std::vector<std::string>{
-                                                              info::lang::translations(info::lang::LanguageKey::General::ok)}
-                                                        : std::vector<std::string>{info::lang::translations(info::lang::LanguageKey::General::retry), info::lang::translations(info::lang::LanguageKey::General::cancel)};
+                                                              info::lang::tr(info::lang::Keys::General::ok)}
+                                                        : std::vector<std::string>{info::lang::tr(info::lang::Keys::General::retry), info::lang::tr(info::lang::Keys::General::cancel)};
 
             neko::uint32 autoClose = (i == 4) ? 0 : 5000;
             if (showHint)
-                showHint({info::lang::translations(info::lang::LanguageKey::Title::error), msg, "", buttons, ((i == 4) ? quitHint : retryHint), autoClose, 0});
+                showHint({info::lang::tr(info::lang::Keys::Title::error), msg, "", buttons, ((i == 4) ? quitHint : retryHint), autoClose, 0});
 
             if (i == 4 || stop)
                 return State::ActionNeeded;
@@ -165,13 +165,13 @@ namespace neko::core {
 
         nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : res : %s", log::SrcLoc::current().function_name(), res.c_str());
         if (setLoadingNow)
-            setLoadingNow(info::translations(info::lang::LanguageKey::Loading::maintenanceInfoParse).c_str());
+            setLoadingNow(info::lang::tr(info::lang::Keys::Loading::maintenanceInfoParse).c_str());
 
         auto rawJsonData = nlohmann::json::parse(response, nullptr, false);
         if (rawJsonData.is_discarded() || !rawJsonData.contains("maintenanceInformation")) {
             nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : failed to maintenance parse!", log::SrcLoc::current().function_name());
             if (showHint)
-                showHint({info::translations(info::lang::LanguageKey::Title::error), info::translations(info::lang::LanguageKey::Error::maintenanceInfoParse), "", {info::lang::translations(info::lang::LanguageKey::General::ok)}, [](neko::uint32) {
+                showHint({info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::maintenanceInfoParse), "", {info::lang::tr(info::lang::Keys::General::ok)}, [](neko::uint32) {
                               nlog::Err(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : click , quit programs", log::SrcLoc::current().function_name());
                               QApplication::quit();
                           }});
@@ -192,10 +192,10 @@ namespace neko::core {
         msg = time + "\n" + msg;
 
         if (setLoadingNow)
-            setLoadingNow(info::translations(info::lang::LanguageKey::Loading::downloadMaintenancePoster).c_str());
+            setLoadingNow(info::lang::tr(info::lang::Keys::Loading::downloadMaintenancePoster).c_str());
         auto fileName = downloadPoster(poster);
 
-        neko::ui::HintMsg hmsg{info::translations(info::lang::LanguageKey::Title::maintenance), msg, fileName, {info::lang::translations(info::lang::LanguageKey::General::ok)}, [link](neko::uint32) {
+        neko::ui::HintMsg hmsg{info::lang::tr(info::lang::Keys::Title::maintenance), msg, fileName, {info::lang::tr(info::lang::Keys::General::ok)}, [link](neko::uint32) {
                                    QDesktopServices::openUrl(QUrl(QString::fromStdString(link)));
                                    QApplication::quit();
                                }};
@@ -292,20 +292,20 @@ namespace neko::core {
             return maintenanceState;
 
         if (setLoadingNow)
-            setLoadingNow(info::lang::translations(info::lang::LanguageKey::Loading.checkUpdate));
+            setLoadingNow(info::lang::tr(info::lang::Keys::Loading.checkUpdate));
 
         auto updateState = checkUpdate(checkUpdateResult);
         if (updateState != State::ActionNeeded)
             return updateState;
 
         if (setLoadingNow)
-            setLoadingNow(info::lang::translations(info::lang::LanguageKey::Loading.updateInfoParse));
+            setLoadingNow(info::lang::tr(info::lang::Keys::Loading.updateInfoParse));
         auto data = parseUpdate(checkUpdateResult);
         if (data.empty())
             return State::ActionNeeded;
 
         if (setLoadingNow)
-            setLoadingNow(info::lang::translations(info::lang::LanguageKey::Loading.downloadUpdatePoster));
+            setLoadingNow(info::lang::tr(info::lang::Keys::Loading.downloadUpdatePoster));
         auto posterPath = downloadPoster(data.poster);
 
         if (!data.mandatory) {
@@ -313,7 +313,7 @@ namespace neko::core {
             std::condition_variable condVar;
             std::unique_lock<std::mutex> lock(mtx);
             bool select = true;
-            showHint({data.Title, (data.time + "\n" + data.msg), "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::cancel)}, [&condVar, &select](neko::uint32 checkId) {
+            showHint({data.Title, (data.time + "\n" + data.msg), "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::cancel)}, [&condVar, &select](neko::uint32 checkId) {
                           if (checkId == 0) {
                               select = true;
                           } else {
@@ -329,7 +329,7 @@ namespace neko::core {
             }
         }
 
-        neko::ui::LoadMsg lmsg{neko::ui::LoadMsg::All, info::lang::translations(info::lang::LanguageKey::Loading.settingDownload), data.Title, data.time, data.msg, posterPath, "img/loading.gif", 100, 0, data.urls.size()};
+        neko::ui::LoadMsg lmsg{neko::ui::LoadMsg::All, info::lang::tr(info::lang::Keys::Loading.settingDownload), data.Title, data.time, data.msg, posterPath, "img/loading.gif", 100, 0, data.urls.size()};
         if (showLoading)
             showLoading(lmsg);
 
@@ -409,7 +409,7 @@ namespace neko::core {
             if (it.get() != State::Completed) {
                 stop.store(true);
                 if (showHint)
-                    showHint({info::lang::translations(info::lang::LanguageKey::Title::error), info::lang::translations(info::lang::LanguageKey::Error.downloadUpdate), "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::cancel)}, [=](neko::uint32 checkId) {
+                    showHint({info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error.downloadUpdate), "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::cancel)}, [=](neko::uint32 checkId) {
                                   if (checkId == 0) {
                                       core::getThreadPool().enqueue([=] {
                                           autoUpdate(showHint, showLoading, setLoadingVal, setLoadingNow);
@@ -440,7 +440,7 @@ namespace neko::core {
         }
         if (!data.resVersion.empty()) {
             ClientConfig cfg(core::getConfigObj());
-            cfg.more.resourceVersion = data.resVersion.c_str();
+            cfg.other.resourceVersion = data.resVersion.c_str();
             cfg.save(core::getConfigObj(), info::app::getConfigFileName());
             nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), "%s : save resource version : %s", log::SrcLoc::current().function_name(), data.resVersion.c_str());
         }
@@ -457,7 +457,7 @@ namespace neko::core {
             };
 
             if (showHint)
-                showHint({info::lang::translations(info::lang::LanguageKey::Title::reStart), info::lang::translations(info::lang::LanguageKey::General::updateOverReStart), "", {info::lang::translations(info::lang::LanguageKey::General::ok), info::lang::translations(info::lang::LanguageKey::General::ok)}, execUpdate});
+                showHint({info::lang::tr(info::lang::Keys::Title::reStart), info::lang::tr(info::lang::Keys::General::updateOverReStart), "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::ok)}, execUpdate});
             auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
 
             if (resState == std::cv_status::timeout) {

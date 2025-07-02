@@ -64,7 +64,7 @@ namespace neko::ui {
             (void)poster->setPixmap(std::string_view(m.poster));
 
         if (m.lineText.empty()) {
-            setLines({neko::info::translations(neko::info::lang.general.input)});
+            setLines({neko::info::tr(neko::info::lang.general.input)});
         } else {
             setLines(m.lineText);
         }
@@ -95,7 +95,7 @@ namespace neko::ui {
             line->setMinimumHeight(50);
             line->setPlaceholderText(QString::fromStdString(it));
             line->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-            if (it == neko::info::translations(neko::info::lang.general.password)) {
+            if (it == neko::info::tr(neko::info::lang.general.password)) {
                 line->setEchoMode(QLineEdit::PasswordEchoOnEdit);
             }
             centralWidgetLayout->addWidget(line);

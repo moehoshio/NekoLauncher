@@ -165,14 +165,14 @@ namespace neko::ui {
         setting->page2->bgInputText->setText(neko::info::translations(neko::info::lang.general.setting).c_str());
         setting->page2->bgInputToolButton->setText("...");
 
-        setting->page2->styleBlurEffectSelectText->setText(neko::info::translations(neko::info::lang.general.blurHint).c_str());
+        setting->page2->styleBlurEffectSelectText->setText(neko::info::translations(neko::info::lang.general.blurEffect).c_str());
         setting->page2->styleBlurEffectSelectRadioAnimation->setText(neko::info::translations(neko::info::lang.general.animation).c_str());
         setting->page2->styleBlurEffectSelectRadioPerformance->setText(neko::info::translations(neko::info::lang.general.performance).c_str());
         setting->page2->styleBlurEffectSelectRadioQuality->setText(neko::info::translations(neko::info::lang.general.quality).c_str());
-        setting->page2->styleBlurEffectRadiusText->setText(neko::info::translations(neko::info::lang.general.blurValue).c_str());
+        setting->page2->styleBlurEffectRadiusText->setText(neko::info::translations(neko::info::lang.general.blurRadius).c_str());
         setting->page2->stylePointSizeEditText->setText(neko::info::translations(neko::info::lang.general.font).c_str());
 
-        setting->page2->lcWindowSetText->setText(neko::info::translations(neko::info::lang.general.launcherMode).c_str());
+        setting->page2->lcWindowSetText->setText(neko::info::translations(neko::info::lang.general.launcherMethod).c_str());
         setting->page2->lcWindowSetBox->setItemText(0, neko::info::translations(neko::info::lang.general.keepWindow).c_str());
         setting->page2->lcWindowSetBox->setItemText(1, neko::info::translations(neko::info::lang.general.endProcess).c_str());
         setting->page2->lcWindowSetBox->setItemText(2, neko::info::translations(neko::info::lang.general.hideAndOverReShow).c_str());
@@ -180,7 +180,7 @@ namespace neko::ui {
         setting->page2->winSizeEditText->setText(neko::info::translations(neko::info::lang.general.size).c_str());
         setting->page2->winSizeEditTextX->setText("X");
         setting->page2->winSysFrameCheckBox->setText(neko::info::translations(neko::info::lang.general.useSystemWindowFrame).c_str());
-        setting->page2->winBarKeepRightCheckBox->setText(neko::info::translations(neko::info::lang.general.barKeepRight).c_str());
+        setting->page2->winBarKeepRightCheckBox->setText(neko::info::translations(neko::info::lang.general.headBarKeepRight).c_str());
 
         setting->page2->netProxyEnable->setText(neko::info::translations(neko::info::lang.general.proxy).c_str());
         setting->page2->netThreadNotAutoEnable->setText(neko::info::translations(neko::info::lang.general.notAutoSetThreadNums).c_str());
@@ -198,7 +198,7 @@ namespace neko::ui {
         setting->page2->winSizeEditWidth->setPlaceholderText(neko::info::translations(neko::info::lang.general.width).c_str());
         setting->page2->winSizeEditHeight->setPlaceholderText(neko::info::translations(neko::info::lang.general.height).c_str());
         setting->page2->netProxyEdit->setPlaceholderText(neko::info::translations(neko::info::lang.general.proxyPlaceholder).c_str());
-        setting->page2->moreTempEdit->setPlaceholderText(neko::info::translations(neko::info::lang.general.tempDir).c_str());
+        setting->page2->moreTempEdit->setPlaceholderText(neko::info::translations(neko::info::lang.general.tempFolder).c_str());
 
         setting->closeButton->setToolTip(neko::info::translations(neko::info::lang.general.close).c_str());
     }
@@ -314,111 +314,7 @@ namespace neko::ui {
             state = temp;
             updatePage(state, oldState);
         });
-        connect(setting->page1->accountLogInOutButton, &QPushButton::clicked, [=, this] {
- auto logoutFunc = [=, this]() {
-                core::getThreadPool().enqueue([] {
-                    neko::ClientConfig cfg(core::getConfigObj());
 
-                    auto url = network::NetworkBase::buildUrl(network::NetworkBase::Api::Authlib::invalidate, network::NetworkBase::Api::Authlib::host);
-                    nlohmann::json json = {
-                        {"accessToken", cfg.minecraft.accessToken}};
-                    auto data = json.dump();
-
-                    network::Network net;
-                    network::RequestConfig reqConfig;
-                    reqConfig.setUrl(url)
-                        .setMethod(network::RequestType::Post)
-                        .setData(data)
-                        .setHeader("Content-Type: application/json")
-                        .setRequestId("logout-" + exec::generateRandomString(10));
-                    (void)net.execute(reqConfig);
-
-                    cfg.minecraft.account = "";
-                    cfg.minecraft.playerName = "";
-                    cfg.minecraft.accessToken = "";
-                    cfg.minecraft.uuid = "";
-
-                    cfg.save(core::getConfigObj(), info::app::getConfigFileName());
-                });
-                isAccountLogIn = false;
-                accountLogInOutButton->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.login)));
-                accountLogInOutInfoText->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.notLogin)));
-            };
-
-            // logout
-            if (isAccountLogIn) {
-                showHint({neko::info::translations(neko::info::lang.title.logoutConfirm),
-                          neko::info::translations(neko::info::lang.general.logoutConfirm),
-                          "",
-                          2,
-                          [=, this](bool checkLogout) {
-                              if (checkLogout) {
-                                  logoutFunc();
-                              }
-                          }});
-                return;
-            }
-
-            auto registerFunc = [=, this]() {
-                neko::launcherMinecraftAuthlibAndPrefetchedCheck([=, this](const ui::hintMsg &m) {
-                    emit this->showHintD(m);
-                });
-                neko::ClientConfig cfg(core::getConfigObj());
-                nlohmann::json authlibData = nlohmann::json::parse(exec::base64Decode(cfg.minecraft.authlibPrefetched));
-
-                if (authlibData.contains("meta") && authlibData["meta"].contains("links") && authlibData["meta"]["links"].contains("register")) {
-                    std::string url = authlibData["meta"]["links"]["register"];
-                    QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
-                }
-            };
-
-            auto loginFunc = [=, this]() {
-                showInput({neko::info::translations(neko::info::lang.title.inputLogin),
-                           "",
-                           "",
-                           {neko::info::translations(neko::info::lang.general.username), neko::info::translations(neko::info::lang.general.password)},
-                           [=, this](bool check) {
-                               if (!check) {
-                                   hideInput();
-                                   return;
-                               }
-
-                               auto inData = getInput();
-                               if (inData.size() != 2) {
-                                   showHint({neko::info::translations(neko::info::lang.title.inputNotEnoughParameters), neko::info::translations(neko::info::lang.general.notEnoughParameters), "", 1});
-                                   return;
-                               }
-                               auto hintFunc = [=, this](const ui::hintMsg &m) {
-                                   emit this->showHintD(m);
-                               };
-                               auto callBack = [=, this](const std::string &name) {
-                                   emit this->loginStatusChangeD(name);
-                               };
-                               exec::getThreadObj().enqueue([=, this] {
-                                   if (neko::authLogin(inData, hintFunc, callBack) == neko::State::Completed) {
-                                       emit this->hideInputD();
-                                   }
-                               });
-                           }});
-            };
-
-
-            // login
-            showHint({neko::info::translations(neko::info::lang.title.loginOrRegister), neko::info::translations(neko::info::lang.general.loginOrRegister), "", 2, [=, this](bool checkOpt1) {
-                          if (!checkOpt1) {
-                              registerFunc();
-                              return;
-                          }
-                          loginFunc();
-                      }});
-        });
-
-        connect(setting->page2->langSelectBox, &QComboBox::currentTextChanged, [=, this](const QString &text) {
-            neko::info::language(text.toStdString());
-            exec::getConfigObj().SetValue("main", "language", text.toStdString().c_str());
-            setupText();
-            showHint({neko::info::translations(neko::info::lang.title.incomplete), neko::info::translations(neko::info::lang.general.incompleteApplied), "", 1, [](bool) {}});
-        });
         connect(setting->page2->bgInputLineEdit, &QLineEdit::editingFinished, [=, this]() {
             bgWidget->setPixmap(setting->page2->bgInputLineEdit->text().toStdString().c_str());
             resizeItem();
@@ -432,7 +328,7 @@ namespace neko::ui {
         });
         connect(
             setting->page2->moreTempEdit, &QLineEdit::editingFinished, [=, this]() {
-                neko::info::tempDir(setting->page2->moreTempEdit->text().toStdString().c_str());
+                neko::info::tempFolder(setting->page2->moreTempEdit->text().toStdString().c_str());
             });
         connect(
             setting->page2->moreTempTool, &QPushButton::clicked, [=, this]() {
@@ -638,28 +534,28 @@ namespace neko::ui {
         icon.addFile(QString::fromUtf8("img/ico.png"), QSize(256, 256), QIcon::Normal, QIcon::Off);
         this->setWindowIcon(icon);
         setting->page2->langSelectBox->setCurrentText(config.main.lang);
-        if (std::string("none") == config.main.bgType) {
+        if (std::string("none") == config.main.backgroundType) {
             setting->page2->bgSelectRadioNone->setChecked(true);
         } else {
-            bgWidget->setPixmap(config.main.bg);
+            bgWidget->setPixmap(config.main.background);
             setting->page2->bgSelectRadioImage->setChecked(true);
         }
 
-        setting->page2->lcWindowSetBox->setCurrentIndex(config.main.launcherMode);
+        setting->page2->lcWindowSetBox->setCurrentIndex(config.main.launcherMethod);
 
-        setting->page2->bgInputLineEdit->setText(config.main.bg);
-        if (config.style.blurValue > 22)
+        setting->page2->bgInputLineEdit->setText(config.main.background);
+        if (config.style.blurRadius > 22)
             blurVal = 22;
-        else if (config.style.blurValue == 1 || config.style.blurValue < 0)
+        else if (config.style.blurRadius == 1 || config.style.blurRadius < 0)
             blurVal = 0;
         else
-            blurVal = config.style.blurValue;
+            blurVal = config.style.blurRadius;
 
         bgWidget->setGraphicsEffect(m_pBlurEffect);
         setting->page2->styleBlurEffectRadiusSlider->setValue(blurVal);
         m_pBlurEffect->setBlurRadius(blurVal);
 
-        switch (config.style.blurHint) {
+        switch (config.style.blurEffect) {
             case 2:
                 setting->page2->styleBlurEffectSelectRadioQuality->setChecked(true);
                 m_pBlurEffect->setBlurHints(QGraphicsBlurEffect::QualityHint);
@@ -676,7 +572,7 @@ namespace neko::ui {
         }
 
         setting->page2->winSysFrameCheckBox->setChecked(config.main.useSysWindowFrame);
-        setting->page2->winBarKeepRightCheckBox->setChecked(config.main.barKeepRight);
+        setting->page2->winBarKeepRightCheckBox->setChecked(config.main.headBarKeepRight);
 
         if (config.net.thread > 0) {
             setting->page2->netThreadNotAutoEnable->setChecked(true);
@@ -691,8 +587,8 @@ namespace neko::ui {
                 setting->page2->netProxyEdit->setText(config.net.proxy);
         }
 
-        if (std::filesystem::is_directory(config.more.tempDir))
-            setting->page2->moreTempEdit->setText(config.more.tempDir);
+        if (std::filesystem::is_directory(config.other.tempFolder))
+            setting->page2->moreTempEdit->setText(config.other.tempFolder);
 
         setting->page3->devOptEnable->setChecked(config.dev.enable);
         setting->page3->devOptDebug->setChecked(config.dev.debug);
@@ -757,7 +653,7 @@ namespace neko::ui {
             resizeItem();
         }
 
-        emit setting->page2->winBarKeepRightCheckBox->toggled(config.main.barKeepRight);
+        emit setting->page2->winBarKeepRightCheckBox->toggled(config.main.headBarKeepRight);
     }
 
     void MainWindow::updatePage(MainWindow::pageState state, MainWindow::pageState oldState) {
@@ -800,23 +696,23 @@ namespace neko::ui {
         std::string bgText = setting->page2->bgInputLineEdit->text().toStdString();
         switch (setting->page2->bgSelectButtonGroup->checkedId()) {
             case 1:
-                cfg.main.bgType = "none";
+                cfg.main.backgroundType = "none";
                 break;
             case 2:
-                cfg.main.bgType = "image";
+                cfg.main.backgroundType = "image";
 
-                cfg.main.bg = bgText.c_str();
+                cfg.main.background = bgText.c_str();
                 break;
             default:
                 break;
         };
         std::string windowSize = setting->page2->winSizeEditWidth->text().toStdString() + "x" + setting->page2->winSizeEditHeight->text().toStdString();
         cfg.main.windowSize = windowSize.c_str();
-        cfg.main.launcherMode = setting->page2->lcWindowSetBox->currentIndex();
+        cfg.main.launcherMethod = setting->page2->lcWindowSetBox->currentIndex();
         cfg.main.useSysWindowFrame = setting->page2->winSysFrameCheckBox->isChecked();
-        cfg.main.barKeepRight = setting->page2->winBarKeepRightCheckBox->isChecked();
-        cfg.style.blurHint = setting->page2->styleBulrEffectButtonGroup->checkedId();
-        cfg.style.blurValue = setting->page2->styleBlurEffectRadiusSlider->value();
+        cfg.main.headBarKeepRight = setting->page2->winBarKeepRightCheckBox->isChecked();
+        cfg.style.blurEffect = setting->page2->styleBulrEffectButtonGroup->checkedId();
+        cfg.style.blurRadius = setting->page2->styleBlurEffectRadiusSlider->value();
         cfg.style.fontPointSize = setting->page2->stylePointSizeEditLine->text().toInt();
         std::string fontFamiliesText = setting->page2->stylePointSizeEditFontBox->currentText().toStdString();
         cfg.style.fontFamilies = fontFamiliesText.c_str();
@@ -832,7 +728,7 @@ namespace neko::ui {
         else
             cfg.net.proxy = "";
         std::string tempText = setting->page2->moreTempEdit->text().toStdString();
-        cfg.more.tempDir = tempText.c_str();
+        cfg.other.tempFolder = tempText.c_str();
         cfg.dev.enable = setting->page3->devOptEnable->isChecked();
         cfg.dev.debug = setting->page3->devOptDebug->isChecked();
         cfg.dev.tls = setting->page3->devOptTls->isChecked();

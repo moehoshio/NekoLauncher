@@ -85,7 +85,7 @@ namespace neko::ui {
         QGraphicsBlurEffect *m_pBlurEffect;
 
         QFont font;
-        int blurValue;
+        int blurRadius;
 
         pageState state;
         pageState oldState;

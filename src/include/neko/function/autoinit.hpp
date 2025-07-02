@@ -7,11 +7,16 @@
 
 #include "neko/log/nlog.hpp"
 
+#include "neko/core/resources.hpp"
+
 #include "neko/schema/types.hpp"
 #include "neko/schema/clientconfig.hpp"
 
+#include "neko/function/info.hpp"
+
 #include "neko/network/network.hpp"
 
+#include "neko/function/utilities.hpp"
 
 #include <filesystem>
 
@@ -44,14 +49,14 @@ namespace neko::init {
         }
 
         if (dev && !debug) {
-            std::string fileName = exec::sum<std::string>("logs/", exec::getTimeString(), ".log");
+            auto fileName = util::math::sum<std::string>("logs/", util::time::getLocalTimeString("%Y-%m-%d-%H-%M-%S").value(), ".log");
 
             std::fstream file(fileName, std::ios::out);
             if (file.is_open()) {
                 file.close();
             }
 
-            (void)loguru::add_file(file_name.c_str(), loguru::Append, loguru::Verbosity_INFO);
+            (void)loguru::add_file(fileName.c_str(), loguru::Append, loguru::Verbosity_INFO);
             return;
         }
 
@@ -80,19 +85,19 @@ namespace neko::init {
      * @brief Initialize thread names for the thread pool.
      */
     inline void initThreadName() {
-        neko::uint64 nums = exec::getThreadObj().get_thread_nums();
-        nlog::autoLog log{FI, LI, FN, "init threadNums : " + std::to_string(nums)};
+        neko::uint64 nums = core::getThreadPool().get_thread_nums();
+        log::autoLog log{"init threadNums : " + std::to_string(nums)};
 
         for (neko::uint64 i = 0; i < nums; ++i) {
-            exec::getThreadObj().enqueue(
-                [i_str = std::to_string(i + 1)]() {
-                    loguru::set_thread_name((std::string("thread ") + i_str).c_str());
+            neko::core::getThreadPool().enqueue(
+                [i_str = std::to_string(i + 1)]{
+                    loguru::set_thread_name(("thread " + i_str).c_str());
                     
                     // Wait some time to ensure the thread name is set
                     // If a thread finishes its work too quickly, it may repeatedly enter work and prevent other threads from setting their names correctly
                     std::this_thread::sleep_for(std::chrono::milliseconds(100)); 
 
-                    nlog::Info(FI, LI, "%s : Hello thread %s", FN, i_str.c_str());
+                    log::Info("Hello thread %s",i_str.c_str());
                 });
         }
     }
@@ -102,9 +107,9 @@ namespace neko::init {
      * @param nums Number of threads to set. If <= 0, use hardware_concurrency.
      */
     inline void setThreadNums(int nums) {
-        nlog::Info(FI, LI, "%s : set threadNums : %d (if nums <= 0, use hardware_concurrency)", FN, nums);
+        log::Info(log::SrcLoc::current(), "set threadNums : %d (if nums <= 0, use hardware_concurrency)",nums);
         if (nums > 0)
-            exec::getThreadObj().set_pool_size(static_cast<neko::uint64>(nums));
+            neko::core::getThreadPool().set_pool_size(static_cast<neko::uint64>(nums));
     }
 
     /**
@@ -112,12 +117,62 @@ namespace neko::init {
      * @param config The client configuration to print.
      */
     inline void configInfoPrint(const ClientConfig & config) {
-        nlog::Info(FI, LI, "%s : config main : lang : %s , bgType : %s , bg : %s , windowSize : %s , launcherMode : %d ,  useSysWinodwFrame: %s , barKeepRight : %s ", FN, config.main.lang, config.main.bgType, config.main.bg, config.main.windowSize, config.main.launcherMode, exec::boolTo<neko::cstr >(config.main.useSysWindowFrame), exec::boolTo<neko::cstr >(config.main.barKeepRight));
-        nlog::Info(FI, LI, "%s : config net : thread : %d , proxy : %s", FN, config.net.thread, config.net.proxy);
-        nlog::Info(FI, LI, "%s : config style : blurHint : %d , blurValue : %d , fontPointSize : %d , fontFamilies : %s ", FN, config.style.blurHint, config.style.blurValue, config.style.fontPointSize, config.style.fontFamilies);
-        nlog::Info(FI, LI, "%s : config dev : enable : %s , debug : %s , server : %s , tls : %s ", FN, exec::boolTo<neko::cstr >(config.dev.enable), exec::boolTo<neko::cstr >(config.dev.debug), config.dev.server, exec::boolTo<neko::cstr >(config.dev.tls));
-        nlog::Info(FI, LI, "%s : config minecraft : account : %s , name : %s , uuid : %s , authlibPrefetched : %s ", FN, config.minecraft.account, config.minecraft.playerName, config.minecraft.uuid, config.minecraft.authlibPrefetched);
-        nlog::Info(FI, LI, "%s : config more : temp : %s , resVersion : %s", FN, config.more.tempDir, config.more.resourceVersion);
+        
+        log::Info(log::SrcLoc::current(), "config main : lang : %s , backgroundType : %s , background : %s , windowSize : %s , launcherMethod : %ld , useSysWindowFrame: %s , headBarKeepRight : %s",
+            config.main.lang,
+            config.main.backgroundType,
+            config.main.background,
+            config.main.windowSize,
+            config.main.launcherMethod,
+            util::logic::boolTo<neko::cstr>(config.main.useSysWindowFrame),
+            util::logic::boolTo<neko::cstr>(config.main.headBarKeepRight)
+        );
+
+        log::Info(log::SrcLoc::current(), "config net : thread : %ld , proxy : %s",
+            config.net.thread,
+            config.net.proxy
+        );
+
+        log::Info(log::SrcLoc::current(), "config style : blurEffect : %ld , blurRadius : %ld , fontPointSize : %ld , fontFamilies : %s",
+            config.style.blurEffect,
+            config.style.blurRadius,
+            config.style.fontPointSize,
+            config.style.fontFamilies
+        );
+
+        log::Info(log::SrcLoc::current(), "config dev : enable : %s , debug : %s , server : %s , tls : %s",
+            util::logic::boolTo<neko::cstr>(config.dev.enable),
+            util::logic::boolTo<neko::cstr>(config.dev.debug),
+            config.dev.server,
+            util::logic::boolTo<neko::cstr>(config.dev.tls)
+        );
+
+        std::string accToken = config.minecraft.accessToken ? config.minecraft.accessToken : "";
+        std::string maskToken = accToken.empty() ? "null" : "**********" + accToken.substr(accToken.size() - 4); // Hide accessToken for security
+        log::Info(log::SrcLoc::current(), "config minecraft : folder : %s , javaPath : %s , account : %s , name : %s , uuid : %s , accessToken : %s , targetVersion : %s , maxMemory : %ld , minMemory : %ld , needMemory : %ld , authlibName : %s , authlibPrefetched : %s , authlibSha256 : %s , tolerantMode : %s , customResolution : %s , joinServerAddress : %s , joinServerPort : %s",
+            config.minecraft.minecraftFolder,
+            config.minecraft.javaPath,
+            config.minecraft.account,
+            config.minecraft.playerName,
+            config.minecraft.uuid,
+            maskToken.c_str(),
+            config.minecraft.targetVersion,
+            config.minecraft.maxMemoryLimit,
+            config.minecraft.minMemoryLimit,
+            config.minecraft.needMemoryLimit,
+            config.minecraft.authlibName,
+            config.minecraft.authlibPrefetched,
+            config.minecraft.authlibSha256,
+            util::logic::boolTo<neko::cstr>(config.minecraft.tolerantMode),
+            config.minecraft.customResolution,
+            config.minecraft.joinServerAddress,
+            config.minecraft.joinServerPort
+        );
+
+        log::Info(log::SrcLoc::current(), "config other : temp : %s , resVersion : %s",
+            config.other.tempFolder,
+            config.other.resourceVersion
+        );
     }
 
     /**
@@ -130,19 +185,16 @@ namespace neko::init {
     inline auto autoInit(int argc, char *argv[]) {
 
         // If loading the configuration file fails, all options will use default values
-        exec::getConfigObj().LoadFile(info::getConfigFileName())
+        (void)core::getConfigObj().LoadFile(info::app::getConfigFileName());
 
-        neko::ClientConfig cfg(exec::getConfigObj());
+        neko::ClientConfig cfg(core::getConfigObj());
 
         initLog(argc, argv, cfg);
 
         setThreadNums(cfg.net.thread);
         initThreadName();
 
-        // Enable error logging
-        nerr::Error::enableLogger = true;
-
-        info::language(cfg.main.lang);
+        info::lang::language(cfg.main.lang);
 
         configInfoPrint(cfg);
 

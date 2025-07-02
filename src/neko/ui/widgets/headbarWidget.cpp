@@ -50,9 +50,9 @@ namespace neko::ui {
     }
 
     HeadBarWidget::setupText() {
-        closeAction->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.close)));
-        minimize->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.minimize)));
-        maximize->setText(QString::fromStdString(neko::info::translations(neko::info::lang.general.maximize)));
+        closeAction->setText(QString::fromStdString(neko::info::tr(neko::info::lang.general.close)));
+        minimize->setText(QString::fromStdString(neko::info::tr(neko::info::lang.general.minimize)));
+        maximize->setText(QString::fromStdString(neko::info::tr(neko::info::lang.general.maximize)));
     }
 
     HeadBarWidget::showHeadBar() {

@@ -83,22 +83,22 @@ namespace neko::system {
 
         auto init = []() -> std::string {
             ClientConfig cfg(exec::getConfigObj());
-            if (std::filesystem::is_directory(cfg.more.tempDir))
-                return std::string(cfg.more.tempDir) | util::unifiedPath;
+            if (std::filesystem::is_directory(cfg.other.tempFolder))
+                return std::string(cfg.other.tempFolder) | util::unifiedPath;
             else
                 return (std::filesystem::temp_directory_path().string() + "/Nekolc") | util::unifiedPath;
         };
 
-        static std::string tempDir = init();
+        static std::string tempFolder = init();
 
         if (!setTempDir.empty() && std::filesystem::is_directory(setTempDir)) {
-            tempDir = setTempDir | util::unifiedPath;
+            tempFolder = setTempDir | util::unifiedPath;
         }
 
-        if (!std::filesystem::exists(tempDir))
-            std::filesystem::create_directory(tempDir);
+        if (!std::filesystem::exists(tempFolder))
+            std::filesystem::create_directory(tempFolder);
 
-        return tempDir;
+        return tempFolder;
     }
 
     /**

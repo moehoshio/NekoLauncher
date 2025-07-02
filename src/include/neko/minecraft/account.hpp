@@ -157,7 +157,7 @@ namespace neko::minecraft::account {
         log::autoLog log;
         LoginResult result;
         if (inData.size() < 2) {
-            result.error = info::lang::translations(info::lang::LanguageKey::Error::invalidInput);
+            result.error = info::lang::tr(info::lang::Keys::Error::invalidInput);
             return result;
         }
 
@@ -180,7 +180,7 @@ namespace neko::minecraft::account {
 
         if (!result.isSuccess() || !result.hasContent()) {
             log::Err(log::SrcLoc::current(), "Failed to authenticate: %s", result.errorMessage.c_str());
-            result.error = info::lang::translations(info::lang::LanguageKey::Error::networkError);
+            result.error = info::lang::tr(info::lang::Keys::Error::networkError);
             return result;
         }
 
@@ -189,7 +189,7 @@ namespace neko::minecraft::account {
             resData = nlohmann::json::parse(result.content);
         } catch (const nlohmann::json::parse_error &e) {
             log::Err(log::SrcLoc::current(), "Failed to parse authentication response: %s", e.what());
-            result.error = info::lang::translations(info::lang::LanguageKey::Error::jsonParse) + e.what();
+            result.error = info::lang::tr(info::lang::Keys::Error::jsonParse) + e.what();
             return result;
         }
 
@@ -202,7 +202,7 @@ namespace neko::minecraft::account {
 
         if (!resData.contains("accessToken") || !resData.contains("selectedProfile") || !resData["selectedProfile"].is_object()) {
             log::Err(log::SrcLoc::current(), "Missing accessToken in response");
-            result.error = info::lang::translations(info::lang::LanguageKey::Error::missingAccessToken) + result.error;
+            result.error = info::lang::tr(info::lang::Keys::Error::missingAccessToken) + result.error;
             return result;
         }
 

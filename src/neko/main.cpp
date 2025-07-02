@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
         // Show loading message
         w.showLoad({neko::ui::loadMsg::OnlyRaw,
-                    neko::info::translations(neko::info::lang.network.testtingNetwork)});
+                    neko::info::tr(neko::info::lang.network.testtingNetwork)});
         w.show();
 
         // Callback functions for showing hints and loading messages
@@ -55,8 +55,8 @@ int main(int argc, char *argv[]) {
                     auto quitHint = [](bool) { QApplication::quit(); };
                     auto retryHint = [](bool check) { if (!check) QApplication::quit(); };
 
-                    std::string msg = std::string(e.msg) + "\n" + neko::info::translations((i == 4) ? neko::info::lang.error.clickToQuit : neko::info::lang.error.clickToRetry);
-                    hintFunc({neko::info::translations(neko::info::lang.title.error), msg, "", (i == 4) ? 2 : 1, ((i == 4) ? quitHint : retryHint)});
+                    std::string msg = std::string(e.msg) + "\n" + neko::info::tr((i == 4) ? neko::info::lang.error.clickToQuit : neko::info::lang.error.clickToRetry);
+                    hintFunc({neko::info::tr(neko::info::lang.title.error), msg, "", (i == 4) ? 2 : 1, ((i == 4) ? quitHint : retryHint)});
                 }
             }
 
