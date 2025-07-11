@@ -798,6 +798,8 @@ namespace neko::event {
 
         // === Task methods End ===
 
+        // === Event Loop Control ===
+
         /**
          * @brief Check if the event loop is running.
          * @return True if running, false otherwise.
