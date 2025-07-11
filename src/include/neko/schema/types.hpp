@@ -1,12 +1,15 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
 
 namespace neko {
 
+    // Basic types should use all-lowercase style
     inline namespace types {
         // Character and string types
         using cstr = const char *;
+        using strview = std::string_view;
         using uchar = unsigned char;
 
         // Not implemented
