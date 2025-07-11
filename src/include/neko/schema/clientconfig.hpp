@@ -28,6 +28,7 @@ namespace neko {
             long launcherMethod;
             bool useSysWindowFrame;
             bool headBarKeepRight;
+            neko::cstr deviceID;
         } main;
 
         /**
@@ -115,6 +116,7 @@ namespace neko {
             main.launcherMethod = cfg.GetLongValue("main", "launcherMethod", 1);
             main.useSysWindowFrame = cfg.GetBoolValue("main", "useSystemWindowFrame", true);
             main.headBarKeepRight = cfg.GetBoolValue("main", "headBarKeepRight", true);
+            main.deviceID = cfg.GetValue("main", "deviceID", "");
 
             style.blurEffect = cfg.GetLongValue("style", "blurEffect", 1);
             style.blurRadius = cfg.GetLongValue("style", "blurRadius", 10);
@@ -173,6 +175,7 @@ namespace neko {
             saveCfg.SetLongValue("main", "launcherMethod", main.launcherMethod);
             saveCfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
             saveCfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
+            saveCfg.SetValue("main", "deviceID", main.deviceID);
 
             saveCfg.SetLongValue("style", "blurEffect", style.blurEffect);
             saveCfg.SetLongValue("style", "blurRadius", style.blurRadius);
