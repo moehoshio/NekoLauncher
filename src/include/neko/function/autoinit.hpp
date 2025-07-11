@@ -9,8 +9,8 @@
 
 #include "neko/core/resources.hpp"
 
-#include "neko/schema/types.hpp"
 #include "neko/schema/clientconfig.hpp"
+#include "neko/schema/types.hpp"
 
 #include "neko/function/info.hpp"
 
@@ -22,13 +22,25 @@
 
 namespace neko::init {
 
+    inline void initDeviceID(ClientConfig &cfg) {
+        // Ensure the device ID is set in the configuration
+        std::string deviceID = cfg.main.deviceID ? cfg.main.deviceID : "";
+        if (!deviceID.empty()) {
+            return;
+        }
+        deviceID = util::uuid::uuidV4();
+        log::Info(log::SrcLoc::current(), "Device ID not set, generating new one: %s", deviceID.c_str());
+        cfg.main.deviceID = deviceID.c_str();
+        cfg.save(core::getConfigObj(), app::getConfigFileName());
+    }
+
     /**
      * @brief Initialize the logging system based on configuration.
      * @param argc Argument count from main().
      * @param argv Argument vector from main().
      * @param cfg Client configuration.
      */
-    inline void initLog(int argc, char *argv[], const ClientConfig& cfg) {
+    inline void initLog(int argc, char *argv[], const ClientConfig &cfg) {
 
         loguru::init(argc, argv);
 
@@ -90,14 +102,14 @@ namespace neko::init {
 
         for (neko::uint64 i = 0; i < nums; ++i) {
             neko::core::getThreadPool().enqueue(
-                [i_str = std::to_string(i + 1)]{
+                [i_str = std::to_string(i + 1)] {
                     loguru::set_thread_name(("thread " + i_str).c_str());
-                    
+
                     // Wait some time to ensure the thread name is set
                     // If a thread finishes its work too quickly, it may repeatedly enter work and prevent other threads from setting their names correctly
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100)); 
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                    log::Info("Hello thread %s",i_str.c_str());
+                    log::Info("Hello thread %s", i_str.c_str());
                 });
         }
     }
@@ -107,7 +119,7 @@ namespace neko::init {
      * @param nums Number of threads to set. If <= 0, use hardware_concurrency.
      */
     inline void setThreadNums(int nums) {
-        log::Info(log::SrcLoc::current(), "set threadNums : %d (if nums <= 0, use hardware_concurrency)",nums);
+        log::Info(log::SrcLoc::current(), "set threadNums : %d (if nums <= 0, use hardware_concurrency)", nums);
         if (nums > 0)
             neko::core::getThreadPool().set_pool_size(static_cast<neko::uint64>(nums));
     }
@@ -116,63 +128,59 @@ namespace neko::init {
      * @brief Print configuration information to the log.
      * @param config The client configuration to print.
      */
-    inline void configInfoPrint(const ClientConfig & config) {
-        
-        log::Info(log::SrcLoc::current(), "config main : lang : %s , backgroundType : %s , background : %s , windowSize : %s , launcherMethod : %ld , useSysWindowFrame: %s , headBarKeepRight : %s",
-            config.main.lang,
-            config.main.backgroundType,
-            config.main.background,
-            config.main.windowSize,
-            config.main.launcherMethod,
-            util::logic::boolTo<neko::cstr>(config.main.useSysWindowFrame),
-            util::logic::boolTo<neko::cstr>(config.main.headBarKeepRight)
-        );
+    inline void configInfoPrint(const ClientConfig &config) {
+
+        log::Info(log::SrcLoc::current(), "config main : lang : %s , backgroundType : %s , background : %s , windowSize : %s , launcherMethod : %ld , useSysWindowFrame: %s , headBarKeepRight : %s , deviceID : %s",
+                  config.main.lang,
+                  config.main.backgroundType,
+                  config.main.background,
+                  config.main.windowSize,
+                  config.main.launcherMethod,
+                  util::logic::boolTo<neko::cstr>(config.main.useSysWindowFrame),
+                  util::logic::boolTo<neko::cstr>(config.main.headBarKeepRight),
+                  config.main.deviceID
+                );
 
         log::Info(log::SrcLoc::current(), "config net : thread : %ld , proxy : %s",
-            config.net.thread,
-            config.net.proxy
-        );
+                  config.net.thread,
+                  config.net.proxy);
 
         log::Info(log::SrcLoc::current(), "config style : blurEffect : %ld , blurRadius : %ld , fontPointSize : %ld , fontFamilies : %s",
-            config.style.blurEffect,
-            config.style.blurRadius,
-            config.style.fontPointSize,
-            config.style.fontFamilies
-        );
+                  config.style.blurEffect,
+                  config.style.blurRadius,
+                  config.style.fontPointSize,
+                  config.style.fontFamilies);
 
         log::Info(log::SrcLoc::current(), "config dev : enable : %s , debug : %s , server : %s , tls : %s",
-            util::logic::boolTo<neko::cstr>(config.dev.enable),
-            util::logic::boolTo<neko::cstr>(config.dev.debug),
-            config.dev.server,
-            util::logic::boolTo<neko::cstr>(config.dev.tls)
-        );
+                  util::logic::boolTo<neko::cstr>(config.dev.enable),
+                  util::logic::boolTo<neko::cstr>(config.dev.debug),
+                  config.dev.server,
+                  util::logic::boolTo<neko::cstr>(config.dev.tls));
 
         std::string accToken = config.minecraft.accessToken ? config.minecraft.accessToken : "";
         std::string maskToken = accToken.empty() ? "null" : "**********" + accToken.substr(accToken.size() - 4); // Hide accessToken for security
         log::Info(log::SrcLoc::current(), "config minecraft : folder : %s , javaPath : %s , account : %s , name : %s , uuid : %s , accessToken : %s , targetVersion : %s , maxMemory : %ld , minMemory : %ld , needMemory : %ld , authlibName : %s , authlibPrefetched : %s , authlibSha256 : %s , tolerantMode : %s , customResolution : %s , joinServerAddress : %s , joinServerPort : %s",
-            config.minecraft.minecraftFolder,
-            config.minecraft.javaPath,
-            config.minecraft.account,
-            config.minecraft.playerName,
-            config.minecraft.uuid,
-            maskToken.c_str(),
-            config.minecraft.targetVersion,
-            config.minecraft.maxMemoryLimit,
-            config.minecraft.minMemoryLimit,
-            config.minecraft.needMemoryLimit,
-            config.minecraft.authlibName,
-            config.minecraft.authlibPrefetched,
-            config.minecraft.authlibSha256,
-            util::logic::boolTo<neko::cstr>(config.minecraft.tolerantMode),
-            config.minecraft.customResolution,
-            config.minecraft.joinServerAddress,
-            config.minecraft.joinServerPort
-        );
+                  config.minecraft.minecraftFolder,
+                  config.minecraft.javaPath,
+                  config.minecraft.account,
+                  config.minecraft.playerName,
+                  config.minecraft.uuid,
+                  maskToken.c_str(),
+                  config.minecraft.targetVersion,
+                  config.minecraft.maxMemoryLimit,
+                  config.minecraft.minMemoryLimit,
+                  config.minecraft.needMemoryLimit,
+                  config.minecraft.authlibName,
+                  config.minecraft.authlibPrefetched,
+                  config.minecraft.authlibSha256,
+                  util::logic::boolTo<neko::cstr>(config.minecraft.tolerantMode),
+                  config.minecraft.customResolution,
+                  config.minecraft.joinServerAddress,
+                  config.minecraft.joinServerPort);
 
         log::Info(log::SrcLoc::current(), "config other : temp : %s , resVersion : %s",
-            config.other.tempFolder,
-            config.other.resourceVersion
-        );
+                  config.other.tempFolder,
+                  config.other.resourceVersion);
     }
 
     /**
@@ -195,6 +203,8 @@ namespace neko::init {
         initThreadName();
 
         info::lang::language(cfg.main.lang);
+
+        initDeviceID(cfg);
 
         configInfoPrint(cfg);
 
