@@ -29,7 +29,7 @@ namespace neko::ui {
         /**
          * @brief The main message content.
          */
-        std::string msg;
+        std::string message;
 
         /**
          * @brief Path to the background image (poster).
@@ -85,7 +85,7 @@ namespace neko::ui {
         /**
          * @brief Additional message to display in the text widget.
          */
-        std::string msg;
+        std::string message;
 
         /**
          * @brief Path to the background image (poster).
@@ -126,7 +126,7 @@ namespace neko::ui {
         /**
          * @brief The main message content.
          */
-        std::string msg;
+        std::string message;
 
         /**
          * @brief Path to the background image (poster).
@@ -177,7 +177,7 @@ namespace neko::ui {
         /**
          * @brief The main message content.
          */
-        std::string msg;
+        std::string message;
 
         /**
          * @brief Path to the background image (poster).
