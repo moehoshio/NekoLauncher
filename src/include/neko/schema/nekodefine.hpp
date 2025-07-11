@@ -14,31 +14,45 @@ namespace neko::schema {
      */
     namespace definitions {
 
-        constexpr neko::cstr NekoLcCoreVersion = "v0.0.1";
+        constexpr neko::strview AppName = "NekoLauncher";
 
-        constexpr neko::cstr NetWorkHostList[] = {"api.example.com", "www.example.org"};
-        
-        constexpr neko::cstr NetWorkAuthlibHost = "skin.example.org";
+        constexpr neko::strview NekoLcCoreVersion = "v0.0.1";
 
+        constexpr neko::strview NetworkHostList[] = {"api.example.com", "www.example.org"};
+
+        constexpr neko::strview NetworkAuthlibHost = "skin.example.org";
+
+        constexpr bool useAuthentication = true;
+
+        constexpr bool useStaticDeployment = false;
+
+        constexpr bool useWebSocket = true;
+
+        // If only static deployment configuration . always enabled when useStaticDeployment is true
+        constexpr bool useStaticRemoteConfig = false;
         // URL for the remote configuration file
-        constexpr neko::cstr NetWorkRemoteConfigUrl = "https://config.example.com/remote-config.json";
+        constexpr neko::strview NetworkRemoteConfigUrl = "https://static.example.com/NekoLc/v0/remote-config.json";
 
-        constexpr neko::cstr launcherMode = "minecraft";
+        constexpr neko::strview launcherMode = "minecraft";
 
-        constexpr neko::cstr clientConfigFileName = "config.ini";
+        constexpr neko::strview clientConfigFileName = "config.ini";
 
-        constexpr neko::uint64 NetWorkHostListSize = sizeof(NetWorkHostList) / sizeof(NetWorkHostList[0]);
+        constexpr neko::uint64 NetworkHostListSize = sizeof(NetworkHostList) / sizeof(NetworkHostList[0]);
 
-        // Unique identifier for the build
-#if defined(GIT_BUILD_ID)
-        constexpr inline const std::string_view build_id = GIT_BUILD_ID;
-#else
 
-        // A constexpr function to generate a unique identifier based on the current time, date, and file.
+        // Helper namespace for constexpr build ID generation
         namespace constexprBuildId {
 
             constexpr char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
             constexpr neko::uint64 charset_size = sizeof(charset) - 1;
+
+            consteval neko::uint64 consteval_strlen(neko::cstr str) {
+                neko::uint64 len = 0;
+                while (str[len] != '\0') {
+                    ++len;
+                }
+                return len;
+            }
 
             constexpr neko::uint32 constexpr_hash(neko::cstr str, int h = 0) {
                 return !str[h] ? 5381 : (constexpr_hash(str, h + 1) * 33) ^ str[h];
@@ -66,13 +80,38 @@ namespace neko::schema {
                 return arr;
             }
 
-            constexpr auto build_id_array = make_identifier<10>(__TIME__, __DATE__, __FILE__);
+            template <neko::uint64 N1, neko::uint64 N2, neko::uint64 N3>
+            constexpr auto concat3(neko::cstr version, neko::cstr time, neko::cstr id) {
+                std::array<char, N1 + 1 + N2 + 1 + N3 + 1> arr{};
+                neko::uint64 idx = 0;
+                for (neko::uint64 i = 0; i < N1; ++i) { arr[idx++] = version[i]; }
+                arr[idx++] = '-';
+                for (neko::uint64 i = 0; i < N2; ++i) { arr[idx++] = time[i]; }
+                arr[idx++] = '-';
+                for (neko::uint64 i = 0; i < N3; ++i) { arr[idx++] = id[i]; }
+                arr[idx] = '\0';
+                return arr;
+            }
+
+            // If GIT_COMMIT_ID is defined, use it as the identifier; otherwise, use make_identifier to generate a seemingly random identifier
+            constexpr auto build_id_array =
+#if defined(GIT_COMMIT_ID)
+                std::array<char, sizeof(GIT_COMMIT_ID)>{GIT_COMMIT_ID};
+#else
+                make_identifier<8>(__TIME__, __DATE__, __FILE__);
+#endif
+
+            // The complete identifier is composed in the form of version-time-unique_identifier
+            constexpr auto build_id_full_array = concat3<NekoLcCoreVersion.size(), consteval_strlen(BUILD_TIME), build_id_array.size()>(NekoLcCoreVersion.data(), BUILD_TIME, build_id_array.data());
 
         } // namespace constexprBuildId
 
-        constexpr std::string_view build_id(constexprBuildId::build_id_array.data(), 10);
-
-#endif // Git_BUILD_ID
+        /**
+         * @brief // This is the build ID, which is a combination of the core version, build time, and a unique identifier.
+         * @var buildID
+         * @example "v0.0.1-20250710184724-githash"
+         */
+        constexpr std::string_view buildID(constexprBuildId::build_id_full_array.data(), constexprBuildId::build_id_full_array.size());
 
     } // namespace definitions
 
