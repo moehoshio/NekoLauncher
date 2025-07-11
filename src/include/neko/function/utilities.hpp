@@ -305,6 +305,16 @@ namespace neko::util {
     namespace memory {
 
         /**
+         * @brief Creates a std::array from the given arguments.
+         * @tparam Args Types of the arguments
+         * @param args Arguments to be included in the array
+         * @return std::array containing the provided arguments
+         */
+        constexpr auto makeArray(auto &&...args) {
+            return std::array{std::forward<decltype(args)>(args)...};
+        }
+
+        /**
          * @brief Creates a shallow copy of a value.
          */
         template <typename T>
@@ -374,7 +384,7 @@ namespace neko::util {
         constexpr auto deepCopy = [](const auto *ptr) -> std::remove_cv_t<std::remove_pointer_t<decltype(ptr)>> * { return memory::copy(ptr); };
     } // namespace lambda
 
-    namespace logic {
+    inline namespace logic {
         /**
          * @brief Converts a boolean to a string or other type.
          * @tparam T Return type
@@ -406,7 +416,7 @@ namespace neko::util {
         };
     } // namespace logic
 
-    namespace math {
+    inline namespace math {
 
         /**
          * @brief Computes the sum of all arguments.
@@ -465,7 +475,6 @@ namespace neko::util {
 #endif
             return tmResult;
         }
-
 
         /**
          * @brief Converts std::tm to utc std::time_t.
