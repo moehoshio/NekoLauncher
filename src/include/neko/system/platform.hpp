@@ -4,7 +4,7 @@
  * @date 2025/06/07
  * @brief Provides platform-related information and utility functions, including OS/architecture identification, temporary/work/home directory helpers.
  *
- * This file is defined under the neko::system namespace and contains the PlatformInfo structure and several platform utility functions.
+ * This file is defined under the neko::system namespace and contains the PlatformInfo and several platform utility functions.
  */
 
 #pragma once
@@ -25,45 +25,64 @@
 namespace neko::system {
 
     /**
-     * @struct PlatformInfo
-     * @brief Provides static platform identification information.
-     *
-     * Contains compile-time constants for operating system name and CPU architecture.
+     * @brief Operating system name identifier.
+     * @details Possible values: "windows", "osx", "linux", or "unknown".
      */
-    struct PlatformInfo {
-
-        /**
-         * @brief Operating system name identifier.
-         * @details Possible values: "windows", "osx", "linux", or "unknown".
-         */
-        constexpr static neko::cstr osName =
+    constexpr neko::cstr osName =
 #if defined(_WIN32)
-            "windows";
+        "windows";
 #elif defined(__APPLE__)
-            "osx";
+        "osx";
 #elif defined(__linux__)
-            "linux";
+        "linux";
+#else
+        "unknown";
+#endif
+
+    /**
+     * @brief CPU architecture identifier.
+     * @details Possible values: "x64", "x86", "arm64", "arm", or "unknown".
+     */
+    constexpr neko::cstr osArch =
+#if defined(__x86_64__) || defined(_M_X64)
+        "x64";
+#elif defined(__i386__) || defined(_M_IX86)
+        "x86";
+#elif defined(__aarch64__) || defined(_M_ARM64)
+        "arm64";
+#elif defined(__arm__) || defined(_M_ARM)
+        "arm";
 #else
             "unknown";
 #endif
 
-        /**
-         * @brief CPU architecture identifier.
-         * @details Possible values: "x64", "x86", "arm64", "arm", or "unknown".
-         */
-        constexpr static neko::cstr osArch =
-#if defined(__x86_64__) || defined(_M_X64)
-            "x64";
-#elif defined(__i386__) || defined(_M_IX86)
-            "x86";
-#elif defined(__aarch64__) || defined(_M_ARM64)
-            "arm64";
-#elif defined(__arm__) || defined(_M_ARM)
-            "arm";
-#else
-                "unknown";
-#endif
-    }; // class PlatformInfo
+    constexpr bool isMacOS() const {
+        return osName == neko::strview("osx");
+    }
+
+    constexpr bool isWindows() const {
+        return osName == neko::strview("windows");
+    }
+
+    constexpr bool isLinux() const {
+        return osName == neko::strview("linux");
+    }
+
+    constexpr bool isArchX64() {
+        return osArch == neko::strview("x64");
+    }
+
+    constexpr bool isArchX86() {
+        return osArch == neko::strview("x86");
+    }
+
+    constexpr bool isArchArm64() {
+        return osArch == neko::strview("arm64");
+    }
+
+    constexpr bool isArchArm() {
+        return osArch == neko::strview("arm");
+    }
 
     /**
      * @brief Get or set the temporary directory path.
@@ -147,7 +166,7 @@ namespace neko::system {
      * @return const char* OS name.
      */
     constexpr neko::cstr getOsName() {
-        return PlatformInfo::osName;
+        return osName;
     }
 
     /**
@@ -155,7 +174,7 @@ namespace neko::system {
      * @return const char* Architecture name.
      */
     constexpr neko::cstr getOsArch() {
-        return PlatformInfo::osArch;
+        return osArch;
     }
 
     std::string getOsVersion();
