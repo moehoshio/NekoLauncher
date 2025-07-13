@@ -50,11 +50,11 @@ namespace neko::event {
     using HandlerId = neko::uint64;
 
     // Event priority levels
-    enum class EventPriority : int {
-        LOW = 0,
-        NORMAL = 1,
-        HIGH = 2,
-        CRITICAL = 3
+    enum class EventPriority : neko::uint8 {
+        Low = 0,
+        Normal = 1,
+        High = 2,
+        Critical = 3
     };
 
     // Event processing mode
@@ -81,7 +81,7 @@ namespace neko::event {
         EventPriority priority;
         ProcessingMode mode;
 
-        BaseEvent(EventPriority prio = EventPriority::NORMAL, ProcessingMode procMode = ProcessingMode::ASYNC)
+        BaseEvent(EventPriority prio = EventPriority::Normal, ProcessingMode procMode = ProcessingMode::ASYNC)
             : id(0), timestamp(std::chrono::steady_clock::now()), priority(prio), mode(procMode) {}
         virtual ~BaseEvent() = default;
         virtual std::type_index getType() const = 0;
@@ -149,7 +149,7 @@ namespace neko::event {
     private:
         std::function<void(const T &)> callback;
         std::vector<std::unique_ptr<EventFilter<T>>> filters;
-        EventPriority minPriority = EventPriority::LOW;
+        EventPriority minPriority = EventPriority::Low;
 
     public:
         /**
@@ -184,7 +184,7 @@ namespace neko::event {
             auto typedEvent = std::static_pointer_cast<Event<T>>(event);
 
             // Check priority
-            if (static_cast<int>(event->priority) < static_cast<int>(minPriority)) {
+            if (static_cast<neko::uint8>(event->priority) < static_cast<neko::uint8>(minPriority)) {
                 return;
             }
 
@@ -224,7 +224,7 @@ namespace neko::event {
          * @param eventId The event/task ID.
          * @param prio The priority.
          */
-        ScheduledTask(TimePoint t, std::function<void()> cb, EventId eventId, EventPriority prio = EventPriority::NORMAL)
+        ScheduledTask(TimePoint t, std::function<void()> cb, EventId eventId, EventPriority prio = EventPriority::Normal)
             : execTime(t), callback(std::move(cb)), id(eventId), priority(prio) {}
 
         /**
@@ -235,8 +235,8 @@ namespace neko::event {
             if (execTime != other.execTime) {
                 return execTime > other.execTime;
             }
-            if (static_cast<int>(priority) != static_cast<int>(other.priority)) {
-                return static_cast<int>(priority) < static_cast<int>(other.priority);
+            if (static_cast<neko::uint8>(priority) != static_cast<neko::uint8>(other.priority)) {
+                return static_cast<neko::uint8>(priority) < static_cast<neko::uint8>(other.priority);
             }
             return id > other.id;
         }
@@ -272,7 +272,7 @@ namespace neko::event {
         std::atomic<bool> enableStats{true};
         EventStats stats;
         mutable std::mutex statsMtx;
-        neko::uint64 maxQueueSize = 10000;
+        neko::uint64 maxQueueSize = 100000;
         std::function<void(const std::string &)> logger;
 
         // Event loop control
@@ -543,7 +543,7 @@ namespace neko::event {
          */
         template <typename T>
         HandlerId subscribe(std::function<void(const T &)> handler,
-                            EventPriority minPriority = EventPriority::LOW) {
+                            EventPriority minPriority = EventPriority::Low) {
             std::unique_lock<std::shared_mutex> lock(eventMtx);
             auto eventHandler = std::make_shared<EventHandler<T>>(std::move(handler));
             eventHandler->id = nextHandlerId.fetch_add(1);
@@ -699,7 +699,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleTask(TimePoint t, std::function<void()> cb, EventPriority priority = EventPriority::NORMAL) {
+        EventId scheduleTask(TimePoint t, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
             return scheduleTaskInternal(t, std::move(cb), priority);
         }
 
@@ -710,7 +710,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, EventPriority priority = EventPriority::NORMAL) {
+        EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
             return scheduleTaskInternal(std::chrono::steady_clock::now() + std::chrono::milliseconds(ms), std::move(cb), priority);
         }
 
@@ -721,7 +721,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, EventPriority priority = EventPriority::NORMAL) {
+        EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
             EventId id = nextTaskId.fetch_add(1);
             auto interval = std::chrono::milliseconds(intervalMs);
 
@@ -813,7 +813,7 @@ namespace neko::event {
          */
         void run() {
             constexpr auto cleanupInterval = std::chrono::seconds(2);
-            constexpr auto maxWaitTime = std::chrono::milliseconds(500); // 最大等待時間
+            constexpr auto maxWaitTime = std::chrono::milliseconds(500); // maximum wait time for events or tasks
 
             auto lastCleanup = std::chrono::steady_clock::now();
 
