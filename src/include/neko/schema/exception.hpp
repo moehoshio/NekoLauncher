@@ -204,10 +204,21 @@ namespace neko::ex {
 #endif
     };
 
+    
+    /**
+     * @brief Exception for program termination or exit.
+     */
+    class ProgramExit : public Exception {
+    public:
+        explicit ProgramExit(const std::string &Msg = "Program exited!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
+    };
+
     /**
      * @brief Exception for already existing objects.
      */
-    struct AlreadyExists : public Exception {
+    class AlreadyExists : public Exception {
+    public:
         explicit AlreadyExists(const std::string &Msg = "Object already exists!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : Exception(Msg, ExtInfo) {}
     };
@@ -215,7 +226,8 @@ namespace neko::ex {
     /**
      * @brief Exception for invalid arguments.
      */
-    struct InvalidArgument : public Exception {
+    class InvalidArgument : public Exception {
+    public:
         explicit InvalidArgument(const std::string &Msg = "Invalid argument!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : Exception(Msg, ExtInfo) {}
     };
@@ -307,6 +319,15 @@ namespace neko::ex {
     class Concurrency : public Exception {
     public:
         explicit Concurrency(const std::string &Msg = "Concurrency error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, ExtInfo) {}
+    };
+
+    /**
+     * @brief Exception for task rejection.
+     */
+    class TaskRejected : public Exception {
+    public:
+        explicit TaskRejected(const std::string &Msg = "Task rejected!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
             : Exception(Msg, ExtInfo) {}
     };
 
