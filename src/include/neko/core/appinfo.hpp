@@ -1,13 +1,11 @@
 #pragma once
 
-#include "neko/schema/api.hpp"
+
 #include "neko/schema/clientconfig.hpp"
 #include "neko/schema/nekodefine.hpp"
 #include "neko/schema/types.hpp"
 
 #include "neko/core/resources.hpp"
-
-#include "neko/system/platform.hpp"
 
 #include <string>
 
@@ -30,9 +28,8 @@ namespace neko::core::app {
      * @return The application version string.
      */
     constexpr neko::cstr getVersion() {
-        return schema::definitio
-            ns::NekoLcCoreVersion.data();
-    };
+        return schema::definitions::NekoLcCoreVersion.data();
+    }
 
     /**
      * @brief Gets the resource version from configuration.
@@ -76,26 +73,6 @@ namespace neko::core::app {
      */
     constexpr neko::cstr getStaticRemoteConfigUrl() {
         return schema::definitions::NetworkRemoteConfigUrl.data();
-    }
-
-    /**
-     * @brief Gets the client information.
-     * @return The client information struct.
-     */
-    inline schema::ClientInfo getClientInfo() {
-        return schema::ClientInfo{
-            .app = {
-                .appName = getAppName(),
-                .coreVersion = getVersion(),
-                .resourceVersion = getResourceVersion(),
-                .buildId = getBuildId()},
-            .system = {
-                .os = system::getOsName(), 
-                .arch = system::getArchName(), 
-                .osVersion = system::getOsVersion()
-            },
-            .extra = {},
-            .deviceId = getDeviceId()};
     }
 
 } // namespace neko::core::app
