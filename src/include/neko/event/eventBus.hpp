@@ -1,15 +1,15 @@
 #pragma once
-#include "neko/event/event.hpp"
+
 #include "neko/core/resources.hpp"
+#include "neko/event/event.hpp"
 
-namespace neko::event {
+namespace neko::bus::event {
 
-     // === Event methods ===
+    // === Event methods ===
 
-      // === Subscription Event ===
+    // === Subscription Event ===
     template <typename T>
-    inline HandlerId subscribe(std::function<void(const T &)> handler,
-                              EventPriority minPriority = EventPriority::LOW) {
+    inline HandlerId subscribe(std::function<void(const T &)> handler, EventPriority minPriority = EventPriority::Low) {
         return core::getEventLoop().subscribe<T>(std::move(handler), minPriority);
     }
 
@@ -18,8 +18,7 @@ namespace neko::event {
         return core::getEventLoop().unsubscribe<T>(handlerId);
     }
 
-
-     // === Publish Event ===
+    // === Publish Event ===
     template <typename T>
     inline void publish(const T &eventData) {
         core::getEventLoop().publish<T>(eventData);
@@ -50,17 +49,16 @@ namespace neko::event {
         return core::getEventLoop().addFilter<T>(handlerId, std::move(filter));
     }
 
-
-     // === Task Scheduling ===
-    inline EventId scheduleTask(EventLoop::TimePoint t, std::function<void()> cb, EventPriority priority = EventPriority::NORMAL) {
+    // === Task Scheduling ===
+    inline EventId scheduleTask(EventLoop::TimePoint t, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
         return core::getEventLoop().scheduleTask(t, std::move(cb), priority);
     }
 
-    inline EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, EventPriority priority = EventPriority::NORMAL) {
+    inline EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
         return core::getEventLoop().scheduleTask(ms, std::move(cb), priority);
     }
 
-    inline EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, EventPriority priority = EventPriority::NORMAL) {
+    inline EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
         return core::getEventLoop().scheduleRepeating(intervalMs, std::move(cb), priority);
     }
 
@@ -72,8 +70,7 @@ namespace neko::event {
         core::getEventLoop().cleanupCancelledTasks();
     }
 
-
-     // === Event Loop Control ===
+    // === Event Loop Control ===
     inline bool isRunning() {
         return core::getEventLoop().isRunning();
     }
@@ -114,4 +111,4 @@ namespace neko::event {
         return core::getEventLoop().getQueueSizes();
     }
 
-} // namespace neko::event
+} // namespace neko::bus::event
