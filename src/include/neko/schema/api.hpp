@@ -1,5 +1,4 @@
 #include "neko/schema/types.hpp"
-#include "neko/system/platform.hpp"
 
 #include "library/nlohmann/json.hpp"
 
@@ -281,16 +280,15 @@ namespace neko::schema {
             bool empty() const noexcept {
                 return LauncherConfigResponse::empty() && checkUpdateUrls.empty();
             }
-            std::optional<std::string> getCheckUpdateUrl() const noexcept {
+
+            std::optional<std::string> getCheckUpdateUrl(const std::string & os, const std::string & arch, const std::string & osVersionRegex) const noexcept {
                 if (checkUpdateUrls.empty()) {
                     return std::nullopt;
                 }
-                std::string os = system::getOsName();
-                std::string arch = system::getOsArch();
 
                 for (const auto &it : checkUpdateUrls) {
                     std::regex versionRegex(it.system.osVersion);
-                    if (it.system.os == os && it.system.arch == arch && std::regex_search(system::getOsVersion(), versionRegex)) {
+                    if (it.system.os == os && it.system.arch == arch && std::regex_search(osVersionRegex, versionRegex)) {
                         return it.url;
                     }
                 }
