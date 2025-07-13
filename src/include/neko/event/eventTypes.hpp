@@ -1,8 +1,11 @@
 #pragma once
+
 #include "neko/schema/types.hpp"
 #include "neko/ui/uiMsg.hpp"
 
 namespace neko::event {
+
+    struct StartEvent {};
 
     struct ExitEvent {};
 
@@ -14,9 +17,17 @@ namespace neko::event {
         ShowLoadEvent(const neko::ui::LoadMsg &msg) : neko::ui::LoadMsg(msg) {}
     };
 
-    struct UpdateLoadingEvent {
+    struct UpdateLoadingValEvent {
+        neko::uint32 progressVal = 0;
+    };
+
+    struct UpdateLoadingNowEvent {
         std::string process;
-        neko::uint32 progressVal;
+    };
+
+    struct UpdateLoadingEvent : public UpdateLoadingValEvent, public UpdateLoadingNowEvent {
+        UpdateLoadingEvent(const std::string &process, neko::uint32 progressVal = 0)
+            : UpdateLoadingValEvent{progressVal}, UpdateLoadingNowEvent{process} {}
     };
 
     struct ShowInputEvent : public neko::ui::InputMsg {
