@@ -5,10 +5,7 @@
 #pragma once
 
 #include "neko/schema/types.hpp"
-
 #include "library/SimpleIni/SimpleIni.h"
-
-#include <shared_mutex>
 
 namespace neko {
     /**
@@ -97,8 +94,6 @@ namespace neko {
             neko::cstr joinServerPort;    // Port of the server to join
         } minecraft;
 
-        static std::shared_mutex configMutex;
-
         ClientConfig() = default;
         ~ClientConfig() = default;
 
@@ -107,8 +102,7 @@ namespace neko {
          *
          * @param cfg SimpleIni configuration object to load settings from
          */
-        ClientConfig(const CSimpleIniA &cfg) {
-            std::shared_lock lock(configMutex);
+        ClientConfig(const CSimpleIniA &cfg) noexcept {
             main.lang = cfg.GetValue("main", "language", "en");
             main.backgroundType = cfg.GetValue("main", "backgroundType", "image");
             main.background = cfg.GetValue("main", "background", "img/bg.png");
@@ -161,68 +155,60 @@ namespace neko {
         }
 
         /**
-         * @brief Save the current configuration
+         * @brief sets the configuration to a SimpleIni configuration object
          *
-         * @param saveCfg SimpleIni configuration object to save settings to
-         * @param fileName Path to the file where configuration will be saved. nullptr or empty string means no file saving
+         * @param cfg SimpleIni configuration object to save settings to
          */
-        void save(CSimpleIniA &saveCfg, neko::cstr fileName = nullptr) const {
-            std::unique_lock lock(configMutex);
-            saveCfg.SetValue("main", "language", main.lang);
-            saveCfg.SetValue("main", "backgroundType", main.backgroundType);
-            saveCfg.SetValue("main", "background", main.background);
-            saveCfg.SetValue("main", "windowSize", main.windowSize);
-            saveCfg.SetLongValue("main", "launcherMethod", main.launcherMethod);
-            saveCfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
-            saveCfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
-            saveCfg.SetValue("main", "deviceID", main.deviceID);
+        void setToConfig(CSimpleIniA &cfg) const noexcept {
+            cfg.SetValue("main", "language", main.lang);
+            cfg.SetValue("main", "backgroundType", main.backgroundType);
+            cfg.SetValue("main", "background", main.background);
+            cfg.SetValue("main", "windowSize", main.windowSize);
+            cfg.SetLongValue("main", "launcherMethod", main.launcherMethod);
+            cfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
+            cfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
+            cfg.SetValue("main", "deviceID", main.deviceID);
 
-            saveCfg.SetLongValue("style", "blurEffect", style.blurEffect);
-            saveCfg.SetLongValue("style", "blurRadius", style.blurRadius);
-            saveCfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
-            saveCfg.SetValue("style", "fontFamilies", style.fontFamilies);
+            cfg.SetLongValue("style", "blurEffect", style.blurEffect);
+            cfg.SetLongValue("style", "blurRadius", style.blurRadius);
+            cfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
+            cfg.SetValue("style", "fontFamilies", style.fontFamilies);
 
-            saveCfg.SetLongValue("net", "thread", net.thread);
-            saveCfg.SetValue("net", "proxy", net.proxy);
+            cfg.SetLongValue("net", "thread", net.thread);
+            cfg.SetValue("net", "proxy", net.proxy);
 
-            saveCfg.SetBoolValue("dev", "enable", dev.enable);
-            saveCfg.SetBoolValue("dev", "debug", dev.debug);
-            saveCfg.SetValue("dev", "server", dev.server);
-            saveCfg.SetBoolValue("dev", "tls", dev.tls);
+            cfg.SetBoolValue("dev", "enable", dev.enable);
+            cfg.SetBoolValue("dev", "debug", dev.debug);
+            cfg.SetValue("dev", "server", dev.server);
+            cfg.SetBoolValue("dev", "tls", dev.tls);
 
-            saveCfg.SetValue("other", "customTempDir", other.tempFolder);
-            saveCfg.SetValue("other", "resourceVersion", other.resourceVersion);
+            cfg.SetValue("other", "customTempDir", other.tempFolder);
+            cfg.SetValue("other", "resourceVersion", other.resourceVersion);
 
-            saveCfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder);
-            saveCfg.SetValue("minecraft", "javaPath", minecraft.javaPath);
-            saveCfg.SetValue("minecraft", "downloadSource", minecraft.downloadSource);
+            cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder);
+            cfg.SetValue("minecraft", "javaPath", minecraft.javaPath);
+            cfg.SetValue("minecraft", "downloadSource", minecraft.downloadSource);
 
-            saveCfg.SetValue("minecraft", "playerName", minecraft.playerName);
-            saveCfg.SetValue("minecraft", "account", minecraft.account);
-            saveCfg.SetValue("minecraft", "uuid", minecraft.uuid);
-            saveCfg.SetValue("minecraft", "accessToken", minecraft.accessToken);
+            cfg.SetValue("minecraft", "playerName", minecraft.playerName);
+            cfg.SetValue("minecraft", "account", minecraft.account);
+            cfg.SetValue("minecraft", "uuid", minecraft.uuid);
+            cfg.SetValue("minecraft", "accessToken", minecraft.accessToken);
 
-            saveCfg.SetValue("minecraft", "targetVersion", minecraft.targetVersion);
+            cfg.SetValue("minecraft", "targetVersion", minecraft.targetVersion);
 
-            saveCfg.SetLongValue("minecraft", "maxMemoryLimit", minecraft.maxMemoryLimit);
-            saveCfg.SetLongValue("minecraft", "minMemoryLimit", minecraft.minMemoryLimit);
-            saveCfg.SetLongValue("minecraft", "needMemoryLimit", minecraft.needMemoryLimit);
+            cfg.SetLongValue("minecraft", "maxMemoryLimit", minecraft.maxMemoryLimit);
+            cfg.SetLongValue("minecraft", "minMemoryLimit", minecraft.minMemoryLimit);
+            cfg.SetLongValue("minecraft", "needMemoryLimit", minecraft.needMemoryLimit);
 
-            saveCfg.SetValue("minecraft", "authlibName", minecraft.authlibName);
-            saveCfg.SetValue("minecraft", "authlibPrefetched", minecraft.authlibPrefetched);
-            saveCfg.SetValue("minecraft", "authlibSha256", minecraft.authlibSha256);
+            cfg.SetValue("minecraft", "authlibName", minecraft.authlibName);
+            cfg.SetValue("minecraft", "authlibPrefetched", minecraft.authlibPrefetched);
+            cfg.SetValue("minecraft", "authlibSha256", minecraft.authlibSha256);
 
-            saveCfg.SetBoolValue("minecraft", "tolerantMode", minecraft.tolerantMode);
+            cfg.SetBoolValue("minecraft", "tolerantMode", minecraft.tolerantMode);
 
-            saveCfg.SetValue("minecraft", "customResolution", minecraft.customResolution);
-            saveCfg.SetValue("minecraft", "joinServerAddress", minecraft.joinServerAddress);
-            saveCfg.SetValue("minecraft", "joinServerPort", minecraft.joinServerPort);
-
-            // Save the configuration to the specified file
-            if (fileName && fileName[0] != '\0') {
-                saveCfg.SaveFile(fileName);
-            }
-            
+            cfg.SetValue("minecraft", "customResolution", minecraft.customResolution);
+            cfg.SetValue("minecraft", "joinServerAddress", minecraft.joinServerAddress);
+            cfg.SetValue("minecraft", "joinServerPort", minecraft.joinServerPort);
         }
     };
 } // namespace neko

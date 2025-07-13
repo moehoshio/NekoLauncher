@@ -1,7 +1,7 @@
 #pragma once
 
-#include "library/SimpleIni/SimpleIni.h"
-#include "library/threadpool.hpp"
+#include "neko/core/configManager.hpp"
+#include "neko/core/threadPool.hpp"
 #include "neko/event/event.hpp"
 
 namespace neko::core {
@@ -18,8 +18,8 @@ namespace neko::core {
          * @brief Gets the global thread pool instance.
          * @return Reference to the global thread pool object.
          */
-        static neko::ThreadPool& getThreadPool() {
-            static neko::ThreadPool instance;
+        static core::thread::ThreadPool& getThreadPool() {
+            static core::thread::ThreadPool instance;
             return instance;
         }
 
@@ -27,8 +27,8 @@ namespace neko::core {
          * @brief Gets the global configuration object.
          * @return Reference to the global SimpleIni configuration object.
          */
-        static CSimpleIniA& getConfigObj() {
-            static CSimpleIniA instance;
+        static core::ConfigManager& getConfigObj() {
+            static core::ConfigManager instance;
             return instance;
         }
 
@@ -48,7 +48,7 @@ namespace neko::core {
      * 
      * This is a convenience function that wraps Resources::getThreadPool()
      */
-    inline neko::ThreadPool& getThreadPool() {
+    inline core::thread::ThreadPool& getThreadPool() {
         return Resources::getThreadPool();
     }
 
@@ -58,7 +58,7 @@ namespace neko::core {
      * 
      * This is a convenience function that wraps Resources::getConfigObj()
      */
-    inline CSimpleIniA& getConfigObj() {
+    inline core::ConfigManager& getConfigObj() {
         return Resources::getConfigObj();
     }
 
