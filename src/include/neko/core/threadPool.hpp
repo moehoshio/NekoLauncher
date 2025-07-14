@@ -203,7 +203,8 @@ namespace neko::core::thread {
                     {
                         std::unique_lock<std::mutex> lock(taskQueueMutex);
                         taskQueueCondVar.wait(lock, [this] {
-                            return isStop.load() || !tasks.empty();
+                            std::lock_guard<std::mutex> lock(self->personalTaskMutex);
+                            return isStop.load() || !tasks.empty() || !self->personalTaskQueue.empty();
                         });
                     }
                     continue;
@@ -238,11 +239,8 @@ namespace neko::core::thread {
                 --activeTasks;
 
                 {
-                    std::lock_guard<std::mutex> queueLock(taskQueueMutex);
-                    if (tasks.empty() && activeTasks.load() == 0) {
-                        std::unique_lock<std::shared_mutex> lock(completionMutex);
-                        completionCondVar.notify_all();
-                    }
+                    std::unique_lock<std::shared_mutex> lock(completionMutex);
+                    completionCondVar.notify_all();
                 }
             }
             if (logger) {
@@ -314,8 +312,8 @@ namespace neko::core::thread {
             }
 
             auto task = std::make_shared<std::packaged_task<ReturnType()>>(
-                [func = std::forward<decltype(function)>(function), ... arg = std::forward<decltype(args)>(args)]() -> ReturnType {
-                    return std::invoke(func, arg...);
+                [function, args...]() mutable -> ReturnType {
+                    return std::invoke(std::forward<decltype(function)>(function), std::forward<decltype(args)>(args)...);
                 });
 
             std::future<ReturnType> res = task->get_future();
@@ -347,8 +345,8 @@ namespace neko::core::thread {
             -> std::future<std::invoke_result_t<decltype(function), decltype(args)...>> {
             using ReturnType = std::invoke_result_t<decltype(function), decltype(args)...>;
             auto task = std::make_shared<std::packaged_task<ReturnType()>>(
-                [func = std::forward<decltype(function)>(function), ... arg = std::forward<decltype(args)>(args)]() -> ReturnType {
-                    return std::invoke(func, arg...);
+                [function, args...]() mutable -> ReturnType {
+                    return std::invoke(std::forward<decltype(function)>(function), std::forward<decltype(args)>(args)...);
                 });
             std::future<ReturnType> res = task->get_future();
             TaskId taskId = ++nextTaskId;
@@ -367,6 +365,31 @@ namespace neko::core::thread {
         }
 
         // === Control ===
+
+        /**
+         * @brief Wait until the task queue is empty . threads maybe are executing their last task (no unassigned tasks).
+         */
+        void waitForTasksEmpty() {
+            std::shared_lock<std::shared_mutex> lock(completionMutex);
+            completionCondVar.wait(lock, [this] {
+                std::lock_guard<std::mutex> queueLock(taskQueueMutex);
+                return tasks.empty();
+            });
+        }
+
+        /**
+         * @brief Wait until the task queue is empty, with a timeout.
+         * @param timeout The duration to wait before giving up.
+         * @return True if the task queue became empty within the timeout, false otherwise.
+         */
+        template <typename Rep, typename Period>
+        bool waitForTasksEmpty(const std::chrono::duration<Rep, Period> &timeout) {
+            std::shared_lock<std::shared_mutex> lock(completionMutex);
+            return completionCondVar.wait_for(lock, timeout, [this] {
+                std::lock_guard<std::mutex> queueLock(taskQueueMutex);
+                return tasks.empty();
+            });
+        }
 
         /**
          * @brief Wait for all tasks to complete.
