@@ -9,6 +9,7 @@
 
 #include "neko/core/threadPool.hpp"
 #include "neko/core/resources.hpp"
+#include "neko/schema/priority.hpp"
 
 /**
  * @namespace neko::bus::thread
@@ -19,7 +20,7 @@ namespace neko::bus::thread {
     auto submit(auto &&function, auto &&...args) {
         return neko::core::getThreadPool().submit(std::forward<decltype(function)>(function), std::forward<decltype(args)>(args)...);
     }
-    auto submitWithPriority(neko::core::thread::TaskPriority priority, auto &&function, auto &&...args) {
+    auto submitWithPriority(neko::Priority priority, auto &&function, auto &&...args) {
         return neko::core::getThreadPool().submitWithPriority(priority, std::forward<decltype(function)>(function), std::forward<decltype(args)>(args)...);
     }
     auto submitToWorker(neko::uint64 workerId, auto &&function, auto &&...args) {

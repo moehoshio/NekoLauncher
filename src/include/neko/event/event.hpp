@@ -9,6 +9,7 @@
 #pragma once
 
 #include "neko/schema/types.hpp"
+#include "neko/schema/priority.hpp"
 #include "neko/event/eventTypes.hpp"
 
 // STL includes
@@ -49,14 +50,6 @@ namespace neko::event {
     using EventId = neko::uint64;
     using HandlerId = neko::uint64;
 
-    // Event priority levels
-    enum class EventPriority : neko::uint8 {
-        Low = 0,
-        Normal = 1,
-        High = 2,
-        Critical = 3
-    };
-
     // Event processing mode
     enum class ProcessingMode {
         ASYNC, // Process asynchronously (default)
@@ -78,10 +71,10 @@ namespace neko::event {
     public:
         EventId id;
         TimePoint timestamp;
-        EventPriority priority;
+        neko::Priority priority;
         ProcessingMode mode;
 
-        BaseEvent(EventPriority prio = EventPriority::Normal, ProcessingMode procMode = ProcessingMode::ASYNC)
+        BaseEvent(neko::Priority prio = neko::Priority::Normal, ProcessingMode procMode = ProcessingMode::ASYNC)
             : id(0), timestamp(std::chrono::steady_clock::now()), priority(prio), mode(procMode) {}
         virtual ~BaseEvent() = default;
         virtual std::type_index getType() const = 0;
@@ -149,7 +142,7 @@ namespace neko::event {
     private:
         std::function<void(const T &)> callback;
         std::vector<std::unique_ptr<EventFilter<T>>> filters;
-        EventPriority minPriority = EventPriority::Low;
+        neko::Priority minPriority = neko::Priority::Low;
 
     public:
         /**
@@ -170,7 +163,7 @@ namespace neko::event {
          * @brief Set the minimum priority for this handler.
          * @param priority The minimum priority.
          */
-        void setMinPriority(EventPriority priority) {
+        void setMinPriority(neko::Priority priority) {
             minPriority = priority;
         }
 
@@ -212,7 +205,7 @@ namespace neko::event {
         TimePoint execTime;
         std::function<void()> callback;
         EventId id;
-        EventPriority priority;
+        neko::Priority priority;
         bool cancelled = false;
         bool repeating = false;
         std::chrono::milliseconds interval{0};
@@ -224,7 +217,7 @@ namespace neko::event {
          * @param eventId The event/task ID.
          * @param prio The priority.
          */
-        ScheduledTask(TimePoint t, std::function<void()> cb, EventId eventId, EventPriority prio = EventPriority::Normal)
+        ScheduledTask(TimePoint t, std::function<void()> cb, EventId eventId, neko::Priority prio = neko::Priority::Normal)
             : execTime(t), callback(std::move(cb)), id(eventId), priority(prio) {}
 
         /**
@@ -440,7 +433,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleTaskInternal(TimePoint t, std::function<void()> cb, EventPriority priority) {
+        EventId scheduleTaskInternal(TimePoint t, std::function<void()> cb, neko::Priority priority) {
             EventId id = nextTaskId.fetch_add(1);
             {
                 std::lock_guard<std::mutex> lock(taskMtx);
@@ -543,7 +536,7 @@ namespace neko::event {
          */
         template <typename T>
         HandlerId subscribe(std::function<void(const T &)> handler,
-                            EventPriority minPriority = EventPriority::Low) {
+                            neko::Priority minPriority = neko::Priority::Low) {
             std::unique_lock<std::shared_mutex> lock(eventMtx);
             auto eventHandler = std::make_shared<EventHandler<T>>(std::move(handler));
             eventHandler->id = nextHandlerId.fetch_add(1);
@@ -612,7 +605,7 @@ namespace neko::event {
          * @param mode The processing mode.
          */
         template <typename T>
-        void publish(const T &eventData, EventPriority priority, ProcessingMode mode = ProcessingMode::ASYNC) {
+        void publish(const T &eventData, neko::Priority priority, ProcessingMode mode = ProcessingMode::ASYNC) {
             updateStats(true);
 
             auto event = std::make_shared<Event<T>>(eventData);
@@ -699,7 +692,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleTask(TimePoint t, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
+        EventId scheduleTask(TimePoint t, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
             return scheduleTaskInternal(t, std::move(cb), priority);
         }
 
@@ -710,7 +703,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
+        EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
             return scheduleTaskInternal(std::chrono::steady_clock::now() + std::chrono::milliseconds(ms), std::move(cb), priority);
         }
 
@@ -721,7 +714,7 @@ namespace neko::event {
          * @param priority The priority.
          * @return The scheduled task ID.
          */
-        EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
+        EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
             EventId id = nextTaskId.fetch_add(1);
             auto interval = std::chrono::milliseconds(intervalMs);
 

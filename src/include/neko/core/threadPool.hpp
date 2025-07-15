@@ -9,6 +9,7 @@
 
 #include "neko/schema/exception.hpp"
 #include "neko/schema/types.hpp"
+#include "neko/schema/priority.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -35,20 +36,14 @@ namespace neko::core::thread {
     using TimePoint = std::chrono::steady_clock::time_point;
     using TaskId = neko::uint64;
 
-    enum class TaskPriority : neko::uint8 {
-        Low = 0,
-        Normal = 1,
-        High = 2,
-        Critical = 3
-    };
 
     struct Task {
         std::function<void()> function;
-        TaskPriority priority;
+        neko::Priority priority;
         TaskId id;
         TimePoint submitTime;
 
-        Task(std::function<void()> func, TaskPriority prio, TaskId taskId)
+        Task(std::function<void()> func, neko::Priority prio, TaskId taskId)
             : function(std::move(func)), priority(prio), id(taskId),
               submitTime(std::chrono::steady_clock::now()) {}
 
@@ -176,7 +171,7 @@ namespace neko::core::thread {
                     }
                 }
 
-                Task task{nullptr, TaskPriority::Normal, 0};
+                Task task{nullptr, neko::Priority::Normal, 0};
                 bool hasTask = false;
 
                 // Check personal queue first
@@ -284,7 +279,7 @@ namespace neko::core::thread {
          */
         auto submit(auto &&function, auto &&...args)
             -> std::future<std::invoke_result_t<decltype(function), decltype(args)...>> {
-            return submitWithPriority(TaskPriority::Normal, std::forward<decltype(function)>(function), std::forward<decltype(args)>(args)...);
+            return submitWithPriority(neko::Priority::Normal, std::forward<decltype(function)>(function), std::forward<decltype(args)>(args)...);
         }
 
         /**
@@ -296,7 +291,7 @@ namespace neko::core::thread {
          * @throws ex::ProgramExit if the thread pool is stopped.
          * @throws ex::TaskRejected if the task is rejected.
          */
-        auto submitWithPriority(TaskPriority priority, auto &&function, auto &&...args)
+        auto submitWithPriority(neko::Priority priority, auto &&function, auto &&...args)
             -> std::future<std::invoke_result_t<decltype(function), decltype(args)...>> {
             using ReturnType = std::invoke_result_t<decltype(function), decltype(args)...>;
 
@@ -358,7 +353,7 @@ namespace neko::core::thread {
 
             {
                 std::lock_guard<std::mutex> qlock(it->personalTaskMutex);
-                it->personalTaskQueue.emplace([task]() { (*task)(); }, TaskPriority::Normal, taskId);
+                it->personalTaskQueue.emplace([task]() { (*task)(); }, neko::Priority::Normal, taskId);
             }
             taskQueueCondVar.notify_all();
             return std::move(res);

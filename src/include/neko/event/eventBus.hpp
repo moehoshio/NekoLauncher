@@ -1,7 +1,8 @@
 #pragma once
 
-#include "neko/core/resources.hpp"
+#include "neko/schema/priority.hpp"
 #include "neko/event/event.hpp"
+#include "neko/core/resources.hpp"
 
 namespace neko::bus::event {
 
@@ -9,7 +10,7 @@ namespace neko::bus::event {
 
     // === Subscription Event ===
     template <typename T>
-    inline HandlerId subscribe(std::function<void(const T &)> handler, EventPriority minPriority = EventPriority::Low) {
+    inline HandlerId subscribe(std::function<void(const T &)> handler, neko::Priority minPriority = neko::Priority::Low) {
         return core::getEventLoop().subscribe<T>(std::move(handler), minPriority);
     }
 
@@ -30,7 +31,7 @@ namespace neko::bus::event {
     }
 
     template <typename T>
-    inline void publish(const T &eventData, EventPriority priority, ProcessingMode mode = ProcessingMode::ASYNC) {
+    inline void publish(const T &eventData, neko::Priority priority, ProcessingMode mode = ProcessingMode::ASYNC) {
         core::getEventLoop().publish<T>(eventData, priority, mode);
     }
 
@@ -50,15 +51,15 @@ namespace neko::bus::event {
     }
 
     // === Task Scheduling ===
-    inline EventId scheduleTask(EventLoop::TimePoint t, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
+    inline EventId scheduleTask(EventLoop::TimePoint t, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
         return core::getEventLoop().scheduleTask(t, std::move(cb), priority);
     }
 
-    inline EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
+    inline EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
         return core::getEventLoop().scheduleTask(ms, std::move(cb), priority);
     }
 
-    inline EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, EventPriority priority = EventPriority::Normal) {
+    inline EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
         return core::getEventLoop().scheduleRepeating(intervalMs, std::move(cb), priority);
     }
 
