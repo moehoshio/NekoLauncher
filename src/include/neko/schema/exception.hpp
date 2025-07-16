@@ -10,12 +10,11 @@
 #include <source_location>
 #include <sstream>
 #include <string>
-#if defined(USE_BOOST_STACKTRACE) && __has_include("boost/stacktrace.hpp")
-#include <boost/stacktrace.hpp>
-#else
-#undef USE_BOOST_STACKTRACE
-#endif
 
+/**
+ * @brief Exception classes for the NekoLauncher
+ * @namespace neko::ex
+ */
 namespace neko::ex {
 
     /**
@@ -45,50 +44,33 @@ namespace neko::ex {
      * @brief Base error class extending std::exception and std::nested_exception.
      *
      * Provides basic error handling functionality for all derived error types.
-     * Stores error message, extension info, and stack trace.
+     * Stores error message and extension info
      */
     class Exception : public std::exception, public std::nested_exception {
     private:
         std::string msg;
         ExceptionExtensionInfo extInfo;
-#if defined(USE_BOOST_STACKTRACE)
-        boost::stacktrace::stacktrace trace;
-#else
-        struct stacktrace {
-            bool empty() const { return true; }
-        };
-        stacktrace trace;
-#endif
 
     public:
-#if defined(USE_BOOST_STACKTRACE)
         /**
          * @brief Construct an Exception with a message and extension info.
          * @param Msg Error message.
          * @param ExtInfo Extended error information.
          */
         explicit Exception(const std::string &Msg, const ExceptionExtensionInfo &ExtInfo) noexcept
-            : msg(Msg), extInfo(ExtInfo), trace(boost::stacktrace::stacktrace()) {}
+            : msg(Msg), extInfo(ExtInfo) {}
         /**
          * @brief Construct an Exception with a message.
          * @param Msg Error message.
          */
         explicit Exception(const std::string &Msg) noexcept
-            : msg(Msg), trace(boost::stacktrace::stacktrace()) {}
+            : msg(Msg) {}
         /**
          * @brief Construct an Exception with a C-string message.
          * @param Msg Error message.
          */
         explicit Exception(neko::cstr Msg) noexcept
-            : msg(Msg ? Msg : ""), trace(boost::stacktrace::stacktrace()) {}
-#else
-        explicit Exception(const std::string &Msg, const ExceptionExtensionInfo &ExtInfo) noexcept
-            : msg(Msg), extInfo(ExtInfo) {}
-        explicit Exception(const std::string &Msg) noexcept
-            : msg(Msg) {}
-        explicit Exception(neko::cstr Msg) noexcept
             : msg(Msg ? Msg : "") {}
-#endif
 
         /**
          * @brief Get the error message.
@@ -104,14 +86,6 @@ namespace neko::ex {
          */
         bool hasExtraInfo() const noexcept {
             return extInfo.hasInfo();
-        }
-
-        /**
-         * @brief Check if a stack trace is available.
-         * @return True if stack trace is not empty.
-         */
-        bool hasStackTrace() const noexcept {
-            return !trace.empty();
         }
 
         /**
@@ -150,61 +124,8 @@ namespace neko::ex {
         const std::string &getMessage() const noexcept {
             return msg;
         }
-
-#if defined(USE_BOOST_STACKTRACE)
-        /**
-         * @brief Get a formatted stack trace as a string
-         * @param format Optional format string to customize output
-         * Supports placeholders:
-         * - {index}: Frame index (0-based)
-         * - {name}: Function name
-         * - {source_file}: Source file name
-         * - {source_line}: Source line number
-         * @return Formatted stack trace string
-         * @note If format is empty, returns the raw stack trace as a string.
-         * If no stack trace is available, returns a default message.
-         * @note The format string is not validated, so ensure it contains valid placeholders.
-         */
-        std::string getStackTraceStr(std::string_view format = "") const {
-            if (trace.empty()) {
-                return "No stack trace available.";
-            }
-
-            std::ostringstream oss;
-
-            if (format.empty()) {
-                oss << trace;
-                return oss.str();
-            }
-
-            for (std::size_t i = 0; i < trace.size(); ++i) {
-                const auto &frame = trace[i];
-                std::string line(format);
-                auto replace = [&](const std::string &key, const std::string &value) {
-                    size_t pos = 0;
-                    while ((pos = line.find(key, pos)) != std::string::npos) {
-                        line.replace(pos, key.length(), value);
-                        pos += value.length();
-                    }
-                };
-                replace("{index}", std::to_string(i));
-                replace("{name}", frame.name());
-                replace("{source_file}", frame.source_file());
-                replace("{source_line}", std::to_string(frame.source_line()));
-                oss << line << '\n';
-            }
-            return oss.str();
-        }
-
-        /**
-         * @brief Get the stack trace object.
-         * @return Reference to boost::stacktrace::stacktrace.
-         */
-        const boost::stacktrace::stacktrace &getStackTrace() const noexcept { return trace; }
-#endif
     };
 
-    
     /**
      * @brief Exception for program termination or exit.
      */
