@@ -1,11 +1,85 @@
+# IDE/Editor folders
 .vs/
 .vscode/
-build/
+.idea/
+xcuserdata/
+*.code-workspace
 
-CmakeLists.txt
+# Build folders
+build/
+out/
+bin/
+dist/
+release/
+debug/
+
+# CMake/Make
+CMakeLists.txt
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+Makefile
+
+# Visual Studio
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.user
 *.log
 *.tmp
 *.bak
+*.obj
+*.pdb
+*.idb
+*.ipch
+*.aps
+*.ncb
+*.suo
+*.opendb
+*.tlog
+*.lastbuildstate
 
+# Qt
 *_moc.cpp
+*.qrc
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+*.qmake.cache
+
+# OS generated
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Backup/Temp
+*.swp
+*.swo
+*.bak
+*.tmp
+*.old
+*.orig
+
+# Others
+*.cache
+*.out
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+
+# Python virtualenv
+venv/
+.env/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Copy files
 *_copy.*
