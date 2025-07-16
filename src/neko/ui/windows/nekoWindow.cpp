@@ -1,25 +1,8 @@
-#include "neko/ui/windows/mainWindow.hpp"
-
-// #include "neko/schema/clientconfig.hpp"
-// #include "neko/schema/state.hpp"
-// #include "neko/ui/uiMsg.hpp"
-
-// #include "neko/core/core.hpp"
-// #include "neko/core/launcher.hpp"
-// #include "neko/core/resources.hpp"
-
-// #include "neko/minecraft/account.hpp"
-
-// #include "neko/function/exec.hpp"
-// #include "neko/function/info.hpp"
-
-// #include "library/nlohmann/json.hpp"
-
-// #include <filesystem>
+#include "neko/ui/windows/nekoWindow.hpp"
 
 namespace neko::ui {
 
-    void MainWindow::resizeItems() {
+    void NekoWindow::resizeItems() {
 
         resize(size());
 
@@ -37,12 +20,12 @@ namespace neko::ui {
         loadingPage->resizeItems(width(), realWindowHeight);
         
     }
-    void MainWindow::resizeEvent(QResizeEvent *event) {
+    void NekoWindow::resizeEvent(QResizeEvent *event) {
         resizeItem();
         QWidget::resizeEvent(event);
     }
 
-    void MainWindow::setupSize() {
+    void NekoWindow::setupSize() {
         // initial window size
         this->resize(scrSize.width() * 0.45, scrSize.height() * 0.45);
 
@@ -57,7 +40,7 @@ namespace neko::ui {
         }
     }
 
-    void MainWindow::setupStyle() {
+    void NekoWindow::setupStyle() {
         const QString mainWidgetLinearGradient = "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255));";
         const QString headToolBar = "QToolBar { background-color: rgba(245, 245, 245,230); }"
                                     "QToolButton {background-color: rgba(245, 245, 245,230);}"
@@ -131,7 +114,7 @@ namespace neko::ui {
 
         setupTranslucentBackground();
     }
-    void MainWindow::setupTranslucentBackground() {
+    void NekoWindow::setupTranslucentBackground() {
         for (auto setTranslucentBackground : std::vector<QWidget *>{input, widget, bgWidget, index, setting->tabWidget, setting->page1, setting->page2, setting->page3, setting->page2->pageScrollArea, setting->page2->scrollContent, setting->page3->pageScrollArea, setting->page3->scrollContent}) {
             setTranslucentBackground->setAttribute(Qt::WA_TranslucentBackground, true);
         }
@@ -140,7 +123,7 @@ namespace neko::ui {
         }
     }
 
-    void MainWindow::setupText() {
+    void NekoWindow::setupText() {
 
         loading->progressBar->setFormat("%v/%m");
         setting->page3->devOptLoadingPage->setText("update");
@@ -203,7 +186,7 @@ namespace neko::ui {
         setting->closeButton->setToolTip(neko::info::translations(neko::info::lang.general.close).c_str());
     }
 
-    void MainWindow::setupFont(neko::ClientConfig config) {
+    void NekoWindow::setupFont(neko::ClientConfig config) {
 
         f.setPointSize(config.style.fontPointSize);
         setting->page2->stylePointSizeEditLine->setText(QString::number(config.style.fontPointSize));
@@ -213,7 +196,7 @@ namespace neko::ui {
         }
         autoSetText(f);
     }
-    void MainWindow::setTextFont(QFont text, QFont h2, QFont h1) {
+    void NekoWindow::setTextFont(QFont text, QFont h2, QFont h1) {
 
         for (auto normal : std::vector<QWidget *>{
                  input->msg, hintWidget->msg, loading->process, loading->text, index->versionText, setting->tabWidget, setting->page1->accountLogInOutInfoText, setting->page1->accountLogInOutButton, setting->page2->langSelectText, setting->page2->langSelectBox, setting->page2->bgSelectText, setting->page2->bgSelectRadioNone, setting->page2->bgSelectRadioImage, setting->page2->bgInputText, setting->page2->bgInputLineEdit, setting->page2->styleBlurEffectSelectText, setting->page2->styleBlurEffectSelectRadioPerformance, setting->page2->styleBlurEffectSelectRadioQuality, setting->page2->styleBlurEffectSelectRadioAnimation, setting->page2->styleBlurEffectRadiusText, setting->page2->stylePointSizeEditText, setting->page2->stylePointSizeEditLine, setting->page2->stylePointSizeEditFontBox, setting->page2->winSysFrameCheckBox, setting->page2->winBarKeepRightCheckBox, setting->page2->winSizeEditText, setting->page2->winSizeEditWidth, setting->page2->winSizeEditTextX, setting->page2->winSizeEditHeight, setting->page2->lcWindowSetText, setting->page2->lcWindowSetBox, setting->page2->netProxyEnable, setting->page2->netProxyEdit, setting->page2->netThreadNotAutoEnable, setting->page2->netThreadSetNums, setting->page2->moreTempText, setting->page2->moreTempEdit, setting->page3->devOptEnable, setting->page3->devOptDebug, setting->page3->devOptTls, setting->page3->devServerAuto, setting->page3->devServerEdit}) {
@@ -230,7 +213,7 @@ namespace neko::ui {
             h1Title->setFont(h1);
         }
     }
-    void MainWindow::autoSetText(QFont text) {
+    void NekoWindow::autoSetText(QFont text) {
         QFont h1, h2;
         h1.setPointSize(text.pointSize() * 1.8);
         h2.setPointSize(text.pointSize() * 1.2);
@@ -240,14 +223,14 @@ namespace neko::ui {
         setTextFont(text, h2, h1);
     };
 
-    void MainWindow::setupConnect() {
+    void NekoWindow::setupConnect() {
 
         connect(index->startButton, &QPushButton::clicked, [=, this] {
             // Maybe we should switch the status to loading after the user clicks start?
 
             if (setting->page1->accountLogInOutButton->text() == neko::info::translations(neko::info::lang.general.login).c_str()) {
                 showHint({neko::info::translations(neko::info::lang.title.notLogin), neko::info::translations(neko::info::lang.general.needLogin), "", 1, [=, this](bool) {
-                              this->showPage(ui::MainWindow::pageState::setting);
+                              this->showPage(ui::NekoWindow::pageState::setting);
                               this->setting->tabWidget->setCurrentIndex(0);
                           }});
                 return;
@@ -271,7 +254,7 @@ namespace neko::ui {
                     default:
                         break;
                 }
-                emit this->showPageD(ui::MainWindow::pageState::index);
+                emit this->showPageD(ui::NekoWindow::pageState::index);
             };
             auto onExit = [=, this](int code) {
                 switch (id) {
@@ -500,21 +483,21 @@ namespace neko::ui {
         connect(hintWidget->dialogButton, &QDialogButtonBox::clicked, [=, this]() {
             hintWidget->hide();
         });
-        connect(this, &MainWindow::showPageD, this, &MainWindow::showPage);
-        connect(this, &MainWindow::showHintD, this, &MainWindow::showHint);
-        connect(this, &MainWindow::showInputD, this, &MainWindow::showInput);
-        connect(this, &MainWindow::hideInputD, this, &MainWindow::hideInput);
-        connect(this, &MainWindow::showLoadD, this, &MainWindow::showLoad);
-        connect(this, &MainWindow::setLoadingNowD, this, &MainWindow::setLoadingNow);
-        connect(this, &MainWindow::setLoadingValD, this, &MainWindow::setLoadingVal);
-        connect(this, &MainWindow::loginStatusChangeD, [=, this](const std::string &name) {
+        connect(this, &NekoWindow::showPageD, this, &NekoWindow::showPage);
+        connect(this, &NekoWindow::showHintD, this, &NekoWindow::showHint);
+        connect(this, &NekoWindow::showInputD, this, &NekoWindow::showInput);
+        connect(this, &NekoWindow::hideInputD, this, &NekoWindow::hideInput);
+        connect(this, &NekoWindow::showLoadD, this, &NekoWindow::showLoad);
+        connect(this, &NekoWindow::setLoadingNowD, this, &NekoWindow::setLoadingNow);
+        connect(this, &NekoWindow::setLoadingValD, this, &NekoWindow::setLoadingVal);
+        connect(this, &NekoWindow::loginStatusChangeD, [=, this](const std::string &name) {
             setting->page1->accountLogInOutButton->setText(neko::info::translations(neko::info::lang.general.logout).c_str());
             setting->page1->accountLogInOutInfoText->setText(name.c_str());
         });
-        connect(this, &MainWindow::winShowHideD, this, &MainWindow::winShowHide);
+        connect(this, &NekoWindow::winShowHideD, this, &NekoWindow::winShowHide);
     }
 
-    void MainWindow::setupBase(neko::ClientConfig config) {
+    void NekoWindow::setupBase(neko::ClientConfig config) {
 
         this->setCentralWidget(widget);
         this->setAcceptDrops(true);
@@ -624,7 +607,7 @@ namespace neko::ui {
         bgWidget->lower();
     }
 
-    MainWindow::MainWindow(neko::ClientConfig config) {
+    NekoWindow::NekoWindow(neko::ClientConfig config) {
 
         headbar = new HeadBar(this);
         hintWidget = new HintWindow(this);
@@ -656,7 +639,7 @@ namespace neko::ui {
         emit setting->page2->winBarKeepRightCheckBox->toggled(config.main.headBarKeepRight);
     }
 
-    void MainWindow::updatePage(MainWindow::pageState state, MainWindow::pageState oldState) {
+    void NekoWindow::updatePage(NekoWindow::pageState state, NekoWindow::pageState oldState) {
         switch (state) {
             case pageState::index:
                 index->show();
@@ -691,7 +674,7 @@ namespace neko::ui {
                 break;
         }
     }
-    void MainWindow::closeEvent(QCloseEvent *event) {
+    void NekoWindow::closeEvent(QCloseEvent *event) {
         neko::ClientConfig cfg(exec::getConfigObj());
         std::string bgText = setting->page2->bgInputLineEdit->text().toStdString();
         switch (setting->page2->bgSelectButtonGroup->checkedId()) {
@@ -742,7 +725,7 @@ namespace neko::ui {
 
         neko::ClientConfig::save(exec::getConfigObj(), neko::info::getConfigFileName(), cfg);
     }
-    bool MainWindow::event(QEvent *event) {
+    bool NekoWindow::event(QEvent *event) {
         constexpr qreal border = 11;
         switch (event->type()) {
 

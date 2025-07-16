@@ -64,7 +64,7 @@
 
 namespace neko::ui {
 
-    class MainWindow : public QMainWindow {
+    class NekoWindow : public QMainWindow {
         Q_OBJECT
 
     private:
@@ -145,7 +145,7 @@ namespace neko::ui {
 
         void setupConnect();
 
-        MainWindow(neko::ClientConfig config);
+        NekoWindow(neko::ClientConfig config);
 
         void updatePage(pageState state, pageState oldState);
 

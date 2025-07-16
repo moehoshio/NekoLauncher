@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
         // Create the main window
         neko::ClientConfig config(exec::getConfigObj());
-        neko::ui::MainWindow w(config);
+        neko::ui::NekoWindow w(config);
 
         // Show loading message
         w.showLoad({neko::ui::loadMsg::OnlyRaw,
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 
             // If the update is complete or there are no updates, show the homepage
             if (neko::autoUpdate(hintFunc, loadFunc, setLoadInfo) == neko::State::Completed) {
-                emit w.showPageD(neko::ui::MainWindow::pageState::index);
+                emit w.showPageD(neko::ui::NekoWindow::pageState::index);
             } else {
                 QApplication::quit();
             }
