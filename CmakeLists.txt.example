@@ -46,8 +46,8 @@ list(APPEND SRCFILES
     ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
     ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
     ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/settingPages.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialog/hintDialog.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialog/inputDialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/hintDialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
 
     # Network
     ${CMAKE_SOURCE_DIR}/src/neko/network/network.cpp
@@ -107,10 +107,10 @@ endif()
 if(BUILD_TESTING)
     enable_testing()
     # api to json
-    add_executable(test_api_to_json test_api_to_json.cpp)
-    add_test(NAME test_api_to_json COMMAND test_api_to_json)
-    target_include_directories(test_api_to_json PRIVATE ${INCLUDE_DIRS})
-    target_compile_features(test_api_to_json PRIVATE cxx_std_20)
+    add_executable(api_tojson_test "test/api_tojson_test.cpp")
+    add_test(NAME test_api_tojson COMMAND api_tojson_test)
+    target_include_directories(api_tojson_test PRIVATE ${INCLUDE_DIRS})
+    target_compile_features(api_tojson_test PRIVATE cxx_std_20)
 endif()
 
 
@@ -155,7 +155,7 @@ target_link_libraries(NekoLc PRIVATE
     # Boost
     Boost::system Boost::process
     # minizip-ng
-    minizip-ng::minizip-ng
+    MINIZIP::minizip-ng
 )
 
 
