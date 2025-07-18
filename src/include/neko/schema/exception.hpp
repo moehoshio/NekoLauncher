@@ -5,6 +5,7 @@
 #pragma once
 
 #include "neko/schema/types.hpp"
+#include "neko/schema/srcloc.hpp"
 
 #include <exception>
 #include <source_location>
@@ -18,29 +19,6 @@
 namespace neko::ex {
 
     /**
-     * @brief Stores extended exception information such as line, file, and function name.
-     */
-    struct ExceptionExtensionInfo {
-        neko::uint32 line = 0;
-        neko::cstr file = nullptr;
-        neko::cstr funcName = nullptr;
-
-        /**
-         * @brief Constructs ErrorExtensionInfo with line, file, and function name.
-         */
-        constexpr ExceptionExtensionInfo(
-            const std::source_location &loc = std::source_location::current()) noexcept
-            : line(loc.line()), file(loc.file_name()), funcName(loc.function_name()) {}
-
-        constexpr neko::uint32 getline() const noexcept { return line; }
-        constexpr neko::cstr getFile() const noexcept { return file; }
-        constexpr neko::cstr getFuncName() const noexcept { return funcName; }
-        constexpr bool hasInfo() const noexcept {
-            return (line != 0 && file != nullptr) || funcName != nullptr;
-        }
-    };
-
-    /**
      * @brief Base error class extending std::exception and std::nested_exception.
      *
      * Provides basic error handling functionality for all derived error types.
@@ -49,28 +27,23 @@ namespace neko::ex {
     class Exception : public std::exception, public std::nested_exception {
     private:
         std::string msg;
-        ExceptionExtensionInfo extInfo;
+        neko::srcLocInfo srcLoc;
 
     public:
         /**
-         * @brief Construct an Exception with a message and extension info.
-         * @param Msg Error message.
-         * @param ExtInfo Extended error information.
-         */
-        explicit Exception(const std::string &Msg, const ExceptionExtensionInfo &ExtInfo) noexcept
-            : msg(Msg), extInfo(ExtInfo) {}
-        /**
          * @brief Construct an Exception with a message.
          * @param Msg Error message.
+         * @param SrcLoc Source location information.
          */
-        explicit Exception(const std::string &Msg) noexcept
-            : msg(Msg) {}
+        explicit Exception(const std::string &Msg, const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : msg(Msg), srcLoc(SrcLoc) {}
         /**
          * @brief Construct an Exception with a C-string message.
          * @param Msg Error message.
+         * @param SrcLoc Source location information.
          */
-        explicit Exception(neko::cstr Msg) noexcept
-            : msg(Msg ? Msg : "") {}
+        explicit Exception(neko::cstr Msg, const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : msg(Msg ? Msg : ""), srcLoc(SrcLoc) {}
 
         /**
          * @brief Get the error message.
@@ -85,15 +58,15 @@ namespace neko::ex {
          * @return True if extension info is present.
          */
         bool hasExtraInfo() const noexcept {
-            return extInfo.hasInfo();
+            return srcLoc.hasInfo();
         }
 
         /**
          * @brief Get the extended error information.
          * @return Reference to ErrorExtensionInfo.
          */
-        const ExceptionExtensionInfo &getExtensionInfo() const noexcept {
-            return extInfo;
+        const neko::srcLocInfo &getSourceLocation() const noexcept {
+            return srcLoc;
         }
 
         /**
@@ -101,21 +74,21 @@ namespace neko::ex {
          * @return Line number.
          */
         neko::uint32 getLine() const noexcept {
-            return extInfo.getline();
+            return srcLoc.getline();
         }
         /**
          * @brief Get the file name where the error occurred.
          * @return File name as a C-string.
          */
         neko::cstr getFile() const noexcept {
-            return extInfo.getFile();
+            return srcLoc.getFile();
         }
         /**
          * @brief Get the function name where the error occurred.
          * @return Function name as a C-string.
          */
         neko::cstr getFuncName() const noexcept {
-            return extInfo.getFuncName();
+            return srcLoc.getFuncName();
         }
         /**
          * @brief Get the error message as a string.
@@ -131,8 +104,8 @@ namespace neko::ex {
      */
     class ProgramExit : public Exception {
     public:
-        explicit ProgramExit(const std::string &Msg = "Program exited!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit ProgramExit(const std::string &Msg = "Program exited!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -140,8 +113,8 @@ namespace neko::ex {
      */
     class AlreadyExists : public Exception {
     public:
-        explicit AlreadyExists(const std::string &Msg = "Object already exists!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit AlreadyExists(const std::string &Msg = "Object already exists!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -149,8 +122,8 @@ namespace neko::ex {
      */
     class InvalidArgument : public Exception {
     public:
-        explicit InvalidArgument(const std::string &Msg = "Invalid argument!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit InvalidArgument(const std::string &Msg = "Invalid argument!", const neko::srcLocInfo &ExtInfo = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -158,8 +131,8 @@ namespace neko::ex {
      */
     class SystemError : public Exception {
     public:
-        explicit SystemError(const std::string &Msg = "System error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit SystemError(const std::string &Msg = "System error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -167,8 +140,8 @@ namespace neko::ex {
      */
     class FileError : public SystemError {
     public:
-        explicit FileError(const std::string &Msg = "File error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : SystemError(Msg, ExtInfo) {}
+        explicit FileError(const std::string &Msg = "File error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : SystemError(Msg, SrcLoc) {}
     };
 
     /**
@@ -176,8 +149,8 @@ namespace neko::ex {
      */
     class NetworkError : public SystemError {
     public:
-        explicit NetworkError(const std::string &Msg = "Network error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : SystemError(Msg, ExtInfo) {}
+        explicit NetworkError(const std::string &Msg = "Network error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : SystemError(Msg, SrcLoc) {}
     };
 
     /**
@@ -185,8 +158,8 @@ namespace neko::ex {
      */
     class DatabaseError : public SystemError {
     public:
-        explicit DatabaseError(const std::string &Msg = "Database error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : SystemError(Msg, ExtInfo) {}
+        explicit DatabaseError(const std::string &Msg = "Database error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : SystemError(Msg, SrcLoc) {}
     };
 
     /**
@@ -194,8 +167,8 @@ namespace neko::ex {
      */
     class ExternalLibraryError : public SystemError {
     public:
-        explicit ExternalLibraryError(const std::string &Msg = "External library error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : SystemError(Msg, ExtInfo) {}
+        explicit ExternalLibraryError(const std::string &Msg = "External library error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : SystemError(Msg, SrcLoc) {}
     };
 
     /**
@@ -203,8 +176,8 @@ namespace neko::ex {
      */
     class OutOfRange : public Exception {
     public:
-        explicit OutOfRange(const std::string &Msg = "Out of range!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit OutOfRange(const std::string &Msg = "Out of range!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -212,8 +185,8 @@ namespace neko::ex {
      */
     class NotImplemented : public Exception {
     public:
-        explicit NotImplemented(const std::string &Msg = "Not implemented!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit NotImplemented(const std::string &Msg = "Not implemented!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -221,8 +194,8 @@ namespace neko::ex {
      */
     class Config : public Exception {
     public:
-        explicit Config(const std::string &Msg = "Configuration error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Config(const std::string &Msg = "Configuration error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -230,8 +203,8 @@ namespace neko::ex {
      */
     class Parse : public Exception {
     public:
-        explicit Parse(const std::string &Msg = "Parse error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Parse(const std::string &Msg = "Parse error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -239,8 +212,8 @@ namespace neko::ex {
      */
     class Concurrency : public Exception {
     public:
-        explicit Concurrency(const std::string &Msg = "Concurrency error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Concurrency(const std::string &Msg = "Concurrency error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -248,8 +221,8 @@ namespace neko::ex {
      */
     class TaskRejected : public Exception {
     public:
-        explicit TaskRejected(const std::string &Msg = "Task rejected!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit TaskRejected(const std::string &Msg = "Task rejected!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -257,8 +230,8 @@ namespace neko::ex {
      */
     class Assertion : public Exception {
     public:
-        explicit Assertion(const std::string &Msg = "Assertion failed!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Assertion(const std::string &Msg = "Assertion failed!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -266,8 +239,8 @@ namespace neko::ex {
      */
     class InvalidOperation : public Exception {
     public:
-        explicit InvalidOperation(const std::string &Msg = "Invalid operation!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit InvalidOperation(const std::string &Msg = "Invalid operation!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -275,8 +248,8 @@ namespace neko::ex {
      */
     class PermissionDenied : public Exception {
     public:
-        explicit PermissionDenied(const std::string &Msg = "Permission denied!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit PermissionDenied(const std::string &Msg = "Permission denied!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -284,8 +257,8 @@ namespace neko::ex {
      */
     class Timeout : public Exception {
     public:
-        explicit Timeout(const std::string &Msg = "Timeout!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Timeout(const std::string &Msg = "Timeout!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -293,8 +266,8 @@ namespace neko::ex {
      */
     class Logic : public Exception {
     public:
-        explicit Logic(const std::string &Msg = "Logic error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Logic(const std::string &Msg = "Logic error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
     /**
@@ -302,8 +275,8 @@ namespace neko::ex {
      */
     class Runtime : public Exception {
     public:
-        explicit Runtime(const std::string &Msg = "Runtime error!", const ExceptionExtensionInfo &ExtInfo = {}) noexcept
-            : Exception(Msg, ExtInfo) {}
+        explicit Runtime(const std::string &Msg = "Runtime error!", const neko::srcLocInfo &SrcLoc = {}) noexcept
+            : Exception(Msg, SrcLoc) {}
     };
 
 } // namespace neko::ex
