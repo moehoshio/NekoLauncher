@@ -1,7 +1,9 @@
 /**
  * @file nlog.hpp
  * @brief neko logging system
- * @namespace neko::log
+ * @author moehoshio
+ * @copyright Copyright (c) 2025 Hoshi
+ * @license MIT OR Apache-2.0
  */
 
 #pragma once
@@ -365,7 +367,7 @@ namespace neko::log {
          * @brief Run the logging loop for async mode
          * @note This will block until the mode is set to Sync or the application exits.
          */
-        void runLoop(){
+        void runLoop() {
             while (mode == neko::SyncMode::Async) {
                 LogRecord record;
                 {
@@ -582,5 +584,26 @@ namespace neko::log {
     inline void setThreadName(std::thread::id threadId, const std::string &name) {
         ThreadNameManager::setThreadName(threadId, name);
     }
+
+    struct autoLog {
+        std::string startMsg;
+        std::string endMsg;
+        neko::srcLocInfo location;
+        std::unique_ptr<IFormatter> formatter;
+
+        autoLog(const std::string &start = "Start", const std::string &end = "End", neko::srcLocInfo loc = {}, std::unique_ptr<IFormatter> fmt = std::make_unique<DefaultFormatter>())
+            : startMsg(start), endMsg(end), location(loc), formatter(std::move(fmt)) {
+            if (!location.hasInfo()) {
+                location = neko::srcLoc::current();
+            }
+            startMsg = formatter->format(LogRecord(Level::Info, startMsg, location));
+            endMsg = formatter->format(LogRecord(Level::Info, endMsg, location));
+            getGlobalLogger().info(startMsg, location);
+        }
+
+        ~autoLog() {
+            getGlobalLogger().info(endMsg, location);
+        }
+    };
 
 } // namespace neko::log
