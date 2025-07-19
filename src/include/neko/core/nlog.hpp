@@ -128,10 +128,10 @@ namespace neko::log {
         Level level;
         std::string message;
         std::chrono::system_clock::time_point timestamp;
-        neko::srcLocInfo location;
+        neko::SrcLocInfo location;
         std::string threadName;
 
-        LogRecord(Level lvl, std::string msg, const neko::srcLocInfo &loc = {})
+        LogRecord(Level lvl, std::string msg, const neko::SrcLocInfo &loc = {})
             : level(lvl), message(std::move(msg)),
               timestamp(std::chrono::system_clock::now()), location(loc) {
             threadName = ThreadNameManager::getThreadName(std::this_thread::get_id());
@@ -179,10 +179,51 @@ namespace neko::log {
      * @brief Log appender interface
      */
     class IAppender {
+    private:
+        Level level = Level::Debug; // Default to accept all levels
+        bool useLoggerLevel = true; // Default to use logger's level
+        
     public:
         virtual ~IAppender() = default;
         virtual void append(const LogRecord &record) = 0;
         virtual void flush() {}
+        
+        /**
+         * @brief Set appender's log level
+         */
+        void setLevel(Level lvl) {
+            level = lvl;
+            useLoggerLevel = false;
+        }
+        
+        /**
+         * @brief Get appender's log level
+         */
+        Level getLevel() const {
+            return level;
+        }
+        
+        /**
+         * @brief Set to use logger's level instead of appender's level
+         */
+        void useLoggerLevel(bool use = true) {
+            useLoggerLevel = use;
+        }
+        
+        /**
+         * @brief Check if this appender should use logger's level
+         */
+        bool shouldUseLoggerLevel() const {
+            return useLoggerLevel;
+        }
+        
+        /**
+         * @brief Check if the given level should be logged by this appender
+         */
+        bool isEnabled(Level logLevel, Level loggerLevel) const {
+            Level effectiveLevel = useLoggerLevel ? loggerLevel : level;
+            return logLevel >= effectiveLevel && effectiveLevel != Level::Off;
+        }
     };
 
     /**
@@ -204,6 +245,11 @@ namespace neko::log {
     public:
         explicit ConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
             : formatter(std::move(formatter)) {}
+            
+        explicit ConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
+            : formatter(std::move(formatter)) {
+            setLevel(level);
+        }
 
         void append(const LogRecord &record) override {
             std::lock_guard<std::mutex> lock(mutex);
@@ -247,12 +293,21 @@ namespace neko::log {
         std::mutex mutex;
 
     public:
-        explicit FileAppender(const std::string &filename,
+        explicit FileAppender(const std::string &filename, bool isTruncate = false,
                               std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
-            : formatter(std::move(formatter)), file(filename, std::ios::app) {
+            : formatter(std::move(formatter)), file(filename, isTruncate ? std::ios::trunc : std::ios::app) {
             if (!file.is_open()) {
                 throw neko::ex::FileError("Failed to open log file: " + filename);
             }
+        }
+        
+        explicit FileAppender(const std::string &filename, Level level, bool isTruncate = false,
+                              std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
+            : formatter(std::move(formatter)), file(filename, isTruncate ? std::ios::trunc : std::ios::app) {
+            if (!file.is_open()) {
+                throw neko::ex::FileError("Failed to open log file: " + filename);
+            }
+            setLevel(level);
         }
 
         void append(const LogRecord &record) override {
@@ -328,15 +383,26 @@ namespace neko::log {
             this->mode = m;
         }
 
-        void addFileAppender(const std::string &filename,
+        void addFileAppender(const std::string &filename, bool isTruncate = false,
                              std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
             std::lock_guard<std::mutex> lock(appenderMutex);
-            appenders.push_back(std::make_unique<FileAppender>(filename, std::move(formatter)));
+            appenders.push_back(std::make_unique<FileAppender>(filename, isTruncate, std::move(formatter)));
+        }
+        
+        void addFileAppender(const std::string &filename, Level level, bool isTruncate = false,
+                             std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+            std::lock_guard<std::mutex> lock(appenderMutex);
+            appenders.push_back(std::make_unique<FileAppender>(filename, level, isTruncate, std::move(formatter)));
         }
 
         void addConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
             std::lock_guard<std::mutex> lock(appenderMutex);
             appenders.push_back(std::make_unique<ConsoleAppender>(std::move(formatter)));
+        }
+        
+        void addConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+            std::lock_guard<std::mutex> lock(appenderMutex);
+            appenders.push_back(std::make_unique<ConsoleAppender>(level, std::move(formatter)));
         }
 
         void addAppender(std::unique_ptr<IAppender> appender) {
@@ -352,7 +418,9 @@ namespace neko::log {
         void append(const LogRecord &record) {
             std::lock_guard<std::mutex> lock(appenderMutex);
             for (const auto &appender : appenders) {
-                appender->append(record);
+                if (appender->isEnabled(record.level, this->level)) {
+                    appender->append(record);
+                }
             }
         }
 
@@ -407,7 +475,7 @@ namespace neko::log {
 
         // === Logging ===
 
-        void log(Level level, const std::string &message, const neko::srcLocInfo &location = {}) {
+        void log(Level level, const std::string &message, const neko::SrcLocInfo &location = {}) {
             if (!isEnabled(level)) {
                 return;
             }
@@ -429,44 +497,44 @@ namespace neko::log {
 
         // === single message logging ===
 
-        void debug(const std::string &message, const neko::srcLocInfo &location = {}) {
+        void debug(const std::string &message, const neko::SrcLocInfo &location = {}) {
             log(Level::Debug, message, location);
         }
 
-        void info(const std::string &message, const neko::srcLocInfo &location = {}) {
+        void info(const std::string &message, const neko::SrcLocInfo &location = {}) {
             log(Level::Info, message, location);
         }
 
-        void warn(const std::string &message, const neko::srcLocInfo &location = {}) {
+        void warn(const std::string &message, const neko::SrcLocInfo &location = {}) {
             log(Level::Warn, message, location);
         }
 
-        void error(const std::string &message, const neko::srcLocInfo &location = {}) {
+        void error(const std::string &message, const neko::SrcLocInfo &location = {}) {
             log(Level::Error, message, location);
         }
 
         // === formatted message logging ===
 
         template <typename... Args>
-        void debug(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void debug(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Debug, message, location);
         }
 
         template <typename... Args>
-        void info(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void info(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Info, message, location);
         }
 
         template <typename... Args>
-        void warn(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void warn(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Warn, message, location);
         }
 
         template <typename... Args>
-        void error(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void error(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Error, message, location);
         }
@@ -504,13 +572,22 @@ namespace neko::log {
         getGlobalLogger().setMode(m);
     }
 
-    inline void addFileAppender(const std::string &filename,
+    inline void addFileAppender(const std::string &filename, bool isTruncate = false,
                                 std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
-        getGlobalLogger().addFileAppender(filename, std::move(formatter));
+        getGlobalLogger().addFileAppender(filename, isTruncate, std::move(formatter));
+    }
+    
+    inline void addFileAppender(const std::string &filename, Level level, bool isTruncate = false,
+                                std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+        getGlobalLogger().addFileAppender(filename, level, isTruncate, std::move(formatter));
     }
 
     inline void addConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
         getGlobalLogger().addConsoleAppender(std::move(formatter));
+    }
+    
+    inline void addConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+        getGlobalLogger().addConsoleAppender(level, std::move(formatter));
     }
 
     inline void addAppender(std::unique_ptr<IAppender> appender) {
@@ -534,39 +611,39 @@ namespace neko::log {
 
     // === Logging ===
 
-    inline void debug(const std::string &message, const neko::srcLocInfo &location = {}) {
+    inline void debug(const std::string &message, const neko::SrcLocInfo &location = {}) {
         getGlobalLogger().debug(message, location);
     }
 
-    inline void info(const std::string &message, const neko::srcLocInfo &location = {}) {
+    inline void info(const std::string &message, const neko::SrcLocInfo &location = {}) {
         getGlobalLogger().info(message, location);
     }
 
-    inline void warn(const std::string &message, const neko::srcLocInfo &location = {}) {
+    inline void warn(const std::string &message, const neko::SrcLocInfo &location = {}) {
         getGlobalLogger().warn(message, location);
     }
 
-    inline void error(const std::string &message, const neko::srcLocInfo &location = {}) {
+    inline void error(const std::string &message, const neko::SrcLocInfo &location = {}) {
         getGlobalLogger().error(message, location);
     }
 
     template <typename... Args>
-    void debug(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void debug(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         getGlobalLogger().debug(message, location);
     }
     template <typename... Args>
-    void info(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void info(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         getGlobalLogger().info(message, location);
     }
     template <typename... Args>
-    void warn(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void warn(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         getGlobalLogger().warn(message, location);
     }
     template <typename... Args>
-    void error(const neko::srcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void error(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         getGlobalLogger().error(message, location);
     }
@@ -588,13 +665,13 @@ namespace neko::log {
     struct autoLog {
         std::string startMsg;
         std::string endMsg;
-        neko::srcLocInfo location;
+        neko::SrcLocInfo location;
         std::unique_ptr<IFormatter> formatter;
 
-        autoLog(const std::string &start = "Start", const std::string &end = "End", neko::srcLocInfo loc = {}, std::unique_ptr<IFormatter> fmt = std::make_unique<DefaultFormatter>())
+        autoLog(const std::string &start = "Start", const std::string &end = "End", neko::SrcLocInfo loc = {}, std::unique_ptr<IFormatter> fmt = std::make_unique<DefaultFormatter>())
             : startMsg(start), endMsg(end), location(loc), formatter(std::move(fmt)) {
             if (!location.hasInfo()) {
-                location = neko::srcLoc::current();
+                location = neko::SrcLoc::current();
             }
             startMsg = formatter->format(LogRecord(Level::Info, startMsg, location));
             endMsg = formatter->format(LogRecord(Level::Info, endMsg, location));
