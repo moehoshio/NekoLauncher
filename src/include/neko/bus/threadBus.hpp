@@ -1,5 +1,4 @@
 /**
- * @see neko::core::thread
  * @see neko/core/threadPool.hpp
  * @file threadBus.hpp
  * @brief Provides a thread bus for managing tasks and worker threads.
@@ -7,9 +6,9 @@
 
 #pragma once
 
+#include "neko/schema/types.hpp"
 #include "neko/core/threadPool.hpp"
 #include "neko/core/resources.hpp"
-#include "neko/schema/priority.hpp"
 
 /**
  * @namespace neko::bus::thread

@@ -1,8 +1,14 @@
+/**
+ * @see neko/event/event.hpp
+ * @file eventBus.hpp
+ * @brief Provides a bus for managing events and event listeners.
+ */
+
 #pragma once
 
-#include "neko/schema/priority.hpp"
-#include "neko/event/event.hpp"
+#include "neko/schema/types.hpp"
 #include "neko/core/resources.hpp"
+#include "neko/event/event.hpp"
 
 namespace neko::bus::event {
 
@@ -10,12 +16,12 @@ namespace neko::bus::event {
 
     // === Subscription Event ===
     template <typename T>
-    inline HandlerId subscribe(std::function<void(const T &)> handler, neko::Priority minPriority = neko::Priority::Low) {
+    inline neko::event::HandlerId subscribe(std::function<void(const T &)> handler, neko::Priority minPriority = neko::Priority::Low) {
         return core::getEventLoop().subscribe<T>(std::move(handler), minPriority);
     }
 
     template <typename T>
-    inline bool unsubscribe(HandlerId handlerId) {
+    inline bool unsubscribe(neko::event::HandlerId handlerId) {
         return core::getEventLoop().unsubscribe<T>(handlerId);
     }
 
@@ -31,39 +37,39 @@ namespace neko::bus::event {
     }
 
     template <typename T>
-    inline void publish(const T &eventData, neko::Priority priority, ProcessingMode mode = ProcessingMode::ASYNC) {
+    inline void publish(const T &eventData, neko::Priority priority, neko::SyncMode mode = neko::SyncMode::Async) {
         core::getEventLoop().publish<T>(eventData, priority, mode);
     }
 
     template <typename T>
-    inline EventId publishAfter(neko::uint64 ms, const T &eventData) {
+    inline neko::event::EventId publishAfter(neko::uint64 ms, const T &eventData) {
         return core::getEventLoop().publishAfter<T>(ms, eventData);
     }
 
     template <typename T>
-    inline EventId publishAfter(neko::uint64 ms, T &&eventData) {
+    inline neko::event::EventId publishAfter(neko::uint64 ms, T &&eventData) {
         return core::getEventLoop().publishAfter<T>(ms, std::forward<T>(eventData));
     }
 
     template <typename T>
-    inline bool addFilter(HandlerId handlerId, std::unique_ptr<EventFilter<T>> filter) {
+    inline bool addFilter(neko::event::HandlerId handlerId, std::unique_ptr<neko::event::EventFilter<T>> filter) {
         return core::getEventLoop().addFilter<T>(handlerId, std::move(filter));
     }
 
     // === Task Scheduling ===
-    inline EventId scheduleTask(EventLoop::TimePoint t, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
+    inline neko::event::EventId scheduleTask(neko::event::TimePoint t, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
         return core::getEventLoop().scheduleTask(t, std::move(cb), priority);
     }
 
-    inline EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
+    inline neko::event::EventId scheduleTask(neko::uint64 ms, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
         return core::getEventLoop().scheduleTask(ms, std::move(cb), priority);
     }
 
-    inline EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
+    inline neko::event::EventId scheduleRepeating(neko::uint64 intervalMs, std::function<void()> cb, neko::Priority priority = neko::Priority::Normal) {
         return core::getEventLoop().scheduleRepeating(intervalMs, std::move(cb), priority);
     }
 
-    inline bool cancelTask(EventId id) {
+    inline bool cancelTask(neko::event::EventId id) {
         return core::getEventLoop().cancelTask(id);
     }
 
@@ -72,9 +78,6 @@ namespace neko::bus::event {
     }
 
     // === Event Loop Control ===
-    inline bool isRunning() {
-        return core::getEventLoop().isRunning();
-    }
 
     inline void run() {
         core::getEventLoop().run();
@@ -100,15 +103,21 @@ namespace neko::bus::event {
         core::getEventLoop().setLogger(std::move(loggerFunc));
     }
 
-    inline EventStats getStatistics() {
-        return core::getEventLoop().getStatistics();
-    }
+    // === Information methods ===
 
     inline void resetStatistics() {
         core::getEventLoop().resetStatistics();
     }
 
-    inline std::pair<size_t, size_t> getQueueSizes() {
+    inline bool isRunning() {
+        return core::getEventLoop().isRunning();
+    }
+
+    inline neko::event::EventStats getStatistics() {
+        return core::getEventLoop().getStatistics();
+    }
+
+    inline neko::event::QueueSizes getQueueSizes() {
         return core::getEventLoop().getQueueSizes();
     }
 

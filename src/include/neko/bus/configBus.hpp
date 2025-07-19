@@ -1,4 +1,11 @@
+/**
+ * @see neko/core/configManager.hpp
+ * @file configBus.hpp
+ * @brief Provides a bus for managing configuration settings.
+ */
+
 #pragma once
+
 #include "neko/core/configManager.hpp"
 #include "neko/core/resources.hpp"
 
