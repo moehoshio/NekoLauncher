@@ -7,21 +7,21 @@
 namespace neko {
 
     inline namespace types {
-        using srcLoc = std::source_location;
+        using SrcLoc = std::source_location;
     }
 
     /**
      * @brief Source location information
      */
-    struct srcLocInfo {
+    struct SrcLocInfo {
         neko::uint32 line = 0;
         neko::cstr file = nullptr;
         neko::cstr funcName = nullptr;
 
-        constexpr srcLocInfo(
-            const srcLoc &loc = srcLoc::current()) noexcept
+        constexpr SrcLocInfo(
+            const SrcLoc &loc = SrcLoc::current()) noexcept
             : line(loc.line()), file(loc.file_name()), funcName(loc.function_name()) {}
-        constexpr srcLocInfo(neko::uint32 line, neko::cstr file, neko::cstr funcName) noexcept
+        constexpr SrcLocInfo(neko::uint32 line, neko::cstr file, neko::cstr funcName) noexcept
             : line(line), file(file), funcName(funcName) {}
 
         constexpr neko::uint32 getLine() const noexcept { return line; }
