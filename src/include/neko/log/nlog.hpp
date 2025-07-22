@@ -12,19 +12,25 @@
 #include "neko/schema/srcloc.hpp"
 #include "neko/schema/types.hpp"
 
-#include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <format>
+#include <memory>
+
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+
 #include <fstream>
 #include <iostream>
-#include <memory>
-#include <mutex>
+
 #include <sstream>
 #include <string>
+
 #include <thread>
+
 #include <unordered_map>
 #include <vector>
+#include <queue>
 
 namespace neko::log {
 
@@ -96,7 +102,7 @@ namespace neko::log {
 
             // Returns thread ID as string
             std::ostringstream oss;
-            oss << threadId;
+            oss << "Thread " << threadId;
             return oss.str();
         }
 
@@ -131,6 +137,7 @@ namespace neko::log {
         neko::SrcLocInfo location;
         std::string threadName;
 
+        LogRecord() = default;
         LogRecord(Level lvl, std::string msg, const neko::SrcLocInfo &loc = {})
             : level(lvl), message(std::move(msg)),
               timestamp(std::chrono::system_clock::now()), location(loc) {
@@ -182,12 +189,12 @@ namespace neko::log {
     private:
         Level level = Level::Debug; // Default to accept all levels
         bool useLoggerLevel = true; // Default to use logger's level
-        
+
     public:
         virtual ~IAppender() = default;
         virtual void append(const LogRecord &record) = 0;
         virtual void flush() {}
-        
+
         /**
          * @brief Set appender's log level
          */
@@ -195,28 +202,28 @@ namespace neko::log {
             level = lvl;
             useLoggerLevel = false;
         }
-        
+
         /**
          * @brief Get appender's log level
          */
         Level getLevel() const {
             return level;
         }
-        
+
         /**
          * @brief Set to use logger's level instead of appender's level
          */
-        void useLoggerLevel(bool use = true) {
+        void setLoggerLevel(bool use = true) {
             useLoggerLevel = use;
         }
-        
+
         /**
          * @brief Check if this appender should use logger's level
          */
         bool shouldUseLoggerLevel() const {
             return useLoggerLevel;
         }
-        
+
         /**
          * @brief Check if the given level should be logged by this appender
          */
@@ -233,25 +240,26 @@ namespace neko::log {
     private:
         std::unique_ptr<IFormatter> formatter;
         std::mutex mutex;
-        constexpr neko::strview
-            red = "\033[31m",
-            green = "\033[32m",
-            yellow = "\033[33m",
-            blue = "\033[34m",
-            magenta = "\033[35m",
-            cyan = "\033[36m",
-            reset = "\033[0m";
 
     public:
         explicit ConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
             : formatter(std::move(formatter)) {}
-            
+
         explicit ConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
             : formatter(std::move(formatter)) {
             setLevel(level);
         }
 
         void append(const LogRecord &record) override {
+            constexpr neko::strview
+                red = "\033[31m",
+                green = "\033[32m",
+                yellow = "\033[33m",
+                blue = "\033[34m",
+                magenta = "\033[35m",
+                cyan = "\033[36m",
+                reset = "\033[0m";
+
             std::lock_guard<std::mutex> lock(mutex);
             auto formatted = formatter->format(record);
 
@@ -293,16 +301,14 @@ namespace neko::log {
         std::mutex mutex;
 
     public:
-        explicit FileAppender(const std::string &filename, bool isTruncate = false,
-                              std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
+        explicit FileAppender(const std::string &filename, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
             : formatter(std::move(formatter)), file(filename, isTruncate ? std::ios::trunc : std::ios::app) {
             if (!file.is_open()) {
                 throw neko::ex::FileError("Failed to open log file: " + filename);
             }
         }
-        
-        explicit FileAppender(const std::string &filename, Level level, bool isTruncate = false,
-                              std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
+
+        explicit FileAppender(const std::string &filename, Level level, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
             : formatter(std::move(formatter)), file(filename, isTruncate ? std::ios::trunc : std::ios::app) {
             if (!file.is_open()) {
                 throw neko::ex::FileError("Failed to open log file: " + filename);
@@ -336,8 +342,8 @@ namespace neko::log {
      */
     class Logger {
     private:
-        Level level;
-        neko::SyncMode mode = neko::SyncMode::Async;
+        Level level = Level::Info;
+        neko::SyncMode mode = neko::SyncMode::Sync;
         std::vector<std::unique_ptr<IAppender>> appenders;
         mutable std::mutex appenderMutex;
 
@@ -347,9 +353,8 @@ namespace neko::log {
         mutable std::mutex logQueueMutex;
 
     public:
-        explicit Logger() : level(Level::Info) {}
 
-        explicit Logger(Level level) : level(level) {
+        explicit Logger(Level level = Level::Info) : level(level) {
             addAppender(std::make_unique<ConsoleAppender>());
         }
 
@@ -383,14 +388,12 @@ namespace neko::log {
             this->mode = m;
         }
 
-        void addFileAppender(const std::string &filename, bool isTruncate = false,
-                             std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+        void addFileAppender(const std::string &filename, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
             std::lock_guard<std::mutex> lock(appenderMutex);
             appenders.push_back(std::make_unique<FileAppender>(filename, isTruncate, std::move(formatter)));
         }
-        
-        void addFileAppender(const std::string &filename, Level level, bool isTruncate = false,
-                             std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+
+        void addFileAppender(const std::string &filename, Level level, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
             std::lock_guard<std::mutex> lock(appenderMutex);
             appenders.push_back(std::make_unique<FileAppender>(filename, level, isTruncate, std::move(formatter)));
         }
@@ -399,7 +402,7 @@ namespace neko::log {
             std::lock_guard<std::mutex> lock(appenderMutex);
             appenders.push_back(std::make_unique<ConsoleAppender>(std::move(formatter)));
         }
-        
+
         void addConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
             std::lock_guard<std::mutex> lock(appenderMutex);
             appenders.push_back(std::make_unique<ConsoleAppender>(level, std::move(formatter)));
@@ -439,7 +442,7 @@ namespace neko::log {
             while (mode == neko::SyncMode::Async) {
                 LogRecord record;
                 {
-                    std::lock_guard<std::mutex> lock(logQueueMutex);
+                    std::unique_lock<std::mutex> lock(logQueueMutex);
                     logQueueCondVar.wait_for(lock, std::chrono::milliseconds(500), [this] {
                         return !logQueue.empty();
                     });
@@ -454,8 +457,9 @@ namespace neko::log {
 
             // Flush remaining logs when stopping the loop
             std::lock_guard<std::mutex> lock(logQueueMutex);
-            for (const auto &record : logQueue) {
-                append(record);
+            while (!logQueue.empty()) {
+                append(logQueue.front());
+                logQueue.pop();
             }
             flush();
         }
@@ -551,14 +555,14 @@ namespace neko::log {
     // === Convenience functions ===
 
     // === Info ===
-    inline Level getLevel() const {
+    inline Level getLevel() {
         return getGlobalLogger().getLevel();
     }
-    inline neko::SyncMode getMode() const {
+    inline neko::SyncMode getMode() {
         return getGlobalLogger().getMode();
     }
 
-    inline bool isEnabled(Level level) const {
+    inline bool isEnabled(Level level) {
         return getGlobalLogger().isEnabled(level);
     }
 
@@ -572,20 +576,18 @@ namespace neko::log {
         getGlobalLogger().setMode(m);
     }
 
-    inline void addFileAppender(const std::string &filename, bool isTruncate = false,
-                                std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+    inline void addFileAppender(const std::string &filename, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
         getGlobalLogger().addFileAppender(filename, isTruncate, std::move(formatter));
     }
-    
-    inline void addFileAppender(const std::string &filename, Level level, bool isTruncate = false,
-                                std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
+
+    inline void addFileAppender(const std::string &filename, Level level, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
         getGlobalLogger().addFileAppender(filename, level, isTruncate, std::move(formatter));
     }
 
     inline void addConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
         getGlobalLogger().addConsoleAppender(std::move(formatter));
     }
-    
+
     inline void addConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
         getGlobalLogger().addConsoleAppender(level, std::move(formatter));
     }
