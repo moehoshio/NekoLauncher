@@ -1,0 +1,36 @@
+{
+    "language": "zh_tw",
+    "Action": {
+        "networkRequest": "網路請求",
+        "uploadFile": "上傳檔案",
+        "downloadFile": "下載檔案",
+        "readFile": "讀取檔案",
+        "writeFile": "寫入檔案",
+        "removeFile": "移除檔案",
+        "createFile": "建立檔案"
+    },
+    "Object": {
+        "maintenance": "維護",
+        "update": "更新"
+    },
+    "Title": {},
+    "Button": {
+        "ok": "確定",
+        "cancel": "取消",
+        "retry": "重試",
+        "quit": "退出"
+    },
+    "General": {},
+    "Info": {
+        "retryMaxReached": "{action}{object} 已達到最大重試次數 ({max})",
+        "doingAction": "正在{action}{object}..."
+    },
+    "Error": {
+        "networkError": "請求{object}時網路錯誤: {error}",
+        "unknownError": "未知錯誤",
+        "invalidResponse": "無效的回應",
+        "parseError": "解析錯誤",
+        "timeout": "請求超時",
+        "notFound": "找不到資源"
+    },
+}

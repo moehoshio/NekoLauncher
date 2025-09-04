@@ -33,7 +33,7 @@ namespace neko::ui {
         versionText->setText(
             QString("core: %1\nres: %2")
             .arg(QString::fromStdString(neko::info::getVersion()))
-            .arg(QString::fromStdString(neko::info::getResVersion()))
+            .arg(QString::fromStdString(neko::info::getResourceVersion()))
         );
     }
     void HomePage::resizeItems(int windowWidth, int windowHeight) {

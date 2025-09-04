@@ -38,7 +38,7 @@ Windows 7
 std >= c++20  
 Qt5.6.0 ?（6.6 與 6.8 為測試版本）  
 cmake 3.20 以上（3.29 為測試版本）  
-libcurl 8.1 為測試版本  
+libcurl 8.4 及以上  
 openssl 3.4 為測試版本  
 boost.process 1.86.0 為測試版本  
 boost.stacktrace 1.86.0 為測試版本  

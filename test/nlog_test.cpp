@@ -45,7 +45,7 @@ void test_ThreadNameManager() {
 
 void test_LogRecord() {
     std::string msg = "Hello";
-    neko::srcLocInfo loc("file.cpp", 42, "func");
+    neko::SrcLocInfo loc("file.cpp", 42, "func");
     LogRecord rec(Level::Warn, msg, loc);
     assert(rec.level == Level::Warn);
     assert(rec.message == msg);
@@ -55,7 +55,7 @@ void test_LogRecord() {
 }
 
 void test_DefaultFormatter() {
-    LogRecord rec(Level::Info, "Test message", neko::srcLocInfo("f.cpp", 1, "f"));
+    LogRecord rec(Level::Info, "Test message", neko::SrcLocInfo("f.cpp", 1, "f"));
     DefaultFormatter fmt;
     std::string out = fmt.format(rec);
     assert(out.find("Test message") != std::string::npos);
@@ -95,7 +95,7 @@ void test_FileAppender() {
     std::string fname = "test_nlog_file.log";
     {
         FileAppender app(fname);
-        LogRecord rec(Level::Info, "file log test", neko::srcLocInfo("file.cpp", 10, "func"));
+        LogRecord rec(Level::Info, "file log test", neko::SrcLocInfo("file.cpp", 10, "func"));
         app.append(rec);
         app.flush();
     }
@@ -176,7 +176,7 @@ void test_Logger_formatted() {
     std::ostringstream out;
     auto* old_cout = std::cout.rdbuf(out.rdbuf());
     logger.addConsoleAppender();
-    logger.info(neko::srcLocInfo("f.cpp", 123, "f"), "Hello {} {}", "world", 42);
+    logger.info(neko::SrcLocInfo("f.cpp", 123, "f"), "Hello {} {}", "world", 42);
     logger.flush();
     std::cout.rdbuf(old_cout);
     std::string s = out.str();
@@ -226,7 +226,7 @@ void test_globalLogger_and_convenience() {
     // Test formatted
     std::ostringstream out2;
     std::cout.rdbuf(out2.rdbuf());
-    info(neko::srcLocInfo("g.cpp", 77, "g"), "fmt {} {}", "A", 1);
+    info(neko::SrcLocInfo("g.cpp", 77, "g"), "fmt {} {}", "A", 1);
     flushLog();
     std::cout.rdbuf(old_cout);
     std::string s2 = out2.str();

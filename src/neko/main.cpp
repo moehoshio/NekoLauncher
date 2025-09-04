@@ -1,14 +1,15 @@
 
+#include "neko/core/app.hpp"
+#include "neko/core/appinit.hpp"
+#include "neko/core/configBus.hpp"
 #include "neko/core/core.hpp"
+#include "neko/core/install.hpp"
+#include "neko/core/threadBus.hpp"
 
 #include "neko/log/nlog.hpp"
-#include "neko/log/logviewer.hpp"
 
-#include "neko/function/autoinit.hpp"
-
-#include "neko/core/install.hpp"
-
-#include "neko/ui/mainwindow.hpp"
+#include "neko/ui/windows/logViewerWindow.hpp"
+#include "neko/ui/windows/mainwindow.hpp"
 
 #include <iostream>
 
@@ -20,43 +21,37 @@
 
 int main(int argc, char *argv[]) {
 
+    using namespace neko;
+
     try {
 
         // Initialization
         QApplication app(argc, argv);
-        auto it = neko::autoInit(argc, argv);
+        auto it = core::app::init::initialize();
 
-        // Create the main window
-        neko::ClientConfig config(exec::getConfigObj());
-        neko::ui::NekoWindow w(config);
+        auto running = core::app::run();
+        ClientConfig config = bus::config::getClientConfig();
+        ui::NekoWindow w(config);
 
         // Show loading message
-        w.showLoad({neko::ui::loadMsg::OnlyRaw,
-                    neko::info::tr(neko::info::lang.network.testtingNetwork)});
+        w.showLoad({ui::loadMsg::OnlyRaw,
+                    info::tr(info::lang.network.testtingNetwork)});
         w.show();
 
-        // Callback functions for showing hints and loading messages
-        auto hintFunc = [=, &w](const neko::ui::hintMsg &m) { emit w.showHintD(m); };
-        auto loadFunc = [=, &w](const neko::ui::loadMsg &m) { emit w.showLoadD(m); };
-        auto setLoadInfo = [=, &w](unsigned int val, const char *msg) {
-            emit w.setLoadingValD(val);
-            if (msg)
-                emit w.setLoadingNowD(msg);
-        };
-
-        exec::getThreadObj().enqueue([=, &it, &w] {
+        bus::thread::submit([=, &it, &w] {
             // check and auto install
-            for (size_t i = 0; i < 5; ++i) {
+            constexpr uint64 maxRetry = 5;
+            for (uint64 i = 0; i < maxRetry; ++i) {
                 try {
-                    neko::checkAndAutoInstall(config, hintFunc, loadFunc, setLoadInfo);
+                    checkAndAutoInstall(config, hintFunc, loadFunc, setLoadInfo);
                     break;
-                } catch (const nerr::Error &e) {
+                } catch (const ex::Exception &e) {
 
-                    auto quitHint = [](bool) { QApplication::quit(); };
-                    auto retryHint = [](bool check) { if (!check) QApplication::quit(); };
+                    auto quitHint = [](bool) { core::app::quit(); };
+                    auto retryHint = [](bool check) { if (!check) core::app::quit(); };
 
-                    std::string msg = std::string(e.msg) + "\n" + neko::info::tr((i == 4) ? neko::info::lang.error.clickToQuit : neko::info::lang.error.clickToRetry);
-                    hintFunc({neko::info::tr(neko::info::lang.title.error), msg, "", (i == 4) ? 2 : 1, ((i == 4) ? quitHint : retryHint)});
+                    std::string msg = std::string(e.msg) + "\n" + info::tr((i == 4) ? info::lang.error.clickToQuit : info::lang.error.clickToRetry);
+                    hintFunc({info::tr(info::lang.title.error), msg, "", (i == 4) ? 2 : 1, ((i == 4) ? quitHint : retryHint)});
                 }
             }
 
@@ -64,31 +59,31 @@ int main(int argc, char *argv[]) {
             it.get();
 
             // If the update is complete or there are no updates, show the homepage
-            if (neko::autoUpdate(hintFunc, loadFunc, setLoadInfo) == neko::State::Completed) {
-                emit w.showPageD(neko::ui::NekoWindow::pageState::index);
+            if (autoUpdate(hintFunc, loadFunc, setLoadInfo) == State::Completed) {
+                emit w.showPageD(ui::NekoWindow::pageState::index);
             } else {
                 QApplication::quit();
             }
         });
 
         // The main thread enters the event loop
-        app.exec();
+        running.mainThreadRunLoopFunction();
 
         // If execution reaches this point, it means the program has exited.
         if (config.dev.enable && config.dev.debug) {
-            neko::ui::LogViewer logViewer(QString::fromStdString(neko::info::workPath() + "/logs/new-debug.log"));
+            ui::LogViewer logViewer(QString::fromStdString(info::workPath() + "/logs/new-debug.log"));
             logViewer.setWindowTitle("NekoLauncher Developer Debug Log");
             logViewer.show();
-            app.exec();
+            running.mainThreadRunLoopFunction();
         }
 
         return 0;
 
-    } catch (const nerr::Error &e) {
-        nlog::Err(FI, LI, "main : unexpected not catch nerr exception , msg : %s", e.what());
+    } catch (const ex::Exception &e) {
+        log::error({}, "main : unexpected not catch neko exception , msg : {}", e.what());
     } catch (const std::exception &e) {
-        nlog::Err(FI, LI, "main : unexpected not catch std exception , what : %s", e.what());
+        log::error({}, "main : unexpected not catch std exception , what : {}", e.what());
     } catch (...) {
-        nlog::Err(FI, LI, "main : unexpected not catch unknown exception");
+        log::error({}, "main : unexpected not catch unknown exception");
     }
 }

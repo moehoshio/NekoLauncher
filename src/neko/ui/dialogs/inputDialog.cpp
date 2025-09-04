@@ -59,7 +59,7 @@ namespace neko::ui {
     void InputDialog::showInput(const InputMsg &m) {
         this->show();
         title->setText(QString::fromStdString(m.title));
-        msg->setText(QString::fromStdString(m.msg));
+        msg->setText(QString::fromStdString(m.message));
         if (!m.poster.empty())
             (void)poster->setPixmap(std::string_view(m.poster));
 

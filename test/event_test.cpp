@@ -31,9 +31,9 @@ void testEventDefaultConstruction() {
 void testEventCustomPriorityAndMode() {
     neko::event::Event<int> event;
     event.priority = neko::Priority::High;
-    event.mode = neko::event::ProcessingMode::SYNC;
+    event.mode = neko::SyncMode::Sync;
     assert(event.priority == neko::Priority::High);
-    assert(event.mode == neko::event::ProcessingMode::SYNC);
+    assert(event.mode == neko::SyncMode::Sync);
     std::cout << "3. testEventCustomPriorityAndMode ok\n";
 }
 

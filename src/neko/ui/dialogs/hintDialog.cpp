@@ -81,7 +81,7 @@ namespace neko::ui {
     void HintDialog::showHint(const HintMsg &m) {
         this->show();
         title->setText(QString::fromStdString(m.title));
-        msg->setText(QString::fromStdString(m.msg));
+        msg->setText(QString::fromStdString(m.message));
         if (!m.poster.empty())
             (void)poster->setPixmap(std::string_view(m.poster));
 

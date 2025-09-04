@@ -57,7 +57,7 @@ namespace neko::ui {
         if (m.type == LoadMsg::Type::Text || m.type == LoadMsg::Type::All) {
             titleH1->setText(QString::fromStdString(m.h1));
             titleH2->setText(QString::fromStdString(m.h2));
-            text->setText(QString::fromStdString(m.msg));
+            text->setText(QString::fromStdString(m.message));
         }
 
         if (m.type == LoadMsg::Type::Progress || m.type == LoadMsg::Type::All) {

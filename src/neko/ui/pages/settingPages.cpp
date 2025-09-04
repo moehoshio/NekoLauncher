@@ -84,7 +84,7 @@ namespace neko::ui {
             if (isLogIn.load()) {
                 hintDialog(ui::HintMsg{
                     .title = lang::tr(lang::Keys::Title::logoutConfirm),
-                    .msg = lang::tr(lang::Keys::Auth::logoutConfirm),
+                    .message = lang::tr(lang::Keys::Auth::logoutConfirm),
                     .poster = "",
                     .buttonText = {lang::tr(lang::Keys::Button::ok),
                                    lang::tr(lang::Keys::Button::cancel)},
@@ -108,35 +108,35 @@ namespace neko::ui {
                 } catch (const ex::NetworkError &e) {
                     hintDialog(ui::HintMsg{
                         .title = lang::tr(lang::Keys::Title::networkError),
-                        .msg = lang::tr(lang::Keys::Network::networkError),
+                        .message = lang::tr(lang::Keys::Network::networkError),
                         .poster = "",
                         .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                     return;
                 } catch (const ex::Parse &e) {
                     hintDialog(ui::HintMsg{
                         .title = lang::tr(lang::Keys::Title::parseError),
-                        .msg = lang::tr(lang::Keys::Error::jsonParse),
+                        .message = lang::tr(lang::Keys::Error::jsonParse),
                         .poster = "",
                         .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                     return;
                 } catch (const nlohmann::json::parse_error &e) {
                     hintDialog(ui::HintMsg{
                         .title = lang::tr(lang::Keys::Title::parseError),
-                        .msg = lang::tr(lang::Keys::Error::jsonParse),
+                        .message = lang::tr(lang::Keys::Error::jsonParse),
                         .poster = "",
                         .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                     return;
                 } catch (const nlohmann::json::out_of_range &e) {
                     hintDialog(ui::HintMsg{
                         .title = lang::tr(lang::Keys::Title::error),
-                        .msg = lang::tr(lang::Keys::Auth::noRegisterLink),
+                        .message = lang::tr(lang::Keys::Auth::noRegisterLink),
                         .poster = "",
                         .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                     return;
                 } catch (const std::exception &e) {
                     hintDialog(ui::HintMsg{
                         .title = lang::tr(lang::Keys::Title::error),
-                        .msg = e.what(),
+                        .message = e.what(),
                         .poster = "",
                         .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                     return;
@@ -146,7 +146,7 @@ namespace neko::ui {
             auto loginFunc = [=, this]() {
                 inputDialog(ui::InputMsg{
                     .title = lang::tr(lang::Keys::Title::inputLogin),
-                    .msg = lang::tr(lang::Keys::Auth::needLogin),
+                    .message = lang::tr(lang::Keys::Auth::needLogin),
                     .poster = "",
                     .lineText = {
                         lang::tr(lang::Keys::General::username),
@@ -161,7 +161,7 @@ namespace neko::ui {
                             if (line.empty()) {
                                 hintDialog(ui::HintMsg{
                                     .title = lang::tr(lang::Keys::Title::inputNotEnoughParameters),
-                                    .msg = lang::tr(lang::Keys::General::notEnoughParameters),
+                                    .message = lang::tr(lang::Keys::General::notEnoughParameters),
                                     .poster = "",
                                     .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                                 return;
@@ -176,7 +176,7 @@ namespace neko::ui {
                             if (!result.error.empty()) {
                                 hintDialog(ui::HintMsg{
                                     .title = lang::tr(lang::Keys::Title::error),
-                                    .msg = result.error,
+                                    .message = result.error,
                                     .poster = "",
                                     .buttonText = {lang::tr(lang::Keys::Button::ok)}});
                                 return;
@@ -189,7 +189,7 @@ namespace neko::ui {
             // login or register
             hintDialog(ui::HintMsg{
                 .title = lang::tr(lang::Keys::Title::loginOrRegister),
-                .msg = lang::tr(lang::Keys::Auth::loginOrRegister),
+                .message = lang::tr(lang::Keys::Auth::loginOrRegister),
                 .poster = "",
                 .buttonText = {lang::tr(lang::Keys::Button::login),
                                lang::tr(lang::Keys::Button::Register),
@@ -515,7 +515,7 @@ namespace neko::ui {
                 inputHintTimer.restart();
                 hintDialog(ui::HintMsg{
                     .title = title,
-                    .msg = msg,
+                    .message = msg,
                     .poster = "",
                     .buttonText = {info::lang::tr(info::lang::Keys::Button::ok)}});
             }
@@ -675,7 +675,7 @@ namespace neko::ui {
             std::string tempPath = moreTempEdit->text().toStdString();
             if (!tempPath.empty() && std::filesystem::is_directory(tempPath)) {
                 neko::ClientConfig cfg(core::getConfigObj());
-                system::temporaryFolder(dir);
+                system::tempFolder(dir);
                 cfg.other.tempFolder = dir.c_str();
                 cfg.save(core::getConfigObj());
             } else {

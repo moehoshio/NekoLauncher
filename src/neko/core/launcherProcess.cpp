@@ -1,6 +1,8 @@
 #include "neko/core/launcherProcess.hpp"
-#include "neko/log/nlog.hpp"
+#include "neko/schema/exception.hpp"
 #include "neko/schema/nekodefine.hpp"
+
+#include "neko/log/nlog.hpp"
 
 #include <boost/process.hpp>
 
@@ -15,41 +17,52 @@
 
 namespace neko::core {
 
-    // This function blocks the thread until the process ends.
-    void launcherProcess(const std::string &command, std::function<void()> onStart, std::function<void(int)> onExit, const std::string &workingDir) {
+    void launcherProcess(const ProcessInfo &processInfo) {
 
         try {
 
+            boost::process::ipstream pipeStream;
+
 #ifdef _WIN32
-            bool usePowershell = command.length() > windowsCommandLengthLimit;
+            bool usePowershell = processInfo.command.length() >= windowsCommandLengthLimit;
             std::string baseCommand = usePowershell ? "powershell" : "cmd";
             std::string commandPrefix = usePowershell ? "-Command" : "/c";
             boost::process::child proc(
                 boost::process::search_path(baseCommand),
                 commandPrefix,
-                command,
-                boost::process::start_dir = workingDir,
-                boost::process::windows::hide);
+                processInfo.command,
+                boost::process::start_dir = processInfo.workingDir,
+                boost::process::windows::hide,
+                boost::process::std_out > pipeStream);
 #else
-            boost::process::child proc("/bin/sh", "-c", command, boost::process::start_dir = workingDir);
+            boost::process::child proc(
+                "/bin/sh",
+                "-c",
+                processInfo.command,
+                boost::process::start_dir = processInfo.workingDir,
+                boost::process::std_out > pipeStream);
 #endif
 
-            if (onStart) {
-                onStart();
+            if (processInfo.onStart) {
+                processInfo.onStart();
+            }
+            if (processInfo.pipeStreamCb) {
+                std::string line;
+                while (std::getline(pipeStream, line)) {
+                    processInfo.pipeStreamCb(line);
+                }
             }
 
             proc.wait();
             int code = proc.exit_code();
 
-            if (onExit) {
-                onExit(code);
+            if (processInfo.onExit) {
+                processInfo.onExit(code);
             }
 
-        } catch (const std::exception &e) {
-            log::Err(log::SrcLoc::current() ,"Launcher error: %s", e.what());
-            if (onExit) {
-                onExit(-1);
-            }
+        } catch (const std::system_error &e) {
+            log::error({}, "Launcher error: {} , code: {}", e.what(), e.code().value());
+            throw ex::Runtime("Failed to launch process : " + std::string(e.what()));
         }
     }
 
@@ -63,14 +76,19 @@ namespace neko::core {
                 boost::process::search_path(baseCommand),
                 commandPrefix,
                 command,
-                boost::process::start_dir = workingDir
-                    boost::process::windows::hide);
+                boost::process::start_dir = workingDir,
+                boost::process::windows::hide);
 #else
-            boost::process::child proc("/bin/sh", "-c", command, boost::process::start_dir = workingDir);
+            boost::process::child proc(
+                "/bin/sh",
+                "-c",
+                command,
+                boost::process::start_dir = workingDir);
 #endif
             proc.detach();
-        } catch (const std::exception &e) {
-            log::Err(log::SrcLoc::current() ,"Launcher error: %s", e.what());
+        } catch (const std::system_error &e) {
+            log::error({}, "Launcher error: {} , code: {}", e.what(), e.code().value());
+            throw ex::Runtime("Failed to launch process : " + std::string(e.what()));
         }
     }
 
