@@ -1,6 +1,6 @@
 /**
  * @file nlog.hpp
- * @brief neko logging system
+ * @brief neko logging module
  * @author moehoshio
  * @copyright Copyright (c) 2025 Hoshi
  * @license MIT OR Apache-2.0
@@ -20,6 +20,7 @@
 #include <condition_variable>
 #include <mutex>
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -28,9 +29,9 @@
 
 #include <thread>
 
+#include <queue>
 #include <unordered_map>
 #include <vector>
-#include <queue>
 
 namespace neko::log {
 
@@ -38,11 +39,11 @@ namespace neko::log {
      * @brief Log level enum
      */
     enum class Level : neko::uint8 {
-        Debug = 1, ///< Debug level, debug information
-        Info = 2,  ///< Info level, general information
-        Warn = 3,  ///< Warning level, potential issues
-        Error = 4, ///< Error level, error information
-        Off = 5    ///< Logging off
+        Debug = 1, ///< Debug
+        Info = 2,  ///< General information
+        Warn = 3,  ///< Potential issues
+        Error = 4, ///< Error
+        Off = 255  ///< Logging off
     };
 
     /**
@@ -70,14 +71,14 @@ namespace neko::log {
      */
     class ThreadNameManager {
     private:
-        static std::unordered_map<std::thread::id, std::string> threadNames;
-        static std::mutex namesMutex;
+        std::unordered_map<std::thread::id, std::string> threadNames;
+        std::mutex namesMutex;
 
     public:
         /**
          * @brief Set the current thread's name
          */
-        static void setCurrentThreadName(const std::string &name) {
+        void setCurrentThreadName(const std::string &name) {
             std::lock_guard<std::mutex> lock(namesMutex);
             threadNames[std::this_thread::get_id()] = name;
         }
@@ -85,7 +86,7 @@ namespace neko::log {
         /**
          * @brief Set the name of the specified thread
          */
-        static void setThreadName(std::thread::id threadId, const std::string &name) {
+        void setThreadName(std::thread::id threadId, const std::string &name) {
             std::lock_guard<std::mutex> lock(namesMutex);
             threadNames[threadId] = name;
         }
@@ -93,7 +94,7 @@ namespace neko::log {
         /**
          * @brief Get thread name, returns thread ID string if not set
          */
-        static std::string getThreadName(std::thread::id threadId) {
+        std::string getThreadName(std::thread::id threadId) {
             std::lock_guard<std::mutex> lock(namesMutex);
             auto it = threadNames.find(threadId);
             if (it != threadNames.end()) {
@@ -109,7 +110,7 @@ namespace neko::log {
         /**
          * @brief Remove thread name
          */
-        static void removeThreadName(std::thread::id threadId) {
+        void removeThreadName(std::thread::id threadId) {
             std::lock_guard<std::mutex> lock(namesMutex);
             threadNames.erase(threadId);
         }
@@ -117,15 +118,11 @@ namespace neko::log {
         /**
          * @brief Clear all thread names
          */
-        static void clearAllNames() {
+        void clearAllNames() {
             std::lock_guard<std::mutex> lock(namesMutex);
             threadNames.clear();
         }
-    };
-
-    // Static member definitions
-    inline std::unordered_map<std::thread::id, std::string> ThreadNameManager::threadNames;
-    inline std::mutex ThreadNameManager::namesMutex;
+    } inline threadNameManager;
 
     /**
      * @brief Log record structure
@@ -141,7 +138,7 @@ namespace neko::log {
         LogRecord(Level lvl, std::string msg, const neko::SrcLocInfo &loc = {})
             : level(lvl), message(std::move(msg)),
               timestamp(std::chrono::system_clock::now()), location(loc) {
-            threadName = ThreadNameManager::getThreadName(std::this_thread::get_id());
+            threadName = threadNameManager.getThreadName(std::this_thread::get_id());
         }
     };
 
@@ -155,11 +152,24 @@ namespace neko::log {
     };
 
     /**
-     * @brief Default log formatter
+     * @brief Default log formatter with configurable file path handling
      */
     class DefaultFormatter : public IFormatter {
+    private:
+        std::string rootPath;
+        bool useFullPath;
+
     public:
+        /**
+         * @brief Constructor
+         * @param rootPath Root path for truncating file paths (empty = use filename only)
+         * @param useFullPath If true, use full file paths regardless of rootPath
+         */
+        explicit DefaultFormatter(const std::string &rootPath = "", bool useFullPath = false)
+            : rootPath(rootPath), useFullPath(useFullPath) {}
+
         std::string format(const LogRecord &record) override {
+            // Format timestamp
             auto time_t = std::chrono::system_clock::to_time_t(record.timestamp);
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                           record.timestamp.time_since_epoch()) %
@@ -172,12 +182,34 @@ namespace neko::log {
             localtime_r(&time_t, &tm);
 #endif
 
+            auto truncatePath = [](const std::string &fullPath, const std::string &rootPath) -> std::string {
+                std::filesystem::path full(fullPath);
+                std::filesystem::path root(rootPath);
+
+                std::error_code ec;
+                auto rel = std::filesystem::relative(full, root, ec);
+                if (!ec && !rel.empty()) {
+                    return rel.string();
+                }
+                return fullPath;
+            };
+
+            // Handle file path based on configuration
+            std::string file;
+            if (useFullPath) {
+                file = record.location.getFile();
+            } else if (!rootPath.empty()) {
+                file = truncatePath(record.location.getFile(), rootPath);
+            } else {
+                file = std::filesystem::path(record.location.getFile()).filename().string();
+            }
+
             return std::format("[{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}] [{}] [{}] [{}:{}] {}",
                                tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
                                tm.tm_hour, tm.tm_min, tm.tm_sec, ms.count(),
                                levelToString(record.level),
                                record.threadName,
-                               record.location.getFile(), record.location.getLine(),
+                               file, record.location.getLine(),
                                record.message);
         }
     };
@@ -353,7 +385,6 @@ namespace neko::log {
         mutable std::mutex logQueueMutex;
 
     public:
-
         explicit Logger(Level level = Level::Info) : level(level) {
             addAppender(std::make_unique<ConsoleAppender>());
         }
@@ -542,126 +573,118 @@ namespace neko::log {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Error, message, location);
         }
-    };
-
-    /**
-     * @brief Get global Logger instance
-     */
-    inline Logger &getGlobalLogger() {
-        static Logger instance;
-        return instance;
-    }
+    } inline logger;
 
     // === Convenience functions ===
 
     // === Info ===
     inline Level getLevel() {
-        return getGlobalLogger().getLevel();
+        return logger.getLevel();
     }
     inline neko::SyncMode getMode() {
-        return getGlobalLogger().getMode();
+        return logger.getMode();
     }
 
     inline bool isEnabled(Level level) {
-        return getGlobalLogger().isEnabled(level);
+        return logger.isEnabled(level);
     }
 
     // === Control ===
 
     inline void setLevel(Level level) {
-        getGlobalLogger().setLevel(level);
+        logger.setLevel(level);
     }
 
     inline void setMode(neko::SyncMode m) {
-        getGlobalLogger().setMode(m);
+        logger.setMode(m);
     }
 
     inline void addFileAppender(const std::string &filename, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
-        getGlobalLogger().addFileAppender(filename, isTruncate, std::move(formatter));
+        logger.addFileAppender(filename, isTruncate, std::move(formatter));
     }
 
     inline void addFileAppender(const std::string &filename, Level level, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
-        getGlobalLogger().addFileAppender(filename, level, isTruncate, std::move(formatter));
+        logger.addFileAppender(filename, level, isTruncate, std::move(formatter));
     }
 
     inline void addConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
-        getGlobalLogger().addConsoleAppender(std::move(formatter));
+        logger.addConsoleAppender(std::move(formatter));
     }
 
     inline void addConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>()) {
-        getGlobalLogger().addConsoleAppender(level, std::move(formatter));
+        logger.addConsoleAppender(level, std::move(formatter));
     }
 
     inline void addAppender(std::unique_ptr<IAppender> appender) {
-        getGlobalLogger().addAppender(std::move(appender));
+        logger.addAppender(std::move(appender));
     }
 
     inline void clearAppenders() {
-        getGlobalLogger().clearAppenders();
+        logger.clearAppenders();
     }
 
     inline void flushLog() {
-        getGlobalLogger().flush();
+        logger.flush();
     }
 
     inline void runLogLoop() {
-        getGlobalLogger().runLoop();
+        logger.runLoop();
     }
     inline void stopLogLoop() {
-        getGlobalLogger().stopLoop();
+        logger.stopLoop();
     }
 
     // === Logging ===
 
     inline void debug(const std::string &message, const neko::SrcLocInfo &location = {}) {
-        getGlobalLogger().debug(message, location);
+        logger.debug(message, location);
     }
 
     inline void info(const std::string &message, const neko::SrcLocInfo &location = {}) {
-        getGlobalLogger().info(message, location);
+        logger.info(message, location);
     }
 
     inline void warn(const std::string &message, const neko::SrcLocInfo &location = {}) {
-        getGlobalLogger().warn(message, location);
+        logger.warn(message, location);
     }
 
     inline void error(const std::string &message, const neko::SrcLocInfo &location = {}) {
-        getGlobalLogger().error(message, location);
+        logger.error(message, location);
     }
 
     template <typename... Args>
     void debug(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
-        getGlobalLogger().debug(message, location);
+        logger.debug(message, location);
     }
     template <typename... Args>
     void info(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
-        getGlobalLogger().info(message, location);
+        logger.info(message, location);
     }
     template <typename... Args>
     void warn(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
-        getGlobalLogger().warn(message, location);
+        logger.warn(message, location);
     }
     template <typename... Args>
     void error(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
-        getGlobalLogger().error(message, location);
+        logger.error(message, location);
     }
 
     /**
      * @brief Convenience function to set current thread name
      */
     inline void setCurrentThreadName(const std::string &name) {
-        ThreadNameManager::setCurrentThreadName(name);
+        threadNameManager.setCurrentThreadName(name);
     }
 
     /**
      * @brief Convenience function to set specified thread name
      */
     inline void setThreadName(std::thread::id threadId, const std::string &name) {
-        ThreadNameManager::setThreadName(threadId, name);
+        threadNameManager.setThreadName(threadId, name);
     }
 
     struct autoLog {
@@ -672,16 +695,13 @@ namespace neko::log {
 
         autoLog(const std::string &start = "Start", const std::string &end = "End", neko::SrcLocInfo loc = {}, std::unique_ptr<IFormatter> fmt = std::make_unique<DefaultFormatter>())
             : startMsg(start), endMsg(end), location(loc), formatter(std::move(fmt)) {
-            if (!location.hasInfo()) {
-                location = neko::SrcLoc::current();
-            }
             startMsg = formatter->format(LogRecord(Level::Info, startMsg, location));
             endMsg = formatter->format(LogRecord(Level::Info, endMsg, location));
-            getGlobalLogger().info(startMsg, location);
+            logger.info(startMsg, location);
         }
 
         ~autoLog() {
-            getGlobalLogger().info(endMsg, location);
+            logger.info(endMsg, location);
         }
     };
 
