@@ -5,14 +5,14 @@
 #include "neko/schema/nekodefine.hpp" // For static host list
 #include "neko/schema/types.hpp"
 
-#if __has_include("neko/log/nlog.hpp")
+#if __has_include(<neko/log/nlog.hpp>)
 #define NEKO_IMPORT_NLOG
-#include "neko/log/nlog.hpp"
+#include <neko/log/nlog.hpp>
 #endif
 
-#if __has_include("neko/bus/threadBus.hpp")
+#if __has_include(<neko/bus/threadBus.hpp>)
 #define NEKO_IMPORT_THREAD_BUS
-#include "neko/bus/threadBus.hpp"
+#include <neko/bus/threadBus.hpp>
 #endif
 
 // C++ STL

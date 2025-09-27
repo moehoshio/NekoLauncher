@@ -47,8 +47,8 @@ namespace neko::core {
                     } catch (...) {
                         debugMsg += "\nNested: <unknown exception>";
                     }
-                    log::Err(e.getFile() ,e.getLine(), "%s : installMinecraft Failed : %s",e.getFuncName(), e.msg.c_str());
-                    log::Debug(e.getFile() ,e.getLine(), "%s : Debug installMinecraft : DebugMsg : %s , StackTrace : %s",e.getFuncName(), debugMsg.c_str(),e.getStackTraceStr().c_str());
+                    log::Err(e.getFile() ,e.getLine(), "%s : installMinecraft Failed : %s",e.getFunc(), e.msg.c_str());
+                    log::Debug(e.getFile() ,e.getLine(), "%s : Debug installMinecraft : DebugMsg : %s , StackTrace : %s",e.getFunc(), debugMsg.c_str(),e.getStackTraceStr().c_str());
                     if (showHint)
                         showHint({info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::installMinecraft) + e.msg + debugMsg, "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::cancel)}, [&mtx, &condVar, &stop](neko::uint32 checkId) {
                                       if (checkId == 1) {

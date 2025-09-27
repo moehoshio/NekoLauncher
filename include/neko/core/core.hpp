@@ -149,7 +149,7 @@ namespace neko::core {
     inline schema::LauncherConfigResponse getRemoteLauncherConfig() {
         log::autoLog log;
         // Use static remote config if enabled
-        if constexpr (schema::definitions::useStaticDeployment || schema::definitions::useStaticRemoteConfig) {
+        if constexpr (schema::definitions::EnableStaticDeployment || schema::definitions::EnableStaticRemoteConfig) {
             return internal::getStaticRemoteConfig();
         } else {
             // If static remote config is not enabled, use the launcher config API

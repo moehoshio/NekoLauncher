@@ -27,7 +27,7 @@ namespace neko::core::app {
      * @return The application version string.
      */
     constexpr neko::cstr getVersion() {
-        return schema::definitions::NekoLcCoreVersion.data();
+        return schema::definitions::AppVersion.data();
     }
 
     /**
@@ -55,7 +55,7 @@ namespace neko::core::app {
      * @return The configuration file name. e.g "config.ini"
      */
     constexpr neko::cstr getConfigFileName() {
-        return schema::definitions::clientConfigFileName.data();
+        return schema::definitions::ClientConfigFileName.data();
     }
 
     /**
@@ -71,7 +71,7 @@ namespace neko::core::app {
      * @return The static remote configuration URL string.
      */
     constexpr neko::cstr getStaticRemoteConfigUrl() {
-        return schema::definitions::NetworkRemoteConfigUrl.data();
+        return schema::definitions::NetworkStaticRemoteConfigUrl.data();
     }
 
 } // namespace neko::core::app

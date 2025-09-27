@@ -57,7 +57,7 @@ namespace neko::ex {
          * @brief Check if extra error info is available.
          * @return True if extension info is present.
          */
-        bool hasExtraInfo() const noexcept {
+        bool hasSrcLocInfo() const noexcept {
             return srcLoc.hasInfo();
         }
 
@@ -65,7 +65,7 @@ namespace neko::ex {
          * @brief Get the extended error information.
          * @return Reference to ErrorExtensionInfo.
          */
-        const neko::SrcLocInfo &getSourceLocation() const noexcept {
+        const neko::SrcLocInfo &getSrcLoc() const noexcept {
             return srcLoc;
         }
 
@@ -87,8 +87,8 @@ namespace neko::ex {
          * @brief Get the function name where the error occurred.
          * @return Function name as a C-string.
          */
-        neko::cstr getFuncName() const noexcept {
-            return srcLoc.getFuncName();
+        neko::cstr getFunc() const noexcept {
+            return srcLoc.getFunc();
         }
         /**
          * @brief Get the error message as a string.

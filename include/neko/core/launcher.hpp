@@ -28,11 +28,11 @@ namespace neko::core {
     inline void launcher(std::function<void(const neko::ui::HintMsg &)> showHint = nullptr, std::function<void()> onStart = nullptr, std::function<void(int)> onExit = nullptr) {
         nlog::autoLog log;
 
-        if constexpr (std::string_view("custom") == schema::definitions::launcherMode) {
+        if constexpr (std::string_view("custom") == schema::definitions::LauncherMode) {
             // Custom launcher
         }
 
-        if constexpr (std::string_view("minecraft") == schema::definitions::launcherMode) {
+        if constexpr (std::string_view("minecraft") == schema::definitions::LauncherMode) {
             try {
                 minecraft::account::launcherMinecraftAuthlibAndPrefetchedCheck();
                 minecraft::account::launcherMinecraftTokenRefresh();

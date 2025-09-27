@@ -14,30 +14,40 @@ namespace neko::schema {
      */
     namespace definitions {
 
+        /*** Application ***/
+
+        // In this project, `App` refers to NekoLc; in contrast, `resource` refers to the managed/maintained content.
         constexpr neko::strview AppName = "NekoLauncher";
 
-        constexpr neko::strview NekoLcCoreVersion = "v0.0.1";
+        constexpr neko::strview AppVersion = "v0.0.1";
+
+        // Options: "custom", "minecraft"
+        constexpr neko::strview LauncherMode = "minecraft";
+
+        constexpr neko::strview ClientConfigFileName = "config.ini";
+
+
+        /*** Network ***/
 
         constexpr neko::strview NetworkHostList[] = {"api.example.com", "www.example.org"};
 
+        // Authlib-Injector for Minecraft
         constexpr neko::strview NetworkAuthlibHost = "skin.example.org";
 
-        constexpr bool useAuthentication = true;
-
-        constexpr bool useStaticDeployment = false;
-
-        constexpr bool useWebSocket = true;
-
-        // If only static deployment configuration . always enabled when useStaticDeployment is true
-        constexpr bool useStaticRemoteConfig = false;
-        // URL for the remote configuration file
-        constexpr neko::strview NetworkRemoteConfigUrl = "https://static.example.com/NekoLc/v0/remote-config.json";
-
-        constexpr neko::strview launcherMode = "minecraft";
-
-        constexpr neko::strview clientConfigFileName = "config.ini";
-
         constexpr neko::uint64 NetworkHostListSize = sizeof(NetworkHostList) / sizeof(NetworkHostList[0]);
+
+        // Whether to use authentication features
+        constexpr bool EnableAuthentication = true;
+
+        // When true, EnableStaticRemoteConfig is always true as well
+        constexpr bool EnableStaticDeployment = false;
+
+        constexpr bool EnableWebSocket = true;
+
+        // If only static deployment configuration
+        constexpr bool EnableStaticRemoteConfig = false;
+        // URL for the static remote configuration file
+        constexpr neko::strview NetworkStaticRemoteConfigUrl = "https://static.example.com/NekoLc/v0/remote-config.json";
 
 
         // Helper namespace for constexpr build ID generation
@@ -101,8 +111,7 @@ namespace neko::schema {
                 make_identifier<8>(__TIME__, __DATE__, __FILE__);
 #endif
 
-            // The complete identifier is composed in the form of version-time-unique_identifier
-            constexpr auto build_id_full_array = concat3<NekoLcCoreVersion.size(), consteval_strlen(BUILD_TIME), build_id_array.size()>(NekoLcCoreVersion.data(), BUILD_TIME, build_id_array.data());
+            constexpr auto build_id_full_array = concat3<AppVersion.size(), consteval_strlen(NEKO_BUILD_TIME), build_id_array.size()>(AppVersion.data(), NEKO_BUILD_TIME, build_id_array.data());
 
         } // namespace constexprBuildId
 
