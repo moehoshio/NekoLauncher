@@ -9,7 +9,7 @@
 
 // Structure definition for ui messages
 
-#include "neko/schema/types.hpp"
+#include <neko/schema/types.hpp>
 
 #include <functional>
 #include <string>

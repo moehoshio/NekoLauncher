@@ -1,8 +1,9 @@
 #pragma once
 
-#include "neko/schema/types.hpp"
-#include "neko/ui/theme.hpp"
+#include <neko/schema/types.hpp>
+
 #include "neko/ui/uiMsg.hpp"
+#include "neko/ui/theme.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include <QtGui/QMovie>

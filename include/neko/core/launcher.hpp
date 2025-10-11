@@ -1,11 +1,13 @@
 #pragma once
 
-#include "neko/core/resources.hpp"
-#include "neko/log/nlog.hpp"
+// Neko Module
 
+#include <neko/log/nlog.hpp>
+
+// NekoLc project
 #include "neko/ui/uiMsg.hpp"
 
-#include "neko/schema/nekodefine.hpp"
+#include "neko/core/resources.hpp"
 
 #include "neko/minecraft/account.hpp"
 #include "neko/minecraft/launcherMinecraft.hpp"

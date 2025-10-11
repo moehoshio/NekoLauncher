@@ -1,5 +1,6 @@
 #pragma once
-#include "neko/log/nlog.hpp"
+
+#include <neko/log/nlog.hpp>
 
 #include <string>
 #include <string_view>

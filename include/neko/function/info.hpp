@@ -1,10 +1,11 @@
 #pragma once
 
 #include "neko/schema/api.hpp"
-#include "neko/system/platform.hpp"
-#include "neko/function/utilities.hpp"
 
-#include "library/nlohmann/json.hpp"
+#include <neko/system/platform.hpp>
+#include <neko/function/utilities.hpp>
+
+#include <nlohmann/json.hpp>
 
 namespace neko::info {
 

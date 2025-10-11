@@ -1,13 +1,15 @@
 #pragma once
 
-#include "neko/log/nlog.hpp"
+// Neko Module
+#include <neko/schema/types.hpp>
+#include <neko/schema/exception.hpp>
 
+#include <neko/log/nlog.hpp>
+
+// NekoLc project
 #include "neko/schema/clientconfig.hpp"
-#include "neko/schema/exception.hpp"
-#include "neko/schema/types.hpp"
 
 #include "neko/ui/uiMsg.hpp"
-
 #include "neko/core/resources.hpp"
 
 #include "neko/function/exec.hpp"

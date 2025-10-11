@@ -1,11 +1,11 @@
 #pragma once
 
-#include "neko/schema/types.hpp"
+#include <neko/schema/types.hpp>
 
-#include "neko/function/utilities.hpp"
-#include "neko/log/nlog.hpp"
+#include <neko/log/nlog.hpp>
+#include <neko/function/utilities.hpp>
 
-#include "library/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <fstream>

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <neko/event/event.hpp>
+#include <neko/core/threadPool.hpp>
+
 #include "neko/core/configManager.hpp"
-#include "neko/core/threadPool.hpp"
-#include "neko/event/event.hpp"
 
 namespace neko::core {
 

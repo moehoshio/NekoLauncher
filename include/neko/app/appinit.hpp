@@ -1,17 +1,16 @@
 #pragma once
 
-#include "neko/schema/clientconfig.hpp"
-#include "neko/schema/types.hpp"
+#include <neko/schema/types.hpp>
+#include <neko/log/nlog.hpp>
+#include <neko/function/utilities.hpp>
+#include <neko/network/networkCommon.hpp>
 
+#include "neko/schema/clientconfig.hpp"
 #include "neko/core/appinfo.hpp"
 #include "neko/core/configBus.hpp"
 #include "neko/core/threadBus.hpp"
-
-#include "neko/log/nlog.hpp"
-
 #include "neko/function/lang.hpp"
-#include "neko/function/utilities.hpp"
-#include "neko/network/networkCommon.hpp"
+
 
 #include <sstream>
 

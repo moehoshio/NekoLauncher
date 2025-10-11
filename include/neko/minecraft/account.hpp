@@ -1,17 +1,20 @@
 #pragma once
 
+// Neko Module
+
+#include <neko/log/nlog.hpp>
+#include <neko/schema/exception.hpp>
+#include <neko/function/utilities.hpp>
+#include <neko/network/network.hpp>
+
+// NekoLc project
 #include "neko/core/core.hpp"
 #include "neko/core/resources.hpp"
 
-#include "neko/log/nlog.hpp"
-#include "neko/schema/exception.hpp"
-
 #include "neko/function/info.hpp"
-#include "neko/function/utilities.hpp"
 
-#include "neko/network/network.hpp"
 
-#include "library/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <string_view>

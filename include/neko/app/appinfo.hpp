@@ -1,9 +1,9 @@
 #pragma once
 
-#include "neko/schema/clientconfig.hpp"
-#include "neko/schema/nekodefine.hpp"
-#include "neko/schema/types.hpp"
+#include <neko/schema/types.hpp>
 
+#include "neko/app/nekoLc.hpp"
+#include "neko/schema/clientConfig.hpp"
 #include "neko/bus/configBus.hpp"
 
 #include <string>
@@ -19,7 +19,7 @@ namespace neko::core::app {
      * @return The application name string.
      */
     constexpr neko::cstr getAppName() {
-        return schema::definitions::AppName.data();
+        return lc::AppName.data();
     }
 
     /**
@@ -27,7 +27,7 @@ namespace neko::core::app {
      * @return The application version string.
      */
     constexpr neko::cstr getVersion() {
-        return schema::definitions::AppVersion.data();
+        return lc::AppVersion.data();
     }
 
     /**
@@ -55,7 +55,7 @@ namespace neko::core::app {
      * @return The configuration file name. e.g "config.ini"
      */
     constexpr neko::cstr getConfigFileName() {
-        return schema::definitions::ClientConfigFileName.data();
+        return lc::ClientConfigFileName.data();
     }
 
     /**
@@ -63,7 +63,7 @@ namespace neko::core::app {
      * @return The build ID string. e.g "v0.0.1-20250710184724-githash"
      */
     constexpr neko::cstr getBuildId() {
-        return schema::definitions::buildID.data();
+        return lc::buildID.data();
     }
 
     /**
@@ -71,7 +71,7 @@ namespace neko::core::app {
      * @return The static remote configuration URL string.
      */
     constexpr neko::cstr getStaticRemoteConfigUrl() {
-        return schema::definitions::NetworkStaticRemoteConfigUrl.data();
+        return lc::NetworkStaticRemoteConfigUrl.data();
     }
 
 } // namespace neko::core::app

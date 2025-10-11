@@ -1,6 +1,13 @@
+/**
+ * @brief NekoLc Event Types
+ * @file eventTypes.hpp
+ * @author moehoshio
+ */
+
 #pragma once
 
-#include "neko/schema/types.hpp"
+#include <neko/schema/types.hpp>
+
 #include "neko/ui/uiMsg.hpp"
 
 namespace neko::event {

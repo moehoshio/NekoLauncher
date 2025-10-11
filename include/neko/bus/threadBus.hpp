@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include "neko/schema/types.hpp"
-#include "neko/core/threadPool.hpp"
+#include <neko/schema/types.hpp>
+#include <neko/core/threadPool.hpp>
+
 #include "neko/core/resources.hpp"
 
 /**

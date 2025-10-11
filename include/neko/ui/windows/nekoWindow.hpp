@@ -1,9 +1,11 @@
 #pragma once
-// Neko Modules
 
-// Neko Ui Modules
-#include "neko/ui/state.hpp"
+// NekoLc project
+
 #include "neko/ui/uiMsg.hpp"
+#include "neko/ui/theme.hpp"
+
+#include "neko/schema/clientconfig.hpp"
 
 #include "neko/ui/widgets/headBarWidget.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"
@@ -16,8 +18,6 @@
 #include "neko/ui/pages/loadingPage.hpp"
 #include "neko/ui/pages/settingPages.hpp"
 
-// Neko Other Modules
-#include "neko/schema/clientconfig.hpp"
 
 // C++ Standard Library
 #include <string>

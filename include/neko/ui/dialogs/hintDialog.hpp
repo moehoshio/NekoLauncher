@@ -1,9 +1,7 @@
 #pragma once
 
 #include "neko/ui/uiMsg.hpp"
-
 #include "neko/ui/theme.hpp"
-
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include <QtWidgets/QDialogButtonBox>

@@ -6,9 +6,10 @@
 
 #pragma once
 
-#include "neko/schema/types.hpp"
+#include <neko/schema/types.hpp>
+#include <neko/event/event.hpp>
+
 #include "neko/core/resources.hpp"
-#include "neko/event/event.hpp"
 
 namespace neko::bus::event {
 

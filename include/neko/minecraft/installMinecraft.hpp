@@ -8,17 +8,17 @@
 
 #pragma once
 
-#include "neko/log/nlog.hpp"
-#include "neko/schema/clientconfig.hpp"
-#include "neko/schema/nerr.hpp"
-#include "neko/schema/types.hpp"
+// Neko Module
+#include <neko/schema/types.hpp>
+#include <neko/log/nlog.hpp>
+#include <neko/network/network.hpp>
+
+// NekoLc project
+#include "neko/schema/clientConfig.hpp"
 #include "neko/ui/uiMsg.hpp"
-
-#include "neko/network/network.hpp"
-
 #include "neko/minecraft/downloadSource.hpp"
 
-#include "library/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <functional>

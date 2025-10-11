@@ -20,24 +20,31 @@ endif()
 option(NEKO_BUILD_TESTS "Neko Launcher Build tests" ON)
 
 # Package path. e.g. vcpkg
-set(NEKO_LIBRARY_DIRS "/path/to/vcpkg/installed/x64-windows")
+if(NOT DEFINED NEKO_LIBRARY_DIRS)
+    set(NEKO_LIBRARY_DIRS "/path/to/vcpkg/installed/x64-windows")
+endif()
 # Qt path
-set(Qt6_DIR "/path/to/Qt6/6.6.1/msvc2019_64")
-
-set(STL_DIR "/path/to/STL")
+if(NOT DEFINED Qt6_DIR)
+    set(Qt6_DIR "/path/to/Qt6/6.6.1/msvc2019_64")
+endif()
+# STL path
+if(NOT DEFINED STL_DIR)
+    set(STL_DIR "/path/to/STL")
+endif()
 
 # user program version
 set(NEKO_LC_USER_VERSION "2.3.1.0")
 
 set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 set(CMAKE_AUTOMOC ON)
 
 # ================
 # === Library ====
 # ================
 
-find_package(Boost COMPONENTS system process)
-find_package(Qt6 COMPONENTS Core Gui Widgets)
+find_package(Boost COMPONENTS process system CONFIG)
+find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
 find_package(GTest QUIET)
 
 if (NOT Boost_FOUND)
@@ -278,13 +285,13 @@ if(NEKO_BUILD_TESTS)
     include(GoogleTest)
 
     # Api struct to json
-    add_executable(Api_toJson_test "${CMAKE_SOURCE_DIR}/test/Api_toJson_test.cpp")
+    add_executable(Api_toJson_test "${CMAKE_SOURCE_DIR}/tests/api_tojson_test.cpp")
     target_include_directories(Api_toJson_test PRIVATE ${NEKO_INCLUDE_DIRS})
     target_link_libraries(Api_toJson_test PRIVATE gtest_main)
     target_compile_features(Api_toJson_test PRIVATE cxx_std_20)
     
     gtest_discover_tests(Api_toJson_test)
-else
+else()
     message(STATUS "NekoNet tests disabled")
 endif()
         

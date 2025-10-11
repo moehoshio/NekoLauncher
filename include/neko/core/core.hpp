@@ -1,24 +1,30 @@
 #pragma once
 
 // Neko Module
+
+#include <neko/schema/types.hpp>
+#include <neko/schema/exception.hpp>
+
+#include <neko/core/threadPool.hpp>
+
+#include <neko/log/nlog.hpp>
+#include <neko/event/event.hpp>
+
+#include <neko/function/utilities.hpp>
+#include <neko/system/platform.hpp>
+
+#include <neko/network/network.hpp>
+
+// NekoLc project
+
 #include "neko/schema/api.hpp"
-#include "neko/schema/state.hpp"
-#include "neko/schema/types.hpp"
+#include "neko/schema/clientConfig.hpp"
+#include "neko/schema/eventTypes.hpp"
 
-#include "neko/schema/clientconfig.hpp"
-#include "neko/schema/exception.hpp"
-#include "neko/schema/nekodefine.hpp"
-
-#include "neko/core/app.hpp"
-#include "neko/core/appinfo.hpp"
-#include "neko/core/configManager.hpp"
-#include "neko/core/launcherProcess.hpp"
-#include "neko/core/threadPool.hpp"
-
-#include "neko/log/nlog.hpp"
-
-#include "neko/event/event.hpp"
-#include "neko/event/eventTypes.hpp"
+#include "<neko/core/app.hpp"
+#include "<neko/core/appinfo.hpp"
+#include "<neko/core/configManager.hpp"
+#include "<neko/core/launcherProcess.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/eventBus.hpp"
@@ -26,14 +32,12 @@
 
 #include "neko/function/info.hpp"
 #include "neko/function/lang.hpp"
-#include "neko/function/utilities.hpp"
-#include "neko/system/platform.hpp"
-
-#include "neko/network/network.hpp"
 
 #include "neko/ui/uiMsg.hpp"
 
-#include "library/nlohmann/json.hpp"
+// other libraries
+
+#include <nlohmann/json.hpp>
 
 // STL
 #include <atomic>

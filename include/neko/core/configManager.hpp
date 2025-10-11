@@ -1,7 +1,8 @@
 #pragma once
 
-#include "library/SimpleIni/SimpleIni.h"
-#include "neko/schema/clientconfig.hpp"
+#include <SimpleIni/SimpleIni.h>
+
+#include "neko/schema/clientConfig.hpp"
 
 #include <functional>
 #include <shared_mutex>

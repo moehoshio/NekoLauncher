@@ -1,13 +1,10 @@
 #pragma once
 
-#include "neko/core/threadBus.hpp"
-#include "neko/core/threadPool.hpp"
+#include <neko/schema/exception.hpp>
 
-#include "neko/event/event.hpp"
+#include "neko/core/threadBus.hpp"
 #include "neko/event/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
-
-#include "neko/schema/exception.hpp"
 
 #include <QtWidgets/QApplication>
 

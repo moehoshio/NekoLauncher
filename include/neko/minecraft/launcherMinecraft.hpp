@@ -8,24 +8,23 @@
 
 #pragma once
 
-#include "neko/function/archiver.hpp"
-#include "neko/schema/clientconfig.hpp"
-#include "neko/schema/nekodefine.hpp"
-#include "neko/schema/types.hpp"
+// Neko Module
+#include <neko/schema/types.hpp>
+#include <neko/schema/exception.hpp>
 
-#include "neko/schema/exception.hpp"
+#include <neko/function/archiver.hpp>
+#include <neko/function/utilities.hpp>
 
-#include "neko/function/utilities.hpp"
+#include <neko/system/memoryinfo.hpp>
+#include <neko/system/platform.hpp>
+#include <neko/network/network.hpp>
+
+// NekoLc project
+#include "neko/schema/clientConfig.hpp"
 #include "neko/function/info.hpp"
-
 #include "neko/core/launcherProcess.hpp"
 
-#include "neko/system/memoryinfo.hpp"
-#include "neko/system/platform.hpp"
-
-#include "neko/network/network.hpp"
-
-#include "library/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 #include <optional>
 #include <regex>
