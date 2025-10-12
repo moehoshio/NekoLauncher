@@ -781,4 +781,4 @@ namespace neko::ui {
 
 } // namespace neko::ui
 
-#include "neko/ui/moc_mainwindow.cpp"
+#include "nekoWindow.moc"

@@ -204,4 +204,4 @@ namespace neko::ui {
 
 } // namespace neko::ui
 
-#include "neko/ui/pages/loadingPage.moc"
+#include "loadingPage.moc"
