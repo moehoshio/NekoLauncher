@@ -3,7 +3,7 @@
 namespace neko::ui {
 
     enum class pageState {
-        index,
+        home,
         setting,
         loading
     };

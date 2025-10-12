@@ -1,3 +1,8 @@
+/**
+ * @file appinit.hpp
+ * @brief Application initialization functions for NekoLauncher.
+ */
+
 #pragma once
 
 #include <neko/schema/types.hpp>

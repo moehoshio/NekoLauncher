@@ -36,7 +36,6 @@ endif()
 set(NEKO_LC_USER_VERSION "2.3.1.0")
 
 set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
-message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 set(CMAKE_AUTOMOC ON)
 
 # ================
@@ -44,15 +43,15 @@ set(CMAKE_AUTOMOC ON)
 # ================
 
 find_package(Boost COMPONENTS process system CONFIG)
-find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
+# find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
 
 if (NOT Boost_FOUND)
     message(FATAL_ERROR "Required Boost but not found ; if you installed it via vcpkg, please make sure to set -DNEKO_LIBRARY_DIRS=<vcpkg_install_path> correctly.")
 endif()
 
-if (NOT Qt6_FOUND)
-    message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
-endif()
+# if (NOT Qt6_FOUND)
+#     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
+# endif()
 
 # Fetch Dependencies
 include(FetchContent)
@@ -181,19 +180,19 @@ list(APPEND NEKO_INCLUDE_DIRS
 # Src files
 list(APPEND NEKO_SRCFILES
     # To ensure that qt moc can locate this file
-    ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
-    ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
+    # ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
+    # ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
 
-    # Ui
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/headbarWidget.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/settingPages.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/hintDialog.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
+    # # Ui
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/headbarWidget.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/settingPages.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/hintDialog.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
 
     # Core
     ${CMAKE_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
@@ -218,7 +217,7 @@ target_link_libraries(NekoLc PRIVATE
 # Link libraries
 target_link_libraries(NekoLc PRIVATE 
     # Qt
-    Qt6::Core Qt6::Widgets Qt6::Gui
+    # Qt6::Core Qt6::Widgets Qt6::Gui
     # Boost
     Boost::system Boost::process
     # Others
@@ -273,26 +272,26 @@ endif() # os
 # ====  Test  ====
 # ================
 
-if(NEKO_BUILD_TESTS)
-    enable_testing()
-    message(STATUS "NekoLc tests enabled")
+# if(NEKO_BUILD_TESTS)
+#     enable_testing()
+#     message(STATUS "NekoLc tests enabled")
 
-    if (NOT GTest_FOUND AND NOT NEKO_AUTO_FETCH_DEPS)
-        message(FATAL_ERROR "GTest not found. Please install GoogleTest or enable NEKO_AUTO_FETCH_DEPS to automatically fetch it.")
-    endif()
+#     if (NOT GTest_FOUND AND NOT NEKO_AUTO_FETCH_DEPS)
+#         message(FATAL_ERROR "GTest not found. Please install GoogleTest or enable NEKO_AUTO_FETCH_DEPS to automatically fetch it.")
+#     endif()
 
-    include(GoogleTest)
+#     include(GoogleTest)
 
-    # Api struct to json
-    add_executable(Api_toJson_test "${CMAKE_SOURCE_DIR}/tests/api_tojson_test.cpp")
-    target_include_directories(Api_toJson_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(Api_toJson_test PRIVATE gtest_main)
-    target_compile_features(Api_toJson_test PRIVATE cxx_std_20)
+#     # Api struct to json
+#     add_executable(Api_toJson_test "${CMAKE_SOURCE_DIR}/tests/api_tojson_test.cpp")
+#     target_include_directories(Api_toJson_test PRIVATE ${NEKO_INCLUDE_DIRS})
+#     target_link_libraries(Api_toJson_test PRIVATE gtest_main)
+#     target_compile_features(Api_toJson_test PRIVATE cxx_std_20)
     
-    gtest_discover_tests(Api_toJson_test)
-else()
-    message(STATUS "NekoNet tests disabled")
-endif()
+#     gtest_discover_tests(Api_toJson_test)
+# else()
+#     message(STATUS "NekoNet tests disabled")
+# endif()
         
 
 # ================

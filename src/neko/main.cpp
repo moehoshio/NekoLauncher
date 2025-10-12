@@ -1,23 +1,11 @@
 
-#include "neko/core/app.hpp"
-#include "neko/core/appinit.hpp"
-#include "neko/core/configBus.hpp"
-#include "neko/core/core.hpp"
-#include "neko/core/install.hpp"
-#include "neko/core/threadBus.hpp"
-
-#include "neko/log/nlog.hpp"
-
-#include "neko/ui/windows/logViewerWindow.hpp"
-#include "neko/ui/windows/mainwindow.hpp"
-
 #include <iostream>
 
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QMainWindow>
+// #include <QtWidgets/QApplication>
+// #include <QtWidgets/QLabel>
+// #include <QtWidgets/QMainWindow>
 
-#include <QtGui/QGuiApplication>
+// #include <QtGui/QGuiApplication>
 
 int main(int argc, char *argv[]) {
 
@@ -26,17 +14,11 @@ int main(int argc, char *argv[]) {
     try {
 
         // Initialization
-        QApplication app(argc, argv);
+        // QApplication app(argc, argv);
         auto it = core::app::init::initialize();
 
         auto running = core::app::run();
         ClientConfig config = bus::config::getClientConfig();
-        ui::NekoWindow w(config);
-
-        // Show loading message
-        w.showLoad({ui::loadMsg::OnlyRaw,
-                    info::tr(info::lang.network.testtingNetwork)});
-        w.show();
 
         bus::thread::submit([=, &it, &w] {
             // check and auto install
@@ -60,7 +42,7 @@ int main(int argc, char *argv[]) {
 
             // If the update is complete or there are no updates, show the homepage
             if (autoUpdate(hintFunc, loadFunc, setLoadInfo) == State::Completed) {
-                emit w.showPageD(ui::NekoWindow::pageState::index);
+                emit w.showPageD(ui::NekoWindow::pageState::home);
             } else {
                 QApplication::quit();
             }
