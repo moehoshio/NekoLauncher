@@ -279,6 +279,12 @@ if(NEKO_BUILD_TESTS)
     target_compile_features(NekoBus_test PRIVATE cxx_std_20)
     gtest_discover_tests(NekoBus_test)
 
+    # Core - Update Test
+    add_executable(NekoCore_update_test "${CMAKE_SOURCE_DIR}/tests/neko_core_update_test.cpp")
+    target_include_directories(NekoCore_update_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoCore_update_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoCore_update_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoCore_update_test)
 else()
     message(STATUS "NekoNet tests disabled")
 endif()
