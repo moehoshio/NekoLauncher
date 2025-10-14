@@ -1,5 +1,5 @@
-
-#include <iostream>
+#include <neko/app/app.hpp>
+#include <neko/app/appinit.hpp>
 
 // #include <QtWidgets/QApplication>
 // #include <QtWidgets/QLabel>
@@ -9,7 +9,12 @@
 
 int main(int argc, char *argv[]) {
 
-    // using namespace neko;
+    using namespace neko;
+
+    app::init::initialize();
+    auto runInfo = app::run();
+
+    return runInfo.mainThreadRunLoopFunction();
 
     // try {
 

@@ -12,7 +12,7 @@
  * @namespace neko::core::app
  * @brief Application-specific information and utilities.
  */
-namespace neko::core::app {
+namespace neko::app {
 
     /**
      * @brief Gets the application name.
@@ -74,4 +74,4 @@ namespace neko::core::app {
         return lc::NetworkStaticRemoteConfigUrl.data();
     }
 
-} // namespace neko::core::app
+} // namespace neko::app

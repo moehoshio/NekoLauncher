@@ -19,7 +19,7 @@
 
 #include <sstream>
 
-namespace neko::core::app::init {
+namespace neko::app::init {
 
     inline void initDeviceID() {
         auto cfg = bus::config::getClientConfig();
@@ -214,4 +214,4 @@ namespace neko::core::app::init {
             }
         });
     }
-} // namespace neko::core::app::init
+} // namespace neko::app::init

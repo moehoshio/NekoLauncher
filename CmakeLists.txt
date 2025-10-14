@@ -199,77 +199,68 @@ list(APPEND NEKO_SRCFILES
 # ================
 
 # Add the executable target
-# add_executable(NekoLc ${NEKO_SRCFILES})
+add_executable(NekoLc ${NEKO_SRCFILES})
 
 # Set the target properties
-# target_include_directories(NekoLc PRIVATE ${NEKO_INCLUDE_DIRS})
-# target_compile_features(NekoLc PRIVATE cxx_std_20)
+target_include_directories(NekoLc PRIVATE ${NEKO_INCLUDE_DIRS})
+target_compile_features(NekoLc PRIVATE cxx_std_20)
 
-# Use static runtime library on Windows to match vcpkg x64-windows-static
-# if(MSVC)
-#     set_property(TARGET NekoLc PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-# endif()
+if(MSVC)
+    set_property(TARGET NekoLc PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 # Link Neko Modules
-# target_link_libraries(NekoLc PRIVATE 
-#     NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool
-# )
+target_link_libraries(NekoLc PRIVATE 
+    NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool
+)
 # Link libraries
-# target_link_libraries(NekoLc PRIVATE 
+target_link_libraries(NekoLc PRIVATE 
     # Qt
     # Qt6::Core Qt6::Widgets Qt6::Gui
     # Boost
-    # Boost::system Boost::process
+    Boost::system Boost::process
     # Others
-#     nlohmann_json SimpleIni
-# )
-
-# Link Windows-specific libraries
-# if(WIN32)
-#     target_link_libraries(NekoLc PRIVATE ws2_32 crypt32)
-# endif()
+    nlohmann_json SimpleIni
+)
 
 # Os-specific settings
-# if(WIN32)
-#     # Set not to use the console window
-#     if(CMAKE_BUILD_TYPE STREQUAL "Release")
-#         set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-#     endif()
-#     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
+if(WIN32)
+    # Set not to use the console window
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+    endif()
+    target_sources(NekoLc PRIVATE resource/windows/icon.rc)
 
-# elseif(APPLE)
+elseif(APPLE)
 
+    # Set the application bundle properties for macOS
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set_target_properties(NekoLc PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
+            # MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
+            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resource/macos/Info.plist
+        )
+    endif()
+    set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/macos/NekoLc.icns)
+    target_sources(NekoLc PRIVATE ${MACOSX_ICON})
+    set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
-#     # Set the application bundle properties for macOS
-#     if(CMAKE_BUILD_TYPE STREQUAL "Release")
-#         set_target_properties(NekoLc PROPERTIES
-#             MACOSX_BUNDLE TRUE
-#             MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
-#             # MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
-#             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resource/macos/Info.plist
-#         )
-#     endif()
-    
-#     set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/macos/NekoLc.icns)
-#     target_sources(NekoLc PRIVATE ${MACOSX_ICON})
-#     set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+elseif(UNIX)
 
-# elseif(UNIX)
+    # Set the executable properties for Linux
+    set_target_properties(NekoLc PROPERTIES
+        OUTPUT_NAME "NekoLc"
+        PREFIX ""
+        SUFFIX ""
+    )
+    # Add a custom command to copy the icon file to the resource directory
+    add_custom_command(TARGET NekoLc POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resource/linux/icon.png ${CMAKE_BINARY_DIR}/icon.png
+        COMMENT "Copying icon.png to build directory"
+    )
 
-#     # Set the executable properties for Linux
-#     set_target_properties(NekoLc PROPERTIES
-#         OUTPUT_NAME "NekoLc"
-#         PREFIX ""
-#         SUFFIX ""
-#     )
-
-#     # Add a custom command to copy the icon file to the resource directory
-#     add_custom_command(TARGET NekoLc POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resource/linux/icon.png ${CMAKE_BINARY_DIR}/icon.png
-#         COMMENT "Copying icon.png to build directory"
-#     )
-
-# endif() # os
+endif() # os
 
 
 # ================

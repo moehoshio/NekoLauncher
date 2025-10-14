@@ -8,7 +8,7 @@
 
 #include <QtWidgets/QApplication>
 
-namespace neko::core::app {
+namespace neko::app {
 
     struct RunningInfo {
         std::function<int()> mainThreadRunLoopFunction;
@@ -46,4 +46,4 @@ namespace neko::core::app {
         QApplication::quit();
     }
 
-} // namespace neko::core::app
+} // namespace neko::app
