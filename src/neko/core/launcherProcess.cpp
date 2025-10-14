@@ -1,10 +1,21 @@
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif
+
+#include <neko/log/nlog.hpp>
+#include <neko/schema/exception.hpp>
+
 #include "neko/core/launcherProcess.hpp"
-#include "neko/schema/exception.hpp"
-#include "neko/schema/nekodefine.hpp"
 
-#include "neko/log/nlog.hpp"
-
-#include <boost/process.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/search_path.hpp>
+#include <boost/process/v1/start_dir.hpp>
 
 #ifdef _WIN32
 #include <boost/process/v1/windows.hpp>
@@ -15,32 +26,34 @@
 #include <string>
 #include <string_view>
 
+namespace bp = boost::process::v1;
+
 namespace neko::core {
 
     void launcherProcess(const ProcessInfo &processInfo) {
 
         try {
 
-            boost::process::ipstream pipeStream;
+            bp::ipstream pipeStream;
 
 #ifdef _WIN32
             bool usePowershell = processInfo.command.length() >= windowsCommandLengthLimit;
             std::string baseCommand = usePowershell ? "powershell" : "cmd";
             std::string commandPrefix = usePowershell ? "-Command" : "/c";
-            boost::process::child proc(
-                boost::process::search_path(baseCommand),
+            bp::child proc(
+                bp::search_path(baseCommand),
                 commandPrefix,
                 processInfo.command,
-                boost::process::start_dir = processInfo.workingDir,
-                boost::process::windows::hide,
-                boost::process::std_out > pipeStream);
+                bp::start_dir = processInfo.workingDir,
+                bp::windows::hide,
+                bp::std_out > pipeStream);
 #else
-            boost::process::child proc(
+            bp::child proc(
                 "/bin/sh",
                 "-c",
                 processInfo.command,
-                boost::process::start_dir = processInfo.workingDir,
-                boost::process::std_out > pipeStream);
+                bp::start_dir = processInfo.workingDir,
+                bp::std_out > pipeStream);
 #endif
 
             if (processInfo.onStart) {
@@ -72,18 +85,18 @@ namespace neko::core {
             bool usePowershell = command.length() > windowsCommandLengthLimit;
             std::string baseCommand = usePowershell ? "powershell" : "cmd";
             std::string commandPrefix = usePowershell ? "-Command" : "/c";
-            boost::process::child proc(
-                boost::process::search_path(baseCommand),
+            bp::child proc(
+                bp::search_path(baseCommand),
                 commandPrefix,
                 command,
-                boost::process::start_dir = workingDir,
-                boost::process::windows::hide);
+                bp::start_dir = workingDir,
+                bp::windows::hide);
 #else
-            boost::process::child proc(
+            bp::child proc(
                 "/bin/sh",
                 "-c",
                 command,
-                boost::process::start_dir = workingDir);
+                bp::start_dir = workingDir);
 #endif
             proc.detach();
         } catch (const std::system_error &e) {

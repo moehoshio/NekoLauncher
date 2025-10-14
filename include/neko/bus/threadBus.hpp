@@ -37,15 +37,6 @@ namespace neko::bus::thread {
     inline neko::uint64 getPendingTaskCount() {
         return neko::core::getThreadPool().getPendingTaskCount();
     }
-    inline bool isEmpty() {
-        return neko::core::getThreadPool().isEmpty();
-    }
-    inline neko::core::thread::TaskStats getTaskStats() {
-        return neko::core::getThreadPool().getTaskStats();
-    }
-    inline bool isStatisticsEnabled() {
-        return neko::core::getThreadPool().isStatisticsEnabled();
-    }
     inline neko::uint64 getMaxQueueSize() {
         return neko::core::getThreadPool().getMaxQueueSize();
     }
@@ -62,30 +53,18 @@ namespace neko::bus::thread {
     }
 
     // === Control ===
-    inline void waitForAllTasksCompletion() {
-        neko::core::getThreadPool().waitForAllTasksCompletion();
+    inline void waitForGlobalTasks() {
+        neko::core::getThreadPool().waitForGlobalTasks();
     }
     template <typename Rep, typename Period>
-    bool waitForAllTasksCompletion(const std::chrono::duration<Rep, Period> &timeout) {
-        return neko::core::getThreadPool().waitForAllTasksCompletion(timeout);
+    bool waitForGlobalTasks(std::chrono::duration<Rep, Period> duration) {
+        return neko::core::getThreadPool().waitForGlobalTasks(duration);
     }
     inline void stop(bool waitForCompletion = true) {
         neko::core::getThreadPool().stop(waitForCompletion);
     }
     inline void setThreadCount(neko::uint64 newThreadCount) {
         neko::core::getThreadPool().setThreadCount(newThreadCount);
-    }
-    inline void clearPendingTasks() {
-        neko::core::getThreadPool().clearPendingTasks();
-    }
-    inline void resetStats() {
-        neko::core::getThreadPool().resetStats();
-    }
-    inline void enableStatistics(bool enable) {
-        neko::core::getThreadPool().enableStatistics(enable);
-    }
-    inline void setLogger(std::function<void(const std::string &)> loggerFunc) {
-        neko::core::getThreadPool().setLogger(std::move(loggerFunc));
     }
     inline void setMaxQueueSize(neko::uint64 maxSize) {
         neko::core::getThreadPool().setMaxQueueSize(maxSize);

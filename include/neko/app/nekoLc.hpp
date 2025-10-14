@@ -1,3 +1,8 @@
+/**
+ * @brief NekoLc configuration and constants.
+ * @file nekoLc.hpp
+ */
+
 #pragma once
 
 #include <neko/schema/types.hpp>

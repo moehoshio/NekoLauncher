@@ -47,3 +47,7 @@ namespace neko {};
 5. Use `#pragma once` at the top of header files. Avoid introducing `using namespace` in the global scope within header files.
 
 6. Always include curly braces `{}` for `for` or `while` loops.
+
+
+## Bus
+NekoBus is essentially a singleton-wrapped bus that lets you access and manipulate the bus object via static methods without directly calling the singleton. This reduces global state and makes the code easier to test and maintain.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SimpleIni/SimpleIni.h>
+#include <SimpleIni.h>
 
 #include "neko/schema/clientConfig.hpp"
 

@@ -9,15 +9,13 @@ project(
 # === Config ====
 # ================
 
-set(NEKO_PATH_SEPARATOR)
-
 if (WIN32)
     set(NEKO_PATH_SEPARATOR ";")
 else()
     set(NEKO_PATH_SEPARATOR ":")
 endif()
 
-option(NEKO_BUILD_TESTS "Neko Launcher Build tests" ON)
+option(NEKO_LC_BUILD_TESTS "Neko Launcher Build tests" ON)
 
 # Package path. e.g. vcpkg
 if(NOT DEFINED NEKO_LIBRARY_DIRS)
@@ -36,7 +34,7 @@ endif()
 set(NEKO_LC_USER_VERSION "2.3.1.0")
 
 set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
-set(CMAKE_AUTOMOC ON)
+# set(CMAKE_AUTOMOC ON)
 
 # ================
 # === Library ====
@@ -44,10 +42,6 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Boost COMPONENTS process system CONFIG)
 # find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
-
-if (NOT Boost_FOUND)
-    message(FATAL_ERROR "Required Boost but not found ; if you installed it via vcpkg, please make sure to set -DNEKO_LIBRARY_DIRS=<vcpkg_install_path> correctly.")
-endif()
 
 # if (NOT Qt6_FOUND)
 #     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
@@ -57,7 +51,7 @@ endif()
 include(FetchContent)
 
 if(NEKO_BUILD_TESTS)
-    message(STATUS "Fetching GoogleTest...")
+    message(STATUS "Neko Launcher is fetching GoogleTest...")
 
     FetchContent_Declare(
         googletest
@@ -151,14 +145,14 @@ message(STATUS "  - C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_
 message(STATUS "  - Build time (UTC): ${NEKO_BUILD_TIME}")
 message(STATUS "")
 message(STATUS "Options:")
-message(STATUS "  - Neko Auto fetch deps: ${NEKO_AUTO_FETCH_DEPS}")
-message(STATUS "  - Neko Build tests: ${NEKO_BUILD_TESTS}")
+message(STATUS "  - Neko (All) Build tests: ${NEKO_BUILD_TESTS}")
+message(STATUS "  - Neko Launcher Build tests: ${NEKO_LC_BUILD_TESTS}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
 message(STATUS "  - Boost found: ${Boost_VERSION}")
 message(STATUS "  - Qt6 found: ${Qt6_VERSION}")
 message(STATUS "  - CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-message(STATUS "  - Library dirs: ${NEKO_LIBRARY_DIRS}")
+message(STATUS "  - Neko Library dirs: ${NEKO_LIBRARY_DIRS}")
 message(STATUS "  - Qt6 dir: ${Qt6_DIR}")
 message(STATUS "  - STL dir: ${STL_DIR}")
 message(STATUS "Neko Modules: NekoEvent, NekoNet, NekoSchema, NekoSystem, NekoFunction, NekoThreadPool")
@@ -175,6 +169,7 @@ list(APPEND NEKO_INCLUDE_DIRS
     ${NEKO_LIBRARY_DIRS}/include
     ${Qt6_DIR}/include
     ${STL_DIR}/include
+    ${simpleini_SOURCE_DIR}
 )
 
 # Src files
@@ -204,94 +199,98 @@ list(APPEND NEKO_SRCFILES
 # ================
 
 # Add the executable target
-add_executable(NekoLc ${NEKO_SRCFILES})
+# add_executable(NekoLc ${NEKO_SRCFILES})
 
 # Set the target properties
-target_include_directories(NekoLc PRIVATE ${NEKO_INCLUDE_DIRS})
-target_compile_features(NekoLc PRIVATE cxx_std_20)
+# target_include_directories(NekoLc PRIVATE ${NEKO_INCLUDE_DIRS})
+# target_compile_features(NekoLc PRIVATE cxx_std_20)
+
+# Use static runtime library on Windows to match vcpkg x64-windows-static
+# if(MSVC)
+#     set_property(TARGET NekoLc PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# endif()
 
 # Link Neko Modules
-target_link_libraries(NekoLc PRIVATE 
-    NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool
-)
+# target_link_libraries(NekoLc PRIVATE 
+#     NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool
+# )
 # Link libraries
-target_link_libraries(NekoLc PRIVATE 
+# target_link_libraries(NekoLc PRIVATE 
     # Qt
     # Qt6::Core Qt6::Widgets Qt6::Gui
     # Boost
-    Boost::system Boost::process
+    # Boost::system Boost::process
     # Others
-    nlohmann_json
-)
+#     nlohmann_json SimpleIni
+# )
 
+# Link Windows-specific libraries
+# if(WIN32)
+#     target_link_libraries(NekoLc PRIVATE ws2_32 crypt32)
+# endif()
 
 # Os-specific settings
-if(WIN32)
-    # Set not to use the console window
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-    endif()
-    target_sources(NekoLc PRIVATE resource/windows/icon.rc)
+# if(WIN32)
+#     # Set not to use the console window
+#     if(CMAKE_BUILD_TYPE STREQUAL "Release")
+#         set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+#     endif()
+#     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
 
-elseif(APPLE)
+# elseif(APPLE)
 
 
-    # Set the application bundle properties for macOS
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties(NekoLc PROPERTIES
-            MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
-            # MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
-            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resource/macos/Info.plist
-        )
-    endif()
+#     # Set the application bundle properties for macOS
+#     if(CMAKE_BUILD_TYPE STREQUAL "Release")
+#         set_target_properties(NekoLc PROPERTIES
+#             MACOSX_BUNDLE TRUE
+#             MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
+#             # MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
+#             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resource/macos/Info.plist
+#         )
+#     endif()
     
-    set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/macos/NekoLc.icns)
-    target_sources(NekoLc PRIVATE ${MACOSX_ICON})
-    set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+#     set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/macos/NekoLc.icns)
+#     target_sources(NekoLc PRIVATE ${MACOSX_ICON})
+#     set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
-elseif(UNIX)
+# elseif(UNIX)
 
-    # Set the executable properties for Linux
-    set_target_properties(NekoLc PROPERTIES
-        OUTPUT_NAME "NekoLc"
-        PREFIX ""
-        SUFFIX ""
-    )
+#     # Set the executable properties for Linux
+#     set_target_properties(NekoLc PROPERTIES
+#         OUTPUT_NAME "NekoLc"
+#         PREFIX ""
+#         SUFFIX ""
+#     )
 
-    # Add a custom command to copy the icon file to the resource directory
-    add_custom_command(TARGET NekoLc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resource/linux/icon.png ${CMAKE_BINARY_DIR}/icon.png
-        COMMENT "Copying icon.png to build directory"
-    )
+#     # Add a custom command to copy the icon file to the resource directory
+#     add_custom_command(TARGET NekoLc POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resource/linux/icon.png ${CMAKE_BINARY_DIR}/icon.png
+#         COMMENT "Copying icon.png to build directory"
+#     )
 
-endif() # os
+# endif() # os
 
 
 # ================
 # ====  Test  ====
 # ================
 
-# if(NEKO_BUILD_TESTS)
-#     enable_testing()
-#     message(STATUS "NekoLc tests enabled")
+if(NEKO_BUILD_TESTS)
+    enable_testing()
+    message(STATUS "NekoLc tests enabled")
+    include(GoogleTest)
 
-#     if (NOT GTest_FOUND AND NOT NEKO_AUTO_FETCH_DEPS)
-#         message(FATAL_ERROR "GTest not found. Please install GoogleTest or enable NEKO_AUTO_FETCH_DEPS to automatically fetch it.")
-#     endif()
+    # Bus Test
+    add_executable(NekoBus_test "${CMAKE_SOURCE_DIR}/tests/neko_bus_test.cpp")
+    target_include_directories(NekoBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoBus_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoBus_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoBus_test)
 
-#     include(GoogleTest)
-
-#     # Api struct to json
-#     add_executable(Api_toJson_test "${CMAKE_SOURCE_DIR}/tests/api_tojson_test.cpp")
-#     target_include_directories(Api_toJson_test PRIVATE ${NEKO_INCLUDE_DIRS})
-#     target_link_libraries(Api_toJson_test PRIVATE gtest_main)
-#     target_compile_features(Api_toJson_test PRIVATE cxx_std_20)
-    
-#     gtest_discover_tests(Api_toJson_test)
-# else()
-#     message(STATUS "NekoNet tests disabled")
-# endif()
+else()
+    message(STATUS "NekoNet tests disabled")
+endif()
         
 
 # ================
@@ -299,25 +298,25 @@ endif() # os
 # ================
 
 # Install rules
-install(TARGETS NekoLc
-    RUNTIME DESTINATION .
-    BUNDLE DESTINATION .
-)
+# install(TARGETS NekoLc
+#     RUNTIME DESTINATION .
+#     BUNDLE DESTINATION .
+# )
 
-# Install configuration and resource files
-install(FILES ${CMAKE_SOURCE_DIR}/src/config.ini
-    DESTINATION .
-)
+# # Install configuration and resource files
+# install(FILES ${CMAKE_SOURCE_DIR}/src/config.ini
+#     DESTINATION .
+# )
 
-# Install language files
-install(FILES 
-    ${CMAKE_SOURCE_DIR}/src/lang/en.json
-    ${CMAKE_SOURCE_DIR}/src/lang/zh_tw.json
-    ${CMAKE_SOURCE_DIR}/src/lang/zh_cn.json
-    DESTINATION lang
-)
+# # Install language files
+# install(FILES 
+#     ${CMAKE_SOURCE_DIR}/src/lang/en.json
+#     ${CMAKE_SOURCE_DIR}/src/lang/zh_tw.json
+#     ${CMAKE_SOURCE_DIR}/src/lang/zh_cn.json
+#     DESTINATION lang
+# )
 
-# Install image files
-install(FILES ${CMAKE_SOURCE_DIR}/resource/img/loading.gif
-    DESTINATION img
-)
+# # Install image files
+# install(FILES ${CMAKE_SOURCE_DIR}/resource/img/loading.gif
+#     DESTINATION img
+# )

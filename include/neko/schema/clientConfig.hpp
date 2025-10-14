@@ -5,7 +5,7 @@
 #pragma once
 
 #include <neko/schema/types.hpp>
-#include <SimpleIni/SimpleIni.h>
+#include <SimpleIni.h>
 
 namespace neko {
     /**

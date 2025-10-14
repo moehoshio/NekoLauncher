@@ -118,8 +118,4 @@ namespace neko::bus::event {
         return core::getEventLoop().getStatistics();
     }
 
-    inline neko::event::QueueSizes getQueueSizes() {
-        return core::getEventLoop().getQueueSizes();
-    }
-
 } // namespace neko::bus::event
