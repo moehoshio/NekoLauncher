@@ -2,11 +2,12 @@
 
 #include <neko/schema/exception.hpp>
 
-#include "neko/core/threadBus.hpp"
-#include "neko/event/eventBus.hpp"
-#include "neko/event/eventTypes.hpp"
+#include "neko/schema/eventTypes.hpp"
+#include "neko/bus/threadBus.hpp"
+#include "neko/bus/eventBus.hpp"
 
-#include <QtWidgets/QApplication>
+
+// #include <QtWidgets/QApplication>
 
 namespace neko::app {
 
@@ -30,7 +31,8 @@ namespace neko::app {
 
         info.eventLoopThreadId = ids[ids.size() - 1];
         info.mainThreadRunLoopFunction = [] {
-            return QApplication::exec();
+            return 0;
+            // return QApplication::exec();
         };
 
         info.eventLoopFuture = neko::bus::thread::submitToWorker(info.eventLoopThreadId, [] {
@@ -43,7 +45,7 @@ namespace neko::app {
 
     void quit() {
         neko::bus::event::stopLoop();
-        QApplication::quit();
+        // QApplication::quit();
     }
 
 } // namespace neko::app

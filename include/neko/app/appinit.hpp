@@ -8,12 +8,16 @@
 #include <neko/schema/types.hpp>
 #include <neko/log/nlog.hpp>
 #include <neko/function/utilities.hpp>
+#include <neko/system/platform.hpp>
+#include <neko/network/network.hpp>
 #include <neko/network/networkCommon.hpp>
 
+
+#include "neko/app/appinfo.hpp"
 #include "neko/schema/clientconfig.hpp"
-#include "neko/core/appinfo.hpp"
-#include "neko/core/configBus.hpp"
-#include "neko/core/threadBus.hpp"
+
+#include "neko/bus/configBus.hpp"
+#include "neko/bus/threadBus.hpp"
 #include "neko/function/lang.hpp"
 
 
@@ -71,10 +75,6 @@ namespace neko::app::init {
 
         log::setCurrentThreadName("Main Thread");
         log::info({}, "Initializing thread pool with {} threads", threadCount);
-
-        bus::thread::setLogger([](const std::string &log) {
-            log::info(log);
-        });
 
         auto ids = bus::thread::getWorkerIds();
 
@@ -187,14 +187,14 @@ namespace neko::app::init {
 
             log::info("Network::initialize : Starting test hosts...");
 
-            for (auto it : schema::definitions::NetworkHostList) {
-                network::Network net;
-                std::string url = network::buildUrl(api::testing, it.data());
+            for (auto it : lc::NetworkHostList) {
+                neko::network::Network net;
+                std::string url = network::buildUrl(lc::api::testing, it.data());
 
                 network::RetryConfig cfg{
-                    .config = network::RequestConfig{
+                    .config = neko::network::RequestConfig{
                         .url = url,
-                        .method = network::RequestType::Get,
+                        .method = neko::network::RequestType::Get,
                         .userAgent = config.getUserAgent(),
                         .proxy = config.getProxy(),
                         .requestId = "Testing - " + std::string(it)},
@@ -205,12 +205,12 @@ namespace neko::app::init {
                 auto result = net.executeWithRetry(cfg);
 
                 if (result.isSuccess()) {
-                    log::info({}, "Network::initialize() : Testing host available, host: {} , statusCode: {}", it, result.statusCode);
+                    neko::log::info( {}, "Network::initialize() : Testing host available, host: {} , statusCode: {}", it, result.statusCode);
                     config.pushAvailableHost(std::string(it));
                     continue;
                 }
 
-                log::warn({}, "Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", it, std::to_string(result.statusCode), result.errorMessage);
+                neko::log::warn({}, "Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", it, std::to_string(result.statusCode), result.errorMessage);
             }
         });
     }

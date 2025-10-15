@@ -121,7 +121,7 @@ namespace neko::lc {
             make_identifier<8>(__TIME__, __DATE__, __FILE__);
 #endif
 
-        constexpr auto build_id_full_array = concat3<AppVersion.size(), consteval_strlen(NEKO_BUILD_TIME), build_id_array.size()>(AppVersion.data(), NEKO_BUILD_TIME, build_id_array.data());
+        constexpr auto build_id_full_array = concat3<AppVersion.size(), consteval_strlen(NEKO_LC_BUILD_TIME), build_id_array.size()>(AppVersion.data(), NEKO_LC_BUILD_TIME, build_id_array.data());
 
     } // namespace constexprBuildId
 
