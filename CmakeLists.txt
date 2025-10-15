@@ -30,8 +30,6 @@ if(NOT DEFINED STL_DIR)
     set(STL_DIR "/path/to/STL")
 endif()
 
-# user program version
-set(NEKO_LC_USER_VERSION "2.3.1.0")
 
 set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
 # set(CMAKE_AUTOMOC ON)
@@ -50,7 +48,7 @@ find_package(Boost COMPONENTS process system CONFIG)
 # Fetch Dependencies
 include(FetchContent)
 
-if(NEKO_BUILD_TESTS)
+if(NEKO_LC_BUILD_TESTS)
     message(STATUS "Neko Launcher is fetching GoogleTest...")
 
     FetchContent_Declare(
@@ -120,37 +118,31 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Get the current git commit ID and build time
-string(TIMESTAMP NEKO_BUILD_TIME "%Y%m%d%H%M%S" UTC)
-execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GIT_COMMIT_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
+string(TIMESTAMP NEKO_LC_BUILD_TIME "%Y%m%d%H%M%S" UTC)
+execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE NEKO_LC_GIT_COMMIT_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
 add_definitions(
-    -DBUILD_TIME="${NEKO_BUILD_TIME}"
-    -DGIT_COMMIT_ID="${GIT_COMMIT_ID}"
-    -DNEKO_LC_VERSION="${PROJECT_VERSION}"
     -DNEKO_LC_NAME="${PROJECT_NAME}"
-    -DNEKO_LC_USER_VERSION="${USER_VERSION}"
+    -DNEKO_LC_VERSION="${PROJECT_VERSION}"
+    -DNEKO_LC_BUILD_TIME="${NEKO_LC_BUILD_TIME}"
     -DNEKO_LC_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
-    -DNEKO_LC_BUILD_COMPILER="${CMAKE_CXX_COMPILER_ID}"
-    -DNEKO_LC_BUILD_COMPILER_VERSION="${CMAKE_CXX_COMPILER_VERSION}"
-    -DNEKO_LC_BUILD_TIME="${NEKO_BUILD_TIME}"
+    -DNEKO_LC_GIT_COMMIT_ID="${NEKO_LC_GIT_COMMIT_ID}"
 )
 
 # Print configuration summary
 message(STATUS "NekoLauncher configuration summary:")
 message(STATUS "  - CMake version: ${CMAKE_VERSION}")
 message(STATUS "  - Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "  - Git commit ID: ${GIT_COMMIT_ID}")
+message(STATUS "  - Git commit ID: ${NEKO_LC_GIT_COMMIT_ID}")
 message(STATUS "  - Project version: ${PROJECT_VERSION}")
-message(STATUS "  - User version: ${NEKO_LC_USER_VERSION}")
 message(STATUS "  - C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "  - Build time (UTC): ${NEKO_BUILD_TIME}")
+message(STATUS "  - Build time (UTC): ${NEKO_LC_BUILD_TIME}")
 message(STATUS "")
 message(STATUS "Options:")
-message(STATUS "  - Neko (All) Build tests: ${NEKO_BUILD_TESTS}")
 message(STATUS "  - Neko Launcher Build tests: ${NEKO_LC_BUILD_TESTS}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
-message(STATUS "  - Boost found: ${Boost_VERSION}")
-message(STATUS "  - Qt6 found: ${Qt6_VERSION}")
+message(STATUS "  - Boost found: ${Boost_FOUND} version ${Boost_VERSION}")
+message(STATUS "  - Qt6 found: ${Qt6_FOUND} version ${Qt6_VERSION}")
 message(STATUS "  - CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 message(STATUS "  - Neko Library dirs: ${NEKO_LIBRARY_DIRS}")
 message(STATUS "  - Qt6 dir: ${Qt6_DIR}")
@@ -272,19 +264,33 @@ if(NEKO_BUILD_TESTS)
     message(STATUS "NekoLc tests enabled")
     include(GoogleTest)
 
-    # Bus Test
-    add_executable(NekoBus_test "${CMAKE_SOURCE_DIR}/tests/neko_bus_test.cpp")
-    target_include_directories(NekoBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoBus_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoBus_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoBus_test)
+    # NekoLc Bus Test
+    add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
+    target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcBus_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcBus_test)
 
-    # App Test
-    add_executable(NekoApp_test "${CMAKE_SOURCE_DIR}/tests/neko_app_test.cpp")
-    target_include_directories(NekoApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoApp_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoApp_test)
+    # NekoLc App Test
+    add_executable(NekoLcApp_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_app_test.cpp")
+    target_include_directories(NekoLcApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcApp_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcApp_test)
+
+    # NekoLc Schema Test
+    add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
+    target_include_directories(NekoLcSchema_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcSchema_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcSchema_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcSchema_test)
+
+    # NekoLc Function Test
+    add_executable(NekoLcFunction_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_function_test.cpp")
+    target_include_directories(NekoLcFunction_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcFunction_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcFunction_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcFunction_test)
 
     # Core - Update Test
     # add_executable(NekoCore_update_test "${CMAKE_SOURCE_DIR}/tests/neko_core_update_test.cpp")

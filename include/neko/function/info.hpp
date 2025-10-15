@@ -17,13 +17,13 @@ namespace neko::info {
     inline schema::ClientInfo getClientInfo() {
         return schema::ClientInfo{
             .app = {
-                .appName = getAppName(),
-                .coreVersion = getVersion(),
-                .resourceVersion = getResourceVersion(),
-                .buildId = getBuildId()},
-            .system = {.os = system::getOsName(), .arch = system::getArchName(), .osVersion = system::getOsVersion()},
+                .appName = app::getAppName(),
+                .coreVersion = app::getVersion(),
+                .resourceVersion = app::getResourceVersion(),
+                .buildId = app::getBuildId()},
+            .system = {.os = system::getOsName(), .arch = system::getOsArch(), .osVersion = system::getOsVersion()},
             .extra = {},
-            .deviceId = getDeviceId()};
+            .deviceId = app::getDeviceId()};
     }
 
     inline schema::Preferences getPreferences() {
