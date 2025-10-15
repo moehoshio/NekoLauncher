@@ -8,6 +8,12 @@
 #include <neko/function/utilities.hpp>
 #include <neko/system/platform.hpp>
 #include <neko/network/network.hpp>
+#include <neko/network/networkCommon.hpp>
+
+// NekoLc project
+#include "neko/function/lang.hpp"
+#include "neko/function/info.hpp"
+#include "neko/schema/eventTypes.hpp"
 
 namespace neko::core {
 
@@ -24,6 +30,7 @@ namespace neko::core {
      * @throws ex::NetworkError if the network request fails
      * @throws ex::Parse if the response cannot be parsed
      * @throws ex::OutOfRange if a required key is missing in the response
+     * @note This function publishes loading events to the event bus to update the UI.
      */
     inline MaintenanceInfo checkMaintenance() {
         log::autoLog log;
@@ -34,19 +41,23 @@ namespace neko::core {
             .process = lang::tr(lang::keys::maintenance::infoRequest)}));
 
         nlohmann::json maintenanceRequest = info::getRequestJson("maintenanceRequest");
-        auto url = net.buildUrl(network::NetworkBase::Api::maintenance);
+        auto url = network::buildUrl(network::NetworkBase::Api::maintenance);
 
         network::RequestConfig reqConfig{
             .url = url,
             .method = network::RequestType::Post,
             .data = maintenanceRequest.dump(),
-            .requestId = "maintenance-" + util::random::generateRandomString(6),
-            .header = network::NetworkBase::HeaderGlobal::jsonContentHeader};
-        auto result = net.executeWithRetry(reqConfig, 5, {150}, {200, 204});
+            .requestId = "Maintenance-" + util::random::generateRandomString(6),
+            .header = network::header::jsonContentHeader};
+        network::RetryConfig retryConfig{
+            .config = reqConfig,
+            .maxRetries = 5,
+            .retryDelay = {150},
+            .successCodes = {200, 204}};
+        auto result = net.executeWithRetry(retryConfig);
 
         if (!result.hasError && result.statusCode == 204) {
-            return {
-                .isMaintenance = false};
+            return {};
         }
 
         if (!result.isSuccess() || !result.hasContent()) {

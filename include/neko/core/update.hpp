@@ -67,7 +67,7 @@ namespace neko::core::update {
         network::Network net;
 
         nlohmann::json updateRequest = info::getRequestJson("updateRequest");
-        auto url = net.buildUrl(network::NetworkBase::Api::checkUpdates);
+        auto url = network::buildUrl(network::NetworkBase::Api::checkUpdates);
 
         network::RequestConfig reqConfig{
             .url = url,
@@ -76,11 +76,18 @@ namespace neko::core::update {
             .requestId = "checkUpdate-" + util::random::generateRandomString(6),
             .header = network::NetworkBase::HeaderGlobal::jsonContentHeader};
 
-        auto result = net.executeWithRetry(reqConfig, 5, {150}, {200, 204, 429});
+        network::RetryConfig retryConfig{
+            .config = reqConfig,
+            .maxRetries = 5,
+            .retryDelay = {150},
+            .successCodes = {200, 204, 429}
+        };
+
+        auto result = net.executeWithRetry(retryConfig);
 
         if (!result.isSuccess()) {
-            log::error({}, "Failed to check update , code : %d , error : %s", result.statusCode, result.errorMessage.c_str());
-            log::debug({}, "res : %s , detailedErrorMessage : %s ", result.content.c_str(), result.detailedErrorMessage.c_str());
+            log::error({}, "Failed to check update , code : {} , error : {}", result.statusCode, result.errorMessage);
+            log::debug({}, "result : {} , detailedErrorMessage : {} ", result.content, result.detailedErrorMessage);
             if (result.statusCode == 429) {
                 return CheckUpdateResult{State::RetryRequired, ""};
             } else {
@@ -88,11 +95,11 @@ namespace neko::core::update {
             }
         }
 
-        if (res.code == 204)
+        if (result.code == 204)
             return CheckUpdateResult{State::Completed, ""};
-        if (res.hasContent() && res.code == 200) {
-            result = res.content;
-            log::info({}, "Check update success, has update , res : %s", result.c_str());
+        if (result.hasContent() && result.code == 200) {
+            result = result.content;
+            log::info({}, "Check update success, has update , result : {}", result);
             return CheckUpdateResult{State::ActionNeeded, result};
         }
 
@@ -218,7 +225,7 @@ namespace neko::core::update {
                 it.fileName = system::workPath() + "/" + it.fileName;
 
             if (!it.isAbsoluteUrl)
-                it.url = network::NetworkBase::buildUrl(it.url);
+                it.url = network::buildUrl(it.url);
         }
 
         auto downloadTask = [=, &stop](int id, UpdateResponse::File info) -> ResultData {

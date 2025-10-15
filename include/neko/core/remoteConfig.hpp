@@ -1,15 +1,15 @@
 #pragma once
 
-#include <neko/log/nlog.hpp>
-
-#include <neko/app/nekoLc.hpp>
-
-#include <neko/network/network.hpp>
-#include <neko/schema/exception.hpp>
 #include <neko/schema/types.hpp>
-
+#include <neko/log/nlog.hpp>
+#include <neko/schema/exception.hpp>
+#include <neko/network/network.hpp>
 #include <neko/function/utilities.hpp>
 #include <neko/system/platform.hpp>
+
+// NekoLc project
+#include "neko/app/nekoLc.hpp"
+#include "neko/schema/api.hpp"
 
 
 namespace neko::core {
@@ -55,7 +55,7 @@ namespace neko::core {
 
             nlohmann::json launcherConfigRequest = info::getRequestJson("launcherConfigRequest");
 
-            auto url = net.buildUrl(network::NetworkBase::Api::launcherConfig);
+            auto url = network::buildUrl(network::NetworkBase::Api::launcherConfig);
 
             reqConfig.setUrl(url)
                 .setMethod(network::RequestType::Post)

@@ -1,13 +1,15 @@
 #pragma once
 
-#include <neko/function/utilities.hpp>
-#include <neko/system/platform.hpp>
+// Neko Modules
 #include <neko/network/network.hpp>
+#include <neko/system/platform.hpp>
+#include <neko/function/utilities.hpp>
 
 #include <optional>
 #include <string>
 
 namespace neko::core {
+    
     // if successful, return file name
     inline std::optional<std::string> downloadPoster(const std::string &url) noexcept {
         if (!url.empty() && util::check::isUrl(url)) {

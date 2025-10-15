@@ -54,8 +54,8 @@ namespace neko::lang {
         for (const auto &it : std::filesystem::directory_iterator(langPath)) {
             if (it.is_regular_file() && util::string::matchExtensionName(it.path().string(), "json")) {
                 std::string fileName = it.path().stem().string();
-                log::Info(log::SrcLoc::current(), "lang file push : %s", fileName.c_str());
                 res.push_back(fileName);
+                log::info("lang file push : " + fileName);
             }
         }
         return res;
@@ -81,7 +81,7 @@ namespace neko::lang {
             std::string fileName = langFolder + "/" + lang + ".json";
             std::ifstream i(fileName);
             if (!std::filesystem::exists(fileName) || !i.is_open()) {
-                log::Err(log::SrcLoc::current(), "Language file : '%s' , does not exist or cannot be opened !", fileName.c_str());
+                log::error({},"Language file : {} , does not exist or cannot be opened !", fileName);
                 cachedJson = nlohmann::json::object();
                 return cachedJson;
             }
@@ -89,11 +89,11 @@ namespace neko::lang {
             try {
                 cachedJson = nlohmann::json::parse(i);
             } catch (const nlohmann::json::parse_error &e) {
-                log::Err(log::SrcLoc::current(), "Failed to parse language : %s , file : %s", e.what(), fileName.c_str());
+                log::error({},"Failed to parse language : {} , file : {}", e.what(), fileName);
                 cachedJson = nlohmann::json::object();
                 return cachedJson;
             }
-            log::Info(log::SrcLoc::current(), "lang : %s , json is discarded : %s ", lang.c_str(), util::logic::boolTo<neko::cstr>(cachedJson.is_discarded()));
+            log::info({},"lang : {} , json is discarded : {}", lang, util::logic::boolTo(cachedJson.is_discarded()));
             cachedLang = lang;
             cachedLangFolder = langFolder;
         }
@@ -111,7 +111,7 @@ namespace neko::lang {
      * Uses nlog for warning about missing translations.
      */
     inline std::string tr(const std::string &key, const std::string &fallback = "Translation not found", const nlohmann::json &langFile = loadTranslations()) {
-        auto check = [&key](const nlohmann::json &obj) -> std::string {
+        auto check = [&key,fallback](const nlohmann::json &obj) -> std::string {
             if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
                 return fallback;
             }
@@ -121,7 +121,7 @@ namespace neko::lang {
         auto res = check(langFile);
 
         if (res == fallback) {
-            log::Warn(log::SrcLoc::current(), "Failed to load key : %s for : %s , try to load default file", key.c_str(), langFile.value("language", "Empty lang").c_str());
+            log::warn({}, "Failed to load key : {} for : {} , try to load default file", key, langFile.value("language", "Empty lang"));
             return check(loadTranslations("en"));
         }
 
@@ -187,7 +187,7 @@ namespace neko::lang {
          */
         namespace title {
             constexpr neko::strview
-                object = "Title",
+                object = "Title";
 
         }
         /**
@@ -202,7 +202,7 @@ namespace neko::lang {
                 retry = "retry",
                 cancel = "cancel",
                 close = "close",
-                quit = "quit"
+                quit = "quit";
 
         }
 
@@ -212,7 +212,7 @@ namespace neko::lang {
          */
         namespace general {
             constexpr neko::strview
-                object = "General",
+                object = "General";
 
         }
 
@@ -224,12 +224,12 @@ namespace neko::lang {
             constexpr neko::strview
                 object = "Info",
                 retryMaxReached = "retryMaxReached",
-                doingAction = "doingAction"
+                doingAction = "doingAction";
         }
 
         namespace minecraft {
             constexpr neko::strview
-                object = "Minecraft",
+                object = "Minecraft";
         }
 
         namespace error {
