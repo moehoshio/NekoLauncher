@@ -1,3 +1,8 @@
+/**
+ * @file resources.hpp
+ * @brief Central access point for global resources in the Neko framework.
+ */
+
 #pragma once
 
 #include <neko/event/event.hpp>

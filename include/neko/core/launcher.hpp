@@ -40,25 +40,25 @@ namespace neko::core {
                 minecraft::account::launcherMinecraftTokenRefresh();
                 minecraft::launcherMinecraft(core::getConfigObj(), onStart, onExit);
             } catch (const ex::NetworkError &e) {
-                log::Err(log::SrcLoc::current(), "Network error: %s", e.what());
+                log::error({}, "Network error: {}", e.what());
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::minecraftNetworkError), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             } catch (const ex::Parse &e) {
-                log::Err(log::SrcLoc::current(), "Parse error: %s", e.what());
+                log::error({}, "Parse error: {}", e.what());
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::jsonParse), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             } catch (const ex::OutOfRange &e) {
-                log::Err(log::SrcLoc::current(), "Out of range error: %s", e.what());
+                log::error({}, "Out of range error: {}", e.what());
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::minecraftVersionKeyOutOfRange), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             } catch (const ex::FileError &e) {
-                log::Err(log::SrcLoc::current(), "File error: %s", e.what());
+                log::error({}, "File error: {}", e.what());
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::minecraftFileError), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             } catch (const ex::Exception &e) {
-                log::Err(log::SrcLoc::current(), "Exception: %s", e.what());
+                log::error({}, "Exception: {}", e.what());
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::minecraftException), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             } catch (const std::exception &e) {
-                log::Err(log::SrcLoc::current(), "Unexpected error: %s", e.what());
+                log::error({}, "Unexpected error: {}", e.what());
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::minecraftUnexpected), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             } catch (...) {
-                log::Err(log::SrcLoc::current(), "An unknown error occurred during the launcher process.");
+                log::error("An unknown error occurred during the launcher process.");
                 internal::displayHint(ui::HintMsg(info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::minecraftUnknownError), "", {info::lang::tr(info::lang::Keys::Button::ok)}), showHint);
             }
         }

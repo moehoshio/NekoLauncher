@@ -14,11 +14,12 @@
 
 
 #include "neko/app/appinfo.hpp"
+#include "neko/app/lang.hpp"
 #include "neko/schema/clientconfig.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/threadBus.hpp"
-#include "neko/function/lang.hpp"
+
 
 
 #include <sstream>

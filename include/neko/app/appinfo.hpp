@@ -1,10 +1,15 @@
 #pragma once
 
 #include <neko/schema/types.hpp>
+#include <neko/system/platform.hpp>
+#include <neko/system/memoryinfo.hpp>
 
+#include "neko/schema/api.hpp"
 #include "neko/app/nekoLc.hpp"
-#include "neko/schema/clientConfig.hpp"
+#include "neko/app/lang.hpp"
+
 #include "neko/bus/configBus.hpp"
+#include "neko/schema/clientConfig.hpp"
 
 #include <string>
 
@@ -72,6 +77,33 @@ namespace neko::app {
      */
     constexpr neko::cstr getStaticRemoteConfigUrl() {
         return lc::NetworkStaticRemoteConfigUrl.data();
+    }
+
+    /**
+     * @brief Gets the client information.
+     * @return The client information struct.
+     */
+    inline schema::ClientInfo getClientInfo() {
+        return schema::ClientInfo{
+            .app = {
+                .appName = getAppName(),
+                .coreVersion = getVersion(),
+                .resourceVersion = getResourceVersion(),
+                .buildId = getBuildId()},
+            .system = {.os = system::getOsName(), .arch = system::getOsArch(), .osVersion = system::getOsVersion()},
+            .extra = {},
+            .deviceId = getDeviceId()};
+    }
+
+    inline schema::Preferences getPreferences() {
+        return schema::Preferences{
+            .language = lang::language()};
+    }
+
+    inline nlohmann::json getRequestJson(const std::string &requestName) {
+        return nlohmann::json{
+            {requestName, {{"clientInfo", getClientInfo()}, {"timestamp", util::time::getUtcNow()}}},
+            {"preferences", getPreferences()}};
     }
 
 } // namespace neko::app

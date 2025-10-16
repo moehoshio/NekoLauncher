@@ -23,14 +23,15 @@ namespace neko::core {
         inline schema::LauncherConfigResponse getStaticRemoteConfig() {
             log::autoLog log;
             network::Network net;
-            network::RequestConfig reqConfig;
-            reqConfig.setUrl(app::getStaticRemoteConfigUrl())
-                .setMethod(network::RequestType::Get)
-                .setRequestId("launcher-config-" + util::random::generateRandomString(6));
-            auto result = net.executeWithRetry(reqConfig);
+            network::RequestConfig reqConfig{
+                .url = app::getStaticRemoteConfigUrl(),
+                .method = network::RequestType::Get,
+                .requestId = "launcher-config-" + util::random::generateRandomString(6)
+            };
+            auto result = net.executeWithRetry({reqConfig});
             if (!result.isSuccess() || result.content.empty()) {
-                log::error({}, "Failed to get remote launcher config: %s", result.errorMessage.c_str());
-                log::debug({}, "Detailed error: %s", result.detailedErrorMessage.c_str());
+                log::error({}, "Failed to get remote launcher config: {}", result.errorMessage);
+                log::debug({}, "Detailed error: {}", result.detailedErrorMessage);
                 throw ex::NetworkError("Failed to get remote launcher config : " + result.errorMessage);
             }
             schema::LauncherConfigResponse response;
@@ -51,23 +52,19 @@ namespace neko::core {
         inline schema::LauncherConfigResponse getDynamicRemoteConfig() {
             log::autoLog log;
             network::Network net;
-            network::RequestConfig reqConfig;
+            network::RequestConfig reqConfig{
+                .url = network::buildUrl(lc::api::launcherConfig),
+                .method = network::RequestType::Post,
+                .data = info::getRequestJson("launcherConfigRequest").dump(),
+                .requestId = "launcher-config-" + util::random::generateRandomString(6),
+                .header = network::NetworkBase::HeaderGlobal::jsonContentHeader
+            };
 
-            nlohmann::json launcherConfigRequest = info::getRequestJson("launcherConfigRequest");
-
-            auto url = network::buildUrl(network::NetworkBase::Api::launcherConfig);
-
-            reqConfig.setUrl(url)
-                .setMethod(network::RequestType::Post)
-                .setData(launcherConfigRequest.dump())
-                .setRequestId("launcher-config-" + util::random::generateRandomString(6))
-                .setHeader(network::NetworkBase::HeaderGlobal::jsonContentHeader);
-            auto result = net.executeWithRetry(reqConfig);
+            auto result = net.executeWithRetry({reqConfig});
 
             if (!result.isSuccess()) {
-                log::error({}, "Failed to get remote launcher config: %s", result.errorMessage.c_str());
-                log::debug({}, "Detailed error: %s", result.detailedErrorMessage.c_str());
-                // If the request fails, throw a NetworkError exception
+                log::error({}, "Failed to get remote launcher config: {}", result.errorMessage);
+                log::debug({}, "Detailed error: {}", result.detailedErrorMessage);
                 throw ex::NetworkError("Failed to get remote launcher config: " + result.errorMessage);
             }
 
@@ -76,7 +73,7 @@ namespace neko::core {
                 nlohmann::json config = nlohmann::json::parse(result.content);
                 return config.get<schema::LauncherConfigResponse>();
             } catch (const nlohmann::json::exception &e) {
-                log::error({}, "Failed to parse remote launcher config: %s", e.what());
+                log::error({}, "Failed to parse remote launcher config: {}", e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));
             }
         }
