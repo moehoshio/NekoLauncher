@@ -30,7 +30,7 @@ namespace neko::minecraft {
 
     // Should not be called from the main thread, as it will block the incoming thread until completion.
     inline void setupMinecraftDownloads(DownloadSource downloadSource, std::string_view versionId, const nlohmann::json &versionJson, std::string_view installPath = "./.minecraft", std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
-        nlog::autoLog log;
+        log::autoLog log;
 
         std::atomic<neko::uint32> now(0);
 

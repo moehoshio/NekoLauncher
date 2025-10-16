@@ -1,5 +1,6 @@
 {
-    "language": "zh_tw",
+    "language": "正體中文",
+
     "Action": {
         "networkRequest": "網路請求",
         "uploadFile": "上傳檔案",

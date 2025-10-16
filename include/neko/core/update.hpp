@@ -136,11 +136,11 @@ namespace neko::core::update {
             }
             log::error({}, "files is empty!");
         } catch (nlohmann::json::parse_error &e) {
-            log::error({}, "Failed to parse json: %s", e.what());
+            log::error({}, "Failed to parse json: {}", e.what());
         } catch (nlohmann::json::out_of_range &e) {
-            log::error({}, "Json key not found: %s", e.what());
+            log::error({}, "Json key not found: {}", e.what());
         } catch (std::exception &e) {
-            log::error({}, "Exception occurred: %s", e.what());
+            log::error({}, "Exception occurred: {}", e.what());
         }
         return {};
     }
@@ -253,10 +253,10 @@ namespace neko::core::update {
         auto checkHash = [=, &progress](const UpdateResponse::File &info) -> ResultData {
             auto hash = util::hash::hashFile(info.fileName, util::hash::mapAlgorithm(info.hashAlgorithm));
             if (hash != info.checksum) {
-                log::error({}, "Hash Non-matching : file : %s  expect hash : %s , real hash : %s", info.fileName.c_str(), info.hash.c_str(), hash.c_str());
+                log::error({}, "Hash Non-matching : file : {}  expect hash : {} , real hash : {}", info.fileName, info.hash, hash);
                 return {State::RetryRequired, info};
             }
-            log::info({}, "Everything is OK , file : %s  hash is matching", info.fileName.c_str());
+            log::info({}, "Everything is OK , file : {}  hash is matching", info.fileName);
             ++progress;
             if (setLoadingVal)
                 setLoadingVal(progress.load());
@@ -336,7 +336,7 @@ namespace neko::core::update {
             }
         }
 
-        log::info({}, "update is ready");
+        log::info("update is ready");
 
         bool needExecUpdate = false;
 
@@ -356,11 +356,11 @@ namespace neko::core::update {
             ClientConfig cfg(core::getConfigObj());
             cfg.other.resourceVersion = data.resourceVersion.c_str();
             cfg.save(core::getConfigObj(), app::getConfigFileName());
-            log::info({}, "save resource version : %s", data.resourceVersion.c_str());
+            log::info({}, "save resource version : {}", data.resourceVersion);
         }
 
         if (needExecUpdate) {
-            log::info({}, "need exec update");
+            log::info("need exec update");
             std::mutex mtx;
             std::condition_variable condVar;
             std::unique_lock<std::mutex> lock(mtx);

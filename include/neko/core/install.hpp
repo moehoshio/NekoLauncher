@@ -49,10 +49,10 @@ namespace neko::core {
                     } catch (...) {
                         debugMsg += "\nNested: <unknown exception>";
                     }
-                    log::Err(e.getFile() ,e.getLine(), "%s : installMinecraft Failed : %s",e.getFunc(), e.msg.c_str());
-                    log::Debug(e.getFile() ,e.getLine(), "%s : Debug installMinecraft : DebugMsg : %s , StackTrace : %s",e.getFunc(), debugMsg.c_str(),e.getStackTraceStr().c_str());
+                    log::error("installMinecraft Failed : " + e.msg);
+                    log::debug({},"Debug installMinecraft : DebugMsg : {}",debugMsg);
                     if (showHint)
-                        showHint({info::lang::tr(info::lang::Keys::Title::error), info::lang::tr(info::lang::Keys::Error::installMinecraft) + e.msg + debugMsg, "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::cancel)}, [&mtx, &condVar, &stop](neko::uint32 checkId) {
+                        showHint({lang::tr(lang::Keys::Title::error), lang::tr(lang::keys::error::installMinecraft) + e.msg + debugMsg, "", {info::lang::tr(info::lang::Keys::General::ok), info::lang::tr(info::lang::Keys::General::cancel)}, [&mtx, &condVar, &stop](neko::uint32 checkId) {
                                       if (checkId == 1) {
                                           stop = true;
                                           QApplication::quit();

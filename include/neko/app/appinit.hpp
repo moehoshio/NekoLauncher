@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include <neko/schema/types.hpp>
 #include <neko/log/nlog.hpp>
-#include <neko/function/utilities.hpp>
+#include <neko/schema/types.hpp>
+
 #include <neko/system/platform.hpp>
 #include <neko/network/network.hpp>
 #include <neko/network/networkCommon.hpp>
+#include <neko/function/utilities.hpp>
 
 
 #include "neko/app/appinfo.hpp"
@@ -19,7 +20,6 @@
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/threadBus.hpp"
-
 
 
 #include <sstream>
