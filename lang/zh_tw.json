@@ -8,7 +8,10 @@
         "readFile": "讀取檔案",
         "writeFile": "寫入檔案",
         "removeFile": "移除檔案",
-        "createFile": "建立檔案"
+        "createFile": "建立檔案",
+        "retryMaxReached": "{action}{object} 已達到最大重試次數 ({max})",
+        "doingAction": "正在{action}{object}...",
+        "parseJson": "解析 JSON",
     },
     "Object": {
         "maintenance": "維護",
@@ -22,9 +25,8 @@
         "quit": "退出"
     },
     "General": {},
-    "Info": {
-        "retryMaxReached": "{action}{object} 已達到最大重試次數 ({max})",
-        "doingAction": "正在{action}{object}..."
+    "Maintenance":{
+        "message": "伺服器維護中，請稍後再試。\n\n維護時間：{startTime} 至 {exEndTime}\n\n{message}"
     },
     "Error": {
         "networkError": "請求{object}時網路錯誤: {error}",

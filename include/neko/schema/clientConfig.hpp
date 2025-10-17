@@ -25,6 +25,7 @@ namespace neko {
             long launcherMethod;
             bool useSysWindowFrame;
             bool headBarKeepRight;
+            neko::cstr resourceVersion;
             neko::cstr deviceID;
         } main;
 
@@ -61,7 +62,6 @@ namespace neko {
          */
         struct Other {
             neko::cstr tempFolder;
-            neko::cstr resourceVersion;
         } other;
 
         /**
@@ -110,6 +110,7 @@ namespace neko {
             main.launcherMethod = cfg.GetLongValue("main", "launcherMethod", 1);
             main.useSysWindowFrame = cfg.GetBoolValue("main", "useSystemWindowFrame", true);
             main.headBarKeepRight = cfg.GetBoolValue("main", "headBarKeepRight", true);
+            other.resourceVersion = cfg.GetValue("main", "resourceVersion", "");
             main.deviceID = cfg.GetValue("main", "deviceID", "");
 
             style.blurEffect = cfg.GetValue("style", "blurEffect", "Animation");
@@ -126,7 +127,6 @@ namespace neko {
             dev.tls = cfg.GetBoolValue("dev", "tls", true);
 
             other.tempFolder = cfg.GetValue("other", "customTempDir", "");
-            other.resourceVersion = cfg.GetValue("other", "resourceVersion", "");
 
             minecraft.minecraftFolder = cfg.GetValue("minecraft", "minecraftFolder", "./.minecraft");
             minecraft.javaPath = cfg.GetValue("minecraft", "javaPath", "");
@@ -167,6 +167,7 @@ namespace neko {
             cfg.SetLongValue("main", "launcherMethod", main.launcherMethod);
             cfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
             cfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
+            cfg.SetValue("main", "resourceVersion", main.resourceVersion);
             cfg.SetValue("main", "deviceID", main.deviceID);
 
             cfg.SetValue("style", "blurEffect", style.blurEffect);
@@ -183,7 +184,6 @@ namespace neko {
             cfg.SetBoolValue("dev", "tls", dev.tls);
 
             cfg.SetValue("other", "customTempDir", other.tempFolder);
-            cfg.SetValue("other", "resourceVersion", other.resourceVersion);
 
             cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder);
             cfg.SetValue("minecraft", "javaPath", minecraft.javaPath);

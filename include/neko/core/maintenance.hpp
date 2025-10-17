@@ -1,18 +1,23 @@
 #pragma once
 
 // Neko Module
-#include <neko/schema/types.hpp>
-#include <neko/schema/exception.hpp>
 #include <neko/log/nlog.hpp>
 #include <neko/event/event.hpp>
 #include <neko/function/utilities.hpp>
 #include <neko/system/platform.hpp>
+
 #include <neko/network/network.hpp>
-#include <neko/network/networkCommon.hpp>
+
+#include <neko/schema/types.hpp>
+#include <neko/schema/exception.hpp>
+
 
 // NekoLc project
-#include "neko/function/lang.hpp"
-#include "neko/function/info.hpp"
+#include "neko/app/lang.hpp"
+#include "neko/app/appinfo.hpp"
+#include "neko/app/nekoLc.hpp"
+
+#include "neko/core/downloadPoster.hpp"
 #include "neko/schema/eventTypes.hpp"
 
 namespace neko::core {
@@ -30,18 +35,23 @@ namespace neko::core {
      * @throws ex::NetworkError if the network request fails
      * @throws ex::Parse if the response cannot be parsed
      * @throws ex::OutOfRange if a required key is missing in the response
-     * @note This function publishes loading events to the event bus to update the UI.
+     * @note This function publishes events to update the UI about the maintenance check process.
      */
     inline MaintenanceInfo checkMaintenance() {
         log::autoLog log;
         network::Network net;
 
+        // Update process to checking maintenance status
+        std::string process = lang::withPlaceholdersReplaced(
+            lang::tr(lang::keys::action::doingAction),
+            {{"{action}", lang::tr(lang::keys::action::networkRequest)},
+             {"{object}", lang::tr(lang::keys::object::maintenance)}});
         bus::event::publish(event::ShowLoadEvent(ui::LoadMsg{
             .type = ui::LoadMsg::Type::OnlyRaw,
-            .process = lang::tr(lang::keys::maintenance::infoRequest)}));
+            .process = process}));
 
-        nlohmann::json maintenanceRequest = info::getRequestJson("maintenanceRequest");
-        auto url = network::buildUrl(network::NetworkBase::Api::maintenance);
+        nlohmann::json maintenanceRequest = app::getRequestJson("maintenanceRequest");
+        auto url = network::buildUrl(lc::api::maintenance);
 
         network::RequestConfig reqConfig{
             .url = url,
@@ -57,16 +67,24 @@ namespace neko::core {
         auto result = net.executeWithRetry(retryConfig);
 
         if (!result.hasError && result.statusCode == 204) {
-            return {};
+            return {.isMaintenance = false};
         }
 
         if (!result.isSuccess() || !result.hasContent()) {
             throw ex::NetworkError("Failed to check maintenance status: " + result.errorMessage);
         }
 
+        // if has content , then parse it
+
         std::string response = result.content;
+
+        //Update process to parsing json
+        process = lang::withPlaceholdersReplaced(
+            lang::tr(lang::keys::action::doingAction),
+            {{"{action}", lang::tr(lang::keys::action::parseJson)},
+             {"{object}", lang::tr(lang::keys::object::maintenance)}});
         bus::event::publish(event::UpdateLoadingNowEvent{
-            .process = lang::tr(lang::keys::Loading::maintenanceInfoParse)});
+            .process = process});
         log::info({}, "maintenance response : {}", response);
 
         try {
@@ -77,10 +95,15 @@ namespace neko::core {
                 lang::tr(lang::keys::Maintenance::message),
                 {{"{startTime}", maintenanceInfo.startTime},
                  {"{exEndTime}", maintenanceInfo.endTime},
-                 {"{msg}", maintenanceInfo.message}});
+                 {"{message}", maintenanceInfo.message}});
 
+            //Update process to downloading poster
+            process = lang::withPlaceholdersReplaced(
+                lang::tr(lang::keys::action::doingAction),
+                {{"{action}", lang::tr(lang::keys::action::downloadFile)},
+                 {"{object}", lang::tr(lang::keys::object::maintenance)}});
             bus::event::publish(event::UpdateLoadingNowEvent{
-                .process = lang::tr(lang::keys::Loading::downloadMaintenancePoster)});
+                .process = process});
             auto filePath = downloadPoster(maintenanceInfo.posterUrl);
 
             std::string command;
@@ -98,13 +121,13 @@ namespace neko::core {
                 .poster = filePath.value_or(""),
                 .openLinkCmd = command};
         } catch (nlohmann::json::parse_error &e) {
-            log::error({}, "Failed to parse json: %s", e.what());
+            log::error({}, "Failed to parse json: {}", e.what());
             throw ex::Parse("Failed to parse json: " + std::string(e.what()));
         } catch (const nlohmann::json::out_of_range &e) {
             log::error({}, "Json key not found: {}", e.what());
             throw ex::OutOfRange("Json key not found: " + std::string(e.what()));
         }
-        return {};
+        return {.isMaintenance = false};
     }
 
 } // namespace neko::core

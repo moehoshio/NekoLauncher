@@ -2,18 +2,15 @@
 
 // Neko Module
 
-#include <neko/schema/types.hpp>
 #include <neko/schema/exception.hpp>
+#include <neko/schema/types.hpp>
 
-#include <neko/core/threadPool.hpp>
-
-#include <neko/log/nlog.hpp>
 #include <neko/event/event.hpp>
+#include <neko/log/nlog.hpp>
 
 #include <neko/function/utilities.hpp>
-#include <neko/system/platform.hpp>
-
 #include <neko/network/network.hpp>
+#include <neko/system/platform.hpp>
 
 // NekoLc project
 
@@ -21,17 +18,15 @@
 #include "neko/schema/clientConfig.hpp"
 #include "neko/schema/eventTypes.hpp"
 
-#include "<neko/core/app.hpp"
-#include "<neko/core/appinfo.hpp"
-#include "<neko/core/configManager.hpp"
-#include "<neko/core/launcherProcess.hpp"
+#include "neko/core/app.hpp"
+#include "neko/core/appinfo.hpp"
+#include "neko/core/downloadPoster.hpp"
+#include "neko/core/launcherProcess.hpp"
+#include "neko/core/maintenance.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/eventBus.hpp"
 #include "neko/bus/threadBus.hpp"
-
-#include "neko/function/info.hpp"
-#include "neko/function/lang.hpp"
 
 #include "neko/ui/uiMsg.hpp"
 
@@ -54,19 +49,20 @@
 
 #include <string>
 #include <string_view>
+
 namespace neko::core::update {
 
-
     struct CheckUpdateResult {
-        bool isUpdateAvailable;
+        bool isUpdateAvailable = false;
         std::string result;
+        std::string errorMessage;
     };
-    // Check for updates, if there are updates available, it will return State::ActionNeeded, otherwise State::Completed.
+
     inline CheckUpdateResult checkUpdate() noexcept {
         log::autoLog log;
         network::Network net;
 
-        nlohmann::json updateRequest = info::getRequestJson("updateRequest");
+        nlohmann::json updateRequest = app::getRequestJson("updateRequest");
         auto url = network::buildUrl(network::NetworkBase::Api::checkUpdates);
 
         network::RequestConfig reqConfig{
@@ -80,39 +76,34 @@ namespace neko::core::update {
             .config = reqConfig,
             .maxRetries = 5,
             .retryDelay = {150},
-            .successCodes = {200, 204, 429}
-        };
+            .successCodes = {200, 204}};
 
         auto result = net.executeWithRetry(retryConfig);
 
         if (!result.isSuccess()) {
             log::error({}, "Failed to check update , code : {} , error : {}", result.statusCode, result.errorMessage);
             log::debug({}, "result : {} , detailedErrorMessage : {} ", result.content, result.detailedErrorMessage);
-            if (result.statusCode == 429) {
-                return CheckUpdateResult{State::RetryRequired, ""};
-            } else {
-                return CheckUpdateResult{State::ActionNeeded, ""};
-            }
+            return {false, "", "Failed to check update : " + result.errorMessage};
         }
 
         if (result.code == 204)
-            return CheckUpdateResult{State::Completed, ""};
+            return {};
         if (result.hasContent() && result.code == 200) {
             result = result.content;
             log::info({}, "Check update success, has update , result : {}", result);
-            return CheckUpdateResult{State::ActionNeeded, result};
+            return {.isUpdateAvailable = true, .result = result};
         }
 
-        return CheckUpdateResult{State::Completed, ""};
+        return {false, "", "Unknown error"};
     }
 
-    // If any error occurs, return an empty object (an empty method is provided for checking).
-    inline UpdateResponse parseUpdate(const std::string &result) noexcept {
+    // If any error occurs, return an empty object
+    inline schema::UpdateResponse parseUpdate(const std::string &result) noexcept {
         log::autoLog log;
 
-        log::debug({}, "res : %s ", result.c_str());
+        log::debug({}, "result : {} ", result);
         try {
-            auto jsonData = nlohmann::json::parse(result).at("updateInformation");
+            auto jsonData = nlohmann::json::parse(result).at("updateResponse");
             UpdateResponse info{
                 .title = jsonData.at("title").get<std::string>(),
                 .description = jsonData.at("description").get<std::string>(),
@@ -145,29 +136,62 @@ namespace neko::core::update {
         return {};
     }
 
-    inline State autoUpdate(std::function<void(const neko::ui::HintMsg &)> hintDialog = nullptr, std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(const std::string &)> setLoadingNow = nullptr) noexcept {
+    struct UpdateState {
+        State state = State::Completed;
+        std::string errorMessage;
+    };
+
+    /**
+     * @brief Perform the auto-update process.
+     * @return UpdateState indicating the result of the update process.
+     * @note This function publishes events to the event bus and may quit the application if maintenance mode is active.
+     */
+    inline UpdateState autoUpdate() noexcept {
         log::autoLog log;
-        using namespace neko::info;
 
-        auto maintenanceState = checkMaintenance(hintDialog, showLoading, setLoadingVal, setLoadingNow);
-        if (maintenanceState != State::Completed)
-            return maintenanceState;
+        auto maintenanceState = checkMaintenance();
 
-        if (setLoadingNow)
-            setLoadingNow(lang::tr(lang::keys::Loading::checkUpdate));
+        if (maintenanceState.isMaintenance) {
+            bus::event::publish<event::MaintenanceEvent>(ui::HintMsg{
+                .title = lang::tr(lang::keys::object::maintenance),
+                .message = maintenanceState.message,
+                .poster = maintenanceState.poster,
+                .buttonText = {lang::tr(lang::keys::button::exit), lang::tr(lang::keys::button::open)},
+                .callback = [=](neko::uint32 i) {
+                    if (i == 1 && !maintenanceState.openLinkCmd.empty()) {
+                        launchProcess(maintenanceState.openLinkCmd);
+                    }
+                    core::app::quit();
+                }
+            });
+            return {};
+        }
+
+        bus::event::publish<event::UpdateLoadingNowEvent>({lang::tr(lang::keys::action::doingAction,
+            {{"{action}", lang::tr(lang::keys::action::networkRequest)},
+             {"{object}", lang::tr(lang::keys::object::update)}})});
+
 
         auto updateState = checkUpdate();
-        if (updateState.state != State::ActionNeeded)
-            return updateState;
+        if (!updateState.errorMessage.empty())
+            return {State::RetryRequired, updateState.errorMessage};
 
-        if (setLoadingNow)
-            setLoadingNow(lang::tr(lang::keys::Loading::updateInfoParse));
+        if (!updateState.isUpdateAvailable) {
+            return {State::Completed, ""};
+        }
+
+        auto updateState = checkUpdate();
+        if (!updateState.errorMessage.empty())
+            return {State::RetryRequired, updateState.errorMessage};
+
+        if (!updateState.isUpdateAvailable) {
+            return {State::Completed, ""};
+        }
+
         auto data = parseUpdate(updateState.result);
         if (data.empty())
-            return State::ActionNeeded;
+            return {State::ActionNeeded, "Failed to parse update data"};
 
-        if (setLoadingNow)
-            setLoadingNow(lang::tr(lang::keys::Loading::downloadUpdatePoster));
         auto posterPath = downloadPoster(data.posterUrl);
 
         if (!data.isMandatory) {
@@ -175,38 +199,10 @@ namespace neko::core::update {
             std::condition_variable condVar;
             std::unique_lock<std::mutex> lock(mtx);
             bool select = true;
-            hintDialog(ui::HintMsg{
-                .title = data.title,
-                .message = (data.publishTime + "\n" + data.description),
-                .poster = "",
-                .buttonText = {lang::tr(lang::keys::Button::ok), lang::tr(lang::keys::Button::cancel)},
-                .callback = [&condVar, &select](neko::uint32 checkId) {
-                    if (checkId == 0) {
-                        select = true;
-                    } else {
-                        select = false;
-                    }
-                    condVar.notify_one();
-                }});
-
             condVar.wait(lock);
             if (!select) {
-                return State::Completed;
+                return {State::Completed, ""};
             }
-        }
-
-        if (showLoading) {
-            showLoading(ui::LoadMsg{
-                .type = ui::LoadMsg::Type::All,
-                .process = lang::tr(lang::keys::Loading::settingDownload),
-                .h1 = data.title,
-                .h2 = data.publishTime,
-                .message = data.description,
-                .poster = posterPath,
-                .icon = "img/loading.gif",
-                .speed = 100,
-                .progressVal = 0,
-                .progressMax = data.files.size()});
         }
 
         struct ResultData {
@@ -258,8 +254,7 @@ namespace neko::core::update {
             }
             log::info({}, "Everything is OK , file : {}  hash is matching", info.fileName);
             ++progress;
-            if (setLoadingVal)
-                setLoadingVal(progress.load());
+
             return {State::Completed, info};
         };
 
@@ -293,15 +288,7 @@ namespace neko::core::update {
                     core::getThreadPool().enqueue([=, &stop]() {
                         if (stop.load())
                             return;
-                        ui::HintMsg hmsg{
-                            .title = lang::tr(lang::keys::Title::error),
-                            .message = lang::withPlaceholdersReplaced(
-                                lang::tr(lang::keys::Network::downloadUpdateError),
-                                {"{details}", lang::tr(lang::keys::Error::clickToQuit)}),
-                            .poster = "",
-                            .buttonText = {lang::tr(lang::keys::Button::ok)},
-                            .callback = exitCallback,
-                        };
+
                         auto retryRes = downloadTask(i, res.url);
                         if (retryRes.state != State::Completed) {
                             hintDialog(hmsg);
@@ -319,16 +306,7 @@ namespace neko::core::update {
 
             auto res = result[i].get();
             if (res.state != State::Completed) {
-                if (hintDialog) {
-                    hintDialog(ui::HintMsg{
-                        .title = lang::tr(lang::keys::Title::error),
-                        .message = lang::withPlaceholdersReplaced(
-                            lang::tr(lang::keys::Network::downloadUpdateError),
-                            {"{details}", res.url.fileName}),
-                        .poster = "",
-                        .buttonText = {lang::tr(lang::keys::Button::retry), lang::tr(lang::keys::Button::cancel)},
-                        .callback = callback});
-                }
+
                 condVar.wait(lock);
                 if (stop.load()) {
                     return State::ActionNeeded;
@@ -369,17 +347,6 @@ namespace neko::core::update {
                 condVar.notify_all();
                 core::app::quit();
             };
-
-            if (hintDialog) {
-                hintDialog(ui::HintMsg{
-                    .title = lang::tr(lang::keys::Title::reStart),
-                    .message = lang::tr(lang::keys::Network::updateOverReStart),
-                    .poster = "",
-                    .buttonText = {lang::tr(lang::keys::Button::ok)},
-                    .callback = execUpdate,
-                    .autoClose = 5000,
-                });
-            }
 
             auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
 

@@ -1,16 +1,17 @@
 #pragma once
 
-#include <neko/schema/types.hpp>
 #include <neko/log/nlog.hpp>
+#include <neko/schema/types.hpp>
 #include <neko/schema/exception.hpp>
-#include <neko/network/network.hpp>
+
 #include <neko/function/utilities.hpp>
 #include <neko/system/platform.hpp>
+
+#include <neko/network/network.hpp>
 
 // NekoLc project
 #include "neko/app/nekoLc.hpp"
 #include "neko/schema/api.hpp"
-
 
 namespace neko::core {
 

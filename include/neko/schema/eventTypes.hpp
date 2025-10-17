@@ -24,6 +24,10 @@ namespace neko::event {
         ShowLoadEvent(const neko::ui::LoadMsg &msg) : neko::ui::LoadMsg(msg) {}
     };
 
+    struct MaintenanceEvent : public neko::ui::HintMsg {
+        MaintenanceEvent(const neko::ui::HintMsg &msg) : neko::ui::HintMsg(msg) {}
+    };
+
     struct UpdateLoadingValEvent {
         neko::uint32 progressVal;
     };

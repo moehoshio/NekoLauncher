@@ -167,7 +167,11 @@ namespace neko::lang {
                 readFile = "readFile",
                 writeFile = "writeFile",
                 removeFile = "removeFile",
-                createFile = "createFile";
+                createFile = "createFile",
+                retryMaxReached = "retryMaxReached",
+                doingAction = "doingAction",
+                parseJson = "parseJson"
+                ;
         }
 
         /**
@@ -181,15 +185,6 @@ namespace neko::lang {
                 update = "update";
         }
 
-        /**
-         * @namespace neko::lang::keys::title
-         * @brief Title-related text
-         */
-        namespace title {
-            constexpr neko::strview
-                object = "Title";
-
-        }
         /**
          * @namespace neko::lang::keys::button
          * @brief Button-related text
@@ -206,6 +201,13 @@ namespace neko::lang {
 
         }
 
+        namespace maintenance {
+            constexpr neko::strview
+                object = "Maintenance",
+                message = "message";
+
+        }
+
         /**
          * @namespace neko::lang::keys::general
          * @brief General purpose text
@@ -214,17 +216,6 @@ namespace neko::lang {
             constexpr neko::strview
                 object = "General";
 
-        }
-
-        /**
-         * @namespace neko::lang::keys::info
-         * @brief Informational messages and processing states.
-         */
-        namespace info {
-            constexpr neko::strview
-                object = "Info",
-                retryMaxReached = "retryMaxReached",
-                doingAction = "doingAction";
         }
 
         namespace minecraft {
