@@ -28,6 +28,17 @@
     "Maintenance":{
         "message": "伺服器維護中，請稍後再試。\n\n維護時間：{startTime} 至 {exEndTime}\n\n{message}"
     },
+    "Update": {
+        "checkingForUpdate": "正在檢查更新...",
+        "updateAvailable": "有新版本可用！",
+        "updateAvailableMessage": "發現新版本可用。\n {description}",
+        "releaseNotes": "發行說明",
+        "noUpdateAvailable": "目前已是最新版本。",
+        "downloadingUpdate": "正在下載更新...",
+        "installingUpdate": "正在安裝更新...",
+        "updateComplete": "更新完成！請重新啟動應用程式以應用更新。",
+        "updateFailed": "更新失敗：{errorMessage}"
+    },
     "Error": {
         "networkError": "請求{object}時網路錯誤: {error}",
         "unknownError": "未知錯誤",

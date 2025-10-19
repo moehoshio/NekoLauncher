@@ -136,17 +136,79 @@ namespace neko::core::update {
         return {};
     }
 
+    void update() {
+        auto result = checkUpdate();
+
+        if (!result.isUpdateAvailable) {
+            log::info({}, "No update available.");
+            return;
+        }
+
+        auto data = parseUpdate(result.result);
+
+        if (data.empty()) {
+            log::error({}, "Failed to parse update data.");
+            return;
+        }
+
+        auto posterPath = downloadPoster(data.posterUrl);
+        log::info({}, "Update available: {} - {}", data.title, data.description);
+    }
+
     struct UpdateState {
         State state = State::Completed;
         std::string errorMessage;
     };
+
+    struct UpdateCallbacks {
+        std::function<void(const std::string &process)> onProgress;
+        std::function<void(const UpdateState &result)> onComplete;
+        std::function<void(const std::string &error)> onError;
+        /**
+         * @brief Callback when an update is available.
+         * @param data The update response data.
+         * @return true to proceed with the update, false to skip.
+         */
+        std::function<bool(const schema::UpdateResponse &data)> onUpdateAvailable;
+    };
+
+    inline UpdateCallbacks createUiCallbacks() {
+        return UpdateCallbacks{
+            .onProgress = [](const std::string &process) { bus::event::publish<event::UpdateLoadingNowEvent>(process); },
+            .onComplete = [](const UpdateState &result) {
+            if (result.state == State::Completed) {
+                bus::event::publish<event::UpdateCompleteEvent>();
+            } },
+            .onError = [](const std::string &error) { bus::event::publish<event::UpdateErrorEvent>(error); },
+            .onUpdateAvailable = [](const schema::UpdateResponse &data) {
+                bus::event::publish<event::UpdateAvailableEvent>(data);
+                if (data.isMandatory) {
+                    return true;
+                }
+                ui::HintMsg hmsg{
+                    .title = lang::tr(lang::keys::update::updateAvailable),
+                    .message = lang::withPlaceholdersReplaced(
+                        lang::tr(lang::keys::update::updateAvailableMessage),
+                        {{"{description}", data.description}}),
+                    .poster = downloadPoster(data.posterUrl),
+                    .buttonText = {lang::tr(lang::keys::button::update), lang::tr(lang::keys::button::cancel)}};
+                bus::event::publish<event::ShowHintEvent>(hmsg);
+            }};
+    }
+    inline UpdateCallbacks createSilentCallbacks() {
+        return UpdateCallbacks{
+            .onProgress = [](const std::string &process) { log::info("Update progress: {}", process); },
+            .onComplete = [](const UpdateState &result) { log::info("Update complete: {}", util::boolTo(result.state == State::Completed, "No Error", result.errorMessage)); },
+            .onError = [](const std::string &error) { log::error("Update error: {}", error); },
+            .onUpdateAvailable = [](const UpdateResponse &data) { return true; }};
+    }
 
     /**
      * @brief Perform the auto-update process.
      * @return UpdateState indicating the result of the update process.
      * @note This function publishes events to the event bus and may quit the application if maintenance mode is active.
      */
-    inline UpdateState autoUpdate() noexcept {
+    inline UpdateState autoUpdate(UpdateCallbacks callbacks = createDefaultCallbacks()) noexcept {
         log::autoLog log;
 
         auto maintenanceState = checkMaintenance();
@@ -162,23 +224,15 @@ namespace neko::core::update {
                         launchProcess(maintenanceState.openLinkCmd);
                     }
                     core::app::quit();
-                }
-            });
+                }});
             return {};
         }
-
-        bus::event::publish<event::UpdateLoadingNowEvent>({lang::tr(lang::keys::action::doingAction,
+        63 std::string process = lang::withPlaceholdersReplaced(
+            lang::tr(lang::keys::action::doingAction),
             {{"{action}", lang::tr(lang::keys::action::networkRequest)},
-             {"{object}", lang::tr(lang::keys::object::update)}})});
+             {"{object}", lang::tr(lang::keys::object::update)}});
 
-
-        auto updateState = checkUpdate();
-        if (!updateState.errorMessage.empty())
-            return {State::RetryRequired, updateState.errorMessage};
-
-        if (!updateState.isUpdateAvailable) {
-            return {State::Completed, ""};
-        }
+        bus::event::publish<event::UpdateLoadingNowEvent>(process);
 
         auto updateState = checkUpdate();
         if (!updateState.errorMessage.empty())
@@ -187,6 +241,13 @@ namespace neko::core::update {
         if (!updateState.isUpdateAvailable) {
             return {State::Completed, ""};
         }
+
+        process = lang::withPlaceholdersReplaced(
+            lang::tr(lang::keys::action::doingAction),
+            {{"{action}", lang::tr(lang::keys::action::parseJson)},
+             {"{object}", lang::tr(lang::keys::object::update)}});
+
+        bus::event::publish<event::UpdateLoadingNowEvent>(process);
 
         auto data = parseUpdate(updateState.result);
         if (data.empty())
@@ -360,4 +421,4 @@ namespace neko::core::update {
         return State::Completed;
     }
 
-} // namespace neko::core::update
+} // namespace neko::core::update 

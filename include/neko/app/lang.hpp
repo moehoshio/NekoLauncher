@@ -185,6 +185,20 @@ namespace neko::lang {
                 update = "update";
         }
 
+        namespace update {
+            constexpr neko::strview
+                object = "Update",
+                checkingForUpdates = "checkingForUpdates",
+                noUpdatesAvailable = "noUpdatesAvailable",
+                updateAvailable = "updateAvailable",
+                updateAvailableMessage = "updateAvailableMessage",
+                downloadingUpdate = "downloadingUpdate",
+                applyingUpdate = "applyingUpdate",
+                updateCompleted = "updateCompleted",
+                mandatoryUpdateNotice = "mandatoryUpdateNotice",
+                optionalUpdateNotice = "optionalUpdateNotice";
+        }
+
         /**
          * @namespace neko::lang::keys::button
          * @brief Button-related text
@@ -192,9 +206,13 @@ namespace neko::lang {
         namespace button {
             constexpr neko::strview
                 object = "Button",
+
                 ok = "ok",
                 open = "open",
                 retry = "retry",
+                apply = "apply",
+                update = "update",
+
                 cancel = "cancel",
                 close = "close",
                 quit = "quit";

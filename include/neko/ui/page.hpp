@@ -2,7 +2,7 @@
 
 namespace neko::ui {
 
-    enum class pageState {
+    enum class Page {
         home,
         setting,
         loading
