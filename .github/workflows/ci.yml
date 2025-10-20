@@ -203,7 +203,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_TARGET_TRIPLET=x64-windows \
             -DNEKO_LC_BUILD_TESTS=ON \
-            -DQt6_DIR=C:/vcpkg/installed/x64-windows/share/qt6 \
+            -DQt6_DIR=C:/vcpkg/installed/x64-windows \
             -DNEKO_LIBRARY_DIRS=C:/vcpkg/installed/x64-windows \
             -DCURL_LIBRARY=C:/vcpkg/installed/x64-windows/lib/libcurl.lib \
             -DCURL_INCLUDE_DIR=C:/vcpkg/installed/x64-windows/include \
@@ -217,29 +217,31 @@ jobs:
             BREW_PREFIX="/usr/local"
           fi
           echo "Using Homebrew prefix: $BREW_PREFIX"
-          cmake -B build \
+          cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} \
             -G "${{ matrix.config.generators }}" \
-            -DCMAKE_PREFIX_PATH="$BREW_PREFIX;$BREW_PREFIX/opt/qt6" \
+            -DCMAKE_PREFIX_PATH="$BREW_PREFIX;$BREW_PREFIX/opt/qt6;$BREW_PREFIX/opt/curl;$BREW_PREFIX/opt/openssl;$BREW_PREFIX/opt/minizip-ng" \
             -DQt6_DIR="$BREW_PREFIX/opt/qt6/lib/cmake/Qt6" \
             -DNEKO_LIBRARY_DIRS="$BREW_PREFIX" \
             -DOPENSSL_ROOT_DIR="$BREW_PREFIX/opt/openssl" \
-            -DCURL_DIR="$BREW_PREFIX/opt/curl" \
+            -DCURL_DIR="$BREW_PREFIX/opt/curl/lib/cmake/CURL" \
             -Dminizip-ng_DIR="$BREW_PREFIX/opt/minizip-ng/lib/cmake/minizip-ng" \
+            -DBoost_DIR="$BREW_PREFIX/opt/boost/lib/cmake/Boost-1.87.0" \
             -DNEKO_LC_BUILD_TESTS=ON
         else
           # For other generators (Linux), specify the compiler explicitly
-          cmake -B build \
+          cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} \
             -G "${{ matrix.config.generators }}" \
-            -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake/Qt6" \
+            -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake/Qt6;/usr/lib/x86_64-linux-gnu/cmake" \
             -DQt6_DIR="/usr/lib/x86_64-linux-gnu/cmake/Qt6" \
             -DNEKO_LIBRARY_DIRS="/usr" \
             -DOPENSSL_ROOT_DIR="/usr" \
+            -DCURL_DIR="/usr/lib/x86_64-linux-gnu/cmake/CURL" \
             -DCURL_LIBRARY="/usr/lib/x86_64-linux-gnu/libcurl.so" \
             -DCURL_INCLUDE_DIR="/usr/include" \
             -DNEKO_LC_BUILD_TESTS=ON
