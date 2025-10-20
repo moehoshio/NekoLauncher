@@ -7,7 +7,7 @@
 #include <neko/bus/threadBus.hpp>
 #include <neko/bus/configBus.hpp>
 #include <neko/bus/eventBus.hpp>
-#include <neko/schema/eventTypes.hpp>
+#include <neko/app/eventTypes.hpp>
 #include <neko/core/resources.hpp>
 
 #include <thread>

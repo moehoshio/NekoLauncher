@@ -110,7 +110,7 @@ namespace neko {
             main.launcherMethod = cfg.GetLongValue("main", "launcherMethod", 1);
             main.useSysWindowFrame = cfg.GetBoolValue("main", "useSystemWindowFrame", true);
             main.headBarKeepRight = cfg.GetBoolValue("main", "headBarKeepRight", true);
-            other.resourceVersion = cfg.GetValue("main", "resourceVersion", "");
+            main.resourceVersion = cfg.GetValue("main", "resourceVersion", "");
             main.deviceID = cfg.GetValue("main", "deviceID", "");
 
             style.blurEffect = cfg.GetValue("style", "blurEffect", "Animation");

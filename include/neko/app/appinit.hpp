@@ -16,7 +16,7 @@
 
 #include "neko/app/appinfo.hpp"
 #include "neko/app/lang.hpp"
-#include "neko/schema/clientconfig.hpp"
+#include "neko/app/clientConfig.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/threadBus.hpp"
@@ -105,7 +105,7 @@ namespace neko::app::init {
 
     inline void configInfoPrint(const ClientConfig &config) {
 
-        log::info({}, "config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , useSysWindowFrame: {} , headBarKeepRight : {} , deviceID : {}",
+        log::info({}, "config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , useSysWindowFrame: {} , headBarKeepRight : {} , deviceID : {} , resourceVersion : {}",
                   config.main.lang,
                   config.main.backgroundType,
                   config.main.background,
@@ -113,7 +113,8 @@ namespace neko::app::init {
                   config.main.launcherMethod,
                   util::logic::boolTo<neko::cstr>(config.main.useSysWindowFrame),
                   util::logic::boolTo<neko::cstr>(config.main.headBarKeepRight),
-                  config.main.deviceID);
+                  config.main.deviceID,
+                  config.main.resourceVersion);
 
         log::info({}, "config net : thread : {} , proxy : {}",
                   config.net.thread,
@@ -152,9 +153,9 @@ namespace neko::app::init {
                   config.minecraft.joinServerAddress,
                   config.minecraft.joinServerPort);
 
-        log::info({}, "config other : temp : {} , resVersion : {}",
-                  config.other.tempFolder,
-                  config.other.resourceVersion);
+        log::info({}, "config other : temp : {} ",
+                  config.other.tempFolder
+                  );
     }
 
     inline void initialize() {

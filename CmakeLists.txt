@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
+
+# Set policy for MSVC runtime library (must be before project())
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
+
 project(
     NekoLc LANGUAGES CXX VERSION 1.0.0.0
     DESCRIPTION "Neko Launcher Client"
@@ -38,12 +44,17 @@ set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
 # === Library ====
 # ================
 
-find_package(Boost COMPONENTS process system CONFIG)
-# find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
+# Set MSVC runtime library to static for all targets (must be before any target creation)
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
-# if (NOT Qt6_FOUND)
-#     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
-# endif()
+find_package(Boost COMPONENTS process system CONFIG)
+find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
+
+if (NOT Qt6_FOUND)
+    message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
+endif()
 
 # Fetch Dependencies
 include(FetchContent)
@@ -186,6 +197,48 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_SOURCE_DIR}/src/neko/main.cpp
 )
 
+
+# ================
+# ====  Test  ====
+# ================
+
+if(NEKO_LC_BUILD_TESTS)
+    enable_testing()
+    message(STATUS "Neko Launcher tests enabled")
+    include(GoogleTest)
+
+    # NekoLc Bus Test
+    add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
+    target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcBus_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcBus_test)
+
+    # NekoLc App Test
+    add_executable(NekoLcApp_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_app_test.cpp")
+    target_include_directories(NekoLcApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcApp_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcApp_test)
+
+    # NekoLc Schema Test
+    add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
+    target_include_directories(NekoLcSchema_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcSchema_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    target_compile_features(NekoLcSchema_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcSchema_test)
+
+    # Core - Update Test
+    # add_executable(NekoCore_update_test "${CMAKE_SOURCE_DIR}/tests/neko_core_update_test.cpp")
+    # target_include_directories(NekoCore_update_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    # target_link_libraries(NekoCore_update_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    # target_compile_features(NekoCore_update_test PRIVATE cxx_std_20)
+    # gtest_discover_tests(NekoCore_update_test)
+else()
+    message(STATUS "Neko Launcher tests disabled")
+endif()
+
+
 # ================
 # == Executable ==
 # ================
@@ -197,18 +250,14 @@ add_executable(NekoLc ${NEKO_SRCFILES})
 target_include_directories(NekoLc PRIVATE ${NEKO_INCLUDE_DIRS})
 target_compile_features(NekoLc PRIVATE cxx_std_20)
 
-if(MSVC)
-    set_property(TARGET NekoLc PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 # Link Neko Modules
 target_link_libraries(NekoLc PRIVATE 
-    NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool
+    NekoSchema NekoEvent NekoSystem NekoFunction NekoThreadPool NekoNet
 )
 # Link libraries
 target_link_libraries(NekoLc PRIVATE 
     # Qt
-    # Qt6::Core Qt6::Widgets Qt6::Gui
+    Qt6::Core Qt6::Widgets Qt6::Gui
     # Boost
     Boost::system Boost::process
     # Others
@@ -217,11 +266,19 @@ target_link_libraries(NekoLc PRIVATE
 
 # Os-specific settings
 if(WIN32)
-    # Set not to use the console window
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-    endif()
     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
+    
+    # Set subsystem based on build type
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        # For Release mode, use Windows subsystem (no console, needs WinMain)
+        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+    else()
+        # For Debug mode, use Console subsystem (with console, uses main)
+        set_target_properties(NekoLc PROPERTIES 
+            WIN32_EXECUTABLE FALSE
+            LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+        )
+    endif()
 
 elseif(APPLE)
 
@@ -254,46 +311,6 @@ elseif(UNIX)
 
 endif() # os
 
-
-# ================
-# ====  Test  ====
-# ================
-
-if(NEKO_LC_BUILD_TESTS)
-    enable_testing()
-    message(STATUS "Neko Launcher tests enabled")
-    include(GoogleTest)
-
-    # NekoLc Bus Test
-    add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
-    target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcBus_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcBus_test)
-
-    # NekoLc App Test
-    add_executable(NekoLcApp_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_app_test.cpp")
-    target_include_directories(NekoLcApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoLcApp_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcApp_test)
-
-    # NekoLc Schema Test
-    add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
-    target_include_directories(NekoLcSchema_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcSchema_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoLcSchema_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcSchema_test)
-
-    # Core - Update Test
-    # add_executable(NekoCore_update_test "${CMAKE_SOURCE_DIR}/tests/neko_core_update_test.cpp")
-    # target_include_directories(NekoCore_update_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    # target_link_libraries(NekoCore_update_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    # target_compile_features(NekoCore_update_test PRIVATE cxx_std_20)
-    # gtest_discover_tests(NekoCore_update_test)
-else()
-    message(STATUS "Neko Launcher tests disabled")
-endif()
         
 
 # ================

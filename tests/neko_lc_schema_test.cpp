@@ -4,9 +4,9 @@
  */
 
 #include <gtest/gtest.h>
-#include <neko/schema/api.hpp>
-#include <neko/schema/clientConfig.hpp>
-#include <neko/schema/eventTypes.hpp>
+#include <neko/app/api.hpp>
+#include <neko/app/clientConfig.hpp>
+#include <neko/app/eventTypes.hpp>
 #include <nlohmann/json.hpp>
 #include <SimpleIni.h>
 

@@ -1,7 +1,9 @@
 # Developer documentation
 
 [Style guide](#style-guide)  
-[Server](https://github.com/moehoshio/NekoLcServer)
+[Api](https://github.com/moehoshio/NekoLcApi)  
+[Server](https://github.com/moehoshio/NekoLcServer)  
+[Bus](#bus)  
 
 ## Style Guide
 

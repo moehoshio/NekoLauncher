@@ -6,6 +6,7 @@
 
 // NekoLc project
 #include "neko/ui/uiMsg.hpp"
+#include "neko/app/nekoLc.hpp"
 
 #include "neko/core/resources.hpp"
 
@@ -22,11 +23,11 @@ namespace neko::core {
     inline void launcher() {
         log::autoLog log;
 
-        if constexpr (std::string_view("custom") == api::definitions::LauncherMode) {
+        if constexpr (std::string_view("custom") == lc::LauncherMode) {
             // Custom launcher
         }
 
-        if constexpr (std::string_view("minecraft") == api::definitions::LauncherMode) {
+        if constexpr (std::string_view("minecraft") == lc::LauncherMode) {
             try {
                 minecraft::account::launcherMinecraftAuthlibAndPrefetchedCheck();
                 minecraft::account::launcherMinecraftTokenRefresh();

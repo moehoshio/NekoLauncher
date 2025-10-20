@@ -20,8 +20,8 @@
 #include <neko/network/network.hpp>
 
 // NekoLc project
-#include "neko/schema/clientConfig.hpp"
-#include "neko/function/info.hpp"
+#include "neko/app/clientConfig.hpp"
+#include "neko/app/appinfo.hpp"
 #include "neko/core/launcherProcess.hpp"
 
 #include <nlohmann/json.hpp>
@@ -456,11 +456,12 @@ namespace neko::minecraft {
          */
         void downloadTask(const Classifiers &single) {
             network::Network net;
-            network::RequestConfig reqConfig;
-            reqConfig.setUrl(single.url)
-                .setMethod(network::RequestType::DownloadFile)
-                .setFileName(single.path)
-                .setRequestId("minecraft-archives-" + single.sha1 + "-" + util::random::generateRandomString(6));
+            network::RequestConfig reqConfig{
+                .url = single.url,
+                .method = network::RequestType::DownloadFile,
+                .fileName = single.path,
+                .requestId = "minecraft-archives-" + single.sha1 + "-" + util::
+            };
             auto res = net.executeWithRetry(reqConfig);
             if (!res.isSuccess()) {
                 throw ex::NetworkError{
@@ -776,13 +777,13 @@ namespace neko::minecraft {
         void downloadAuthlibInjector(const std::string &authlibPath, CSimpleIniA &configIni) {
             log::autoLog log;
 
+            auto url = network::buildUrl(lc::api::authlib::injector::latest, lc::api::authlib::injector::downloadHost);
             network::Network net;
-            network::RequestConfig reqConfig;
-
-            auto url = net.buildUrl(network::NetworkBase::Api::Authlib::Injector::latest, network::NetworkBase::Api::Authlib::Injector::downloadHost);
-            reqConfig.setUrl(url)
-                .setMethod(network::RequestType::Get)
-                .setRequestId("minecraft-authlib-injector-latest");
+            network::RequestConfig reqConfig{
+                .url = url,
+                .method = network::RequestType::Get,
+                .requestId = "minecraft-authlib-injector-latest"
+            };
 
             auto res = net.executeWithRetry(reqConfig);
             if (!res.isSuccess() || !res.hasContent()) {
@@ -809,11 +810,12 @@ namespace neko::minecraft {
                     ex::ExceptionExtensionInfo{}};
             }
 
-            network::RequestConfig downloadConfig;
-            downloadConfig.setUrl(downloadUrl)
-                .setMethod(network::RequestType::DownloadFile)
-                .setFileName(authlibPath)
-                .setRequestId("minecraft-authlib-injector-download");
+            network::RequestConfig downloadConfig{
+                .url = downloadUrl,
+                .method = network::RequestType::DownloadFile,
+                .fileName = authlibPath,
+                .requestId = "minecraft-authlib-injector-download"
+            };
 
             auto downloadRes = net.executeWithRetry(downloadConfig);
             if (!downloadRes.isSuccess()) {
@@ -866,7 +868,7 @@ namespace neko::minecraft {
             }
 
             std::vector<std::string> result;
-            result.push_back("-javaagent:" + authlibPath + "=" + network::NetworkBase::buildUrl(networkBase::Api::Authlib::root, networkBase::Api::Authlib::host));
+            result.push_back("-javaagent:" + authlibPath + "=" + network::buildUrl(lc::api::authlib::root, lc::api::authlib::host));
             result.push_back("-Dauthlibinjector.side=client");
             result.push_back("-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefetched);
             return result;

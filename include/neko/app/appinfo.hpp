@@ -4,12 +4,13 @@
 #include <neko/system/platform.hpp>
 #include <neko/system/memoryinfo.hpp>
 
-#include "neko/schema/api.hpp"
+#include "neko/app/api.hpp"
 #include "neko/app/nekoLc.hpp"
 #include "neko/app/lang.hpp"
+#include "neko/app/clientConfig.hpp"
 
 #include "neko/bus/configBus.hpp"
-#include "neko/schema/clientConfig.hpp"
+
 
 #include <string>
 
@@ -43,7 +44,7 @@ namespace neko::app {
      */
     inline std::string getResourceVersion() {
         neko::ClientConfig cfg = bus::config::getClientConfig();
-        return cfg.other.resourceVersion;
+        return cfg.main.resourceVersion;
     }
 
     /**

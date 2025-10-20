@@ -1,25 +1,30 @@
 #include <neko/app/app.hpp>
 #include <neko/app/appinit.hpp>
 
-// #include <QtWidgets/QApplication>
-// #include <QtWidgets/QLabel>
-// #include <QtWidgets/QMainWindow>
-
-// #include <QtGui/QGuiApplication>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QWidget>
+#include <QtGui/QGuiApplication>
 
 int main(int argc, char *argv[]) {
 
     using namespace neko;
 
+    QApplication app(argc, argv);
+    QWidget w;
+    w.resize(800, 600);
+    w.setWindowTitle("NekoLauncher");
+    w.show();
     app::init::initialize();
     auto runInfo = app::run();
 
-    return runInfo.mainThreadRunLoopFunction();
+    return app.exec();
 
     // try {
 
     //     // Initialization
-    //     // QApplication app(argc, argv);
+        
     //     auto it = core::app::init::initialize();
 
     //     auto running = core::app::run();

@@ -12,7 +12,7 @@
 #include <neko/bus/threadBus.hpp>
 #include <neko/bus/configBus.hpp>
 #include <neko/bus/eventBus.hpp>
-#include <neko/schema/eventTypes.hpp>
+#include <neko/app/eventTypes.hpp>
 
 #include <thread>
 #include <chrono>
@@ -594,20 +594,6 @@ TEST_F(AppRunTest, CheckWorkerThreadsAvailable) {
     auto workerIds = neko::bus::thread::getWorkerIds();
     ASSERT_FALSE(workerIds.empty());
     ASSERT_GE(workerIds.size(), 1);
-}
-
-TEST_F(AppRunTest, RunInfoStructure) {
-    // Test that RunningInfo structure is properly defined
-    neko::app::RunningInfo info;
-    
-    // Should be able to assign values
-    info.eventLoopThreadId = 1;
-    ASSERT_EQ(info.eventLoopThreadId, 1);
-    
-    // mainThreadRunLoopFunction should be assignable
-    info.mainThreadRunLoopFunction = []() { return 0; };
-    ASSERT_NE(info.mainThreadRunLoopFunction, nullptr);
-    ASSERT_EQ(info.mainThreadRunLoopFunction(), 0);
 }
 
 TEST_F(AppRunTest, ThrowsExceptionWhenNoWorkerThreads) {

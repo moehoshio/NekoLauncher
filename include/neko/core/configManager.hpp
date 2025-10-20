@@ -2,7 +2,7 @@
 
 #include <SimpleIni.h>
 
-#include "neko/schema/clientConfig.hpp"
+#include "neko/app/clientConfig.hpp"
 
 #include <functional>
 #include <shared_mutex>

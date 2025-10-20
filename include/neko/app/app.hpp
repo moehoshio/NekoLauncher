@@ -2,17 +2,13 @@
 
 #include <neko/schema/exception.hpp>
 
-#include "neko/schema/eventTypes.hpp"
+#include "neko/app/eventTypes.hpp"
 #include "neko/bus/threadBus.hpp"
 #include "neko/bus/eventBus.hpp"
-
-
-// #include <QtWidgets/QApplication>
 
 namespace neko::app {
 
     struct RunningInfo {
-        std::function<int()> mainThreadRunLoopFunction;
         neko::uint64 eventLoopThreadId = 0;
         // If the future returns, it means the event loop has ended
         std::future<void> eventLoopFuture;
@@ -30,10 +26,6 @@ namespace neko::app {
         }
 
         info.eventLoopThreadId = ids[ids.size() - 1];
-        info.mainThreadRunLoopFunction = [] {
-            return 0;
-            // return QApplication::exec();
-        };
 
         info.eventLoopFuture = neko::bus::thread::submitToWorker(info.eventLoopThreadId, [] {
             neko::bus::event::run();
@@ -45,7 +37,6 @@ namespace neko::app {
 
     void quit() {
         neko::bus::event::stopLoop();
-        // QApplication::quit();
     }
 
 } // namespace neko::app
