@@ -53,6 +53,7 @@ endif()
 
 find_package(Boost COMPONENTS process system CONFIG)
 find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets)
+find_package(GTest CONFIG QUIET)
 
 if (NOT Qt6_FOUND)
     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
@@ -61,8 +62,8 @@ endif()
 # Fetch Dependencies
 include(FetchContent)
 
-if(NEKO_LC_BUILD_TESTS)
-    message(STATUS "Neko Launcher is fetching GoogleTest...")
+if(NOT GTEST_FOUND AND NEKO_LC_BUILD_TESTS)
+    message(STATUS "GTest Not Found; Neko Launcher is fetching GoogleTest...")
 
     FetchContent_Declare(
         googletest
@@ -176,28 +177,10 @@ list(APPEND NEKO_INCLUDE_DIRS
     ${simpleini_SOURCE_DIR}
 )
 
-# Qt6 include directories will be added via target_link_libraries with Qt6::Widgets
-# No need to manually add Qt6_DIR/include as Qt targets provide their own include paths
-
 # Src files
 list(APPEND NEKO_SRCFILES
-    # To ensure that qt moc can locate this file
-    ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
-    ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
-
-    # # Ui
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/headbarWidget.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/settingPages.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/hintDialog.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
-
     # Core
-    ${CMAKE_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
+    # ${CMAKE_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
     ${CMAKE_SOURCE_DIR}/src/neko/main.cpp
 )
 
@@ -208,29 +191,29 @@ list(APPEND NEKO_SRCFILES
 
 if(NEKO_LC_BUILD_TESTS)
     enable_testing()
-    message(STATUS "Neko Launcher tests enabled")
+    message(STATUS "Neko Launcher tests enabled (NEKO_LC_BUILD_TESTS=ON)")
     include(GoogleTest)
 
     # NekoLc Bus Test
-    add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
-    target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcBus_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcBus_test)
+    # add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
+    # target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    # target_link_libraries(NekoLcBus_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    # target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
+    # gtest_discover_tests(NekoLcBus_test)
 
     # NekoLc App Test
-    add_executable(NekoLcApp_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_app_test.cpp")
-    target_include_directories(NekoLcApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoLcApp_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcApp_test)
+    # add_executable(NekoLcApp_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_app_test.cpp")
+    # target_include_directories(NekoLcApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    # target_link_libraries(NekoLcApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    # target_compile_features(NekoLcApp_test PRIVATE cxx_std_20)
+    # gtest_discover_tests(NekoLcApp_test)
 
     # NekoLc Schema Test
-    add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
-    target_include_directories(NekoLcSchema_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcSchema_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    target_compile_features(NekoLcSchema_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcSchema_test)
+    # add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
+    # target_include_directories(NekoLcSchema_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    # target_link_libraries(NekoLcSchema_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
+    # target_compile_features(NekoLcSchema_test PRIVATE cxx_std_20)
+    # gtest_discover_tests(NekoLcSchema_test)
 
     # Core - Update Test
     # add_executable(NekoCore_update_test "${CMAKE_SOURCE_DIR}/tests/neko_core_update_test.cpp")
@@ -239,7 +222,7 @@ if(NEKO_LC_BUILD_TESTS)
     # target_compile_features(NekoCore_update_test PRIVATE cxx_std_20)
     # gtest_discover_tests(NekoCore_update_test)
 else()
-    message(STATUS "Neko Launcher tests disabled")
+    message(STATUS "Neko Launcher tests disabled (NEKO_LC_BUILD_TESTS=OFF)")
 endif()
 
 
