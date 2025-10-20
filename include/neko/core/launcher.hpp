@@ -22,11 +22,11 @@ namespace neko::core {
     inline void launcher() {
         log::autoLog log;
 
-        if constexpr (std::string_view("custom") == schema::definitions::LauncherMode) {
+        if constexpr (std::string_view("custom") == api::definitions::LauncherMode) {
             // Custom launcher
         }
 
-        if constexpr (std::string_view("minecraft") == schema::definitions::LauncherMode) {
+        if constexpr (std::string_view("minecraft") == api::definitions::LauncherMode) {
             try {
                 minecraft::account::launcherMinecraftAuthlibAndPrefetchedCheck();
                 minecraft::account::launcherMinecraftTokenRefresh();

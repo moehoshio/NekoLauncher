@@ -14,12 +14,12 @@
 
 // NekoLc project
 
-#include "neko/schema/api.hpp"
-#include "neko/schema/clientConfig.hpp"
-#include "neko/schema/eventTypes.hpp"
+#include "neko/app/api.hpp"
+#include "neko/app/clientConfig.hpp"
+#include "neko/app/eventTypes.hpp"
 
-#include "neko/core/app.hpp"
-#include "neko/core/appinfo.hpp"
+#include "neko/app/app.hpp"
+#include "neko/app/appinfo.hpp"
 #include "neko/core/downloadPoster.hpp"
 #include "neko/core/launcherProcess.hpp"
 #include "neko/core/maintenance.hpp"
@@ -52,13 +52,91 @@
 
 namespace neko::core::update {
 
-    struct CheckUpdateResult {
-        bool isUpdateAvailable = false;
+    struct UpdateState {
+        bool isSuccess = false;
         std::string result;
         std::string errorMessage;
     };
 
-    inline CheckUpdateResult checkUpdate() noexcept {
+    struct UpdateCallbacks {
+        std::function<void(const std::string &process)> onProgress;
+        std::function<void(const UpdateState &result)> onComplete;
+        std::function<void(const std::string &error)> onError;
+        /**
+         * @brief Callback when an update is available.
+         * @param data The update response data.
+         * @return true to proceed with the update, false to skip.
+         */
+        std::function<bool(const api::UpdateResponse &data)> onUpdateAvailable;
+        /**
+         * @brief Callback when maintenance mode is active.
+         * @param state The maintenance state data.
+         * @return true to exit the application, false to continue.
+         */
+        std::function<bool(const MaintenanceState &state)> onMaintenance;
+    };
+
+    inline UpdateCallbacks createUiCallbacks() {
+        return UpdateCallbacks{
+            .onProgress = [](const std::string &process) { bus::event::publish<event::UpdateLoadingNowEvent>(process); },
+            .onComplete = [](const UpdateState &result) {
+            if (result.state == State::Completed) {
+                bus::event::publish<event::UpdateCompleteEvent>();
+            } else {
+                ui::HintMsg msg{
+                    .title = lang::tr(lang::keys::object::error),
+                    .message = lang::withPlaceholdersReplaced(
+                        lang::tr(lang::keys::error::updateFailed),
+                        {{"{error}", result.errorMessage}}),
+                    .buttonText = {lang::tr(lang::keys::button::quit), lang::tr(lang::keys::button::retry)}};
+                bus::event::publish<event::ShowHintEvent>(msg);
+            } },
+            .onError = [](const std::string &error) { bus::event::publish<event::ShowHintEvent>(error); },
+            .onUpdateAvailable = [](const api::UpdateResponse &data) {
+                bus::event::publish<event::UpdateAvailableEvent>(data);
+                if (data.isMandatory) {
+                    return true;
+                }
+                // Todo: Show update dialog to user and get confirmation
+                return false;
+            },
+            .onMaintenance = [](const MaintenanceState &state) {
+                std::promise<bool> promise;
+                auto future = promise.get_future();
+                
+                ui::HintMsg msg{
+                    .title = lang::tr(lang::keys::object::maintenance),
+                    .message = state.message,
+                    .poster = state.poster,
+                    .buttonText = {lang::tr(lang::keys::button::exit), 
+                                  lang::tr(lang::keys::button::open)},
+                    .callback = [&promise, state](neko::uint32 i) {
+                        if (i == 1 && !state.openLinkCmd.empty()) {
+                            launchProcess(state.openLinkCmd);
+                        }
+                        promise.set_value(true);
+                    }};
+                
+                bus::event::publish<event::MaintenanceEvent>(msg);
+                return future.get();
+            }};
+    }
+    inline UpdateCallbacks createSilentCallbacks() {
+        return UpdateCallbacks{
+            .onProgress = [](const std::string &process) { log::info("Update progress: {}", process); },
+            .onComplete = [](const UpdateState &result) { log::info("Update complete: {}", util::boolTo(result.state == State::Completed, "Success", result.errorMessage)); },
+            .onError = [](const std::string &error) { log::error("Update error: {}", error); },
+            .onUpdateAvailable = [](const UpdateResponse &data) { return true; },
+            .onMaintenance = [](const MaintenanceState &state) {
+                log::warn("Maintenance mode active: {}", state.message);
+                if (!state.openLinkCmd.empty()) {
+                    log::info("Maintenance link: {}", state.openLinkCmd);
+                }
+                return false;
+            }};
+    }
+
+    inline UpdateState checkUpdate() noexcept {
         log::autoLog log;
         network::Network net;
 
@@ -91,14 +169,14 @@ namespace neko::core::update {
         if (result.hasContent() && result.code == 200) {
             result = result.content;
             log::info({}, "Check update success, has update , result : {}", result);
-            return {.isUpdateAvailable = true, .result = result};
+            return {true, result};
         }
 
         return {false, "", "Unknown error"};
     }
 
     // If any error occurs, return an empty object
-    inline schema::UpdateResponse parseUpdate(const std::string &result) noexcept {
+    inline api::UpdateResponse parseUpdate(const std::string &result) noexcept {
         log::autoLog log;
 
         log::debug({}, "result : {} ", result);
@@ -136,71 +214,189 @@ namespace neko::core::update {
         return {};
     }
 
-    void update() {
-        auto result = checkUpdate();
-
-        if (!result.isUpdateAvailable) {
-            log::info({}, "No update available.");
-            return;
-        }
-
-        auto data = parseUpdate(result.result);
-
+    /**
+     * @brief Perform the update process with the given update data.
+     * @param data The update response data.
+     * @param callbacks Optional callbacks for progress and state updates.
+     */
+    UpdateState update(api::UpdateResponse data, const UpdateCallbacks &callbacks = createUiCallbacks()) noexcept {
         if (data.empty()) {
-            log::error({}, "Failed to parse update data.");
-            return;
+            return {State::Failed, "Update data is empty"};
         }
 
-        auto posterPath = downloadPoster(data.posterUrl);
-        log::info({}, "Update available: {} - {}", data.title, data.description);
-    }
+        // Progress callback helper
+        auto notifyProgress = [&](const std::string &msg) {
+            if (callbacks.onProgress)
+                callbacks.onProgress(msg);
+            else
+                bus::event::publish<event::UpdateLoadingNowEvent>(msg);
+        };
 
-    struct UpdateState {
-        State state = State::Completed;
-        std::string errorMessage;
-    };
+        notifyProgress(lang::withPlaceholdersReplaced(
+            lang::tr(lang::keys::action::doingAction),
+            {{"{action}", lang::tr(lang::keys::action::downloadFile)},
+             {"{object}", lang::tr(lang::keys::object::update)}}));
 
-    struct UpdateCallbacks {
-        std::function<void(const std::string &process)> onProgress;
-        std::function<void(const UpdateState &result)> onComplete;
-        std::function<void(const std::string &error)> onError;
-        /**
-         * @brief Callback when an update is available.
-         * @param data The update response data.
-         * @return true to proceed with the update, false to skip.
-         */
-        std::function<bool(const schema::UpdateResponse &data)> onUpdateAvailable;
-    };
+        log::info({}, "Update available: {} - {} , resource version: {}",
+                  data.title, data.description, data.resourceVersion);
 
-    inline UpdateCallbacks createUiCallbacks() {
-        return UpdateCallbacks{
-            .onProgress = [](const std::string &process) { bus::event::publish<event::UpdateLoadingNowEvent>(process); },
-            .onComplete = [](const UpdateState &result) {
-            if (result.state == State::Completed) {
-                bus::event::publish<event::UpdateCompleteEvent>();
-            } },
-            .onError = [](const std::string &error) { bus::event::publish<event::UpdateErrorEvent>(error); },
-            .onUpdateAvailable = [](const schema::UpdateResponse &data) {
-                bus::event::publish<event::UpdateAvailableEvent>(data);
-                if (data.isMandatory) {
-                    return true;
+        // Prepare file URLs and paths
+        for (auto &it : data.files) {
+            it.fileName = (it.isCoreFile ? system::tempFolder() : system::workPath()) + "/" + it.fileName;
+
+            if (!it.isAbsoluteUrl) {
+                it.url = network::buildUrl(it.url);
+            }
+        }
+
+        struct ResultData {
+            neko::State state;
+            api::UpdateResponse::File fileInfo;
+        };
+
+        std::vector<std::future<ResultData>> futures;
+        std::atomic<int> progress(0);
+        std::atomic<bool> shouldStop(false);
+
+        // Lambda: Download task
+        auto downloadTask = [&shouldStop](neko::uint64 id, const api::UpdateResponse::File &info) -> ResultData {
+            if (shouldStop.load(std::memory_order_acquire))
+                return {State::Cancelled, info};
+
+            network::Network net;
+            network::RequestConfig reqConfig{
+                .url = info.url,
+                .method = network::RequestType::DownloadFile,
+                .fileName = info.fileName,
+                .requestId = "update-" + std::to_string(id) + "-" + util::random::generateRandomString(6)};
+
+            if (info.suggestMultiThread) {
+                if (!net.multiThreadedDownload(network::MultiDownloadConfig(reqConfig)))
+                    return {State::RetryRequired, info};
+            } else {
+                auto result = net.executeWithRetry({reqConfig});
+                if (!result.isSuccess())
+                    return {State::RetryRequired, info};
+            }
+            return {State::Completed, info};
+        };
+
+        // Lambda: Hash verification
+        auto verifyHash = [&progress, callbacks](const api::UpdateResponse::File &info) -> ResultData {
+            auto hash = util::hash::hashFile(info.fileName, util::hash::mapAlgorithm(info.hashAlgorithm));
+
+            if (hash == info.checksum) {
+                log::info({}, "Hash verification passed: {}", info.fileName);
+
+                int currentProgress = ++progress;
+                if (callbacks.onProgress) {
+                    callbacks.onProgress(std::format("Verified {}/{}", currentProgress, info.fileName));
+                } else {
+                    bus::event::publish<event::UpdateLoadingValEvent>(currentProgress);
                 }
-                ui::HintMsg hmsg{
-                    .title = lang::tr(lang::keys::update::updateAvailable),
-                    .message = lang::withPlaceholdersReplaced(
-                        lang::tr(lang::keys::update::updateAvailableMessage),
-                        {{"{description}", data.description}}),
-                    .poster = downloadPoster(data.posterUrl),
-                    .buttonText = {lang::tr(lang::keys::button::update), lang::tr(lang::keys::button::cancel)}};
-                bus::event::publish<event::ShowHintEvent>(hmsg);
-            }};
-    }
-    inline UpdateCallbacks createSilentCallbacks() {
-        return UpdateCallbacks{
-            .onProgress = [](const std::string &process) { log::info("Update progress: {}", process); },
-            .onComplete = [](const UpdateState &result) { log::info("Update complete: {}", util::boolTo(result.state == State::Completed, "No Error", result.errorMessage)); },
-            .onError = [](const std::string &error) { log::error("Update error: {}", error); },
-            .onUpdateAvailable = [](const UpdateResponse &data) { return true; }};
+
+                return {State::Completed, info};
+            }
+
+            log::error({}, "Hash mismatch: file={}, expected={}, actual={}",
+                       info.fileName, info.checksum, hash);
+            return {State::HashMismatch, info};
+        };
+
+        // Lambda: Combined task
+        auto processFile = [&](neko::uint64 i, const api::UpdateResponse::File &info) -> ResultData {
+            if (shouldStop.load(std::memory_order_acquire))
+                return {State::Cancelled, info};
+
+            auto downloadResult = downloadTask(i, info);
+            if (downloadResult.state != State::Completed)
+                return downloadResult;
+
+            return verifyHash(info);
+        };
+
+        // Submit all tasks
+        futures.reserve(data.files.size());
+        for (size_t i = 0; i < data.files.size(); ++i) {
+            futures.push_back(bus::thread::submit(processFile, i, data.files[i]));
+        }
+
+        // Collect results with early exit
+        std::string failureReason;
+        for (auto &future : futures) {
+            if (shouldStop.load(std::memory_order_acquire))
+                break;
+
+            auto result = future.get();
+            if (result.state != State::Completed) {
+                shouldStop.store(true, std::memory_order_release);
+                failureReason = std::format("Update failed for file: {} (state: {})",
+                                            result.fileInfo.fileName,
+                                            static_cast<int>(result.state));
+                log::error({}, failureReason);
+                break;
+            }
+        }
+
+        if (!failureReason.empty()) {
+            return {false, "", failureReason};
+        }
+
+        log::info({}, "All files downloaded and verified successfully");
+
+        // Prepare update command
+        std::vector<std::string> coreFiles;
+        for (const auto &file : data.files) {
+            if (file.isCoreFile)
+                coreFiles.push_back(file.fileName);
+        }
+
+        // Save resource version
+        if (!data.resourceVersion.empty()) {
+            bus::config::updateClientConfig([&data](neko::ClientConfig &cfg) {
+                cfg.other.resourceVersion = data.resourceVersion;
+            });
+            log::info({}, "Saved resource version: {}", data.resourceVersion);
+            bus::config::save(app::getConfigFileName());
+        }
+
+        // Execute update if core files need replacement
+        if (!coreFiles.empty()) {
+            try {
+                std::string updateExecPath = system::tempFolder() + "/update_" + util::random::generateRandomString(10);
+
+                std::filesystem::path updateSourcePath = system::workPath() + "/update";
+                if (!std::filesystem::exists(updateSourcePath)) {
+                    return {false, "", "Update executable not found: " + updateSourcePath.string()};
+                }
+
+                std::filesystem::create_directories(updateExecPath);
+                std::filesystem::copy(updateSourcePath,
+                                      updateExecPath + "/update",
+                                      std::filesystem::copy_options::overwrite_existing);
+
+                std::string cmd = updateExecPath + "/update " + system::workPath();
+                for (const auto &file : coreFiles) {
+                    cmd += " " + file;
+                }
+
+                log::info({}, "Executing update command: {}", cmd);
+
+                if (callbacks.onComplete) {
+                    callbacks.onComplete({State::RestartRequired, "Update ready, restart required"});
+                }
+
+                app::quit();
+                launcherNewProcess(cmd);
+
+            } catch (const std::filesystem::filesystem_error &e) {
+                std::string error = std::format("Filesystem error: {}", e.what());
+                log::error({}, error);
+                return {false, "", error};
+            }
+        }
+
+        return {true, "", ""};
     }
 
     /**
@@ -208,217 +404,87 @@ namespace neko::core::update {
      * @return UpdateState indicating the result of the update process.
      * @note This function publishes events to the event bus and may quit the application if maintenance mode is active.
      */
-    inline UpdateState autoUpdate(UpdateCallbacks callbacks = createDefaultCallbacks()) noexcept {
+    inline UpdateState autoUpdate(const UpdateCallbacks &callbacks = createUiCallbacks()) noexcept {
         log::autoLog log;
 
+        // Check maintenance mode
         auto maintenanceState = checkMaintenance();
+        
+        if (!maintenanceState.errorMessage.empty()) {
+            log::warn({}, "Failed to check maintenance: {}", maintenanceState.errorMessage);
+        }
 
         if (maintenanceState.isMaintenance) {
-            bus::event::publish<event::MaintenanceEvent>(ui::HintMsg{
-                .title = lang::tr(lang::keys::object::maintenance),
-                .message = maintenanceState.message,
-                .poster = maintenanceState.poster,
-                .buttonText = {lang::tr(lang::keys::button::exit), lang::tr(lang::keys::button::open)},
-                .callback = [=](neko::uint32 i) {
-                    if (i == 1 && !maintenanceState.openLinkCmd.empty()) {
-                        launchProcess(maintenanceState.openLinkCmd);
-                    }
-                    core::app::quit();
-                }});
-            return {};
+            log::info({}, "Maintenance mode active: {}", maintenanceState.message);
+            
+            bool shouldExit = true;
+            if (callbacks.onMaintenance) {
+                shouldExit = callbacks.onMaintenance(maintenanceState);
+            }
+            
+            if (shouldExit) {
+                app::quit();
+            }
+            
+            return {State::Cancelled, "Maintenance mode active"};
         }
-        63 std::string process = lang::withPlaceholdersReplaced(
+
+        // Notify progress
+        std::string process = lang::withPlaceholdersReplaced(
             lang::tr(lang::keys::action::doingAction),
             {{"{action}", lang::tr(lang::keys::action::networkRequest)},
              {"{object}", lang::tr(lang::keys::object::update)}});
 
-        bus::event::publish<event::UpdateLoadingNowEvent>(process);
+        if (callbacks.onProgress)
+            callbacks.onProgress(process);
 
+        // Check for updates
         auto updateState = checkUpdate();
-        if (!updateState.errorMessage.empty())
+        if (!updateState.errorMessage.empty()) {
+            if (callbacks.onError)
+                callbacks.onError(updateState.errorMessage);
             return {State::RetryRequired, updateState.errorMessage};
-
-        if (!updateState.isUpdateAvailable) {
-            return {State::Completed, ""};
         }
 
+        if (!updateState.isUpdateAvailable) {
+            UpdateState result{State::Completed, "No update available"};
+            if (callbacks.onComplete)
+                callbacks.onComplete(result);
+            return result;
+        }
+
+        // Parse update data
         process = lang::withPlaceholdersReplaced(
             lang::tr(lang::keys::action::doingAction),
             {{"{action}", lang::tr(lang::keys::action::parseJson)},
              {"{object}", lang::tr(lang::keys::object::update)}});
 
-        bus::event::publish<event::UpdateLoadingNowEvent>(process);
+        if (callbacks.onProgress)
+            callbacks.onProgress(process);
 
         auto data = parseUpdate(updateState.result);
-        if (data.empty())
-            return {State::ActionNeeded, "Failed to parse update data"};
-
-        auto posterPath = downloadPoster(data.posterUrl);
-
-        if (!data.isMandatory) {
-            std::mutex mtx;
-            std::condition_variable condVar;
-            std::unique_lock<std::mutex> lock(mtx);
-            bool select = true;
-            condVar.wait(lock);
-            if (!select) {
-                return {State::Completed, ""};
-            }
+        if (data.empty()) {
+            std::string error = "Failed to parse update data";
+            if (callbacks.onError)
+                callbacks.onError(error);
+            return {State::ActionNeeded, error};
         }
 
-        struct ResultData {
-            neko::State state;
-            UpdateResponse::File url;
-        };
-        std::vector<std::future<ResultData>> result;
-        std::atomic<int> progress(0);
-        std::atomic<bool> stop(false);
-
-        for (auto &it : data.files) {
-
-            if (it.isCoreFile)
-                it.fileName = system::tempFolder() + "/" + it.fileName;
-            else
-                it.fileName = system::workPath() + "/" + it.fileName;
-
-            if (!it.isAbsoluteUrl)
-                it.url = network::buildUrl(it.url);
+        // Ask if user wants to update
+        if (callbacks.onUpdateAvailable && !callbacks.onUpdateAvailable(data)) {
+            UpdateState result{State::Completed, "Update cancelled by user"};
+            if (callbacks.onComplete)
+                callbacks.onComplete(result);
+            return result;
         }
 
-        auto downloadTask = [=, &stop](int id, UpdateResponse::File info) -> ResultData {
-            network::Network net;
-            network::RequestConfig reqConfig;
-            reqConfig.setUrl(info.url)
-                .setMethod(network::RequestType::DownloadFile)
-                .setFileName(info.fileName)
-                .setRequestId("update-" + std::to_string(id) + "-" + util::random::generateRandomString(6));
+        // Perform update
+        auto finalResult = update(data, callbacks);
+        
+        if (callbacks.onComplete)
+            callbacks.onComplete(finalResult);
 
-            if (stop.load())
-                return {State::ActionNeeded, info};
-
-            if (info.multis) {
-                if (!net.multiThreadedDownload(network::MultiDownloadConfig(reqConfig)))
-                    return {State::RetryRequired, info};
-            } else {
-                if (!net.executeWithRetry(reqConfig, 3)) {
-                    return {State::RetryRequired, info};
-                }
-            }
-            return {State::Completed, info};
-        };
-
-        auto checkHash = [=, &progress](const UpdateResponse::File &info) -> ResultData {
-            auto hash = util::hash::hashFile(info.fileName, util::hash::mapAlgorithm(info.hashAlgorithm));
-            if (hash != info.checksum) {
-                log::error({}, "Hash Non-matching : file : {}  expect hash : {} , real hash : {}", info.fileName, info.hash, hash);
-                return {State::RetryRequired, info};
-            }
-            log::info({}, "Everything is OK , file : {}  hash is matching", info.fileName);
-            ++progress;
-
-            return {State::Completed, info};
-        };
-
-        // push task
-        for (size_t i = 0; i < data.files.size(); ++i) {
-            result.push_back(core::getThreadPool().enqueue([=, &stop] {
-                if (stop.load())
-                    return State::ActionNeeded;
-
-                auto state1 = downloadTask(i, data.files[i]);
-                if (state1.state != State::Completed)
-                    return state1;
-
-                return checkHash(data.files[i]);
-            }));
-        }
-
-        // check result
-        for (size_t i = 0; i < result.size(); ++i) {
-            std::mutex mtx;
-            std::condition_variable condVar;
-            std::unique_lock<std::mutex> lock(mtx);
-
-            auto exitCallback = [=, &condVar](neko::uint32) {
-                stop.store(true);
-                condVar.notify_all();
-                core::app::quit();
-            };
-            auto callback = [=, &condVar](neko::uint32 checkId) {
-                if (checkId == 0) {
-                    core::getThreadPool().enqueue([=, &stop]() {
-                        if (stop.load())
-                            return;
-
-                        auto retryRes = downloadTask(i, res.url);
-                        if (retryRes.state != State::Completed) {
-                            hintDialog(hmsg);
-                        }
-                        auto hashRes = checkHash(res.url);
-                        if (hashRes.state != State::Completed) {
-                            hintDialog(hmsg);
-                        }
-                        condVar.notify_all();
-                    });
-                } else {
-                    exitCallback(checkId);
-                }
-            };
-
-            auto res = result[i].get();
-            if (res.state != State::Completed) {
-
-                condVar.wait(lock);
-                if (stop.load()) {
-                    return State::ActionNeeded;
-                }
-            }
-        }
-
-        log::info("update is ready");
-
-        bool needExecUpdate = false;
-
-        std::string updateTempPath = system::tempFolder() + "/update_" + util::random::generateRandomString(10);
-        std::filesystem::copy(system::workPath() + "/update", updateTempPath + "/update");
-
-        std::string cmd = updateTempPath + "/update " + system::workPath();
-
-        for (const auto &it : data.files) {
-            if (it.isCoreFile) {
-                if (!needExecUpdate)
-                    needExecUpdate = true;
-                cmd += (" " + it.fileName);
-            }
-        }
-        if (!data.resourceVersion.empty()) {
-            ClientConfig cfg(core::getConfigObj());
-            cfg.other.resourceVersion = data.resourceVersion.c_str();
-            cfg.save(core::getConfigObj(), app::getConfigFileName());
-            log::info({}, "save resource version : {}", data.resourceVersion);
-        }
-
-        if (needExecUpdate) {
-            log::info("need exec update");
-            std::mutex mtx;
-            std::condition_variable condVar;
-            std::unique_lock<std::mutex> lock(mtx);
-
-            auto execUpdate = [=, &condVar](neko::uint32) {
-                condVar.notify_all();
-                core::app::quit();
-            };
-
-            auto resState = condVar.wait_for(lock, std::chrono::seconds(6));
-
-            if (resState == std::cv_status::timeout) {
-                core::app::quit();
-            }
-            launcherNewProcess(cmd);
-            core::getEventLoop().stopLoop();
-        }
-
-        return State::Completed;
+        return finalResult;
     }
 
-} // namespace neko::core::update 
+} // namespace neko::core::update

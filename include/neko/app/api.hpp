@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace neko::schema {
+namespace neko::api {
 
     struct Error {
         std::string
@@ -732,4 +732,4 @@ namespace neko::schema {
         from_json(j.at("updateResponse"), info.updateResponse);
     }
 
-} // namespace neko::schema
+} // namespace neko::api

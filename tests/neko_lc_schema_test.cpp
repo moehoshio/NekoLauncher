@@ -1,6 +1,6 @@
 /**
  * @file neko_lc_schema_test.cpp
- * @brief Unit tests for neko schema modules (API types, client config, event types)
+ * @brief Unit tests for neko api modules (API types, client config, event types)
  */
 
 #include <gtest/gtest.h>
@@ -25,7 +25,7 @@ protected:
 };
 
 TEST_F(ErrorSchemaTest, ErrorToJson) {
-    neko::schema::Error error;
+    neko::api::Error error;
     error.error = "ERR001";
     error.errorType = "NetworkError";
     error.errorMessage = "Connection timeout";
@@ -44,7 +44,7 @@ TEST_F(ErrorSchemaTest, ErrorFromJson) {
         {"errorMessage", "Invalid input"}
     };
 
-    neko::schema::Error error = j.get<neko::schema::Error>();
+    neko::api::Error error = j.get<neko::api::Error>();
 
     EXPECT_EQ(error.error, "ERR002");
     EXPECT_EQ(error.errorType, "ValidationError");
@@ -52,7 +52,7 @@ TEST_F(ErrorSchemaTest, ErrorFromJson) {
 }
 
 TEST_F(ErrorSchemaTest, ErrorEmpty) {
-    neko::schema::Error error;
+    neko::api::Error error;
     EXPECT_TRUE(error.empty());
 
     error.error = "ERR001";
@@ -70,7 +70,7 @@ protected:
 };
 
 TEST_F(MetaSchemaTest, MetaToJson) {
-    neko::schema::Meta meta;
+    neko::api::Meta meta;
     meta.apiVersion = "1.0.0";
     meta.minApiVersion = "0.9.0";
     meta.buildVersion = "build-123";
@@ -99,7 +99,7 @@ TEST_F(MetaSchemaTest, MetaFromJson) {
         {"deprecatedMessage", "Please upgrade"}
     };
 
-    neko::schema::Meta meta = j.get<neko::schema::Meta>();
+    neko::api::Meta meta = j.get<neko::api::Meta>();
 
     EXPECT_EQ(meta.apiVersion, "2.0.0");
     EXPECT_EQ(meta.minApiVersion, "1.5.0");
@@ -121,7 +121,7 @@ protected:
 };
 
 TEST_F(ClientInfoSchemaTest, AppToJson) {
-    neko::schema::App app;
+    neko::api::App app;
     app.appName = "NekoLauncher";
     app.coreVersion = "1.0.0";
     app.resourceVersion = "1.0.0";
@@ -136,7 +136,7 @@ TEST_F(ClientInfoSchemaTest, AppToJson) {
 }
 
 TEST_F(ClientInfoSchemaTest, SystemToJson) {
-    neko::schema::System system;
+    neko::api::System system;
     system.os = "Windows";
     system.arch = "x64";
     system.osVersion = "10.0.19045";
@@ -149,7 +149,7 @@ TEST_F(ClientInfoSchemaTest, SystemToJson) {
 }
 
 TEST_F(ClientInfoSchemaTest, ClientInfoToJson) {
-    neko::schema::ClientInfo clientInfo;
+    neko::api::ClientInfo clientInfo;
     clientInfo.app.appName = "NekoLauncher";
     clientInfo.app.coreVersion = "1.0.0";
     clientInfo.system.os = "Windows";
@@ -180,7 +180,7 @@ TEST_F(ClientInfoSchemaTest, ClientInfoFromJson) {
         {"deviceId", "device-456"}
     };
 
-    neko::schema::ClientInfo clientInfo = j.get<neko::schema::ClientInfo>();
+    neko::api::ClientInfo clientInfo = j.get<neko::api::ClientInfo>();
 
     EXPECT_EQ(clientInfo.app.appName, "TestApp");
     EXPECT_EQ(clientInfo.app.coreVersion, "2.0.0");
@@ -200,7 +200,7 @@ protected:
 };
 
 TEST_F(AuthSchemaTest, AccountToJson) {
-    neko::schema::Auth::Account account;
+    neko::api::Auth::Account account;
     account.username = "testuser";
     account.password = "testpass";
 
@@ -211,7 +211,7 @@ TEST_F(AuthSchemaTest, AccountToJson) {
 }
 
 TEST_F(AuthSchemaTest, TokenToJson) {
-    neko::schema::Auth::Token token;
+    neko::api::Auth::Token token;
     token.accessToken = "access123";
     token.refreshToken = "refresh456";
 
@@ -241,7 +241,7 @@ TEST_F(AuthSchemaTest, AuthFromJson) {
         }}
     };
 
-    neko::schema::Auth auth = j.get<neko::schema::Auth>();
+    neko::api::Auth auth = j.get<neko::api::Auth>();
 
     EXPECT_EQ(auth.account.username, "user1");
     EXPECT_EQ(auth.account.password, "pass1");
@@ -261,7 +261,7 @@ protected:
 };
 
 TEST_F(LauncherConfigSchemaTest, WebSocketToJson) {
-    neko::schema::LauncherConfigResponse::WebSocket ws;
+    neko::api::LauncherConfigResponse::WebSocket ws;
     ws.enable = true;
     ws.socketHost = "wss://example.com";
     ws.heartbeatIntervalSec = 30;
@@ -274,7 +274,7 @@ TEST_F(LauncherConfigSchemaTest, WebSocketToJson) {
 }
 
 TEST_F(LauncherConfigSchemaTest, SecurityToJson) {
-    neko::schema::LauncherConfigResponse::Security security;
+    neko::api::LauncherConfigResponse::Security security;
     security.enableAuthentication = true;
     security.tokenExpirationSec = 3600;
     security.refreshTokenExpirationDays = 30;
@@ -319,7 +319,7 @@ TEST_F(LauncherConfigSchemaTest, LauncherConfigFromJson) {
         }}
     };
 
-    neko::schema::LauncherConfigResponse config = j.get<neko::schema::LauncherConfigResponse>();
+    neko::api::LauncherConfigResponse config = j.get<neko::api::LauncherConfigResponse>();
 
     EXPECT_EQ(config.host.size(), 2);
     EXPECT_EQ(config.host[0], "https://server1.com");
@@ -360,7 +360,7 @@ TEST_F(MaintenanceSchemaTest, MaintenanceFromJson) {
         }}
     };
 
-    neko::schema::MaintenanceResponse maintenance = j.get<neko::schema::MaintenanceResponse>();
+    neko::api::MaintenanceResponse maintenance = j.get<neko::api::MaintenanceResponse>();
 
     EXPECT_EQ(maintenance.status, "progress");
     EXPECT_EQ(maintenance.message, "Server is under maintenance");
@@ -370,7 +370,7 @@ TEST_F(MaintenanceSchemaTest, MaintenanceFromJson) {
 }
 
 TEST_F(MaintenanceSchemaTest, MaintenanceStatus) {
-    neko::schema::MaintenanceResponse maintenance;
+    neko::api::MaintenanceResponse maintenance;
 
     maintenance.status = "progress";
     EXPECT_TRUE(maintenance.isMaintenance());
@@ -394,7 +394,7 @@ protected:
 };
 
 TEST_F(UpdateSchemaTest, UpdateFileToJson) {
-    neko::schema::UpdateResponse::File file;
+    neko::api::UpdateResponse::File file;
     file.url = "https://example.com/file.zip";
     file.fileName = "update.zip";
     file.checksum = "abc123";
@@ -453,7 +453,7 @@ TEST_F(UpdateSchemaTest, UpdateResponseFromJson) {
         }}
     };
 
-    neko::schema::UpdateResponse update = j.get<neko::schema::UpdateResponse>();
+    neko::api::UpdateResponse update = j.get<neko::api::UpdateResponse>();
 
     EXPECT_EQ(update.title, "New Update Available");
     EXPECT_EQ(update.description, "Bug fixes and improvements");
@@ -477,7 +477,7 @@ protected:
 };
 
 TEST_F(WebSocketSchemaTest, WebSocketClientSideToJson) {
-    neko::schema::WebSocketClientSide ws;
+    neko::api::WebSocketClientSide ws;
     ws.action = "ping";
     ws.accessToken = "token123";
     ws.lastMessageId = "msg123";
@@ -490,7 +490,7 @@ TEST_F(WebSocketSchemaTest, WebSocketClientSideToJson) {
 }
 
 TEST_F(WebSocketSchemaTest, WebSocketClientSideActions) {
-    neko::schema::WebSocketClientSide ws;
+    neko::api::WebSocketClientSide ws;
 
     ws.action = "ping";
     EXPECT_TRUE(ws.isPing());
@@ -509,7 +509,7 @@ TEST_F(WebSocketSchemaTest, WebSocketClientSideActions) {
 }
 
 TEST_F(WebSocketSchemaTest, WebSocketServerSideActions) {
-    neko::schema::WebSocketServerSide ws;
+    neko::api::WebSocketServerSide ws;
 
     ws.action = "ping";
     EXPECT_TRUE(ws.isPing());
@@ -526,11 +526,11 @@ TEST_F(WebSocketSchemaTest, WebSocketServerSideActions) {
 }
 
 TEST_F(WebSocketSchemaTest, WebSocketServerSideHasError) {
-    neko::schema::WebSocketServerSide ws;
+    neko::api::WebSocketServerSide ws;
 
     EXPECT_FALSE(ws.hasError());
 
-    neko::schema::Error error;
+    neko::api::Error error;
     error.error = "ERR001";
     ws.errors.push_back(error);
 

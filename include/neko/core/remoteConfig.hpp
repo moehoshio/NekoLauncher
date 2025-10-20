@@ -21,7 +21,7 @@ namespace neko::core {
          * @throws ex::Parse if the response cannot be parsed
          * @throws ex::NetworkError if the network request fails
          */
-        inline schema::LauncherConfigResponse getStaticRemoteConfig() {
+        inline api::LauncherConfigResponse getStaticRemoteConfig() {
             log::autoLog log;
             network::Network net;
             network::RequestConfig reqConfig{
@@ -35,10 +35,10 @@ namespace neko::core {
                 log::debug({}, "Detailed error: {}", result.detailedErrorMessage);
                 throw ex::NetworkError("Failed to get remote launcher config : " + result.errorMessage);
             }
-            schema::LauncherConfigResponse response;
+            api::LauncherConfigResponse response;
             try {
                 nlohmann::json config = nlohmann::json::parse(result.content);
-                response = config.get<schema::LauncherConfigResponse>();
+                response = config.get<api::LauncherConfigResponse>();
             } catch (const nlohmann::json::exception &e) {
                 log::error({}, "Failed to parse remote launcher config: %s", e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));
@@ -50,7 +50,7 @@ namespace neko::core {
          * @throws ex::Parse if the response cannot be parsed
          * @throws ex::NetworkError if the network request fails
          */
-        inline schema::LauncherConfigResponse getDynamicRemoteConfig() {
+        inline api::LauncherConfigResponse getDynamicRemoteConfig() {
             log::autoLog log;
             network::Network net;
             network::RequestConfig reqConfig{
@@ -72,7 +72,7 @@ namespace neko::core {
             try {
                 // Parse the response content as JSON
                 nlohmann::json config = nlohmann::json::parse(result.content);
-                return config.get<schema::LauncherConfigResponse>();
+                return config.get<api::LauncherConfigResponse>();
             } catch (const nlohmann::json::exception &e) {
                 log::error({}, "Failed to parse remote launcher config: {}", e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));
@@ -85,7 +85,7 @@ namespace neko::core {
      * @throws ex::NetworkError if the network request fails
      * @throws ex::Parse if the response cannot be parsed
      */
-    inline schema::LauncherConfigResponse getRemoteLauncherConfig() {
+    inline api::LauncherConfigResponse getRemoteLauncherConfig() {
         log::autoLog log;
         // Use static remote config if enabled
         if constexpr (lc::EnableStaticDeployment || lc::EnableStaticRemoteConfig) {

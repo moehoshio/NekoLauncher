@@ -90,7 +90,7 @@ namespace neko::core {
         try {
 
             auto jsonData = nlohmann::json::parse(response).at("maintenanceResponse");
-            schema::MaintenanceResponse maintenanceInfo = jsonData.get<schema::MaintenanceResponse>();
+            api::MaintenanceResponse maintenanceInfo = jsonData.get<api::MaintenanceResponse>();
             maintenanceInfo.message = lang::withPlaceholdersReplaced(
                 lang::tr(lang::keys::Maintenance::message),
                 {{"{startTime}", maintenanceInfo.startTime},

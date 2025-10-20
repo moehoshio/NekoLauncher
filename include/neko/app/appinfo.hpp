@@ -83,8 +83,8 @@ namespace neko::app {
      * @brief Gets the client information.
      * @return The client information struct.
      */
-    inline schema::ClientInfo getClientInfo() {
-        return schema::ClientInfo{
+    inline api::ClientInfo getClientInfo() {
+        return api::ClientInfo{
             .app = {
                 .appName = getAppName(),
                 .coreVersion = getVersion(),
@@ -95,8 +95,8 @@ namespace neko::app {
             .deviceId = getDeviceId()};
     }
 
-    inline schema::Preferences getPreferences() {
-        return schema::Preferences{
+    inline api::Preferences getPreferences() {
+        return api::Preferences{
             .language = lang::language()};
     }
 

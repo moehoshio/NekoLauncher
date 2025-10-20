@@ -182,7 +182,9 @@ namespace neko::lang {
             constexpr neko::strview
                 object = "Object",
                 maintenance = "maintenance",
-                update = "update";
+                update = "update",
+                error = "error"
+                ;
         }
 
         namespace update {
@@ -243,12 +245,14 @@ namespace neko::lang {
 
         namespace error {
             constexpr neko::strview
-                error = "Error",
+                object = "Error",
                 unknownError = "unknownError",
                 networkError = "networkError",
                 parseError = "parseError",
                 timeout = "timeout",
-                notFound = "notFound";
+                notFound = "notFound",
+                updateFailed = "updateFailed"
+                ;
 
         }
         constexpr neko::strview language = "language";
