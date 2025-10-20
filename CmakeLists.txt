@@ -38,7 +38,9 @@ endif()
 
 
 set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
-# set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 # ================
 # === Library ====
@@ -65,7 +67,7 @@ if(NEKO_LC_BUILD_TESTS)
     FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG        release-1.12.1
+        GIT_TAG        v1.17.0
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -170,27 +172,29 @@ message(STATUS "")
 list(APPEND NEKO_INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/include
     ${NEKO_LIBRARY_DIRS}/include
-    ${Qt6_DIR}/include
     ${STL_DIR}/include
     ${simpleini_SOURCE_DIR}
 )
 
+# Qt6 include directories will be added via target_link_libraries with Qt6::Widgets
+# No need to manually add Qt6_DIR/include as Qt targets provide their own include paths
+
 # Src files
 list(APPEND NEKO_SRCFILES
     # To ensure that qt moc can locate this file
-    # ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
-    # ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
+    ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
+    ${CMAKE_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
 
     # # Ui
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/headbarWidget.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/settingPages.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/hintDialog.cpp
-    # ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/headbarWidget.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/pages/settingPages.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/hintDialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
 
     # Core
     ${CMAKE_SOURCE_DIR}/src/neko/core/launcherProcess.cpp

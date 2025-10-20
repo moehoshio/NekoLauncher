@@ -2,6 +2,7 @@
 
 // Neko Modules
 #include <neko/network/network.hpp>
+#include <neko/network/networkTypes.hpp>
 
 #include <neko/system/platform.hpp>
 #include <neko/function/utilities.hpp>
@@ -20,8 +21,8 @@ namespace neko::core {
             network::RequestConfig reqConfig{
                 .url = url,
                 .method = network::RequestType::DownloadFile,
-                .fileName = fileName,
-                .requestId = "download-poster-" + util::random::generateRandomString(6)
+                .requestId = "download-poster-" + util::random::generateRandomString(6),
+                .fileName = fileName
             };
 
             auto res = net.execute(reqConfig);

@@ -24,7 +24,7 @@ namespace neko::ui {
         explicit LogViewerWindow(const QString &filePath, QWidget *parent = nullptr);
 
         void initialize();
-        void setLayout(QLayout *layout) override;
+    void setLayout(QLayout *layout);
         void loadLogFile(const QString &filePath);
         void appendLogLine(const QString &line);
         void appendLogLines(const QStringList &lines);

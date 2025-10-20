@@ -31,8 +31,8 @@ namespace neko::core {
             };
             auto result = net.executeWithRetry({reqConfig});
             if (!result.isSuccess() || result.content.empty()) {
-                log::error({}, "Failed to get remote launcher config: {}", result.errorMessage);
-                log::debug({}, "Detailed error: {}", result.detailedErrorMessage);
+                log::error({}, std::string("Failed to get remote launcher config: ") + result.errorMessage);
+                log::debug({}, std::string("Detailed error: ") + result.detailedErrorMessage);
                 throw ex::NetworkError("Failed to get remote launcher config : " + result.errorMessage);
             }
             api::LauncherConfigResponse response;
@@ -40,7 +40,7 @@ namespace neko::core {
                 nlohmann::json config = nlohmann::json::parse(result.content);
                 response = config.get<api::LauncherConfigResponse>();
             } catch (const nlohmann::json::exception &e) {
-                log::error({}, "Failed to parse remote launcher config: %s", e.what());
+                log::error({}, std::string("Failed to parse remote launcher config: ") + e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));
             }
             return response;
@@ -56,16 +56,16 @@ namespace neko::core {
             network::RequestConfig reqConfig{
                 .url = network::buildUrl(lc::api::launcherConfig),
                 .method = network::RequestType::Post,
-                .data = info::getRequestJson("launcherConfigRequest").dump(),
                 .requestId = "launcher-config-" + util::random::generateRandomString(6),
-                .header = network::NetworkBase::HeaderGlobal::jsonContentHeader
+                .header = network::NetworkBase::HeaderGlobal::jsonContentHeader,
+                .postData = info::getRequestJson("launcherConfigRequest").dump()
             };
 
             auto result = net.executeWithRetry({reqConfig});
 
             if (!result.isSuccess()) {
-                log::error({}, "Failed to get remote launcher config: {}", result.errorMessage);
-                log::debug({}, "Detailed error: {}", result.detailedErrorMessage);
+                log::error({}, std::string("Failed to get remote launcher config: ") + result.errorMessage);
+                log::debug({}, std::string("Detailed error: ") + result.detailedErrorMessage);
                 throw ex::NetworkError("Failed to get remote launcher config: " + result.errorMessage);
             }
 
@@ -74,7 +74,7 @@ namespace neko::core {
                 nlohmann::json config = nlohmann::json::parse(result.content);
                 return config.get<api::LauncherConfigResponse>();
             } catch (const nlohmann::json::exception &e) {
-                log::error({}, "Failed to parse remote launcher config: {}", e.what());
+                log::error({}, std::string("Failed to parse remote launcher config: ") + e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));
             }
         }

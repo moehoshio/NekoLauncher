@@ -1,13 +1,14 @@
 #include "neko/ui/dialogs/hintDialog.hpp"
 #include "neko/ui/theme.hpp"
 #include "neko/ui/uiMsg.hpp"
+#include "neko/app/lang.hpp"
 
 #include <QtCore/QTimer>
 
 namespace neko::ui {
     HintDialog::HintDialog(QWidget *parent)
         : QWidget(parent),
-          poster(new PixmapWidget(this)),
+          poster(new PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           centralWidget(new QWidget(this)),
           centralWidgetLayout(new QVBoxLayout(centralWidget)),
           title(new QLabel(centralWidget)),
@@ -87,7 +88,7 @@ namespace neko::ui {
 
         // If no buttons, add the default button
         if (m.buttonText.empty()) {
-            auto btn = new QPushButton(neko::info::tr(neko::info::lang.general.ok), this);
+            auto btn = new QPushButton(QString::fromStdString(neko::lang::tr(std::string(neko::lang::keys::button::ok))), this);
             buttons.push_back(btn);
             dialogButton->addButton(btn, QDialogButtonBox::ActionRole);
             btn->setDefault(true);
@@ -125,13 +126,13 @@ namespace neko::ui {
 
         // If the callback is not set, only reset the state
         if (!m.callback) {
-            connect(dialogButton, &QDialogButtonBox::clicked, this, [=, m, did](QAbstractButton *button) {
+            connect(dialogButton, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
                 resetState();
             });
             return;
         }
 
-        connect(dialogButton, &QDialogButtonBox::clicked, this, [=, m, did](QAbstractButton *button) {
+        connect(dialogButton, &QDialogButtonBox::clicked, this, [this, m, did](QAbstractButton *button) {
             for (neko::uint32 i = 0; i < buttons.size(); ++i) {
                 if (buttons[i] == button) {
                     m.callback(i);
@@ -142,7 +143,7 @@ namespace neko::ui {
             }
         });
 
-        connect(this, &QWidget::destroyed, this, [m, did](QObject *) {
+        connect(this, &QWidget::destroyed, this, [this, m, did](QObject *) {
             if (!*did) {
                 m.callback(m.defaultButtonIndex); // If the dialog is closed without clicking a button, call the callback with 0
                 resetState();

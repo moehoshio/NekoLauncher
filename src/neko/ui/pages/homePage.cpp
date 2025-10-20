@@ -1,5 +1,5 @@
 #include "neko/ui/pages/homePage.hpp"
-#include "neko/function/info.hpp"
+#include "neko/app/lang.hpp"
 
 namespace neko::ui {
     HomePage::HomePage(QWidget *parent) : QWidget(parent),

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <neko/schema/types.hpp>
+
 #include <string_view>
 
 namespace neko::ui {
@@ -11,84 +13,20 @@ namespace neko::ui {
     };
 
     struct Theme {
-        std::string_view name;
+        neko::strview name;
         ThemeType type;
-        std::string_view backgroundColor;
-        std::string_view textColor;      // Main text and button text
-        std::string_view accentColor;    // Accent color, for buttons, focus, links, etc.
-        std::string_view hoverColor;     // For mouse hover
-        std::string_view selectedColor;  // For selected (highlighted) state
-        std::string_view disabledColor;  // For disabled state
-        std::string_view borderColor;    // Border color
-        std::string_view separatorColor; // Separator line color
-        std::string_view borderRadius;   // Border radius, can be pixel value or percentage
-        std::string_view fontFamily;
+        neko::strview backgroundColor;
+        neko::strview textColor;      // Main text and button text
+        neko::strview accentColor;    // Accent color, for buttons, focus, links, etc.
+        neko::strview hoverColor;     // For mouse hover
+        neko::strview selectedColor;  // For selected (highlighted) state
+        neko::strview disabledColor;  // For disabled state
+        neko::strview borderColor;    // Border color
+        neko::strview separatorColor; // Separator line color
+        neko::strview borderRadius;   // Border radius, can be pixel value or percentage
+        neko::strview fontFamily;
         int fontSize;
         int padding;
-
-        setTheme(std::string_view n, ThemeType t, std::string_view bgColor, std::string_view txtColor, std::string_view accColor, std::string_view hvrColor, std::string_view selColor, std::string_view disColor, std::string_view brdColor, std::string_view sepColor, std::string_view brdRadius, std::string_view fntFamily, int fntSize, int pad)
-            : name(n), type(t),
-              backgroundColor(bgColor), textColor(txtColor), accentColor(accColor),
-              hoverColor(hvrColor), selectedColor(selColor), disabledColor(disColor),
-              borderColor(brdColor), separatorColor(sepColor), borderRadius(brdRadius),
-              fontFamily(fntFamily), fontSize(fntSize), padding(pad) {}
-        Theme &setName(std::string_view n) {
-            name = n;
-            return *this;
-        }
-        Theme &setType(ThemeType t) {
-            type = t;
-            return *this;
-        }
-
-        Theme &setBackgroundColor(std::string_view bgColor) {
-            backgroundColor = bgColor;
-            return *this;
-        }
-        Theme &setTextColor(std::string_view txtColor) {
-            textColor = txtColor;
-            return *this;
-        }
-        Theme &setAccentColor(std::string_view accColor) {
-            accentColor = accColor;
-            return *this;
-        }
-        Theme &setHoverColor(std::string_view hvrColor) {
-            hoverColor = hvrColor;
-            return *this;
-        }
-        Theme &setSelectedColor(std::string_view selColor) {
-            selectedColor = selColor;
-            return *this;
-        }
-        Theme &setDisabledColor(std::string_view disColor) {
-            disabledColor = disColor;
-            return *this;
-        }
-        Theme &setBorderColor(std::string_view brdColor) {
-            borderColor = brdColor;
-            return *this;
-        }
-        Theme &setSeparatorColor(std::string_view sepColor) {
-            separatorColor = sepColor;
-            return *this;
-        }
-        Theme &setBorderRadius(std::string_view brdRadius) {
-            borderRadius = brdRadius;
-            return *this;
-        }
-        Theme &setFontFamily(std::string_view fntFamily) {
-            fontFamily = fntFamily;
-            return *this;
-        }
-        Theme &setFontSize(int fntSize) {
-            fontSize = fntSize;
-            return *this;
-        }
-        Theme &setPadding(int pad) {
-            padding = pad;
-            return *this;
-        }
     };
 
     // default themes

@@ -16,9 +16,9 @@
 #include "neko/app/lang.hpp"
 #include "neko/app/appinfo.hpp"
 #include "neko/app/nekoLc.hpp"
+#include "neko/app/eventTypes.hpp"
 
 #include "neko/core/downloadPoster.hpp"
-#include "neko/schema/eventTypes.hpp"
 
 namespace neko::core {
 
@@ -43,9 +43,9 @@ namespace neko::core {
 
         // Update process to checking maintenance status
         std::string process = lang::withPlaceholdersReplaced(
-            lang::tr(lang::keys::action::doingAction),
-            {{"{action}", lang::tr(lang::keys::action::networkRequest)},
-             {"{object}", lang::tr(lang::keys::object::maintenance)}});
+            lang::tr(std::string(lang::keys::action::doingAction)),
+            {{"{action}", lang::tr(std::string(lang::keys::action::networkRequest))},
+             {"{object}", lang::tr(std::string(lang::keys::object::maintenance))}});
         bus::event::publish(event::ShowLoadEvent(ui::LoadMsg{
             .type = ui::LoadMsg::Type::OnlyRaw,
             .process = process}));
@@ -56,13 +56,11 @@ namespace neko::core {
         network::RequestConfig reqConfig{
             .url = url,
             .method = network::RequestType::Post,
-            .data = maintenanceRequest.dump(),
-            .requestId = "Maintenance-" + util::random::generateRandomString(6),
-            .header = network::header::jsonContentHeader};
+            .postData = maintenanceRequest.dump()};
         network::RetryConfig retryConfig{
             .config = reqConfig,
             .maxRetries = 5,
-            .retryDelay = {150},
+            .retryDelay = std::chrono::milliseconds(150),
             .successCodes = {200, 204}};
         auto result = net.executeWithRetry(retryConfig);
 
@@ -80,28 +78,28 @@ namespace neko::core {
 
         //Update process to parsing json
         process = lang::withPlaceholdersReplaced(
-            lang::tr(lang::keys::action::doingAction),
-            {{"{action}", lang::tr(lang::keys::action::parseJson)},
-             {"{object}", lang::tr(lang::keys::object::maintenance)}});
+            lang::tr(std::string(lang::keys::action::doingAction)),
+            {{"{action}", lang::tr(std::string(lang::keys::action::parseJson))},
+             {"{object}", lang::tr(std::string(lang::keys::object::maintenance))}});
         bus::event::publish(event::UpdateLoadingNowEvent{
             .process = process});
-        log::info({}, "maintenance response : {}", response);
+    log::info("maintenance response : " + response);
 
         try {
 
             auto jsonData = nlohmann::json::parse(response).at("maintenanceResponse");
             api::MaintenanceResponse maintenanceInfo = jsonData.get<api::MaintenanceResponse>();
             maintenanceInfo.message = lang::withPlaceholdersReplaced(
-                lang::tr(lang::keys::Maintenance::message),
+                lang::tr(std::string(lang::keys::maintenance::message)),
                 {{"{startTime}", maintenanceInfo.startTime},
-                 {"{exEndTime}", maintenanceInfo.endTime},
+                 {"{exEndTime}", maintenanceInfo.exEndTime},
                  {"{message}", maintenanceInfo.message}});
 
             //Update process to downloading poster
             process = lang::withPlaceholdersReplaced(
-                lang::tr(lang::keys::action::doingAction),
-                {{"{action}", lang::tr(lang::keys::action::downloadFile)},
-                 {"{object}", lang::tr(lang::keys::object::maintenance)}});
+                lang::tr(std::string(lang::keys::action::doingAction)),
+                {{"{action}", lang::tr(std::string(lang::keys::action::downloadFile))},
+                 {"{object}", lang::tr(std::string(lang::keys::object::maintenance))}});
             bus::event::publish(event::UpdateLoadingNowEvent{
                 .process = process});
             auto filePath = downloadPoster(maintenanceInfo.posterUrl);
@@ -121,10 +119,10 @@ namespace neko::core {
                 .poster = filePath.value_or(""),
                 .openLinkCmd = command};
         } catch (nlohmann::json::parse_error &e) {
-            log::error({}, "Failed to parse json: {}", e.what());
+            log::error("Failed to parse json: " + std::string(e.what()));
             throw ex::Parse("Failed to parse json: " + std::string(e.what()));
         } catch (const nlohmann::json::out_of_range &e) {
-            log::error({}, "Json key not found: {}", e.what());
+            log::error("Json key not found: " + std::string(e.what()));
             throw ex::OutOfRange("Json key not found: " + std::string(e.what()));
         }
         return {.isMaintenance = false};

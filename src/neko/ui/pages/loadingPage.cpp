@@ -10,7 +10,7 @@ namespace neko::ui {
     LoadingPage::LoadingPage(QWidget *parent)
         : QWidget(parent),
           progressBar(new QProgressBar(this)),
-          poster(new PixmapWidget(this)),
+          poster(new PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           textLayoutWidget(new QWidget(this)),
           textLayout(new QVBoxLayout(textLayoutWidget)),
           h1Title(new QLabel(this)),
@@ -40,7 +40,7 @@ namespace neko::ui {
         loadingLabel->setScaledContents(true);
         poster->lower();
 
-        for (auto it : std::vector<QLabel *>{titleH1, titleH2, text}) {
+        for (auto it : std::vector<QLabel *>{h1Title, h2Title, text}) {
             it->setAlignment(Qt::AlignCenter);
         }
         
@@ -55,8 +55,8 @@ namespace neko::ui {
         loadingMv->start();
 
         if (m.type == LoadMsg::Type::Text || m.type == LoadMsg::Type::All) {
-            titleH1->setText(QString::fromStdString(m.h1));
-            titleH2->setText(QString::fromStdString(m.h2));
+            h1Title->setText(QString::fromStdString(m.h1));
+            h2Title->setText(QString::fromStdString(m.h2));
             text->setText(QString::fromStdString(m.message));
         }
 
@@ -101,8 +101,8 @@ namespace neko::ui {
         this->hide();
         loadingMv->stop();
 
-        titleH1->clear();
-        titleH2->clear();
+        h1Title->clear();
+        h2Title->clear();
         text->clear();
         process->clear();
 

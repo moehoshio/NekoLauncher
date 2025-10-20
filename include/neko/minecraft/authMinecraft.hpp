@@ -56,7 +56,7 @@ namespace neko::minecraft::auth {
                 .url = url,
                 .method = network::RequestType::Post,
                 .header = network::NetworkBase::HeaderGlobal::jsonContentHeader,
-                .data = json.dump()};
+                .postData = json.dump()};
             auto result = net.execute(reqConfig);
             if (!result.hasError && result.statusCode == 204) {
                 log::info("Token is valid");
@@ -71,7 +71,7 @@ namespace neko::minecraft::auth {
             auto refResult = net.execute(reqConfig);
 
             if (!refResult.isSuccess() || !refResult.hasContent()) {
-                log::error({}, "Failed to refresh token , {}", refResult.errorMessage);
+                log::error({}, std::string("Failed to refresh token , ") + refResult.errorMessage);
                 throw ex::NetworkError("Failed to refresh token , " + refResult.errorMessage);
             }
 
@@ -81,14 +81,14 @@ namespace neko::minecraft::auth {
             try {
                 refJsonData = nlohmann::json::parse(refResult.content);
             } catch (const nlohmann::json::parse_error &e) {
-                log::error({}, "Failed to parse refresh token response: {}", e.what());
+                log::error({}, std::string("Failed to parse refresh token response: ") + e.what());
                 throw ex::Parse("Failed to parse refresh token response : " + std::string(e.what()));
             }
 
             auto error = refJsonData.value("error", ""),
                  errorMsg = refJsonData.value("errorMessage", "");
             if (!error.empty() || !errorMsg.empty()) {
-                log::error({}, "Error refreshing token: {} - {}", error, errorMsg);
+                log::error({}, std::string("Error refreshing token: ") + error + " - " + errorMsg);
                 throw ex::NetworkError("Error refreshing token: " + error + " - " + errorMsg);
             }
 
@@ -219,7 +219,7 @@ namespace neko::minecraft::auth {
             auto result = net.execute(reqConfig);
 
             if (!result.isSuccess() || !result.hasContent()) {
-                log::error({}, "Failed to authenticate: {}", result.errorMessage);
+                log::error({}, std::string("Failed to authenticate: ") + result.errorMessage);
                 result.error = lang::tr(lang::keys::error::networkError);
                 return result;
             }
@@ -228,7 +228,7 @@ namespace neko::minecraft::auth {
             try {
                 resData = nlohmann::json::parse(result.content);
             } catch (const nlohmann::json::parse_error &e) {
-                log::error({}, "Failed to parse authentication response: {}", e.what());
+                log::error({}, std::string("Failed to parse authentication response: ") + e.what());
                 result.error = lang::tr(lang::Keys::Error::jsonParse) + e.what();
                 return result;
             }

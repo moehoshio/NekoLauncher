@@ -5,7 +5,7 @@
 #include "neko/ui/uiMsg.hpp"
 #include "neko/ui/theme.hpp"
 
-#include "neko/schema/clientconfig.hpp"
+#include "neko/app/clientConfig.hpp"
 
 #include "neko/ui/widgets/headBarWidget.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"

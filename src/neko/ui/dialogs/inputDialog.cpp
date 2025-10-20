@@ -5,7 +5,7 @@
 
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
-#include "neko/function/info.hpp"
+#include "neko/app/lang.hpp"
 
 namespace neko::ui {
     InputDialog::InputDialog(QWidget *parent)

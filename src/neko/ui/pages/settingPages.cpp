@@ -3,11 +3,11 @@
 #include "neko/ui/uiMsg.hpp"
 
 #include "neko/core/resources.hpp"
-#include "neko/schema/clientconfig.hpp"
+#include "neko/app/clientConfig.hpp"
 
 #include "neko/event/event.hpp"
 
-#include "neko/function/info.hpp"
+#include "neko/app/lang.hpp"
 #include "neko/function/utilities.hpp"
 
 #include "neko/minecraft/account.hpp"

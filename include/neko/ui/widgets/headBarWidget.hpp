@@ -3,10 +3,10 @@
 
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 
-#include <QtWidgets/QDragEnterEvent>
-#include <QtWidgets/QDragMoveEvent>
+#include <QtGui/QDragEnterEvent>
+#include <QtGui/QDragMoveEvent>
 
 #include <QtCore/QEvent>
 
