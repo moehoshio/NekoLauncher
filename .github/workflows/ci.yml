@@ -87,6 +87,14 @@ jobs:
         echo "=== CMake Information ==="
         cmake --version
 
+    - name: Install dependencies (Ubuntu)
+      if: "startsWith(matrix.config.os, 'ubuntu')"
+      run: sudo apt-get update && sudo apt-get install -y libtool
+
+    - name: Install dependencies (macOS)
+      if: "startsWith(matrix.config.os, 'macos')"
+      run: brew install gperf
+
     # ============================================================================
     # Install vcpkg (Unix)
     # ============================================================================
@@ -162,19 +170,19 @@ jobs:
           -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON `
           -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
           -DVCPKG_TARGET_TRIPLET=x64-windows `
-          -DCMAKE_PREFIX_PATH="$installedPath"
+          -DNEKO_LC_LIBRARY_DIRS="$installedPath"
       shell: powershell
 
     - name: Configure CMake (Ubuntu)
       if: "startsWith(matrix.config.os, 'ubuntu')"
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=$VCPKG_ROOT/installed/x64-linux
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-linux
       shell: bash
 
     - name: Configure CMake (macOS)
       if: "startsWith(matrix.config.os, 'macos')"
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=$VCPKG_ROOT/installed/x64-macos
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos
       shell: bash
 
     - name: Verify Hash and Archive Support

@@ -24,8 +24,8 @@ endif()
 option(NEKO_LC_BUILD_TESTS "Neko Launcher Build tests" ON)
 
 # Package path. e.g. vcpkg
-if(NOT DEFINED NEKO_LIBRARY_DIRS)
-    set(NEKO_LIBRARY_DIRS "/path/to/vcpkg/installed/x64-windows")
+if(NOT DEFINED NEKO_LC_LIBRARY_DIRS)
+    set(NEKO_LC_LIBRARY_DIRS "/path/to/vcpkg/installed/x64-windows")
 endif()
 # Qt path
 if(NOT DEFINED Qt6_DIR)
@@ -37,7 +37,7 @@ if(NOT DEFINED STL_DIR)
 endif()
 
 
-set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LIBRARY_DIRS}")
+set(CMAKE_PREFIX_PATH "${Qt6_DIR}${NEKO_PATH_SEPARATOR}${NEKO_LC_LIBRARY_DIRS}")
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -171,8 +171,8 @@ message(STATUS "")
 
 # Include directories
 list(APPEND NEKO_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/include
-    ${NEKO_LIBRARY_DIRS}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${NEKO_LC_LIBRARY_DIRS}/include
     ${STL_DIR}/include
     ${simpleini_SOURCE_DIR}
 )
@@ -180,8 +180,8 @@ list(APPEND NEKO_INCLUDE_DIRS
 # Src files
 list(APPEND NEKO_SRCFILES
     # Core
-    # ${CMAKE_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
-    ${CMAKE_SOURCE_DIR}/src/neko/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/main.cpp
 )
 
 
@@ -255,17 +255,11 @@ target_link_libraries(NekoLc PRIVATE
 if(WIN32)
     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
     
-    # Set subsystem based on build type
+    # Set not to use the console window
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        # For Release mode, use Windows subsystem (no console, needs WinMain)
         set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-    else()
-        # For Debug mode, use Console subsystem (with console, uses main)
-        set_target_properties(NekoLc PROPERTIES 
-            WIN32_EXECUTABLE FALSE
-            LINK_FLAGS "/SUBSYSTEM:CONSOLE"
-        )
     endif()
+    target_sources(NekoLc PRIVATE resource/windows/icon.rc)
 
 elseif(APPLE)
 
