@@ -13,12 +13,15 @@ protected:
     void TearDown() override {}
 };
 
-// Error 結構體測試
+// Error struct test
 TEST_F(ApiTest, ErrorSerialization) {
-    Error error{"404", "NotFound", "Resource not found"};
+    Error errorObj;
+    errorObj.error = "404";
+    errorObj.errorType = "NotFound";
+    errorObj.errorMessage = "Resource not found";
     
     nlohmann::json j;
-    to_json(j, error);
+    to_json(j, errorObj);
     
     EXPECT_EQ(j["error"], "404");
     EXPECT_EQ(j["errorType"], "NotFound");
@@ -37,13 +40,21 @@ TEST_F(ApiTest, ErrorEmpty) {
     Error emptyError;
     EXPECT_TRUE(emptyError.empty());
     
-    Error nonEmptyError{"", "", "message"};
+    Error nonEmptyError;
+    nonEmptyError.errorMessage = "message";
     EXPECT_FALSE(nonEmptyError.empty());
 }
 
-// Meta 結構體測試
+// Meta struct test
 TEST_F(ApiTest, MetaSerialization) {
-    Meta meta{"1.0", "1.0", "build123", "2024-01-01", "deprecated", 1234567890, true};
+    Meta meta;
+    meta.apiVersion = "1.0";
+    meta.minApiVersion = "1.0";
+    meta.buildVersion = "build123";
+    meta.releaseDate = "2024-01-01";
+    meta.deprecatedMessage = "deprecated";
+    meta.timestamp = 1234567890;
+    meta.isDeprecated = true;
     
     nlohmann::json j;
     to_json(j, meta);
@@ -60,9 +71,13 @@ TEST_F(ApiTest, MetaSerialization) {
     EXPECT_EQ(deserializedMeta.isDeprecated, true);
 }
 
-// App 結構體測試
+// App struct test
 TEST_F(ApiTest, AppSerialization) {
-    App app{"NekoLauncher", "1.0", "1.0", "build123"};
+    App app;
+    app.appName = "NekoLauncher";
+    app.coreVersion = "1.0";
+    app.resourceVersion = "1.0";
+    app.buildId = "build123";
     
     nlohmann::json j;
     to_json(j, app);
@@ -78,9 +93,12 @@ TEST_F(ApiTest, AppSerialization) {
     EXPECT_FALSE(deserializedApp.empty());
 }
 
-// System 結構體測試
+// System struct test
 TEST_F(ApiTest, SystemSerialization) {
-    System system{"Windows", "x64", "10.0.19041"};
+    System system;
+    system.os = "Windows";
+    system.arch = "x64";
+    system.osVersion = "10.0.19041";
     
     nlohmann::json j;
     to_json(j, system);
@@ -97,12 +115,26 @@ TEST_F(ApiTest, SystemSerialization) {
     EXPECT_EQ(deserializedSystem.osVersion, "10.0.19041");
 }
 
-// ClientInfo 結構體測試
+// ClientInfo struct test
 TEST_F(ApiTest, ClientInfoSerialization) {
-    App app{"NekoLauncher", "1.0", "1.0", "build123"};
-    System system{"Windows", "x64", "10.0.19041"};
+    App app;
+    app.appName = "NekoLauncher";
+    app.coreVersion = "1.0";
+    app.resourceVersion = "1.0";
+    app.buildId = "build123";
+    
+    System system;
+    system.os = "Windows";
+    system.arch = "x64";
+    system.osVersion = "10.0.19041";
+    
     Extra extra;
-    ClientInfo clientInfo{app, system, extra, "device123"};
+    
+    ClientInfo clientInfo;
+    clientInfo.app = app;
+    clientInfo.system = system;
+    clientInfo.extra = extra;
+    clientInfo.deviceId = "device123";
     
     nlohmann::json j;
     to_json(j, clientInfo);
@@ -118,9 +150,11 @@ TEST_F(ApiTest, ClientInfoSerialization) {
     EXPECT_EQ(deserializedClientInfo.app.appName, "NekoLauncher");
 }
 
-// Auth 相關測試
+// Auth related test
 TEST_F(ApiTest, AuthAccountSerialization) {
-    Auth::Account account{"user123", "pass123"};
+    Auth::Account account;
+    account.username = "user123";
+    account.password = "pass123";
     
     nlohmann::json j;
     to_json(j, account);
@@ -136,7 +170,9 @@ TEST_F(ApiTest, AuthAccountSerialization) {
 }
 
 TEST_F(ApiTest, AuthTokenSerialization) {
-    Auth::Token token{"access123", "refresh123"};
+    Auth::Token token;
+    token.accessToken = "access123";
+    token.refreshToken = "refresh123";
     
     nlohmann::json j;
     to_json(j, token);
@@ -151,10 +187,11 @@ TEST_F(ApiTest, AuthTokenSerialization) {
     EXPECT_EQ(deserializedToken.refreshToken, "refresh123");
 }
 
-// LauncherConfigResponse 測試
+// LauncherConfigResponse test
 TEST_F(ApiTest, LauncherConfigResponseSerialization) {
     LauncherConfigResponse config;
-    config.host = {"host1.example.com", "host2.example.com"};
+    config.host.push_back("host1.example.com");
+    config.host.push_back("host2.example.com");
     config.retryIntervalSec = 30;
     config.maxRetryCount = 3;
     config.webSocket.enable = true;
@@ -176,27 +213,27 @@ TEST_F(ApiTest, LauncherConfigResponseSerialization) {
     EXPECT_EQ(deserializedConfig.webSocket.socketHost, "ws.example.com");
 }
 
-// MaintenanceResponse 測試
+// MaintenanceResponse test
 TEST_F(ApiTest, MaintenanceResponseMethods) {
     MaintenanceResponse maintenance;
     
-    // 測試進行中的維護
+    // Test in-progress maintenance
     maintenance.status = "progress";
     EXPECT_TRUE(maintenance.isMaintenance());
     EXPECT_FALSE(maintenance.isScheduled());
     
-    // 測試預定的維護
+    // Test scheduled maintenance
     maintenance.status = "scheduled";
     EXPECT_FALSE(maintenance.isMaintenance());
     EXPECT_TRUE(maintenance.isScheduled());
     
-    // 測試完成的維護
+    // Test completed maintenance
     maintenance.status = "completed";
     EXPECT_FALSE(maintenance.isMaintenance());
     EXPECT_FALSE(maintenance.isScheduled());
 }
 
-// UpdateResponse 測試
+// UpdateResponse test
 TEST_F(ApiTest, UpdateResponseSerialization) {
     UpdateResponse update;
     update.title = "Update v1.1";
@@ -229,30 +266,33 @@ TEST_F(ApiTest, UpdateResponseSerialization) {
     EXPECT_TRUE(deserializedUpdate.files[0].isCoreFile);
 }
 
-// WebSocket 測試
+// WebSocket test
 TEST_F(ApiTest, WebSocketServerSideMethods) {
     WebSocketServerSide ws;
     
-    // 測試 ping
+    // Test ping
     ws.action = "ping";
     EXPECT_TRUE(ws.isPing());
     EXPECT_FALSE(ws.isPong());
     EXPECT_FALSE(ws.isNotifyChanged());
     
-    // 測試 pong
+    // Test pong
     ws.action = "pong";
     EXPECT_FALSE(ws.isPing());
     EXPECT_TRUE(ws.isPong());
     
-    // 測試 notifyChanged
+    // Test notifyChanged
     ws.action = "notifyChanged";
     ws.notifyChanged.type = "update";
     ws.notifyChanged.message = "New update available";
     EXPECT_TRUE(ws.isNotifyChanged());
     
-    // 測試錯誤
-    Error error{"500", "ServerError", "Internal error"};
-    ws.errors.push_back(error);
+    // Test error
+    Error errorObj;
+    errorObj.error = "500";
+    errorObj.errorType = "ServerError";
+    errorObj.errorMessage = "Internal error";
+    ws.errors.push_back(errorObj);
     EXPECT_TRUE(ws.hasError());
 }
 
@@ -269,30 +309,35 @@ TEST_F(ApiTest, WebSocketClientSideMethods) {
     EXPECT_FALSE(ws.isPing());
 }
 
-// StaticConfig 測試
+// StaticConfig test
 TEST_F(ApiTest, StaticLauncherConfigGetCheckUpdateUrl) {
     StaticConfig::StaticLauncherConfig config;
     
     StaticConfig::StaticLauncherConfig::CheckUpdateUrls url1;
-    url1.system = {"Windows", "x64", "10\\..*"};
+    url1.system.os = "Windows";
+    url1.system.arch = "x64";
+    url1.system.osVersion = "10\\..*";
     url1.url = "http://windows-x64.example.com/update";
     
     StaticConfig::StaticLauncherConfig::CheckUpdateUrls url2;
-    url2.system = {"Linux", "x64", ".*"};
+    url2.system.os = "Linux";
+    url2.system.arch = "x64";
+    url2.system.osVersion = ".*";
     url2.url = "http://linux-x64.example.com/update";
     
-    config.checkUpdateUrls = {url1, url2};
+    config.checkUpdateUrls.push_back(url1);
+    config.checkUpdateUrls.push_back(url2);
     
-    // 測試匹配的情況
+    // Test matching case
     auto result1 = config.getCheckUpdateUrl("Windows", "x64", "10.0.19041");
     EXPECT_TRUE(result1.has_value());
     EXPECT_EQ(result1.value(), "http://windows-x64.example.com/update");
     
-    // 測試不匹配的情況
+    // Test non-matching case
     auto result2 = config.getCheckUpdateUrl("Windows", "x86", "10.0.19041");
     EXPECT_FALSE(result2.has_value());
     
-    // 測試 Linux 匹配
+    // Test Linux matching
     auto result3 = config.getCheckUpdateUrl("Linux", "x64", "Ubuntu 20.04");
     EXPECT_TRUE(result3.has_value());
     EXPECT_EQ(result3.value(), "http://linux-x64.example.com/update");
@@ -301,20 +346,20 @@ TEST_F(ApiTest, StaticLauncherConfigGetCheckUpdateUrl) {
 TEST_F(ApiTest, StaticMaintenanceInfoMethods) {
     StaticConfig::StaticMaintenanceInfo info;
     
-    // 測試完成狀態
+    // Test completed status
     info.status = "completed";
     EXPECT_TRUE(info.isCompleted());
     
-    // 測試空狀態（也算完成）
+    // Test empty status (also counts as completed)
     info.status = "";
     EXPECT_TRUE(info.isCompleted());
     
-    // 測試進行中狀態
+    // Test in-progress status
     info.status = "progress";
     EXPECT_FALSE(info.isCompleted());
 }
 
-// FeedbackLogRequest 測試
+// FeedbackLogRequest test
 TEST_F(ApiTest, FeedbackLogRequestSerialization) {
     FeedbackLogRequest request;
     request.timestamp = 1234567890;
@@ -333,7 +378,7 @@ TEST_F(ApiTest, FeedbackLogRequestSerialization) {
     EXPECT_EQ(deserializedRequest.logContent, "Error occurred in module X");
 }
 
-// StaticUpdateInfo 測試
+// StaticUpdateInfo test
 TEST_F(ApiTest, StaticUpdateInfoSerialization) {
     StaticUpdateInfo info;
     info.coreVersion = "1.0";
@@ -355,17 +400,17 @@ TEST_F(ApiTest, StaticUpdateInfoSerialization) {
     EXPECT_EQ(deserializedInfo.updateResponse.title, "Update available");
 }
 
-// 邊界情況和錯誤處理測試
+// Boundary cases and error handling test
 TEST_F(ApiTest, JsonDeserializationWithMissingFields) {
-    // 測試缺少字段時的反序列化
+    // Test deserialization with missing fields
     nlohmann::json j = {{"error", "404"}};
     
-    Error error;
-    from_json(j, error);
+    Error errorObj;
+    from_json(j, errorObj);
     
-    EXPECT_EQ(error.error, "404");
-    EXPECT_EQ(error.errorType, "");
-    EXPECT_EQ(error.errorMessage, "");
+    EXPECT_EQ(errorObj.error, "404");
+    EXPECT_EQ(errorObj.errorType, "");
+    EXPECT_EQ(errorObj.errorMessage, "");
 }
 
 TEST_F(ApiTest, EmptyObjectsSerialization) {
