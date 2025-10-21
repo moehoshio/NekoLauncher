@@ -1,10 +1,10 @@
-name: CI
+name: Neko Function CI
 
 on:
   push:
-    branches: [ main, develop, dev-moehoshio ]
+    branches: [ main, develop, release/* , dev-moehoshio ]
   pull_request:
-    branches: [ main, develop, dev-moehoshio ]
+    branches: [ main, develop, release/* , dev-moehoshio ]
 
 jobs:
   build-and-test:
@@ -79,196 +79,127 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install dependencies (Ubuntu)
-      if: startsWith(matrix.config.os, 'ubuntu')
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake ninja-build software-properties-common
-        
-        # Install libcurl, OpenSSL, minizip-ng and Qt6 dependencies
-        sudo apt-get install -y \
-          libcurl4-openssl-dev \
-          libssl-dev \
-          zlib1g-dev \
-          pkg-config \
-          libminizip-dev \
-          qt6-base-dev \
-          qt6-tools-dev \
-          qt6-tools-dev-tools \
-          libqt6core6 \
-          libqt6gui6 \
-          libqt6widgets6 \
-          libgl1-mesa-dev
-        
-        # Install GCC-13 from toolchain PPA
-        if [[ "${{ matrix.config.cxx }}" == g++-13 ]]; then
-          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
-          sudo apt-get install -y gcc-13 g++-13
-        # Install Clang-16 from LLVM APT repository
-        elif [[ "${{ matrix.config.cxx }}" == clang++-16 ]]; then
-          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
-          sudo apt-get install -y clang-16 clang++-16
-        # Install other Clang versions
-        elif [[ "${{ matrix.config.cxx }}" == clang* ]]; then
-          sudo apt-get install -y ${{ matrix.config.cxx }}
-        fi
-
-    - name: Check compiler versions (Debug)
-      if: startsWith(matrix.config.os, 'ubuntu')
+    - name: Check compiler versions (Unix)
+      if: "!startsWith(matrix.config.os, 'windows')"
       run: |
         echo "=== Compiler Information ==="
         ${{ matrix.config.cxx }} --version
         echo "=== CMake Information ==="
         cmake --version
-        echo "=== Standard Library Check ==="
-        echo '#include <version>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "C++20 headers available" || echo "C++20 headers missing"
-        echo '#include <source_location>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "source_location available" || echo "source_location missing"
-        echo '#include <format>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "format available" || echo "format missing"
 
-    - name: Install dependencies (macOS)
-      if: startsWith(matrix.config.os, 'macos')
+    # ============================================================================
+    # Install vcpkg (Unix)
+    # ============================================================================
+    - name: Install vcpkg (Unix)
+      if: "!startsWith(matrix.config.os, 'windows')"
       run: |
-        brew install cmake ninja curl openssl zlib pkg-config minizip-ng qt6
+        echo "=== Installing Vcpkg ==="
+        git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+        ~/vcpkg/bootstrap-vcpkg.sh
+
+        VCPKG_ROOT=~/vcpkg
+        echo "VCPKG_ROOT=$VCPKG_ROOT" >> $GITHUB_ENV
+
+    # ============================================================================
+    # Install packages via vcpkg (Unix)
+    # ============================================================================
+    - name: Install dependencies via vcpkg (Unix)
+      if: "!startsWith(matrix.config.os, 'windows')"
+      run: |
+        echo "=== Installing dependencies via vcpkg ==="
+        ~/vcpkg/vcpkg install zlib openssl minizip-ng qt --recurse
+
+    # ============================================================================
+    # Windows: Use default vcpkg
+    # ============================================================================
+    - name: Install dependencies via vcpkg (Windows)
+      if: startsWith(matrix.config.os, 'windows')
+      run: |
+        Write-Host "=== Installing dependencies via vcpkg ==="
+        $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
+        Write-Host "Using vcpkg at: $vcpkgRoot"
+
+        vcpkg install openssl:x64-windows minizip-ng:x64-windows qt:x64-windows --recurse
+        Write-Host ""
+        Write-Host "=== Installed packages ==="
+        vcpkg list
+        Write-Host ""
+        Write-Host "=== Verifying installation ==="
+        $installedPath = "$vcpkgRoot\installed\x64-windows"
+        Write-Host "Installed path: $installedPath"
+        if (Test-Path "$installedPath\share\minizip-ng") {
+          Write-Host "minizip-ng CMake files: OK"
+        } else {
+          Write-Host "minizip-ng CMake files: NOT FOUND"
+        }
+        if (Test-Path "$installedPath\share\openssl") {
+          Write-Host "OpenSSL CMake files: OK"
+        } else {
+          Write-Host "OpenSSL CMake files: NOT FOUND"
+        }
+      shell: powershell
 
     - name: Set up MSVC environment (Windows)
       if: startsWith(matrix.config.os, 'windows') && matrix.config.cc == 'cl'
       uses: ilammy/msvc-dev-cmd@v1.13.0
 
-    - name: Setup vcpkg (Windows)
+    # ============================================================================
+    # Configure CMake for all platforms
+    # ============================================================================
+    - name: Configure CMake (Windows)
       if: startsWith(matrix.config.os, 'windows')
       run: |
-        git clone --depth 1 https://github.com/Microsoft/vcpkg.git C:\vcpkg
-        C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
-      shell: cmd
+        Write-Host "=== Configuring NekoFunction (Windows) ==="
+        $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
+        $toolchainFile = "$vcpkgRoot\scripts\buildsystems\vcpkg.cmake"
+        $installedPath = "$vcpkgRoot\installed\x64-windows"
+        
+        Write-Host "VCPKG_ROOT: $vcpkgRoot"
+        Write-Host "CMAKE_TOOLCHAIN_FILE: $toolchainFile"
+        Write-Host "CMAKE_PREFIX_PATH: $installedPath"
+        
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" `
+          -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON `
+          -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows `
+          -DCMAKE_PREFIX_PATH="$installedPath"
+      shell: powershell
 
-    - name: Cache vcpkg packages (Windows)
-      if: startsWith(matrix.config.os, 'windows')
-      uses: actions/cache@v4
-      with:
-        path: |
-          C:\vcpkg\installed
-          C:\vcpkg\packages
-        key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}-x64-windows-qt6
-        restore-keys: |
-          ${{ runner.os }}-vcpkg-
-
-    - name: Install dependencies via vcpkg (Windows)
-      if: startsWith(matrix.config.os, 'windows')
+    - name: Configure CMake (Ubuntu)
+      if: "startsWith(matrix.config.os, 'ubuntu')"
       run: |
-        echo "Installing packages..."
-        C:\vcpkg\vcpkg install curl:x64-windows openssl:x64-windows zlib:x64-windows minizip-ng:x64-windows qt6-base:x64-windows qt6-tools:x64-windows
-        echo "Integrating vcpkg..."
-        C:\vcpkg\vcpkg integrate install
-        echo "Listing installed packages..."
-        C:\vcpkg\vcpkg list
-        echo VCPKG_ROOT=C:\vcpkg >> %GITHUB_ENV%
-      shell: cmd
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=$VCPKG_ROOT/installed/x64-linux
+      shell: bash
 
-    - name: Verify vcpkg installation (Windows)
-      if: startsWith(matrix.config.os, 'windows')
+    - name: Configure CMake (macOS)
+      if: "startsWith(matrix.config.os, 'macos')"
       run: |
-        echo "=== vcpkg Information ==="
-        echo "VCPKG_ROOT: $env:VCPKG_ROOT"
-        echo "Toolchain file exists:"
-        Test-Path "C:\vcpkg\scripts\buildsystems\vcpkg.cmake"
-        echo ""
-        echo "=== Installed packages ==="
-        C:\vcpkg\vcpkg list
-        echo ""
-        echo "=== libcurl files ==="
-        Get-ChildItem "C:\vcpkg\installed\x64-windows" -Recurse -Include "*curl*" | Select-Object FullName -First 10
-        echo ""
-        echo "=== Qt6 files ==="
-        Get-ChildItem "C:\vcpkg\installed\x64-windows" -Recurse -Include "*Qt6*" | Select-Object FullName -First 10
-      shell: pwsh
-      continue-on-error: true
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=$VCPKG_ROOT/installed/x64-macos
+      shell: bash
 
-    - name: Install build tools (Windows)
-      if: startsWith(matrix.config.os, 'windows')
+    - name: Verify Hash and Archive Support
       run: |
-        if ("${{ matrix.config.generators }}" -eq "Ninja") {
-          choco install ninja
-          # Setup Clang
-          choco install llvm
-        }
-
-    - name: Configure CMake
-      run: |
-        if [[ "${{ matrix.config.generators }}" == *"Visual Studio"* ]]; then
-          # For Visual Studio generators with vcpkg on Windows
-          echo "Configuring with vcpkg toolchain: C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          cmake -B build \
-            -G "${{ matrix.config.generators }}" \
-            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=x64-windows \
-            -DNEKO_LC_BUILD_TESTS=ON \
-            -DQt6_DIR=C:/vcpkg/installed/x64-windows \
-            -DNEKO_LIBRARY_DIRS=C:/vcpkg/installed/x64-windows \
-            -DCURL_LIBRARY=C:/vcpkg/installed/x64-windows/lib/libcurl.lib \
-            -DCURL_INCLUDE_DIR=C:/vcpkg/installed/x64-windows/include \
-            -DOPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
-        elif [[ "${{ runner.os }}" == "macOS" ]]; then
-          # For macOS, set prefix path for Homebrew packages
-          # Support both Apple Silicon (/opt/homebrew) and Intel (/usr/local)
-          if [[ -d "/opt/homebrew" ]]; then
-            BREW_PREFIX="/opt/homebrew"
-          else
-            BREW_PREFIX="/usr/local"
-          fi
-          echo "Using Homebrew prefix: $BREW_PREFIX"
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} \
-            -G "${{ matrix.config.generators }}" \
-            -DCMAKE_PREFIX_PATH="$BREW_PREFIX;$BREW_PREFIX/opt/qt6;$BREW_PREFIX/opt/curl;$BREW_PREFIX/opt/openssl;$BREW_PREFIX/opt/minizip-ng" \
-            -DQt6_DIR="$BREW_PREFIX/opt/qt6/lib/cmake/Qt6" \
-            -DNEKO_LIBRARY_DIRS="$BREW_PREFIX" \
-            -DOPENSSL_ROOT_DIR="$BREW_PREFIX/opt/openssl" \
-            -DCURL_DIR="$BREW_PREFIX/opt/curl/lib/cmake/CURL" \
-            -Dminizip-ng_DIR="$BREW_PREFIX/opt/minizip-ng/lib/cmake/minizip-ng" \
-            -DBoost_DIR="$BREW_PREFIX/opt/boost/lib/cmake/Boost-1.87.0" \
-            -DNEKO_LC_BUILD_TESTS=ON
+        echo "=== NekoFunction Configuration Check ==="
+        if grep -q "Hash support enabled: ON" build/CMakeCache.txt 2>/dev/null || grep -rq "Hash support enabled: ON" build/ 2>/dev/null; then
+          echo "✓ Hash support is ENABLED"
         else
-          # For other generators (Linux), specify the compiler explicitly
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} \
-            -G "${{ matrix.config.generators }}" \
-            -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake/Qt6;/usr/lib/x86_64-linux-gnu/cmake" \
-            -DQt6_DIR="/usr/lib/x86_64-linux-gnu/cmake/Qt6" \
-            -DNEKO_LIBRARY_DIRS="/usr" \
-            -DOPENSSL_ROOT_DIR="/usr" \
-            -DCURL_DIR="/usr/lib/x86_64-linux-gnu/cmake/CURL" \
-            -DCURL_LIBRARY="/usr/lib/x86_64-linux-gnu/libcurl.so" \
-            -DCURL_INCLUDE_DIR="/usr/include" \
-            -DNEKO_LC_BUILD_TESTS=ON
+          echo "✗ Hash support is DISABLED or not found"
+        fi
+        if grep -q "Archiver support enabled: ON" build/CMakeCache.txt 2>/dev/null || grep -rq "Archiver support enabled: ON" build/ 2>/dev/null; then
+          echo "✓ Archiver support is ENABLED"
+        else
+          echo "✗ Archiver support is DISABLED or not found"
         fi
       shell: bash
 
     - name: Build
       run: cmake --build build --config ${{ matrix.config.build_type }} --parallel
 
-    - name: List build artifacts (Debug)
-      if: runner.os == 'Windows'
-      run: |
-        echo "=== Build Directory Contents ==="
-        dir build\${{ matrix.config.build_type }}
-        echo ""
-        echo "=== DLL Files ==="
-        dir build\${{ matrix.config.build_type }}\*.dll
-      shell: cmd
-      continue-on-error: true
-
     - name: Run tests
       working-directory: build
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
           if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ] || [ "${{ matrix.config.generators }}" = "Visual Studio 16 2019" ]; then
-            # Run ctest with detailed output
-            echo "Running tests for ${{ matrix.config.build_type }} configuration..."
             ctest -C ${{ matrix.config.build_type }} --output-on-failure --verbose
           else
             ctest --output-on-failure --verbose
@@ -277,22 +208,6 @@ jobs:
           ctest --output-on-failure --verbose
         fi
       shell: bash
-
-    - name: Run disabled network tests (allow failure)
-      working-directory: build
-      run: |
-        echo "=== Running disabled network tests (these may fail due to network conditions) ==="
-        if [ "${{ runner.os }}" = "Windows" ]; then
-          if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ] || [ "${{ matrix.config.generators }}" = "Visual Studio 16 2019" ]; then
-            ./${{ matrix.config.build_type }}/NekoNet_tests.exe --gtest_also_run_disabled_tests --gtest_filter=DISABLED_* || echo "Some disabled tests failed (expected)"
-          else
-            ./NekoNet_tests.exe --gtest_also_run_disabled_tests --gtest_filter=DISABLED_* || echo "Some disabled tests failed (expected)"
-          fi
-        else
-          ./NekoNet_tests --gtest_also_run_disabled_tests --gtest_filter=DISABLED_* || echo "Some disabled tests failed (expected)"
-        fi
-      shell: bash
-      continue-on-error: true
 
     - name: Upload build artifacts (on failure)
       if: failure()
