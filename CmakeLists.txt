@@ -180,7 +180,7 @@ list(APPEND NEKO_INCLUDE_DIRS
 # Src files
 list(APPEND NEKO_SRCFILES
     # Core
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/main.cpp
 )
 
@@ -194,6 +194,17 @@ if(NEKO_LC_BUILD_TESTS)
     message(STATUS "Neko Launcher tests enabled (NEKO_LC_BUILD_TESTS=ON)")
     include(GoogleTest)
 
+    # =====================
+    # == NekoLc App Test ==
+    # =====================
+
+    # Api
+    add_executable(NekoLcAppApi_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/neko_lc_app_api_test.cpp")
+    target_include_directories(NekoLcAppApi_test PRIVATE ${NEKO_INCLUDE_DIRS})
+    target_link_libraries(NekoLcAppApi_test PRIVATE GTest::gtest GTest::gtest_main nlohmann_json NekoSchema)
+    target_compile_features(NekoLcAppApi_test PRIVATE cxx_std_20)
+    gtest_discover_tests(NekoLcAppApi_test)
+
     # NekoLc Bus Test
     # add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
     # target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
@@ -201,12 +212,6 @@ if(NEKO_LC_BUILD_TESTS)
     # target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
     # gtest_discover_tests(NekoLcBus_test)
 
-    # NekoLc App Test
-    # add_executable(NekoLcApp_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_app_test.cpp")
-    # target_include_directories(NekoLcApp_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    # target_link_libraries(NekoLcApp_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    # target_compile_features(NekoLcApp_test PRIVATE cxx_std_20)
-    # gtest_discover_tests(NekoLcApp_test)
 
     # NekoLc Schema Test
     # add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
@@ -256,9 +261,9 @@ if(WIN32)
     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
     
     # Set not to use the console window
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-    endif()
+    # if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    #     set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+    # endif()
     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
 
 elseif(APPLE)
