@@ -89,7 +89,7 @@ jobs:
 
     - name: Install dependencies (Ubuntu)
       if: "startsWith(matrix.config.os, 'ubuntu')"
-      run: sudo apt-get update && sudo apt-get install -y libtool autotools-dev autoconf automake m4 pkg-config libgettextpo0 gettext
+      run: sudo apt-get update && sudo apt-get install -y libtool m4 autotools-dev autoconf automake pkg-config libgettextpo0 gettext
 
     - name: Install dependencies (macOS)
       if: "startsWith(matrix.config.os, 'macos')"

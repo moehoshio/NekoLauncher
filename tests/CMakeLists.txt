@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.20)
+project(NekoLcTests LANGUAGES CXX)
+
+# =====================
+# == NekoLc App Test ==
+# =====================
+add_subdirectory(app)
+
+# =====================
+# == NekoLc Bus Test ==
+# =====================
+add_subdirectory(bus)

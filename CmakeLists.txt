@@ -35,8 +35,8 @@ list(APPEND CMAKE_PREFIX_PATH
 )
 
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+# set(CMAKE_AUTORCC ON)
+# set(CMAKE_AUTOUIC ON)
 
 # ================
 # === Library ====
@@ -188,52 +188,15 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/main.cpp
 )
 
+# =====================
+# = Commons Libraries =
+# =====================
+add_library(Neko_Commons INTERFACE)
+target_include_directories(Neko_Commons INTERFACE ${NEKO_INCLUDE_DIRS} )
+target_link_libraries(Neko_Commons INTERFACE NekoSchema NekoEvent NekoThreadPool NekoFunction NekoSystem NekoNet)
 
-# ================
-# ====  Test  ====
-# ================
-
-if(NEKO_LC_BUILD_TESTS)
-    enable_testing()
-    message(STATUS "Neko Launcher tests enabled (NEKO_LC_BUILD_TESTS=ON)")
-    include(GoogleTest)
-
-    # =====================
-    # == NekoLc App Test ==
-    # =====================
-
-    # Api
-    add_executable(NekoLcApp_Api_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/neko_lc_app_api_test.cpp")
-    target_include_directories(NekoLcApp_Api_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    target_link_libraries(NekoLcApp_Api_test PRIVATE GTest::gtest GTest::gtest_main nlohmann_json NekoSchema)
-    target_compile_features(NekoLcApp_Api_test PRIVATE cxx_std_20)
-    gtest_discover_tests(NekoLcApp_Api_test)
-
-    # NekoLc Bus Test
-    # add_executable(NekoLcBus_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_bus_test.cpp")
-    # target_include_directories(NekoLcBus_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    # target_link_libraries(NekoLcBus_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    # target_compile_features(NekoLcBus_test PRIVATE cxx_std_20)
-    # gtest_discover_tests(NekoLcBus_test)
-
-
-    # NekoLc Schema Test
-    # add_executable(NekoLcSchema_test "${CMAKE_SOURCE_DIR}/tests/neko_lc_schema_test.cpp")
-    # target_include_directories(NekoLcSchema_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    # target_link_libraries(NekoLcSchema_test PRIVATE gtest_main nlohmann_json NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    # target_compile_features(NekoLcSchema_test PRIVATE cxx_std_20)
-    # gtest_discover_tests(NekoLcSchema_test)
-
-    # Core - Update Test
-    # add_executable(NekoCore_update_test "${CMAKE_SOURCE_DIR}/tests/neko_core_update_test.cpp")
-    # target_include_directories(NekoCore_update_test PRIVATE ${NEKO_INCLUDE_DIRS})
-    # target_link_libraries(NekoCore_update_test PRIVATE gtest_main NekoSchema NekoEvent NekoNet NekoSystem NekoFunction NekoThreadPool)
-    # target_compile_features(NekoCore_update_test PRIVATE cxx_std_20)
-    # gtest_discover_tests(NekoCore_update_test)
-else()
-    message(STATUS "Neko Launcher tests disabled (NEKO_LC_BUILD_TESTS=OFF)")
-endif()
-
+add_library(Neko_Commons_Other INTERFACE)
+target_link_libraries(Neko_Commons_Other INTERFACE nlohmann_json SimpleIni)
 
 # ================
 # == Executable ==
@@ -243,12 +206,11 @@ endif()
 add_executable(NekoLc ${NEKO_SRCFILES})
 
 # Set the target properties
-target_include_directories(NekoLc PRIVATE ${NEKO_INCLUDE_DIRS})
 target_compile_features(NekoLc PRIVATE cxx_std_20)
 
 # Link Neko Modules
 target_link_libraries(NekoLc PRIVATE 
-    NekoSchema NekoEvent NekoSystem NekoFunction NekoThreadPool NekoNet
+    Neko_Commons 
 )
 # Link libraries
 target_link_libraries(NekoLc PRIVATE 
@@ -257,7 +219,7 @@ target_link_libraries(NekoLc PRIVATE
     # Boost
     Boost::system Boost::process
     # Others
-    nlohmann_json SimpleIni
+    Neko_Commons_Other
 )
 
 # Os-specific settings
@@ -301,6 +263,19 @@ elseif(UNIX)
 
 endif() # os
 
+# ================
+# ====  Test  ====
+# ================
+
+if(NEKO_LC_BUILD_TESTS)
+    enable_testing()
+    message(STATUS "Neko Launcher tests enabled (NEKO_LC_BUILD_TESTS=ON)")
+    include(GoogleTest)
+
+    add_subdirectory(tests)
+else()
+    message(STATUS "Neko Launcher tests disabled (NEKO_LC_BUILD_TESTS=OFF)")
+endif()
         
 
 # ================
