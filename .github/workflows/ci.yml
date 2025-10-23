@@ -172,6 +172,7 @@ jobs:
     # ============================================================================
     # Configure CMake for all platforms
     # ============================================================================
+
     - name: Configure CMake (Windows)
       if: startsWith(matrix.config.os, 'windows')
       run: |
@@ -203,21 +204,6 @@ jobs:
       if: "startsWith(matrix.config.os, 'macos')"
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos -DQt6_DIR=$Qt6_DIR -S .
-      shell: bash
-
-    - name: Verify Hash and Archive Support
-      run: |
-        echo "=== NekoFunction Configuration Check ==="
-        if grep -q "Hash support enabled: ON" build/CMakeCache.txt 2>/dev/null || grep -rq "Hash support enabled: ON" build/ 2>/dev/null; then
-          echo "✓ Hash support is ENABLED"
-        else
-          echo "✗ Hash support is DISABLED or not found"
-        fi
-        if grep -q "Archiver support enabled: ON" build/CMakeCache.txt 2>/dev/null || grep -rq "Archiver support enabled: ON" build/ 2>/dev/null; then
-          echo "✓ Archiver support is ENABLED"
-        else
-          echo "✗ Archiver support is DISABLED or not found"
-        fi
       shell: bash
 
     - name: Build

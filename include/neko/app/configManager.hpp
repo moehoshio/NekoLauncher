@@ -5,6 +5,7 @@
 #include "neko/app/clientConfig.hpp"
 
 #include <functional>
+#include <mutex>
 #include <shared_mutex>
 #include <string>
 
