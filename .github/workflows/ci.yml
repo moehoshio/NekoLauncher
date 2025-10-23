@@ -94,8 +94,7 @@ jobs:
       if: "startsWith(matrix.config.os, 'ubuntu')"
       run: |
         sudo apt-get update
-        sudo apt-get install -y nasm libcap-dev libcrypt-dev libcryptsetup-dev libqrencode-dev python3-pip libgcrypt-dev gnutls-dev libdbus-1-dev libxkbcommon-dev python3-pip valgrind libtool libtool-bin libltdl-dev m4 autotools-dev autoconf automake pkg-config gettext libgl1-mesa-dev libxcb-cursor0
-        python3 -m pip install --user jinja2
+        sudo apt-get install -y nasm m4 autotools-dev autoconf automake pkg-config gettext libgl1-mesa-dev libxcb-cursor0
 
     - name: Install dependencies (macOS)
       if: "startsWith(matrix.config.os, 'macos')"
@@ -134,7 +133,7 @@ jobs:
       if: "!startsWith(matrix.config.os, 'windows')"
       run: |
         echo "=== Installing dependencies via vcpkg ==="
-        ~/vcpkg/vcpkg install zlib openssl minizip-ng boost-process --recurse
+        ~/vcpkg/vcpkg install zlib openssl minizip-ng curl boost-process --recurse
 
     # ============================================================================
     # Windows: Use default vcpkg
@@ -146,7 +145,7 @@ jobs:
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         Write-Host "Using vcpkg at: $vcpkgRoot"
 
-        vcpkg install openssl:x64-windows minizip-ng:x64-windows boost-process:x64-windows --recurse
+        vcpkg install openssl:x64-windows minizip-ng:x64-windows curl:x64-windows boost-process:x64-windows --recurse
         Write-Host ""
         Write-Host "=== Installed packages ==="
         vcpkg list

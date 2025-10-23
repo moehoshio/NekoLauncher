@@ -235,31 +235,31 @@ if(WIN32)
 elseif(APPLE)
 
     # Set the application bundle properties for macOS
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties(NekoLc PROPERTIES
-            MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
-            # MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
-            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resource/macos/Info.plist
-        )
-    endif()
-    set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/macos/NekoLc.icns)
-    target_sources(NekoLc PRIVATE ${MACOSX_ICON})
-    set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    # if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    #     set_target_properties(NekoLc PROPERTIES
+    #         MACOSX_BUNDLE TRUE
+    #         MACOSX_BUNDLE_BUNDLE_NAME "com.moehoshio.NekoLauncher"
+    #         MACOSX_BUNDLE_ICON_FILE "NekoLc.icns"
+    #         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resource/macos/Info.plist
+    #     )
+    # endif()
+    # set(MACOSX_ICON ${CMAKE_SOURCE_DIR}/resource/macos/NekoLc.icns)
+    # target_sources(NekoLc PRIVATE ${MACOSX_ICON})
+    # set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 elseif(UNIX)
 
     # Set the executable properties for Linux
-    set_target_properties(NekoLc PROPERTIES
-        OUTPUT_NAME "NekoLc"
-        PREFIX ""
-        SUFFIX ""
-    )
-    # Add a custom command to copy the icon file to the resource directory
-    add_custom_command(TARGET NekoLc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resource/linux/icon.png ${CMAKE_BINARY_DIR}/icon.png
-        COMMENT "Copying icon.png to build directory"
-    )
+    # set_target_properties(NekoLc PROPERTIES
+    #     OUTPUT_NAME "NekoLc"
+    #     PREFIX ""
+    #     SUFFIX ""
+    # )
+    # # Add a custom command to copy the icon file to the resource directory
+    # add_custom_command(TARGET NekoLc POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resource/linux/icon.png ${CMAKE_BINARY_DIR}/icon.png
+    #     COMMENT "Copying icon.png to build directory"
+    # )
 
 endif() # os
 
