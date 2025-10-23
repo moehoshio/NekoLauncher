@@ -86,14 +86,33 @@ jobs:
         ${{ matrix.config.cxx }} --version
         echo "=== CMake Information ==="
         cmake --version
+    
+    - name: Install Python requirements
+      run: python3 -m pip install --user jinja2
 
     - name: Install dependencies (Ubuntu)
       if: "startsWith(matrix.config.os, 'ubuntu')"
-      run: sudo apt-get update && sudo apt-get install -y libtool m4 autotools-dev autoconf automake pkg-config libgettextpo0 gettext
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y nasm libcap-dev libcrypt-dev libcryptsetup-dev libqrencode-dev python3-pip libgcrypt-dev gnutls-dev libdbus-1-dev libxkbcommon-dev python3-pip valgrind libtool libtool-bin libltdl-dev m4 autotools-dev autoconf automake pkg-config gettext libgl1-mesa-dev libxcb-cursor0
+        python3 -m pip install --user jinja2
 
     - name: Install dependencies (macOS)
       if: "startsWith(matrix.config.os, 'macos')"
       run: brew install gperf autoconf automake libtool m4 pkg-config gettext
+
+    # ============================================================================
+    # Install Qt using aqtinstall
+    # ============================================================================
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.6.1'
+        host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'Linux' && 'linux' || 'mac' }}
+        target: 'desktop'
+        arch: ${{ runner.os == 'Windows' && 'win64_msvc2019_64' || runner.os == 'Linux' && 'gcc_64' || 'clang_64' }}
+        modules: 'qtnetworkauth qtwebsockets'
+        cache: true
 
     # ============================================================================
     # Install vcpkg (Unix)
@@ -115,7 +134,7 @@ jobs:
       if: "!startsWith(matrix.config.os, 'windows')"
       run: |
         echo "=== Installing dependencies via vcpkg ==="
-        ~/vcpkg/vcpkg install zlib openssl minizip-ng qt --recurse
+        ~/vcpkg/vcpkg install zlib openssl minizip-ng --recurse
 
     # ============================================================================
     # Windows: Use default vcpkg
@@ -127,7 +146,7 @@ jobs:
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         Write-Host "Using vcpkg at: $vcpkgRoot"
 
-        vcpkg install openssl:x64-windows minizip-ng:x64-windows qt:x64-windows --recurse
+        vcpkg install openssl:x64-windows minizip-ng:x64-windows --recurse
         Write-Host ""
         Write-Host "=== Installed packages ==="
         vcpkg list
@@ -164,26 +183,29 @@ jobs:
         
         Write-Host "VCPKG_ROOT: $vcpkgRoot"
         Write-Host "CMAKE_TOOLCHAIN_FILE: $toolchainFile"
-        Write-Host "CMAKE_PREFIX_PATH: $installedPath"
+        Write-Host "CMAKE_PREFIX_PATH: $installedPath;$env:Qt6_DIR"
         
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" `
           -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON `
           -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
           -DVCPKG_TARGET_TRIPLET=x64-windows `
-          -DNEKO_LC_LIBRARY_DIRS="$installedPath"
-          -DQt6_DIR="$installedPath"
+          -DNEKO_LC_LIBRARY_DIRS="$installedPath" `
+          -DQt6_DIR="$env:Qt6_DIR" `
+          -S .
       shell: powershell
 
     - name: Configure CMake (Ubuntu)
       if: "startsWith(matrix.config.os, 'ubuntu')"
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-linux
+        cd ${GITHUB_WORKSPACE}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-linux -DQt6_DIR=$Qt6_DIR -S .
       shell: bash
 
     - name: Configure CMake (macOS)
       if: "startsWith(matrix.config.os, 'macos')"
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos
+        cd ${GITHUB_WORKSPACE}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos -DQt6_DIR=$Qt6_DIR -S .
       shell: bash
 
     - name: Verify Hash and Archive Support
@@ -205,7 +227,7 @@ jobs:
       run: cmake --build build --config ${{ matrix.config.build_type }} --parallel
 
     - name: Run tests
-      working-directory: build
+      working-directory: build/tests
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
           if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ] || [ "${{ matrix.config.generators }}" = "Visual Studio 16 2019" ]; then
