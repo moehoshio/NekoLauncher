@@ -145,13 +145,14 @@ jobs:
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         Write-Host "Using vcpkg at: $vcpkgRoot"
 
-        vcpkg install openssl:x64-windows minizip-ng:x64-windows curl:x64-windows boost-process:x64-windows --recurse
+        # Use x64-windows-static triplet to match static runtime library linking
+        vcpkg install openssl:x64-windows-static minizip-ng:x64-windows-static curl:x64-windows-static boost-process:x64-windows-static --recurse
         Write-Host ""
         Write-Host "=== Installed packages ==="
         vcpkg list
         Write-Host ""
         Write-Host "=== Verifying installation ==="
-        $installedPath = "$vcpkgRoot\installed\x64-windows"
+        $installedPath = "$vcpkgRoot\installed\x64-windows-static"
         Write-Host "Installed path: $installedPath"
         if (Test-Path "$installedPath\share\minizip-ng") {
           Write-Host "minizip-ng CMake files: OK"
@@ -179,7 +180,7 @@ jobs:
         Write-Host "=== Configuring NekoFunction (Windows) ==="
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         $toolchainFile = "$vcpkgRoot\scripts\buildsystems\vcpkg.cmake"
-        $installedPath = "$vcpkgRoot\installed\x64-windows"
+        $installedPath = "$vcpkgRoot\installed\x64-windows-static"
         
         Write-Host "VCPKG_ROOT: $vcpkgRoot"
         Write-Host "CMAKE_TOOLCHAIN_FILE: $toolchainFile"
@@ -188,9 +189,10 @@ jobs:
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" `
           -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON `
           -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
-          -DVCPKG_TARGET_TRIPLET=x64-windows `
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static `
           -DNEKO_LC_LIBRARY_DIRS="$installedPath" `
           -DQt6_DIR="$env:Qt6_DIR" `
+          -DNEKO_FUNCTION_STATIC_LINK=ON `
           -S .
       shell: powershell
 
