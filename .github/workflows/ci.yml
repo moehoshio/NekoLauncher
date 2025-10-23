@@ -134,7 +134,7 @@ jobs:
       if: "!startsWith(matrix.config.os, 'windows')"
       run: |
         echo "=== Installing dependencies via vcpkg ==="
-        ~/vcpkg/vcpkg install zlib openssl minizip-ng --recurse
+        ~/vcpkg/vcpkg install zlib openssl minizip-ng boost-process --recurse
 
     # ============================================================================
     # Windows: Use default vcpkg
@@ -146,7 +146,7 @@ jobs:
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         Write-Host "Using vcpkg at: $vcpkgRoot"
 
-        vcpkg install openssl:x64-windows minizip-ng:x64-windows --recurse
+        vcpkg install openssl:x64-windows minizip-ng:x64-windows boost-process:x64-windows --recurse
         Write-Host ""
         Write-Host "=== Installed packages ==="
         vcpkg list
@@ -197,14 +197,12 @@ jobs:
     - name: Configure CMake (Ubuntu)
       if: "startsWith(matrix.config.os, 'ubuntu')"
       run: |
-        cd ${GITHUB_WORKSPACE}
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-linux -DQt6_DIR=$Qt6_DIR -S .
       shell: bash
 
     - name: Configure CMake (macOS)
       if: "startsWith(matrix.config.os, 'macos')"
       run: |
-        cd ${GITHUB_WORKSPACE}
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos -DQt6_DIR=$Qt6_DIR -S .
       shell: bash
 
