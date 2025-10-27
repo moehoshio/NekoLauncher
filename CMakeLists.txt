@@ -52,13 +52,13 @@ find_package(Boost COMPONENTS process system)
 find_package(Qt6 COMPONENTS Core Gui Widgets)
 find_package(GTest QUIET)
 
-if (NOT Boost_FOUND)
-    message(FATAL_ERROR "Required Boost but not found ; please make sure to set -DNEKO_LC_LIBRARY_DIRS=<path> correctly.")
-endif()
+# if (NOT Boost_FOUND)
+#     message(FATAL_ERROR "Required Boost but not found ; please make sure to set -DNEKO_LC_LIBRARY_DIRS=<path> correctly.")
+# endif()
 
-if (NOT Qt6_FOUND)
-    message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
-endif()
+# if (NOT Qt6_FOUND)
+#     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
+# endif()
 
 # Fetch Dependencies
 include(FetchContent)
