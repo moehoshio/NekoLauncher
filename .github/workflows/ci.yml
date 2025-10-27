@@ -212,7 +212,7 @@ jobs:
       run: cmake --build build --config ${{ matrix.config.build_type }} --parallel
 
     - name: Run tests
-      working-directory: build/tests
+      working-directory: build/
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
           if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ] || [ "${{ matrix.config.generators }}" = "Visual Studio 16 2019" ]; then
