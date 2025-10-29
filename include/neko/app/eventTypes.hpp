@@ -17,8 +17,8 @@ namespace neko::event {
     /*****************/
     /* Global Events */
     /*****************/
-    struct StartEvent {};
-    struct QuitEvent {};
+    struct NekoStartEvent {};
+    struct NekoQuitEvent {};
 
     /*****************/
     /* Window Events */

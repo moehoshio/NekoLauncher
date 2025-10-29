@@ -106,6 +106,11 @@ FetchContent_Declare(
     GIT_TAG        main
 )
 FetchContent_Declare(
+    NekoLog
+    GIT_REPOSITORY https://github.com/moehoshio/NekoLog.git
+    GIT_TAG        main
+)
+FetchContent_Declare(
     NekoFunction
     GIT_REPOSITORY https://github.com/moehoshio/NekoFunction.git
     GIT_TAG        main
@@ -124,7 +129,7 @@ if (NOT DEFINED NEKO_LIBRARY_DIRS)
     set(NEKO_FUNCTION_LIBRARY_PATH ${NEKO_LC_LIBRARY_DIRS} CACHE PATH "Path to NekoFunction library")
     set(NEKO_NET_LIBRARY_PATH ${NEKO_LC_LIBRARY_DIRS} CACHE PATH "Path to NekoNet library")
 endif()
-FetchContent_MakeAvailable(NekoSchema NekoEvent NekoThreadPool NekoFunction NekoSystem NekoNet)
+FetchContent_MakeAvailable(NekoSchema NekoEvent NekoThreadPool NekoLog NekoFunction NekoSystem NekoNet)
 
 # ================
 # ====  Info  ====
@@ -165,7 +170,7 @@ message(STATUS "  - CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 message(STATUS "  - Neko Library dirs: ${NEKO_LIBRARY_DIRS}")
 message(STATUS "  - Qt6 dir: ${Qt6_DIR}")
 message(STATUS "  - STL dir: ${STL_DIR}")
-message(STATUS "Neko Modules: NekoEvent, NekoNet, NekoSchema, NekoSystem, NekoFunction, NekoThreadPool")
+message(STATUS "Neko Modules: NekoEvent, NekoNet, NekoLog, NekoSchema, NekoSystem, NekoFunction, NekoThreadPool")
 message(STATUS "")
 
 
@@ -193,7 +198,7 @@ list(APPEND NEKO_SRCFILES
 # =====================
 add_library(Neko_Commons INTERFACE)
 target_include_directories(Neko_Commons INTERFACE ${NEKO_INCLUDE_DIRS} )
-target_link_libraries(Neko_Commons INTERFACE NekoSchema NekoEvent NekoThreadPool NekoFunction NekoSystem NekoNet)
+target_link_libraries(Neko_Commons INTERFACE NekoSchema NekoEvent NekoThreadPool NekoLog NekoFunction NekoSystem NekoNet)
 
 add_library(Neko_Commons_Other INTERFACE)
 target_link_libraries(Neko_Commons_Other INTERFACE nlohmann_json SimpleIni)

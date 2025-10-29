@@ -240,7 +240,8 @@ namespace neko::lang {
 
         namespace minecraft {
             constexpr neko::strview
-                object = "Minecraft";
+                object = "Minecraft",
+                missingAccessToken = "missingAccessToken";
         }
 
         namespace error {
@@ -251,7 +252,8 @@ namespace neko::lang {
                 parseError = "parseError",
                 timeout = "timeout",
                 notFound = "notFound",
-                updateFailed = "updateFailed"
+                updateFailed = "updateFailed",
+                invalidInput = "invalidInput"
                 ;
 
         }

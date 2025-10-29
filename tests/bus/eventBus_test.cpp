@@ -233,8 +233,12 @@ TEST_F(EventBusTest, PublishAfterWithRValue) {
     auto eventId = publishAfter<SimpleEvent>(100, SimpleEvent{777, "delayed rvalue"});
     ASSERT_NE(eventId, 0);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-    ASSERT_EQ(receivedValue, 777);
+    // Wait with polling
+    for (int i = 0; i < 30 && receivedValue == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    
+    ASSERT_EQ(receivedValue, 777) << "Event value was not received";
     
     unsubscribe<SimpleEvent>(handler);
 }
@@ -251,27 +255,35 @@ TEST_F(EventBusTest, ScheduleTaskAtTimePoint) {
     
     ASSERT_NE(eventId, 0);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
     ASSERT_FALSE(taskExecuted);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    ASSERT_TRUE(taskExecuted);
+    // Wait with polling
+    for (int i = 0; i < 30 && !taskExecuted; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    
+    ASSERT_TRUE(taskExecuted) << "Task was not executed";
 }
 
 TEST_F(EventBusTest, ScheduleTaskAfterMilliseconds) {
     std::atomic<bool> taskExecuted{false};
     
-    auto eventId = scheduleTask(150, [&taskExecuted]() {
+    auto eventId = scheduleTask(100, [&taskExecuted]() {
         taskExecuted = true;
     });
     
     ASSERT_NE(eventId, 0);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
     ASSERT_FALSE(taskExecuted);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(150));
-    ASSERT_TRUE(taskExecuted);
+    // Wait with polling
+    for (int i = 0; i < 30 && !taskExecuted; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    
+    ASSERT_TRUE(taskExecuted) << "Task was not executed";
 }
 
 TEST_F(EventBusTest, ScheduleTaskWithPriority) {

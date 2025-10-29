@@ -46,11 +46,11 @@ TEST_F(AppTest, RunningInfoCopy) {
 // 
 // The run() function:
 // - Requires worker threads to be initialized
-// - Publishes StartEvent to event bus
+// - Publishes NekoStartEvent to event bus
 // - Returns RunningInfo with thread ID and future
 //
 // The quit() function:
-// - Publishes QuitEvent to event bus
+// - Publishes NekoQuitEvent to event bus
 //
 // These functions involve complex system interactions and should be
 // tested in a full application context with proper setup and teardown.

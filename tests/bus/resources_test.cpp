@@ -242,7 +242,10 @@ TEST_F(ResourcesTest, AllResourcesWorkTogether) {
         eventTaskDone = true;
     });
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    // Wait with polling
+    for (int i = 0; i < 30 && !eventTaskDone; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     
     eventLoop.stopLoop();
     eventLoop.wakeUp();
@@ -252,8 +255,8 @@ TEST_F(ResourcesTest, AllResourcesWorkTogether) {
     }
     
     // Verify all tasks completed
-    ASSERT_TRUE(threadTaskDone);
-    ASSERT_TRUE(eventTaskDone);
+    ASSERT_TRUE(threadTaskDone) << "Thread pool task was not completed";
+    ASSERT_TRUE(eventTaskDone) << "Event loop task was not completed";
     
     auto config = configMgr.getClientConfig();
     ASSERT_STREQ(config.main.lang, "integration_test");

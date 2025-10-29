@@ -32,13 +32,13 @@ namespace neko::app {
         info.eventLoopFuture = bus::thread::submitToWorker(info.eventLoopThreadId, [] {
             bus::event::run();
         });
-        bus::event::publish<event::StartEvent>({});
+        bus::event::publish<event::NekoStartEvent>({});
 
         return info;
     }
 
     void quit() {
-        bus::event::publish<event::QuitEvent>({});
+        bus::event::publish<event::NekoQuitEvent>({});
     }
 
 } // namespace neko::app

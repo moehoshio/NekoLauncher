@@ -39,12 +39,16 @@
         "updateComplete": "更新完成！請重新啟動應用程式以應用更新。",
         "updateFailed": "更新失敗：{errorMessage}"
     },
+    "minecraft": {
+        "missingAccessToken": "回應中缺少 accessToken "
+    },
     "Error": {
         "networkError": "請求{object}時網路錯誤: {error}",
         "unknownError": "未知錯誤",
         "invalidResponse": "無效的回應",
         "parseError": "解析錯誤",
         "timeout": "請求超時",
-        "notFound": "找不到資源"
+        "notFound": "找不到資源",
+        "invalidInput": "無效輸入",
     },
 }

@@ -15,14 +15,14 @@ protected:
 
 // Test Global Events
 TEST_F(EventTypesTest, StartEventCreation) {
-    StartEvent event;
-    // StartEvent is an empty struct, just verify it can be instantiated
+    NekoStartEvent event;
+    // NekoStartEvent is an empty struct, just verify it can be instantiated
     SUCCEED();
 }
 
 TEST_F(EventTypesTest, QuitEventCreation) {
-    QuitEvent event;
-    // QuitEvent is an empty struct, just verify it can be instantiated
+    NekoQuitEvent event;
+    // NekoQuitEvent is an empty struct, just verify it can be instantiated
     SUCCEED();
 }
 
@@ -202,8 +202,8 @@ TEST_F(EventTypesTest, UpdateCompleteEvent) {
 // Test event type sizes (ensure they are lightweight)
 TEST_F(EventTypesTest, EventSizes) {
     // Empty events should be very small
-    EXPECT_LE(sizeof(StartEvent), 8);
-    EXPECT_LE(sizeof(QuitEvent), 8);
+    EXPECT_LE(sizeof(NekoStartEvent), 8);
+    EXPECT_LE(sizeof(NekoQuitEvent), 8);
     EXPECT_LE(sizeof(CloseWindowEvent), 8);
     EXPECT_LE(sizeof(MinimizeWindowEvent), 8);
     EXPECT_LE(sizeof(MaximizeWindowEvent), 8);
