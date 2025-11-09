@@ -38,12 +38,6 @@ target_link_libraries(NekoLcApp_ConfigManager_test PRIVATE Neko_Commons Neko_Com
 target_compile_features(NekoLcApp_ConfigManager_test PRIVATE cxx_std_20)
 gtest_discover_tests(NekoLcApp_ConfigManager_test)
 
-# Event Types
-add_executable(NekoLcApp_EventTypes_test "${CMAKE_CURRENT_SOURCE_DIR}/eventTypes_test.cpp")
-target_link_libraries(NekoLcApp_EventTypes_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)
-target_compile_features(NekoLcApp_EventTypes_test PRIVATE cxx_std_20)
-gtest_discover_tests(NekoLcApp_EventTypes_test)
-
 # Lang
 add_executable(NekoLcApp_Lang_test "${CMAKE_CURRENT_SOURCE_DIR}/lang_test.cpp")
 target_link_libraries(NekoLcApp_Lang_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)

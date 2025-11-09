@@ -18,25 +18,19 @@ project(
 option(NEKO_LC_STATIC_LINK "Neko Launcher Static Link Libraries" ON)
 option(NEKO_LC_BUILD_TESTS "Neko Launcher Build tests" ON)
 
-# Package path. e.g. vcpkg
-if(NOT DEFINED NEKO_LC_LIBRARY_DIRS)
-    set(NEKO_LC_LIBRARY_DIRS "/path/to/vcpkg/installed/x64-windows")
+# Package path
+if(DEFINED NEKO_LC_LIBRARY_DIRS)
+    list(APPEND CMAKE_PREFIX_PATH 
+        ${Qt6_DIR}
+    )
 endif()
 
 # Qt path
-if(NOT DEFINED Qt6_DIR)
-    set(Qt6_DIR "/path/to/Qt6/6.6.1/msvc2019_64")
+if(DEFINED Qt6_DIR)
+    list(APPEND CMAKE_PREFIX_PATH 
+        ${Qt6_DIR}
+    )
 endif()
-
-
-list(APPEND CMAKE_PREFIX_PATH 
-    ${NEKO_LC_LIBRARY_DIRS}
-    ${Qt6_DIR}
-)
-
-set(CMAKE_AUTOMOC ON)
-# set(CMAKE_AUTORCC ON)
-# set(CMAKE_AUTOUIC ON)
 
 # ================
 # === Library ====
@@ -48,17 +42,17 @@ if(NEKO_LC_STATIC_LINK AND MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-find_package(Boost COMPONENTS process system)
+find_package(Boost COMPONENTS process)
 find_package(Qt6 COMPONENTS Core Gui Widgets)
 find_package(GTest QUIET)
 
-# if (NOT Boost_FOUND)
-#     message(FATAL_ERROR "Required Boost but not found ; please make sure to set -DNEKO_LC_LIBRARY_DIRS=<path> correctly.")
-# endif()
+if (NOT Boost_FOUND)
+    message(FATAL_ERROR "Required Boost but not found ; please make sure to set -DNEKO_LC_LIBRARY_DIRS=<path> correctly.")
+endif()
 
-# if (NOT Qt6_FOUND)
-#     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
-# endif()
+if (NOT Qt6_FOUND)
+    message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DQt6_DIR=<Qt_install_path> correctly.")
+endif()
 
 # Fetch Dependencies
 include(FetchContent)
@@ -167,7 +161,7 @@ message(STATUS "Dependency summary:")
 message(STATUS "  - Boost found: ${Boost_FOUND} version ${Boost_VERSION}")
 message(STATUS "  - Qt6 found: ${Qt6_FOUND} version ${Qt6_VERSION}")
 message(STATUS "  - CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-message(STATUS "  - Neko Library dirs: ${NEKO_LIBRARY_DIRS}")
+message(STATUS "  - Neko Launcher Library dirs: ${NEKO_LC_LIBRARY_DIRS}")
 message(STATUS "  - Qt6 dir: ${Qt6_DIR}")
 message(STATUS "  - STL dir: ${STL_DIR}")
 message(STATUS "Neko Modules: NekoEvent, NekoNet, NekoLog, NekoSchema, NekoSystem, NekoFunction, NekoThreadPool")
@@ -189,6 +183,7 @@ list(APPEND NEKO_INCLUDE_DIRS
 # Src files
 list(APPEND NEKO_SRCFILES
     # Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/main.cpp
 )
@@ -204,8 +199,12 @@ add_library(Neko_Commons_Other INTERFACE)
 target_link_libraries(Neko_Commons_Other INTERFACE nlohmann_json SimpleIni)
 
 # ================
-# == Executable ==
+#  Main Executable
 # ================
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 # Add the executable target
 add_executable(NekoLc ${NEKO_SRCFILES})
@@ -222,7 +221,7 @@ target_link_libraries(NekoLc PRIVATE
     # Qt
     Qt6::Core Qt6::Widgets Qt6::Gui
     # Boost
-    Boost::system Boost::process
+    Boost::process
     # Others
     Neko_Commons_Other
 )

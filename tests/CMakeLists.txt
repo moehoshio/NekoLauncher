@@ -10,3 +10,8 @@ add_subdirectory(app)
 # == NekoLc Bus Test ==
 # =====================
 add_subdirectory(bus)
+
+# =====================
+# == NekoLc Core Test ==
+# =====================
+add_subdirectory(core)

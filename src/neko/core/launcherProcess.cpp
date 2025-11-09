@@ -40,20 +40,34 @@ namespace neko::core {
             bool usePowershell = processInfo.command.length() >= windowsCommandLengthLimit;
             std::string baseCommand = usePowershell ? "powershell" : "cmd";
             std::string commandPrefix = usePowershell ? "-Command" : "/c";
-            bp::child proc(
-                bp::search_path(baseCommand),
-                commandPrefix,
-                processInfo.command,
-                bp::start_dir = processInfo.workingDir,
-                bp::windows::hide,
-                bp::std_out > pipeStream);
+            
+            bp::child proc = processInfo.workingDir.empty()
+                ? bp::child(
+                    bp::search_path(baseCommand),
+                    commandPrefix,
+                    processInfo.command,
+                    bp::windows::hide,
+                    bp::std_out > pipeStream)
+                : bp::child(
+                    bp::search_path(baseCommand),
+                    commandPrefix,
+                    processInfo.command,
+                    bp::start_dir = processInfo.workingDir,
+                    bp::windows::hide,
+                    bp::std_out > pipeStream);
 #else
-            bp::child proc(
-                "/bin/sh",
-                "-c",
-                processInfo.command,
-                bp::start_dir = processInfo.workingDir,
-                bp::std_out > pipeStream);
+            bp::child proc = processInfo.workingDir.empty()
+                ? bp::child(
+                    "/bin/sh",
+                    "-c",
+                    processInfo.command,
+                    bp::std_out > pipeStream)
+                : bp::child(
+                    "/bin/sh",
+                    "-c",
+                    processInfo.command,
+                    bp::start_dir = processInfo.workingDir,
+                    bp::std_out > pipeStream);
 #endif
 
             if (processInfo.onStart) {
@@ -85,18 +99,30 @@ namespace neko::core {
             bool usePowershell = command.length() > windowsCommandLengthLimit;
             std::string baseCommand = usePowershell ? "powershell" : "cmd";
             std::string commandPrefix = usePowershell ? "-Command" : "/c";
-            bp::child proc(
-                bp::search_path(baseCommand),
-                commandPrefix,
-                command,
-                bp::start_dir = workingDir,
-                bp::windows::hide);
+            
+            bp::child proc = workingDir.empty()
+                ? bp::child(
+                    bp::search_path(baseCommand),
+                    commandPrefix,
+                    command,
+                    bp::windows::hide)
+                : bp::child(
+                    bp::search_path(baseCommand),
+                    commandPrefix,
+                    command,
+                    bp::start_dir = workingDir,
+                    bp::windows::hide);
 #else
-            bp::child proc(
-                "/bin/sh",
-                "-c",
-                command,
-                bp::start_dir = workingDir);
+            bp::child proc = workingDir.empty()
+                ? bp::child(
+                    "/bin/sh",
+                    "-c",
+                    command)
+                : bp::child(
+                    "/bin/sh",
+                    "-c",
+                    command,
+                    bp::start_dir = workingDir);
 #endif
             proc.detach();
         } catch (const std::system_error &e) {
