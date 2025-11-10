@@ -31,6 +31,22 @@ jobs:
               build_type: "Release",
               generators: "Visual Studio 17 2022"
             }
+          - {
+              name: "Windows Clang Debug",
+              os: windows-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Debug",
+              generators: "Visual Studio 17 2022"
+            }
+          - {
+              name: "Windows Clang Release",
+              os: windows-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Release",
+              generators: "Visual Studio 17 2022"
+            }
           
           # Linux builds
           - {
@@ -46,6 +62,22 @@ jobs:
               os: ubuntu-latest,
               cc: "gcc",
               cxx: "g++",
+              build_type: "Release",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "Ubuntu Clang Debug",
+              os: ubuntu-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "Ubuntu Clang Release",
+              os: ubuntu-latest,
+              cc: "clang",
+              cxx: "clang++",
               build_type: "Release",
               generators: "Unix Makefiles"
             }

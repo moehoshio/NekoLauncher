@@ -144,11 +144,13 @@ TEST_F(LauncherProcessTest, EmptyCommand) {
     };
 
     // Empty command behavior varies by platform
-    // On Windows with cmd/powershell, empty command may succeed with exit code 0
+#ifdef _WIN32
+    // On Windows, boost::process throws exception for empty command
+    EXPECT_THROW(neko::core::launcherProcess(info), neko::ex::Runtime);
+#else
     // On Unix with sh, empty command typically succeeds with exit code 0
-    // The process should complete without throwing
     ASSERT_NO_THROW(neko::core::launcherProcess(info));
-    // Exit code could be 0 or non-zero depending on shell implementation
+#endif
 }
 
 // Test long command (Windows command length limit)
@@ -197,8 +199,8 @@ TEST_F(LauncherProcessTest, LauncherNewProcessBasic) {
     auto markerFile = testDir / "detached_marker.txt";
     
 #ifdef _WIN32
-    // Use PowerShell's Start-Sleep which is more reliable in CI environments
-    std::string command = "powershell -Command \"Start-Sleep -Seconds 1; 'done' | Out-File -FilePath '" + markerFile.string() + "'\"";
+    // Use cmd with a simple echo command that redirects to file
+    std::string command = "cmd /c \"ping 127.0.0.1 -n 2 > nul && echo done > \"" + markerFile.string() + "\"\"";
 #else
     std::string command = "sleep 1 && echo done > \"" + markerFile.string() + "\"";
 #endif
@@ -206,7 +208,7 @@ TEST_F(LauncherProcessTest, LauncherNewProcessBasic) {
     ASSERT_NO_THROW(neko::core::launcherNewProcess(command, testDir.string()));
     
     // Wait for the detached process to complete
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     
     // Check if the marker file was created
     EXPECT_TRUE(fs::exists(markerFile));

@@ -11,7 +11,7 @@ target_compile_features(NekoLcBus_thread_test PRIVATE cxx_std_20)
 gtest_discover_tests(NekoLcBus_thread_test DISCOVERY_TIMEOUT 60)
 
 # Event
-add_executable(NekoLcBus_event_test "${CMAKE_CURRENT_SOURCE_DIR}/event_test.cpp")
+add_executable(NekoLcBus_event_test "${CMAKE_CURRENT_SOURCE_DIR}/eventBus_test.cpp")
 target_link_libraries(NekoLcBus_event_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)
 target_compile_features(NekoLcBus_event_test PRIVATE cxx_std_20)
 gtest_discover_tests(NekoLcBus_event_test DISCOVERY_TIMEOUT 60)
