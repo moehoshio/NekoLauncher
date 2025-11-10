@@ -12,6 +12,11 @@ add_subdirectory(app)
 add_subdirectory(bus)
 
 # =====================
-# == NekoLc Core Test ==
+# = NekoLc Core Test ==
 # =====================
 add_subdirectory(core)
+
+# =====================
+# NekoLc Minecraft Test
+# =====================
+add_subdirectory(minecraft)

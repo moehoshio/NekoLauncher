@@ -9,19 +9,19 @@
 #pragma once
 
 // Neko Module
-#include <neko/schema/types.hpp>
 #include <neko/schema/exception.hpp>
+#include <neko/schema/types.hpp>
 
 #include <neko/function/archiver.hpp>
 #include <neko/function/utilities.hpp>
 
+#include <neko/network/network.hpp>
 #include <neko/system/memoryinfo.hpp>
 #include <neko/system/platform.hpp>
-#include <neko/network/network.hpp>
 
 // NekoLc project
-#include "neko/app/clientConfig.hpp"
 #include "neko/app/appinfo.hpp"
+#include "neko/app/clientConfig.hpp"
 #include "neko/core/launcherProcess.hpp"
 
 #include <nlohmann/json.hpp>
@@ -166,7 +166,6 @@ namespace neko::minecraft {
             std::string sha256;
 
         } authlib;
-
     };
 
     namespace internal {
@@ -186,9 +185,7 @@ namespace neko::minecraft {
         /// @throws ex::FileError if the target directory does not exist or is not a directory.
         std::string getAbsoluteMinecraftPath(const std::string &targetDir) {
             if (!std::filesystem::is_directory(targetDir)) {
-                throw ex::FileError(
-                    std::string("Minecraft directory not found or is not a directory: ") + targetDir,
-                    ex::ExceptionExtensionInfo{});
+                throw ex::FileError(std::string("Minecraft directory not found or is not a directory: ") + targetDir);
             }
             return std::filesystem::absolute(targetDir).string() | util::unifiedPath;
         }
@@ -202,9 +199,7 @@ namespace neko::minecraft {
                     return it.path().filename().string() | util::unifiedPath;
                 }
             }
-            throw ex::FileError(
-                std::string("No minecraft version found in: ") + targetDir,
-                ex::ExceptionExtensionInfo{});
+            throw ex::FileError(std::string("No minecraft version found in: ") + targetDir);
         }
 
         /// @brief Retrieves a list of all Minecraft versions found in the specified directory.
@@ -226,16 +221,12 @@ namespace neko::minecraft {
         /// @throws ex::FileError if the file does not exist or cannot be opened.
         std::string getMinecraftVersionJsonContent(const std::string &targetPath) {
             if (!std::filesystem::exists(targetPath)) {
-                throw ex::FileError(
-                    std::string("minecraft version json file not exists: ") + targetPath,
-                    ex::ExceptionExtensionInfo{});
+                throw ex::FileError(std::string("minecraft version json file not exists: ") + targetPath);
             }
 
             std::ifstream jsonFile(targetPath);
             if (!jsonFile.is_open()) {
-                throw ex::FileError(
-                    std::string("failed to open minecraft version json file: ") + targetPath,
-                    ex::ExceptionExtensionInfo{});
+                throw ex::FileError(std::string("failed to open minecraft version json file: ") + targetPath);
             }
             std::ostringstream jsonOss;
             jsonOss << jsonFile.rdbuf();
@@ -247,9 +238,7 @@ namespace neko::minecraft {
         /// @throws ex::FileError if the path does not exist or is not a regular file.
         std::string getAbsoluteFilePath(const std::string &path) {
             if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)) {
-                throw ex::FileError(
-                    std::string("Path is not exists or is not a file: ") + path,
-                    ex::ExceptionExtensionInfo{});
+                throw ex::FileError(std::string("Path is not exists or is not a file: ") + path);
             }
             return std::filesystem::absolute(path).string() | util::unifiedPath;
         }
@@ -260,9 +249,7 @@ namespace neko::minecraft {
         /// @throws ex::FileError if the directory does not exist or is not a directory.
         void assertDirectoryExists(const std::string &dirPath, const std::string &errorMsg) {
             if (!std::filesystem::is_directory(dirPath)) {
-                throw ex::FileError(
-                    errorMsg + dirPath,
-                    ex::ExceptionExtensionInfo{});
+                throw ex::FileError(errorMsg + dirPath);
             }
         }
 
@@ -281,9 +268,7 @@ namespace neko::minecraft {
                 std::replace(package.begin(), package.end(), '.', '/');
                 return package + "/" + name + "/" + version + "/" + name + "-" + version + ".jar";
             }
-            throw ex::Parse{
-                "Invalid raw name : " + rawName + ", expected format: package:name:version",
-                ex::ExceptionExtensionInfo{}};
+            throw ex::Parse{"Invalid raw name : " + rawName + ", expected format: package:name:version"};
         };
 
         /**
@@ -377,14 +362,12 @@ namespace neko::minecraft {
             network::RequestConfig reqConfig{
                 .url = single.url,
                 .method = network::RequestType::DownloadFile,
-                .fileName = single.path,
-                .requestId = "minecraft-archives-" + single.sha1 + "-" + util::
-            };
-            auto res = net.executeWithRetry(reqConfig);
+                .requestId = "minecraft-archives-" + single.sha1 + "-" + util::random::generateRandomString(6),
+                .fileName = single.path};
+            auto res = net.executeWithRetry({reqConfig});
             if (!res.isSuccess()) {
                 throw ex::NetworkError{
-                    "Archives download failed, path: " + single.path + ", ex sha1: " + single.sha1 + ", error: " + res.errorMessage,
-                    ex::ExceptionExtensionInfo{}};
+                    "Archives download failed, path: " + single.path + ", ex sha1: " + single.sha1 + ", error: " + res.errorMessage};
             }
         };
 
@@ -403,8 +386,7 @@ namespace neko::minecraft {
                 return std::regex_search(system::getOsVersion(), versionRegex);
             } catch (const std::regex_error &e) {
                 throw ex::Parse{
-                    "Invalid OS version regex: " + versionRegexStr + ", system version: " + system::getOsVersion() + ", error: " + e.what(),
-                    ex::ExceptionExtensionInfo{}};
+                    "Invalid OS version regex: " + versionRegexStr + ", system version: " + system::getOsVersion() + ", error: " + e.what()};
             }
         }
 
@@ -421,7 +403,7 @@ namespace neko::minecraft {
                 if (!cfg.tolerantMode) {
                     throw;
                 }
-                log::Warn(log::SrcLoc::current(), "Failed to match OS version with regex '%s': %s", rules.osVersion.c_str(), e.what());
+                log::warn({}, "Failed to match OS version with regex '{}': {}", rules.osVersion, e.what());
             }
 
             return true;
@@ -455,8 +437,8 @@ namespace neko::minecraft {
 
                 if (rules.contains("features") && rules["features"].is_object()) {
                     auto features = rules["features"];
-                    rulesMap.featuresIsDemoUser = features.value("isDemoUser", false);
-                    rulesMap.featuresHasCustomResolution = features.value("hasCustomResolution", false);
+                    rulesMap.isDemoUser = features.value("isDemoUser", false);
+                    rulesMap.hasCustomResolution = features.value("hasCustomResolution", false);
                     featuresOk = checkFeatures(rulesMap, cfg);
                 }
 
@@ -473,8 +455,8 @@ namespace neko::minecraft {
 
         void uncompress(const std::string &zipFilePath, const std::string &destDir) {
             archive::ExtractConfig config{
-                .destDir = destDir,
                 .inputArchivePath = zipFilePath,
+                .destDir = destDir,
                 .overwrite = true};
             try {
                 archive::zip::extract(config);
@@ -513,18 +495,18 @@ namespace neko::minecraft {
                     // download the file if it does not exist or is not a regular file
                     if (!std::filesystem::is_regular_file(it.path)) {
                         if (i == 0) {
-                            log::Warn(log::SrcLoc::current(), "Archives not exists , path : %s , ready to download", it.path.c_str());
+                            log::warn({}, "Archives not exists , path : {} , ready to download", it.path);
                         }
 
                         try {
                             downloadTask(it);
                         } catch (const ex::NetworkError &e) {
                             if (i >= maxRetries - 1) {
-                                log::Error(log::SrcLoc::current(), "Archives download failed after multiple attempts, path : %s , sha1 : %s", it.path.c_str(), it.sha1.c_str());
+                                log::error({}, "Archives download failed after multiple attempts, path : {} , sha1 : {}", it.path, it.sha1);
                                 throw;
                             }
 
-                            log::Error(log::SrcLoc::current(), "Archives download failed, path: %s, sha1: %s, error: %s", it.path.c_str(), it.sha1.c_str(), e.what());
+                            log::error({}, "Archives download failed, path: {} , sha1: {} , error: {}", it.path, it.sha1, e.what());
                             continue;
                         }
                     }
@@ -538,31 +520,26 @@ namespace neko::minecraft {
                             std::filesystem::remove(it.path);
                         } catch (const std::filesystem::filesystem_error &e) {
                             if (i >= maxRetries - 1) {
-                                throw ex::FileError{
-                                    "Failed to remove file after multiple attempts, path: " + it.path + ", error: " + e.what(),
-                                    ex::ExceptionExtensionInfo{}};
+                                throw ex::FileError{"Failed to remove file after multiple attempts, path: " + it.path + ", error: " + e.what()};
                             }
-                            log::Error(log::SrcLoc::current(),
-                                       "Failed to remove file, path: %s, error code: %d, error: %s. Will retry. (attempt %u/%u)",
-                                       it.path.c_str(), e.code().value(), e.what(), i + 1, maxRetries);
+                            log::error({}, "Failed to remove file, path: {} , error code: {} , error: {}. Will retry. (attempt {}/{})",
+                                       it.path, e.code().value(), e.what(), i + 1, maxRetries);
                             continue;
                         }
                         // remove successful
 
                         // if failed to max retries, throw an error
                         if (i >= maxRetries - 1) {
-                            log::Error(log::SrcLoc::current(), "Archives hash match failed after multiple attempts, path : %s , sha1 : %s", it.path.c_str(), it.sha1.c_str());
-                            throw ex::FileError{
-                                "Archives hash match failed after multiple attempts, ex sha1: " + it.sha1 + ", sha1: " + hash + ", path: " + it.path,
-                                ex::ExceptionExtensionInfo{}};
+                            log::error({}, "Archives hash match failed after multiple attempts, path : {} , sha1 : {}", it.path, it.sha1);
+                            throw ex::FileError{"Archives hash match failed after multiple attempts, ex sha1: " + it.sha1 + ", sha1: " + hash + ", path: " + it.path};
                         }
                         // retry again
-                        log::Warn(log::SrcLoc::current(), "Archives hash not match , try the download again, ex sha1 : %s , sha1 : %s , path : %s", it.sha1.c_str(), hash.c_str(), it.path.c_str());
+                        log::warn({}, "Archives hash not match , try the download again, ex sha1 : {} , sha1 : {} , path : {}", it.sha1, hash, it.path);
                         continue;
                     }
 
                     // looks good, break the auto retry loop
-                    log::Debug(log::SrcLoc::current(), "Archives exists and hash match , path : %s , sha1 : %s", it.path.c_str(), it.sha1.c_str());
+                    log::debug({}, "Archives exists and hash match , path : {} , sha1 : {}", it.path, it.sha1);
                     break;
                 }
             }
@@ -574,12 +551,12 @@ namespace neko::minecraft {
             for (const auto &it : arguments) {
 
                 if (it.is_string()) {
-                    log::Debug(log::SrcLoc::current(), "Push string : %s", it.get<std::string>().c_str());
+                    log::debug({}, "Push string : {}", it.get<std::string>());
                     result.push_back(it.get<std::string>());
                     continue;
                 }
                 if (!it.is_object()) {
-                    log::Warn(log::SrcLoc::current(), "Unexpected type (not object and not string): %s", it.type_name());
+                    log::warn({}, "Unexpected type (not object and not string): {}", it.type_name());
                     continue;
                 }
                 if (!it.contains("value"))
@@ -623,7 +600,7 @@ namespace neko::minecraft {
                     continue;
 
                 if (!lib.contains("name")) {
-                    log::Warn(log::SrcLoc::current(), "Library missing required 'name' field: %s", lib.dump().c_str());
+                    log::warn({}, "Library missing required 'name' field: {}", lib.dump());
                     continue;
                 }
 
@@ -639,7 +616,7 @@ namespace neko::minecraft {
                     artifactMap.artifact.size = artifactJson.value("size", 0U);
 
                     if (artifactMap.artifact.path.empty() || artifactMap.artifact.url.empty() || artifactMap.artifact.sha1.empty()) {
-                        log::Warn(log::SrcLoc::current(), "Library artifact missing required fields (path, url, sha1): %s", lib.dump().c_str());
+                        log::warn({}, "Library artifact missing required fields (path, url, sha1): {}", lib.dump());
                         continue;
                     }
 
@@ -667,7 +644,7 @@ namespace neko::minecraft {
                         if (!cfg.tolerantMode) {
                             throw;
                         }
-                        log::Error(log::SrcLoc::current(), "Failed to checkArchives , error : %s", e.what());
+                        log::error({}, "Failed to checkArchives , error : {}", e.what());
                     }
                 }
 
@@ -678,7 +655,7 @@ namespace neko::minecraft {
 
                 // Note: Forge may not include fields like "downloads", so it cannot be repaired; just try to add it directly
                 std::string path = librariesPath + "/" + constructPath(lib.value("name", ""));
-                nlog::Debug(log::SrcLoc::current(), "Push path : %s", path.c_str());
+                log::debug({}, "Push path : {}", path);
                 librariesPaths.push_back(path);
             }
             return librariesPaths;
@@ -687,12 +664,11 @@ namespace neko::minecraft {
         /**
          * @brief Downloads the Authlib Injector JAR file
          * @param authlibPath The path where the Authlib Injector JAR file should be saved.
-         * @param configIni The configuration INI file to save the Authlib Injector SHA256 hash.
          * @throws ex::NetworkError if the download fails
          * @throws ex::Parse if the JSON response cannot be parsed correctly.
          * @throws ex::FileError if the downloaded file's SHA256 hash does not match the expected value.
          */
-        void downloadAuthlibInjector(const std::string &authlibPath, CSimpleIniA &configIni) {
+        void downloadAuthlibInjector(const std::string &authlibPath) {
             log::autoLog log;
 
             auto url = network::buildUrl(lc::api::authlib::injector::latest, lc::api::authlib::injector::downloadHost);
@@ -700,14 +676,11 @@ namespace neko::minecraft {
             network::RequestConfig reqConfig{
                 .url = url,
                 .method = network::RequestType::Get,
-                .requestId = "minecraft-authlib-injector-latest"
-            };
+                .requestId = "minecraft-authlib-injector-latest"};
 
-            auto res = net.executeWithRetry(reqConfig);
+            auto res = net.executeWithRetry({reqConfig});
             if (!res.isSuccess() || !res.hasContent()) {
-                throw ex::NetworkError{
-                    "Failed to Get latest Authlib Injector version, error: " + res.errorMessage,
-                    ex::ExceptionExtensionInfo{}};
+                throw ex::NetworkError{"Failed to Get latest Authlib Injector version, error: " + res.errorMessage};
             }
 
             nlohmann::json authlibVersionInfo;
@@ -719,57 +692,50 @@ namespace neko::minecraft {
                 downloadUrl = authlibVersionInfo.at("download_url").get<std::string>();
                 checksumSha256 = authlibVersionInfo.at("checksums").at("sha256").get<std::string>();
             } catch (const nlohmann::json::parse_error &e) {
-                throw ex::Parse{
-                    "Failed to parse Authlib Injector version info, error: " + std::string(e.what()),
-                    ex::ExceptionExtensionInfo{}};
+                throw ex::Parse{"Failed to parse Authlib Injector version info, error: " + std::string(e.what())};
             } catch (const nlohmann::json::out_of_range &e) {
-                throw ex::Parse{
-                    "Authlib Injector version info does not contain 'download_url', error: " + std::string(e.what()),
-                    ex::ExceptionExtensionInfo{}};
+                throw ex::Parse{"Authlib Injector version info does not contain 'download_url', error: " + std::string(e.what())};
             }
 
             network::RequestConfig downloadConfig{
                 .url = downloadUrl,
                 .method = network::RequestType::DownloadFile,
-                .fileName = authlibPath,
-                .requestId = "minecraft-authlib-injector-download"
-            };
+                .requestId = "minecraft-authlib-injector-download",
+                .fileName = authlibPath};
 
-            auto downloadRes = net.executeWithRetry(downloadConfig);
+            auto downloadRes = net.executeWithRetry({downloadConfig});
             if (!downloadRes.isSuccess()) {
-                throw ex::NetworkError{
-                    "Failed to download Authlib Injector, error: " + downloadRes.errorMessage,
-                    ex::ExceptionExtensionInfo{}};
+                throw ex::NetworkError{"Failed to download Authlib Injector, error: " + downloadRes.errorMessage};
             }
 
             auto hash = util::hash::hashFile(authlibPath, util::hash::Algorithm::sha256);
             if (hash != checksumSha256) {
-                throw ex::FileError{
-                    "Downloaded Authlib Injector hash does not match expected SHA256, expected: " + checksumSha256 + ", got: " + hash,
-                    ex::ExceptionExtensionInfo{}};
+                throw ex::FileError{"Downloaded Authlib Injector hash does not match expected SHA256, expected: " + checksumSha256 + ", got: " + hash};
             }
 
             // Save the checksum to the config file
-            neko::ClientConfig cfg(configIni);
-            cfg.minecraft.authlibSha256 = checksumSha256;
-            cfg.save(configIni, info::app::getConfigFileName());
-            log::Info(log::SrcLoc::current(), "Authlib Injector downloaded successfully: %s , hash sha256 : %s", authlibPath.c_str(), checksumSha256.c_str());
+            bus::config::updateClientConfig(
+                [&](neko::ClientConfig &cfg) {
+                    cfg.minecraft.authlibSha256 = checksumSha256.c_str();
+            });
+            bus::config::save(app::getConfigFileName());
+            log::info({}, "Authlib Injector downloaded successfully: {} , hash sha256 : {}", authlibPath, checksumSha256);
         }
 
-        std::vector<std::string> getAuthlibVector(const std::string &minecraftDir, const LauncherMinecraftConfig &cfg, CSimpleIniA &configIni = core::getConfigObj()) {
+        std::vector<std::string> getAuthlibVector(const std::string &minecraftDir, const LauncherMinecraftConfig &cfg) {
 
             // authlib meta prefetched
-            std::string authlibPrefetched = cfg.authlibPrefetched;
+            std::string authlibPrefetched = cfg.authlib.prefetched;
             // Since the config file may add escape backslashes, remove them before use
             authlibPrefetched.erase(std::remove(authlibPrefetched.begin(), authlibPrefetched.end(), '\\'), authlibPrefetched.end());
 
             // /path/to/.minecraft/<authlibName> (authlib-injector.jar)
-            std::string authlibPath = minecraftDir + "/" + cfg.authlibName;
+            std::string authlibPath = minecraftDir + "/" + cfg.authlib.name;
 
             auto hash = util::hash::hashFile(authlibPath, util::hash::Algorithm::sha256);
 
             if (!std::filesystem::exists(authlibPath)) {
-                downloadAuthlibInjector(authlibPath, configIni);
+                downloadAuthlibInjector(authlibPath);
             }
 
             if (!cfg.tolerantMode) {
@@ -777,11 +743,9 @@ namespace neko::minecraft {
                     try {
                         std::filesystem::remove(authlibPath);
                     } catch (const std::filesystem::filesystem_error &e) {
-                        throw ex::FileError{
-                            "Failed to remove file: " + authlibPath + ", error code: " + std::to_string(e.code()) ", error: " + e.what(),
-                            ex::ExceptionExtensionInfo{}};
+                        throw ex::FileError{"Failed to remove file: " + authlibPath + ", error code: " + std::to_string(e.code().value()) + ", error: " + e.what()};
                     }
-                    downloadAuthlibInjector(authlibPath, configIni);
+                    downloadAuthlibInjector(authlibPath);
                 }
             }
 
@@ -794,42 +758,9 @@ namespace neko::minecraft {
 
     } // namespace internal
 
-    /// @throws ex::FileError if the minecraft folder is not a directory or does not exist
-    /// @throws ex::Parse if the minecraft version json is invalid or does not contain required fields
-    /// @throws ex::OutOfRange if the minecraft version json does not contain required keys
-    /// @throws ex::NetworkError if the download fails or the file hash does not match
-    /// @brief Launches Minecraft with the specified configuration.
-    inline void launcherMinecraft(neko::ClientConfig cfg) {
-
-        auto resolution = util::check::matchResolution(cfg.minecraft.customResolution);
-        LauncherMinecraftConfig launcherCfg {
-            .minecraftFolder = cfg.minecraft.minecraftFolder,
-            .javaPath = cfg.minecraft.javaPath,
-            .playerName = cfg.minecraft.playerName,
-            .uuid = cfg.minecraft.uuid,
-            .accessToken = cfg.minecraft.accessToken,
-            .targetVersion = cfg.minecraft.targetVersion,
-            .authlibPrefetched = cfg.minecraft.authlibPrefetched,
-            .authlibName = cfg.minecraft.authlibName,
-            .authlib = {
-                .sha256 = cfg.minecraft.authlibSha256
-            },
-            .isDemoUser = cfg.minecraft.isDemoUser,
-            .hasCustomResolution = resolution.has_value(),
-            .tolerantMode = cfg.minecraft.tolerantMode
-        };
-        if (resolution.has_value()) {
-            launcherCfg.resolutionWidth = resolution.value().width;
-            launcherCfg.resolutionHeight = resolution.value().height;
-        }
-
-        auto command = neko::minecraft::getLauncherMinecraftCommand(launcherCfg);
-        core::launcherProcess(command, onStart, onExit, internal::getAbsoluteMinecraftPath(cfg.minecraft.minecraftFolder));
-    }
-
     // may throw neko::ex FileError, Parse, OutOfRange , NetworkError
     inline std::string getLauncherMinecraftCommand(const LauncherMinecraftConfig &cfg) {
-        nlog::autoLog log;
+        log::autoLog log;
 
         // minecraft absolute path (e.g /path/to/.minecraft)
         const std::string minecraftDir = internal::getAbsoluteMinecraftPath(cfg.minecraftFolder);
@@ -837,7 +768,7 @@ namespace neko::minecraft {
         // a <version>
         const std::string minecraftVersionName = cfg.targetVersion.empty() ? internal::getMinecraftVersionName(minecraftDir + "/versions") : cfg.targetVersion;
 
-        log::Info("minecraft version name : " + minecraftVersionName);
+        log::info("minecraft version name : " + minecraftVersionName);
 
         // /path/to/.minecraft/versions/<version>
         const std::string minecraftVersionDir = internal::buildMinecraftVersionDir(minecraftDir + "/versions/", minecraftVersionName);
@@ -849,15 +780,13 @@ namespace neko::minecraft {
 
         const std::string minecraftVersionContent = internal::getMinecraftVersionJsonContent(minecraftVersionJsonPath);
 
-        log::Info(log::SrcLoc::current(), "version file : %s ,content len : %zu", minecraftVersionJsonPath.c_str(), minecraftVersionContent.length());
+        log::info({}, "version file : {} ,content len : {}", minecraftVersionJsonPath, minecraftVersionContent.length());
 
         nlohmann::json minecraftVersionJsonObj;
         try {
             minecraftVersionJsonObj = nlohmann::json::parse(minecraftVersionContent);
         } catch (const nlohmann::json::parse_error &e) {
-            throw ex::Parse{
-                "Failed to parse minecraft version json: ", std::string(e.what()) + ", file : " + minecraftVersionJsonPath,
-                ex::ExceptionExtensionInfo{}};
+            throw ex::Parse{"Failed to parse minecraft version json: " + std::string(e.what()) + ", file : " + minecraftVersionJsonPath};
         }
 
         nlohmann::json
@@ -871,14 +800,12 @@ namespace neko::minecraft {
             gameArguments = baseArguments.at("game");
             libraries = minecraftVersionJsonObj.at("libraries");
         } catch (const nlohmann::json::out_of_range &e) {
-            throw ex::OutOfRange{
-                std::string("Required key not found in version json: ") + minecraftVersionJsonPath + ", error: " + e.what(),
-                ex::ExceptionExtensionInfo{}};
+            throw ex::OutOfRange{std::string("Required key not found in version json: ") + minecraftVersionJsonPath + ", error: " + e.what()};
         }
 
         // jvm
         const std::string
-            javaPath = getAbsoluteFilePath(cfg.javaPath),
+            javaPath = internal::getAbsoluteFilePath(cfg.javaPath),
             mainClass = minecraftVersionJsonObj.value("mainClass", "net.minecraft.client.main.Main"),
             // /path/to/.minecraft/versions/<version>/<version>.jar
             clientJarPath = minecraftVersionDir + "/" + minecraftVersionJsonObj.value("jar", "") + ".jar",
@@ -904,9 +831,7 @@ namespace neko::minecraft {
         try {
             gameAssetsId = minecraftVersionJsonObj.at("assetIndex").at("id").get<std::string>();
         } catch (const nlohmann::json::out_of_range &e) {
-            throw ex::OutOfRange{
-                std::string("AssetIndex id not found in version json: ") + minecraftVersionJsonPath,
-                ex::ExceptionExtensionInfo{}};
+            throw ex::OutOfRange{std::string("AssetIndex id not found in version json: ") + minecraftVersionJsonPath};
         }
 
         internal::assertDirectoryExists(librariesPath, "libraries directory not exists: ");
@@ -928,7 +853,7 @@ namespace neko::minecraft {
             {{"${natives_directory}", nativesPath},
              {"${library_directory}", librariesPath},
              {"${launcher_name}", "Neko Launcher"},
-             {"${launcher_version}", info::app::getVersion()},
+             {"${launcher_version}", app::getVersion()},
              {"${classpath}", classPath}});
 
         // game
@@ -962,19 +887,16 @@ namespace neko::minecraft {
             if (memoryInfo.has_value()) {
                 neko::uint64 totalBytes = memoryInfo.value().totalBytes;
                 if (totalBytes < cfg.needMemoryLimit * oneGbyte) {
-                    log::Err(log::SrcLoc::current(), "system memory is not enough , total memory : %zu GB (%zu MB) , need : %d GB", totalBytes / oneGbyte, totalBytes / oneMbyte, cfg.needMemoryLimit);
-                    throw ex::Runtime(std::string("System memory is not enough , total memory : ") + std::to_string(totalBytes / oneGbyte) + " GB ( " + std::to_string(totalBytes / oneMbyte) + "MB ) , need : " + std::to_string(cfg.needMemoryLimit) + " GB",
-                                      ex::ExceptionExtensionInfo{});
+                    log::error({}, "system memory is not enough , total memory : {} GB ({} MB) , need : {} GB", totalBytes / oneGbyte, totalBytes / oneMbyte, cfg.needMemoryLimit);
+                    throw ex::Runtime(std::string("System memory is not enough , total memory : ") + std::to_string(totalBytes / oneGbyte) + " GB ( " + std::to_string(totalBytes / oneMbyte) + "MB ) , need : " + std::to_string(cfg.needMemoryLimit) + " GB");
                 }
             }
 
             neko::uint64 maxLimit = std::max(cfg.maxMemoryLimit, cfg.needMemoryLimit);
-            neko::uint64 minLimit = std::min(cfg.minMemoryLimit, maxLimit);
+            neko::uint64 minLimit = std::min(neko::uint64(cfg.minMemoryLimit), maxLimit);
 
             if (minLimit < 0 || maxLimit < 0) {
-                throw ex::InvalidArgument{
-                    "Memory limit cannot be negative, minLimit: " + std::to_string(minLimit) + ", maxLimit: " + std::to_string(maxLimit),
-                    ex::ExceptionExtensionInfo{}};
+                throw ex::InvalidArgument{"Memory limit cannot be negative, minLimit: " + std::to_string(minLimit) + ", maxLimit: " + std::to_string(maxLimit)};
             }
 
             return MemoryLimits{
@@ -1030,12 +952,50 @@ namespace neko::minecraft {
 
         // Mask the game token before logging to avoid security issues.
         internal::applyPlaceholders(gameArgumentsVector, {{gameAccessToken, "***********"}});
-        log::Debug(log::SrcLoc::current(), "command len : %zu", command.size());
-        log::Debug(log::SrcLoc::current(), "jvm optimize arguments : %s", joinArgs(jvmOptimizeArguments).c_str());
-        log::Debug(log::SrcLoc::current(), "jvm arguments : %s", joinArgs(jvmArgumentsVector).c_str());
-        log::Debug(log::SrcLoc::current(), "game arguments : %s", joinArgs(gameArgumentsVector).c_str());
-        log::Debug(log::SrcLoc::current(), "authlib injector arguments : %s", joinArgs(authlibInjectorVector).c_str());
-
+        log::debug({}, "command len : {}", command.size());
+        log::debug({}, "jvm optimize arguments : {}", joinArgs(jvmOptimizeArguments));
+        log::debug({}, "jvm arguments : {}", joinArgs(jvmArgumentsVector));
+        log::debug({}, "game arguments : {}", joinArgs(gameArgumentsVector));
+        log::debug({}, "authlib injector arguments : {}", joinArgs(authlibInjectorVector));
         return command;
+    }
+
+    /// @throws ex::FileError if the minecraft folder is not a directory or does not exist
+    /// @throws ex::Parse if the minecraft version json is invalid or does not contain required fields
+    /// @throws ex::OutOfRange if the minecraft version json does not contain required keys
+    /// @throws ex::NetworkError if the download fails or the file hash does not match
+    /// @brief Launches Minecraft with the specified configuration.
+    inline void launcherMinecraft(neko::ClientConfig cfg) {
+
+        auto resolution = util::check::matchResolution(cfg.minecraft.customResolution);
+        LauncherMinecraftConfig launcherCfg{
+            .minecraftFolder = cfg.minecraft.minecraftFolder,
+            .targetVersion = cfg.minecraft.targetVersion,
+            .javaPath = cfg.minecraft.javaPath,
+            .playerName = cfg.minecraft.playerName,
+            .uuid = cfg.minecraft.uuid,
+            .accessToken = cfg.minecraft.accessToken,
+
+            .tolerantMode = cfg.minecraft.tolerantMode,
+            .isDemoUser = false,
+            .hasCustomResolution = resolution.has_value(),
+            .authlib = {
+                .enabled = true,
+                .prefetched = cfg.minecraft.authlibPrefetched,
+                .name = "authlib-injector.jar",
+                .sha256 = cfg.minecraft.authlibSha256,
+            }
+            };
+        if (resolution.has_value()) {
+            launcherCfg.resolutionWidth = resolution.value().width;
+            launcherCfg.resolutionHeight = resolution.value().height;
+        }
+
+        auto command = neko::minecraft::getLauncherMinecraftCommand(launcherCfg);
+        core::ProcessInfo pi{
+            .command = command,
+            .workingDir = internal::getAbsoluteMinecraftPath(cfg.minecraft.minecraftFolder)
+        };
+        core::launcherProcess(pi);
     }
 } // namespace neko::minecraft

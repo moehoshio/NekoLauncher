@@ -4,8 +4,20 @@ project(NekoLc_Minecraft_test LANGUAGES CXX)
 enable_testing()
 include(GoogleTest)
 
-# Auth
-add_executable(NekoLcMinecraft_auth_test "${CMAKE_CURRENT_SOURCE_DIR}/auth_test.cpp")
-target_link_libraries(NekoLcMinecraft_auth_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)
-target_compile_features(NekoLcMinecraft_auth_test PRIVATE cxx_std_20)
-gtest_discover_tests(NekoLcMinecraft_auth_test)
+# Download Source
+add_executable(NekoLc_Minecraft_DownloadSource_test "${CMAKE_CURRENT_SOURCE_DIR}/downloadSource_test.cpp")
+target_link_libraries(NekoLc_Minecraft_DownloadSource_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)
+target_compile_features(NekoLc_Minecraft_DownloadSource_test PRIVATE cxx_std_20)
+gtest_discover_tests(NekoLc_Minecraft_DownloadSource_test)
+
+# Auth Minecraft
+add_executable(NekoLc_Minecraft_authMinecraft_test "${CMAKE_CURRENT_SOURCE_DIR}/authMinecraft_test.cpp")
+target_link_libraries(NekoLc_Minecraft_authMinecraft_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)
+target_compile_features(NekoLc_Minecraft_authMinecraft_test PRIVATE cxx_std_20)
+gtest_discover_tests(NekoLc_Minecraft_authMinecraft_test)
+
+# Launcher Minecraft (commented out due to compilation issues with launcherMinecraft.hpp API version mismatch)
+add_executable(NekoLc_Minecraft_launcherMinecraft_test "${CMAKE_CURRENT_SOURCE_DIR}/launcherMinecraft_test.cpp")
+target_link_libraries(NekoLc_Minecraft_launcherMinecraft_test PRIVATE Neko_Commons Neko_Commons_Other GTest::gtest GTest::gtest_main)
+target_compile_features(NekoLc_Minecraft_launcherMinecraft_test PRIVATE cxx_std_20)
+gtest_discover_tests(NekoLc_Minecraft_launcherMinecraft_test)
