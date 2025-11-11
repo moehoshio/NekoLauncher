@@ -248,14 +248,14 @@ TEST_F(EventBusTest, PublishAfterWithRValue) {
 TEST_F(EventBusTest, ScheduleTaskAtTimePoint) {
     std::atomic<bool> taskExecuted{false};
     
-    auto futureTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+    auto futureTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(200);
     auto eventId = scheduleTask(futureTime, [&taskExecuted]() {
         taskExecuted = true;
     });
     
     ASSERT_NE(eventId, 0);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     ASSERT_FALSE(taskExecuted);
     
     // Wait with polling
