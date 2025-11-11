@@ -56,7 +56,7 @@ namespace neko::minecraft::auth {
         };
         auto result = net.execute(reqConfig);
         if (!result.isSuccess() || !result.hasContent()) {
-            log::error({}, "Failed to fetch authlib data: {}", result.errorMessage);
+            log::error("Failed to fetch authlib data: {}", {} ,result.errorMessage);
             throw ex::NetworkError("Failed to fetch authlib data");
         }
 
@@ -64,7 +64,7 @@ namespace neko::minecraft::auth {
         try {
             resJson = nlohmann::json::parse(result.content);
         } catch (const nlohmann::json::parse_error &e) {
-            log::error({}, "Failed to parse authlib response: {}", e.what());
+            log::error("Failed to parse authlib response: {}", {} , e.what());
             throw ex::Parse("Failed to parse authlib response: " + std::string(e.what()));
         }
         authlibPrefetched = util::base64::base64Encode(resJson.dump());
@@ -116,7 +116,7 @@ namespace neko::minecraft::auth {
             auto refResult = net.execute(reqConfig);
 
             if (!refResult.isSuccess() || !refResult.hasContent()) {
-                log::error({}, "Failed to refresh token, {}", refResult.errorMessage);
+                log::error("Failed to refresh token, {}", {} , refResult.errorMessage);
                 throw ex::NetworkError("Failed to refresh token , " + refResult.errorMessage);
             }
 
@@ -126,14 +126,14 @@ namespace neko::minecraft::auth {
             try {
                 refJsonData = nlohmann::json::parse(refResult.content);
             } catch (const nlohmann::json::parse_error &e) {
-                log::error({}, "Failed to parse refresh token response: {}", e.what());
+                log::error("Failed to parse refresh token response: {}", {} , e.what());
                 throw ex::Parse("Failed to parse refresh token response : " + std::string(e.what()));
             }
 
             auto error = refJsonData.value("error", ""),
                  errorMsg = refJsonData.value("errorMessage", "");
             if (!error.empty() || !errorMsg.empty()) {
-                log::error({} , "Error refreshing token: {} - {}" ,error , errorMsg);
+                log::error("Error refreshing token: {} - {}", {} ,error , errorMsg);
                 throw ex::NetworkError("Error refreshing token: " + error + " - " + errorMsg);
             }
 
@@ -225,7 +225,7 @@ namespace neko::minecraft::auth {
             auto netResult = net.execute(reqConfig);
 
             if (!netResult.isSuccess() || !netResult.hasContent()) {
-                log::error({}, "Failed to authenticate: {}", netResult.errorMessage);
+                log::error("Failed to authenticate: {}", {} ,netResult.errorMessage);
                 result.error = lang::tr(std::string(lang::keys::error::networkError));
                 return result;
             }
@@ -234,7 +234,7 @@ namespace neko::minecraft::auth {
             try {
                 resData = nlohmann::json::parse(netResult.content);
             } catch (const nlohmann::json::parse_error &e) {
-                log::error({}, "Failed to parse authentication response: {}", e.what());
+                log::error("Failed to parse authentication response: {}", {} , e.what());
                 result.error = lang::tr(std::string(lang::keys::error::parseError)) + e.what();
                 return result;
             }

@@ -19,6 +19,8 @@
 #include <neko/system/memoryinfo.hpp>
 #include <neko/system/platform.hpp>
 
+#include <neko/log/nlog.hpp>
+
 // NekoLc project
 #include "neko/app/appinfo.hpp"
 #include "neko/app/clientConfig.hpp"
@@ -403,7 +405,7 @@ namespace neko::minecraft {
                 if (!cfg.tolerantMode) {
                     throw;
                 }
-                log::warn({}, "Failed to match OS version with regex '{}': {}", rules.osVersion, e.what());
+                log::warn("Failed to match OS version with regex '{}': {}", {} , rules.osVersion, e.what());
             }
 
             return true;
@@ -495,18 +497,18 @@ namespace neko::minecraft {
                     // download the file if it does not exist or is not a regular file
                     if (!std::filesystem::is_regular_file(it.path)) {
                         if (i == 0) {
-                            log::warn({}, "Archives not exists , path : {} , ready to download", it.path);
+                            log::warn("Archives not exists , path : {} , ready to download", {} ,it.path);
                         }
 
                         try {
                             downloadTask(it);
                         } catch (const ex::NetworkError &e) {
                             if (i >= maxRetries - 1) {
-                                log::error({}, "Archives download failed after multiple attempts, path : {} , sha1 : {}", it.path, it.sha1);
+                                log::error("Archives download failed after multiple attempts, path : {} , sha1 : {}", {} , it.path, it.sha1);
                                 throw;
                             }
 
-                            log::error({}, "Archives download failed, path: {} , sha1: {} , error: {}", it.path, it.sha1, e.what());
+                            log::error("Archives download failed, path: {} , sha1: {} , error: {}", {} , it.path, it.sha1, e.what());
                             continue;
                         }
                     }
@@ -522,24 +524,24 @@ namespace neko::minecraft {
                             if (i >= maxRetries - 1) {
                                 throw ex::FileError{"Failed to remove file after multiple attempts, path: " + it.path + ", error: " + e.what()};
                             }
-                            log::error({}, "Failed to remove file, path: {} , error code: {} , error: {}. Will retry. (attempt {}/{})",
-                                       it.path, e.code().value(), e.what(), i + 1, maxRetries);
+                            log::error("Failed to remove file, path: {} , error code: {} , error: {}. Will retry. (attempt {}/{})",
+                                       {} , it.path, e.code().value(), e.what(), i + 1, maxRetries);
                             continue;
                         }
                         // remove successful
 
                         // if failed to max retries, throw an error
                         if (i >= maxRetries - 1) {
-                            log::error({}, "Archives hash match failed after multiple attempts, path : {} , sha1 : {}", it.path, it.sha1);
+                            log::error("Archives hash match failed after multiple attempts, path : {} , sha1 : {}", {} , it.path, it.sha1);
                             throw ex::FileError{"Archives hash match failed after multiple attempts, ex sha1: " + it.sha1 + ", sha1: " + hash + ", path: " + it.path};
                         }
                         // retry again
-                        log::warn({}, "Archives hash not match , try the download again, ex sha1 : {} , sha1 : {} , path : {}", it.sha1, hash, it.path);
+                        log::warn("Archives hash not match , try the download again, ex sha1 : {} , sha1 : {} , path : {}", {} , it.sha1, hash, it.path);
                         continue;
                     }
 
                     // looks good, break the auto retry loop
-                    log::debug({}, "Archives exists and hash match , path : {} , sha1 : {}", it.path, it.sha1);
+                    log::debug("Archives exists and hash match , path : {} , sha1 : {}", {} , it.path, it.sha1);
                     break;
                 }
             }
@@ -551,12 +553,12 @@ namespace neko::minecraft {
             for (const auto &it : arguments) {
 
                 if (it.is_string()) {
-                    log::debug({}, "Push string : {}", it.get<std::string>());
+                    log::debug("Push string : {}", {} , it.get<std::string>());
                     result.push_back(it.get<std::string>());
                     continue;
                 }
                 if (!it.is_object()) {
-                    log::warn({}, "Unexpected type (not object and not string): {}", it.type_name());
+                    log::warn("Unexpected type (not object and not string): {}", {} , it.type_name());
                     continue;
                 }
                 if (!it.contains("value"))
@@ -600,7 +602,7 @@ namespace neko::minecraft {
                     continue;
 
                 if (!lib.contains("name")) {
-                    log::warn({}, "Library missing required 'name' field: {}", lib.dump());
+                    log::warn("Library missing required 'name' field: {}", {} , lib.dump());
                     continue;
                 }
 
@@ -616,7 +618,7 @@ namespace neko::minecraft {
                     artifactMap.artifact.size = artifactJson.value("size", 0U);
 
                     if (artifactMap.artifact.path.empty() || artifactMap.artifact.url.empty() || artifactMap.artifact.sha1.empty()) {
-                        log::warn({}, "Library artifact missing required fields (path, url, sha1): {}", lib.dump());
+                        log::warn("Library artifact missing required fields (path, url, sha1): {}", {} , lib.dump());
                         continue;
                     }
 
@@ -644,7 +646,7 @@ namespace neko::minecraft {
                         if (!cfg.tolerantMode) {
                             throw;
                         }
-                        log::error({}, "Failed to checkArchives , error : {}", e.what());
+                        log::error("Failed to checkArchives , error : {}", {} , e.what());
                     }
                 }
 
@@ -655,7 +657,7 @@ namespace neko::minecraft {
 
                 // Note: Forge may not include fields like "downloads", so it cannot be repaired; just try to add it directly
                 std::string path = librariesPath + "/" + constructPath(lib.value("name", ""));
-                log::debug({}, "Push path : {}", path);
+                log::debug("Push path : {}", {} , path);
                 librariesPaths.push_back(path);
             }
             return librariesPaths;
@@ -719,7 +721,7 @@ namespace neko::minecraft {
                     cfg.minecraft.authlibSha256 = checksumSha256.c_str();
             });
             bus::config::save(app::getConfigFileName());
-            log::info({}, "Authlib Injector downloaded successfully: {} , hash sha256 : {}", authlibPath, checksumSha256);
+            log::info("Authlib Injector downloaded successfully: {} , hash sha256 : {}", {} , authlibPath, checksumSha256);
         }
 
         std::vector<std::string> getAuthlibVector(const std::string &minecraftDir, const LauncherMinecraftConfig &cfg) {
@@ -780,7 +782,7 @@ namespace neko::minecraft {
 
         const std::string minecraftVersionContent = internal::getMinecraftVersionJsonContent(minecraftVersionJsonPath);
 
-        log::info({}, "version file : {} ,content len : {}", minecraftVersionJsonPath, minecraftVersionContent.length());
+        log::info("version file : {} ,content len : {}", {} , minecraftVersionJsonPath, minecraftVersionContent.length());
 
         nlohmann::json minecraftVersionJsonObj;
         try {
@@ -887,7 +889,7 @@ namespace neko::minecraft {
             if (memoryInfo.has_value()) {
                 neko::uint64 totalBytes = memoryInfo.value().totalBytes;
                 if (totalBytes < cfg.needMemoryLimit * oneGbyte) {
-                    log::error({}, "system memory is not enough , total memory : {} GB ({} MB) , need : {} GB", totalBytes / oneGbyte, totalBytes / oneMbyte, cfg.needMemoryLimit);
+                    log::error("system memory is not enough , total memory : {} GB ({} MB) , need : {} GB", {} , totalBytes / oneGbyte, totalBytes / oneMbyte, cfg.needMemoryLimit);
                     throw ex::Runtime(std::string("System memory is not enough , total memory : ") + std::to_string(totalBytes / oneGbyte) + " GB ( " + std::to_string(totalBytes / oneMbyte) + "MB ) , need : " + std::to_string(cfg.needMemoryLimit) + " GB");
                 }
             }
@@ -952,11 +954,11 @@ namespace neko::minecraft {
 
         // Mask the game token before logging to avoid security issues.
         internal::applyPlaceholders(gameArgumentsVector, {{gameAccessToken, "***********"}});
-        log::debug({}, "command len : {}", command.size());
-        log::debug({}, "jvm optimize arguments : {}", joinArgs(jvmOptimizeArguments));
-        log::debug({}, "jvm arguments : {}", joinArgs(jvmArgumentsVector));
-        log::debug({}, "game arguments : {}", joinArgs(gameArgumentsVector));
-        log::debug({}, "authlib injector arguments : {}", joinArgs(authlibInjectorVector));
+        log::debug("command len : {}", {} ,command.size());
+        log::debug("jvm optimize arguments : {}", {} ,joinArgs(jvmOptimizeArguments));
+        log::debug("jvm arguments : {}", {} ,joinArgs(jvmArgumentsVector));
+        log::debug("game arguments : {}", {} ,joinArgs(gameArgumentsVector));
+        log::debug("authlib injector arguments : {}", {} ,joinArgs(authlibInjectorVector));
         return command;
     }
 

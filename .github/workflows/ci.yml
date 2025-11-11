@@ -99,6 +99,22 @@ jobs:
               build_type: "Release",
               generators: "Unix Makefiles"
             }
+          - {
+              name: "macOS GCC Debug",
+              os: macos-latest,
+              cc: "gcc",
+              cxx: "g++",
+              build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "macOS GCC Release",
+              os: macos-latest,
+              cc: "gcc",
+              cxx: "g++",
+              build_type: "Release",
+              generators: "Unix Makefiles"
+            }
 
     steps:
     - name: Checkout

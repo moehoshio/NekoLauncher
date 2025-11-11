@@ -81,7 +81,7 @@ namespace neko::lang {
             std::string fileName = langFolder + "/" + lang + ".json";
             std::ifstream i(fileName);
             if (!std::filesystem::exists(fileName) || !i.is_open()) {
-                log::error({},"Language file : {} , does not exist or cannot be opened !", fileName);
+                log::error("Language file : {} , does not exist or cannot be opened !", {} ,fileName);
                 cachedJson = nlohmann::json::object();
                 return cachedJson;
             }
@@ -89,11 +89,11 @@ namespace neko::lang {
             try {
                 cachedJson = nlohmann::json::parse(i);
             } catch (const nlohmann::json::parse_error &e) {
-                log::error({},"Failed to parse language : {} , file : {}", e.what(), fileName);
+                log::error("Failed to parse language : {} , file : {}", {} , e.what(), fileName);
                 cachedJson = nlohmann::json::object();
                 return cachedJson;
             }
-            log::info({},"lang : {} , json is discarded : {}", lang, util::logic::boolTo(cachedJson.is_discarded()));
+            log::info("lang : {} , json is discarded : {}", {} , lang, util::logic::boolTo(cachedJson.is_discarded()));
             cachedLang = lang;
             cachedLangFolder = langFolder;
         }
@@ -121,7 +121,7 @@ namespace neko::lang {
         auto res = check(langFile);
 
         if (res == fallback) {
-            log::warn({}, "Failed to load key : {} for : {} , try to load default file", key, langFile.value("language", "Empty lang"));
+            log::warn("Failed to load key : {} for : {} , try to load default file", {} , key, langFile.value("language", "Empty lang"));
             return check(loadTranslations("en"));
         }
 

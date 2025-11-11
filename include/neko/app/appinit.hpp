@@ -85,7 +85,7 @@ namespace neko::app::init {
         bus::thread::setThreadCount(threadCount);
 
         log::setCurrentThreadName("Main Thread");
-        log::info({}, "Initializing thread pool with {} threads", threadCount);
+        log::info("Initializing thread pool with {} threads", {} , threadCount);
 
         auto ids = bus::thread::getWorkerIds();
 
@@ -99,7 +99,7 @@ namespace neko::app::init {
                     log::info("Hello thread " + threadName);
                 });
             } catch (const ex::OutOfRange &e) {
-                log::error({}, "Not Found Worker Thread {}", i_str);
+                log::error("Not Found Worker Thread {}", {} ,i_str);
             }
         }
     }
@@ -116,7 +116,8 @@ namespace neko::app::init {
 
     inline void configInfoPrint(const ClientConfig &config) {
 
-        log::info({}, "config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , useSysWindowFrame: {} , headBarKeepRight : {} , deviceID : {} , resourceVersion : {}",
+        log::info("config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , useSysWindowFrame: {} , headBarKeepRight : {} , deviceID : {} , resourceVersion : {}",
+                {},
                   config.main.lang,
                   config.main.backgroundType,
                   config.main.background,
@@ -127,17 +128,20 @@ namespace neko::app::init {
                   config.main.deviceID,
                   config.main.resourceVersion);
 
-        log::info({}, "config net : thread : {} , proxy : {}",
+        log::info("config net : thread : {} , proxy : {}",
+                  {},
                   config.net.thread,
                   config.net.proxy);
 
-        log::info({}, "config style : blurEffect : {} , blurRadius : {} , fontPointSize : {} , fontFamilies : {}",
+        log::info("config style : blurEffect : {} , blurRadius : {} , fontPointSize : {} , fontFamilies : {}",
+                  {},
                   config.style.blurEffect,
                   config.style.blurRadius,
                   config.style.fontPointSize,
                   config.style.fontFamilies);
 
-        log::info({}, "config dev : enable : {} , debug : {} , server : {} , tls : {}",
+        log::info("config dev : enable : {} , debug : {} , server : {} , tls : {}",
+                  {},
                   util::logic::boolTo<neko::cstr>(config.dev.enable),
                   util::logic::boolTo<neko::cstr>(config.dev.debug),
                   config.dev.server,
@@ -145,7 +149,8 @@ namespace neko::app::init {
 
         std::string accToken = config.minecraft.accessToken ? config.minecraft.accessToken : "";
         std::string maskToken = accToken.empty() ? "null" : "**********" + accToken.substr(accToken.size() - 4); // Hide accessToken for security
-        log::info({}, "config minecraft : folder : {} , javaPath : {} , account : {} , name : {} , uuid : {} , accessToken : {} , targetVersion : {} , maxMemory : {} , minMemory : {} , needMemory : {} , authlibName : {} , authlibPrefetched : {} , authlibSha256 : {} , tolerantMode : {} , customResolution : {} , joinServerAddress : {} , joinServerPort : {}",
+        log::info("config minecraft : folder : {} , javaPath : {} , account : {} , name : {} , uuid : {} , accessToken : {} , targetVersion : {} , maxMemory : {} , minMemory : {} , needMemory : {} , authlibName : {} , authlibPrefetched : {} , authlibSha256 : {} , tolerantMode : {} , customResolution : {} , joinServerAddress : {} , joinServerPort : {}",
+                  {},
                   config.minecraft.minecraftFolder,
                   config.minecraft.javaPath,
                   config.minecraft.account,
@@ -164,7 +169,8 @@ namespace neko::app::init {
                   config.minecraft.joinServerAddress,
                   config.minecraft.joinServerPort);
 
-        log::info({}, "config other : temp : {} ",
+        log::info("config other : temp : {} ",
+                  {} ,
                   config.other.tempFolder
                   );
     }
@@ -196,7 +202,7 @@ namespace neko::app::init {
                 .setUserAgent(userAgentStream.str())
                 .setProxy(proxy)
                 .setProtocol((dev && !tls) ? "http://" : "https://");
-            log::info({}, "Network initialized with UserAgent: {}, Proxy: {}, Protocol: {}", config.getUserAgent(), config.getProxy(), config.getProtocol());
+            log::info("Network initialized with UserAgent: {}, Proxy: {}, Protocol: {}", {}, config.getUserAgent(), config.getProxy(), config.getProtocol());
 
             log::info("Network::initialize : Starting test hosts...");
 
@@ -218,12 +224,12 @@ namespace neko::app::init {
                 auto result = net.executeWithRetry(cfg);
 
                 if (result.isSuccess()) {
-                    neko::log::info( {}, "Network::initialize() : Testing host available, host: {} , statusCode: {}", it, result.statusCode);
+                    neko::log::info( "Network::initialize() : Testing host available, host: {} , statusCode: {}", {} , it, result.statusCode);
                     config.pushAvailableHost(std::string(it));
                     continue;
                 }
 
-                neko::log::warn({}, "Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", it, std::to_string(result.statusCode), result.errorMessage);
+                neko::log::warn("Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", {} , it, std::to_string(result.statusCode), result.errorMessage);
             }
         });
     }

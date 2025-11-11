@@ -88,7 +88,7 @@ namespace neko::core {
             }
 
         } catch (const std::system_error &e) {
-            log::error({}, "Launcher error: {} , code: {}", e.what(), e.code().value());
+            log::error("Launcher error: {} , code: {}", {} , e.what(), e.code().value());
             throw ex::Runtime("Failed to launch process : " + std::string(e.what()));
         }
     }
@@ -126,7 +126,7 @@ namespace neko::core {
 #endif
             proc.detach();
         } catch (const std::system_error &e) {
-            log::error({}, "Launcher error: {} , code: {}", e.what(), e.code().value());
+            log::error("Launcher error: {} , code: {}", {} , e.what(), e.code().value());
             throw ex::Runtime("Failed to launch process : " + std::string(e.what()));
         }
     }
