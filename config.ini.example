@@ -1,0 +1,54 @@
+[main]
+language = en
+backgroundType = image
+background = img/bg.png
+windowSize = 1280x720
+launcherMethod = 1
+useSystemWindowFrame = true
+headBarKeepRight = true
+resourceVersion = v1.0.0
+deviceID = 38912750-4ede-40cf-8559-f2f746ab2093
+
+
+[style]
+blurEffect = Animation
+blurRadius = 10
+fontPointSize = 10
+fontFamilies = 
+
+
+[net]
+thread = 0
+proxy = true
+
+
+[dev]
+enable = true
+debug = true
+server = auto
+tls = true
+
+
+[other]
+customTempDir = 
+
+
+[minecraft]
+minecraftFolder = ./.minecraft
+javaPath = 
+downloadSource = Official
+playerName = 
+account = 
+uuid = 
+accessToken = 
+targetVersion = 
+maxMemoryLimit = 2048
+minMemoryLimit = 1024
+needMemoryLimit = 1024
+authlibName = authlib-injector.jar
+authlibPrefetched = 
+authlibSha256 = 
+tolerantMode = false
+customResolution = 
+joinServerAddress = 
+joinServerPort = 25565

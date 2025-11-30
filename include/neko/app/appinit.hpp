@@ -44,10 +44,10 @@ namespace neko::app::init {
 
     inline void initLog() {
 
-        constexpr neko::cstr logDir = "logs";
-        constexpr neko::cstr logExtName = ".log";
-        constexpr neko::cstr debugLogName = "debug.log";
-        constexpr neko::cstr newDebugLogName = "new-debug.log";
+        std::string logDir = "logs";
+        std::string logExtName = ".log";
+        std::string debugLogName = "debug.log";
+        std::string newDebugLogName = "new-debug.log";
 
         auto cfg = bus::config::getClientConfig();
         bool
@@ -64,18 +64,18 @@ namespace neko::app::init {
 
         if (!dev) {
             log::setLevel(log::Level::Warn);
-            auto fileName = util::math::sum<std::string>(logDir, "/", util::time::getLocalTimeString("%Y-%m-%d-%H-%M-%S").value(), logExtName);
+            auto fileName = util::math::sum(logDir, "/", util::time::getLocalTimeString("%Y-%m-%d-%H-%M-%S").value(), logExtName);
             log::addFileAppender(fileName, false);
 
         } else if (dev && !debug) {
             log::setLevel(log::Level::Info);
-            auto fileName = util::math::sum<std::string>(logDir, "/", util::time::getLocalTimeString("%Y-%m-%d-%H-%M-%S").value(), logExtName);
+            auto fileName = util::math::sum(logDir, "/", util::time::getLocalTimeString("%Y-%m-%d-%H-%M-%S").value(), logExtName);
             log::addFileAppender(fileName, false);
 
         } else if (dev && debug) {
             log::setLevel(log::Level::Debug);
-            log::addFileAppender(util::math::sum<std::string>(logDir, "/", debugLogName), false);
-            log::addFileAppender(util::math::sum<std::string>(logDir, "/", newDebugLogName), true);
+            log::addFileAppender(util::math::sum(logDir, "/", debugLogName), false);
+            log::addFileAppender(util::math::sum(logDir, "/", newDebugLogName), true);
         }
     }
 

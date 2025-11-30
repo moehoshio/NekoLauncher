@@ -1,12 +1,13 @@
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#endif
+#endif // WIN32_LEAN_AND_MEAN
 #ifndef NOMINMAX
 #define NOMINMAX
-#endif
-#endif
+#endif // NOMINMAX
 #define _WIN32_WINNT 0x0601
+#endif // _WIN32
+
 
 #include <neko/log/nlog.hpp>
 #include <neko/schema/exception.hpp>

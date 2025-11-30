@@ -12,6 +12,7 @@ bin/
 dist/
 release/
 debug/
+config.ini
 
 # CMake/Make
 CMakeLists.txt.user
