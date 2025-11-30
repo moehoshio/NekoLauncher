@@ -12,6 +12,7 @@
 #include <neko/network/network.hpp>
 #include <neko/network/networkCommon.hpp>
 #include <neko/function/utilities.hpp>
+#include <neko/function/uuid.hpp>
 
 
 #include "neko/app/appinfo.hpp"

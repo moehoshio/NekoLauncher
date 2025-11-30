@@ -2,7 +2,7 @@
 
 #include <neko/schema/exception.hpp>
 
-#include "neko/app/eventTypes.hpp"
+#include "neko/event/eventTypes.hpp"
 
 // Bus Modules
 #include "neko/bus/threadBus.hpp"

@@ -2,6 +2,7 @@
  * @file api.hpp
  * @brief Neko Launcher API data structures and JSON serialization/deserialization.
  * @author moehoshio
+ * @see https://github.com/moehoshio/NekoLcApi/wiki
  */
 
 #pragma once

@@ -50,6 +50,6 @@ namespace neko {};
 
 6. Always include curly braces `{}` for `for` or `while` loops.
 
-
 ## Bus
+
 NekoBus is essentially a singleton-wrapped bus that lets you access and manipulate the bus object via static methods without directly calling the singleton. This reduces global state and makes the code easier to test and maintain.

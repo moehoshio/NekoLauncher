@@ -7,7 +7,7 @@
 #pragma once
 
 #include <neko/schema/types.hpp>
-#include <neko/core/threadPool.hpp>
+#include <neko/thread/threadPool.hpp>
 
 #include "neko/bus/resources.hpp"
 

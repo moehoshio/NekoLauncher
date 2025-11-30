@@ -6,6 +6,7 @@
 #define NOMINMAX
 #endif
 #endif
+#define _WIN32_WINNT 0x0601
 
 #include <neko/log/nlog.hpp>
 #include <neko/schema/exception.hpp>

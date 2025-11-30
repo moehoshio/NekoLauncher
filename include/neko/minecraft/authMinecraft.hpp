@@ -12,6 +12,7 @@
 
 #include <neko/log/nlog.hpp>
 #include <neko/function/utilities.hpp>
+#include <neko/function/uuid.hpp>
 #include <neko/network/network.hpp>
 #include <neko/schema/exception.hpp>
 

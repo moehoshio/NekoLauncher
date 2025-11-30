@@ -12,7 +12,8 @@
 #include <neko/schema/exception.hpp>
 #include <neko/schema/types.hpp>
 
-#include <neko/function/archiver.hpp>
+#include <neko/function/archive.hpp>
+#include <neko/function/hash.hpp>
 #include <neko/function/utilities.hpp>
 
 #include <neko/network/network.hpp>
@@ -514,7 +515,7 @@ namespace neko::minecraft {
                     }
 
                     // check the file hash
-                    auto hash = util::hash::hashFile(it.path, util::hash::Algorithm::sha1);
+                    auto hash = util::hash::digestFile(it.path, util::hash::Algorithm::sha1);
                     if (hash != it.sha1) {
 
                         // hash mismatch, try to remove the file
@@ -710,7 +711,7 @@ namespace neko::minecraft {
                 throw ex::NetworkError{"Failed to download Authlib Injector, error: " + downloadRes.errorMessage};
             }
 
-            auto hash = util::hash::hashFile(authlibPath, util::hash::Algorithm::sha256);
+            auto hash = util::hash::digestFile(authlibPath, util::hash::Algorithm::sha256);
             if (hash != checksumSha256) {
                 throw ex::FileError{"Downloaded Authlib Injector hash does not match expected SHA256, expected: " + checksumSha256 + ", got: " + hash};
             }
@@ -734,7 +735,7 @@ namespace neko::minecraft {
             // /path/to/.minecraft/<authlibName> (authlib-injector.jar)
             std::string authlibPath = minecraftDir + "/" + cfg.authlib.name;
 
-            auto hash = util::hash::hashFile(authlibPath, util::hash::Algorithm::sha256);
+            auto hash = util::hash::digestFile(authlibPath, util::hash::Algorithm::sha256);
 
             if (!std::filesystem::exists(authlibPath)) {
                 downloadAuthlibInjector(authlibPath);

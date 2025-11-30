@@ -4,6 +4,7 @@
 
 #include <neko/log/nlog.hpp>
 #include <neko/function/utilities.hpp>
+#include <neko/system/platform.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -40,8 +41,7 @@ namespace neko::lang {
      * @return The path to the language directory.
      */
     inline std::string getLanguageFolder() {
-        using namespace neko::ops::pipe;
-        return (std::filesystem::current_path() / "lang").string() | util::unifiedPath;
+        return neko::system::workPath() + "/lang";
     }
 
     /**

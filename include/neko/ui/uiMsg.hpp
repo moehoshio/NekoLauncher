@@ -142,7 +142,6 @@ namespace neko::ui {
 
         /**
          * @brief Callback function after clicking a button.
-         * If using radio buttons, the returned boolean value can be ignored.
          * @param uint32 The callback parameter indicates which button the user clicked; the index corresponds
          * @param uint32 to the order of the buttonText vector.
          * @param uint32 If the dialog auto-closes or the window is closed (process ends), the default value 0 is returned.

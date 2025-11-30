@@ -31,23 +31,7 @@ jobs:
               build_type: "Release",
               generators: "Visual Studio 17 2022"
             }
-          - {
-              name: "Windows Clang Debug",
-              os: windows-latest,
-              cc: "clang",
-              cxx: "clang++",
-              build_type: "Debug",
-              generators: "Visual Studio 17 2022"
-            }
-          - {
-              name: "Windows Clang Release",
-              os: windows-latest,
-              cc: "clang",
-              cxx: "clang++",
-              build_type: "Release",
-              generators: "Visual Studio 17 2022"
-            }
-          
+
           # Linux builds
           - {
               name: "Ubuntu GCC Debug",

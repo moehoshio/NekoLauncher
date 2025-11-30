@@ -6,7 +6,7 @@
 #pragma once
 
 #include <neko/event/event.hpp>
-#include <neko/core/threadPool.hpp>
+#include <neko/thread/threadPool.hpp>
 
 #include "neko/app/configManager.hpp"
 
@@ -24,8 +24,8 @@ namespace neko::bus {
          * @brief Gets the global thread pool instance.
          * @return Reference to the global thread pool object.
          */
-        static core::thread::ThreadPool& getThreadPool() {
-            static core::thread::ThreadPool instance;
+        static thread::ThreadPool& getThreadPool() {
+            static thread::ThreadPool instance;
             return instance;
         }
 
@@ -54,7 +54,7 @@ namespace neko::bus {
      * 
      * This is a convenience function that wraps Resources::getThreadPool()
      */
-    inline core::thread::ThreadPool& getThreadPool() {
+    inline thread::ThreadPool& getThreadPool() {
         return Resources::getThreadPool();
     }
 
