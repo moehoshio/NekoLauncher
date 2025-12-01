@@ -9,7 +9,7 @@ if(POLICY CMP0167)
 endif()
 
 project(
-    NekoLc LANGUAGES CXX VERSION 1.0.0
+    NekoLc LANGUAGES CXX VERSION 0.0.1
     DESCRIPTION "Neko Launcher Client"
     HOMEPAGE_URL "https://github.com/moehoshio/NekoLauncher"
 )
@@ -101,10 +101,6 @@ if (NOT SimpleIni_FOUND)
 endif()
 
 # Neko Modules
-if (NEKO_LC_LIBRARY_DIRS)
-    set(NEKO_FUNCTION_LIBRARY_PATH ${NEKO_LC_LIBRARY_DIRS} CACHE PATH "Path to NekoFunction library")
-    set(NEKO_NETWORK_LIBRARY_PATH ${NEKO_LC_LIBRARY_DIRS} CACHE PATH "Path to NekoNetwork library")
-endif()
 
 if (NOT NekoSchema_FOUND)
     message(STATUS "NekoSchema Not Found; Neko Launcher is fetching NekoSchema...")

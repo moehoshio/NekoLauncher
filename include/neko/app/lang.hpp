@@ -2,15 +2,19 @@
 
 #include <neko/schema/types.hpp>
 
-#include <neko/log/nlog.hpp>
 #include <neko/function/utilities.hpp>
+#include <neko/log/nlog.hpp>
 #include <neko/system/platform.hpp>
+
+#include "neko/app/nekoLc.hpp"
 
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -21,18 +25,18 @@
 namespace neko::lang {
 
     /**
-     * @brief Gets or sets the preferred language.
-     * @param lang Optional parameter to set a new preferred language.
-     * @return The current preferred language code.
-     *
-     * @details Defaults to "en" if no language is set.
+     * @brief Sets or gets the preferred language (file name without extension).
      */
-    inline std::string language(const std::string &lang = "") {
+    inline std::string language(const std::string &langCode = "") {
+        static std::shared_mutex languageMutex;
         static std::string preferredLanguage = "en";
 
-        if (!lang.empty())
-            preferredLanguage = lang;
+        if (!langCode.empty()) {
+            std::unique_lock lock(languageMutex);
+            preferredLanguage = langCode;
+        }
 
+        std::shared_lock lock(languageMutex);
         return preferredLanguage;
     }
 
@@ -41,24 +45,7 @@ namespace neko::lang {
      * @return The path to the language directory.
      */
     inline std::string getLanguageFolder() {
-        return neko::system::workPath() + "/lang";
-    }
-
-    /**
-     * @brief Gets a list of available language files.
-     * @param langPath Path to the directory containing language files.
-     * @return A vector of language codes.
-     */
-    inline std::vector<std::string> getLanguages(const std::string &langPath = getLanguageFolder()) {
-        std::vector<std::string> res;
-        for (const auto &it : std::filesystem::directory_iterator(langPath)) {
-            if (it.is_regular_file() && util::string::matchExtensionName(it.path().string(), "json")) {
-                std::string fileName = it.path().stem().string();
-                res.push_back(fileName);
-                log::info("lang file push : " + fileName);
-            }
-        }
-        return res;
+        return neko::system::workPath() + std::string("/") + lc::LanguageFolderName.data();
     }
 
     /**
@@ -71,37 +58,66 @@ namespace neko::lang {
      * Caches the loaded language file
      * Uses nlog for logging the loading process.
      */
-    inline nlohmann::json loadTranslations(const std::string &lang = language(), const std::string &langFolder = getLanguageFolder()) {
+    inline nlohmann::json loadTranslations(const std::string &langCode = language(), const std::string &langFolder = getLanguageFolder()) {
         // cached lang
-        static std::string cachedLang;
+        static std::shared_mutex languageMutex;
+        static std::string cachedLangCode;
         static std::string cachedLangFolder;
         static nlohmann::json cachedJson;
 
-        if (lang != cachedLang || langFolder != cachedLangFolder) {
-            std::string fileName = langFolder + "/" + lang + ".json";
-            std::ifstream i(fileName);
-            if (!std::filesystem::exists(fileName) || !i.is_open()) {
-                log::error("Language file : {} , does not exist or cannot be opened !", {} ,fileName);
-                cachedJson = nlohmann::json::object();
+        {
+            std::shared_lock lock(languageMutex);
+            if (langCode == cachedLangCode && langFolder == cachedLangFolder) {
                 return cachedJson;
             }
-
-            try {
-                cachedJson = nlohmann::json::parse(i);
-            } catch (const nlohmann::json::parse_error &e) {
-                log::error("Failed to parse language : {} , file : {}", {} , e.what(), fileName);
-                cachedJson = nlohmann::json::object();
-                return cachedJson;
-            }
-            log::info("lang : {} , json is discarded : {}", {} , lang, util::logic::boolTo(cachedJson.is_discarded()));
-            cachedLang = lang;
-            cachedLangFolder = langFolder;
         }
+
+        std::unique_lock uniqueLock(languageMutex);
+        std::string filePath = langFolder + "/" + langCode + ".json";
+        std::ifstream i(filePath);
+        if (!std::filesystem::exists(filePath) || !i.is_open()) {
+            log::error("Language file : {} , does not exist or cannot be opened !", {}, filePath);
+            cachedJson = nlohmann::json::object();
+            return cachedJson;
+        }
+
+        try {
+            cachedJson = nlohmann::json::parse(i);
+        } catch (const nlohmann::json::parse_error &e) {
+            log::error("Failed to parse language : {} , file : {}", {}, e.what(), filePath);
+            cachedJson = nlohmann::json::object();
+            return cachedJson;
+        }
+        log::info("Loaded language file : " + filePath);
+        cachedLangCode = langCode;
+        cachedLangFolder = langFolder;
         return cachedJson;
     }
 
     /**
-     * @brief Gets a translated string for a specific key.
+     * @brief Retrieves a list of available languages.
+     * @param langPath Path to the directory containing language files.
+     * @return A vector of pairs, each containing the language code and its display name.
+     */
+    inline std::vector<std::pair<std::string, std::string>> getLanguages(const std::string &langFolder = getLanguageFolder()) {
+        std::vector<std::pair<std::string, std::string>> result;
+        for (const auto &it : std::filesystem::directory_iterator(langFolder)) {
+            if (it.is_regular_file() && util::string::matchExtensionName(it.path().string(), "json")) {
+                std::string langCode = it.path().stem().string();
+                auto json = loadTranslations(langCode, langFolder);
+                if (json.contains("language")) {
+                    result.emplace_back(langCode, json["language"].get<std::string>());
+                } else {
+                    result.emplace_back(langCode, langCode);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief Translates a key within a specified category.
+     * @param category The category or subject under which to look up the key.
      * @param key The translation key to look up.
      * @param fallback The fallback message if the key is not found.
      * @param langFile The JSON object containing translations.
@@ -110,18 +126,23 @@ namespace neko::lang {
      * @details Falls back to English if the key is not found in the specified language.
      * Uses nlog for warning about missing translations.
      */
-    inline std::string tr(const std::string &key, const std::string &fallback = "Translation not found", const nlohmann::json &langFile = loadTranslations()) {
-        auto check = [&key,fallback](const nlohmann::json &obj) -> std::string {
-            if (obj.empty() || obj.is_discarded() || !obj.contains(key)) {
+    inline std::string tr(
+        const std::string &category,
+        const std::string &key,
+        const std::string &fallback = "Translation not found",
+        const nlohmann::json &langFile = loadTranslations()) {
+
+        auto check = [&category, &key, &fallback](const nlohmann::json &obj) -> std::string {
+            if (obj.empty() || obj.is_discarded() || !obj.contains(category) || !obj[category].contains(key)) {
                 return fallback;
             }
-            return obj.value(key, fallback);
+            return obj[category].value(key, fallback);
         };
 
         auto res = check(langFile);
 
         if (res == fallback) {
-            log::warn("Failed to load key : {} for : {} , try to load default file", {} , key, langFile.value("language", "Empty lang"));
+            log::warn("Failed to load key : {} in category : {} for : {} , try to load default file", {}, key, category, langFile.value("language", "Empty lang"));
             return check(loadTranslations("en"));
         }
 
@@ -138,6 +159,7 @@ namespace neko::lang {
         const std::string &input,
         std::map<std::string, std::string> replacements = {
             {"{key}", "value"}}) {
+
         std::string output = input;
         for (const auto &[key, value] : replacements) {
             std::string::size_type pos;
@@ -148,116 +170,45 @@ namespace neko::lang {
         return output;
     }
 
-    auto withReplaced = [](const std::string &input, std::map<std::string, std::string> replacements) -> std::string {
+    /**
+     * @brief Translates a key within a specified category and replaces placeholders.
+     * @param category The category or subject under which to look up the key.
+     * @param key The translation key to look up.
+     * @param replacements A map of placeholder names to their replacement values.
+     * @return The translated string with placeholders replaced.
+     */
+    std::string trWithReplaced(const std::string &category, const std::string &key, std::map<std::string, std::string> replacements) {
+        std::string input = tr(category, key);
         return withPlaceholdersReplaced(input, replacements);
     };
 
     namespace keys {
 
-        /**
-         * @namespace neko::lang::keys::action
-         * @brief Action-related text
-         */
-        namespace action {
-            constexpr neko::strview
-                object = "Action",
-                networkRequest = "networkRequest",
-                uploadFile = "uploadFile",
-                downloadFile = "downloadFile",
-                readFile = "readFile",
-                writeFile = "writeFile",
-                removeFile = "removeFile",
-                createFile = "createFile",
-                retryMaxReached = "retryMaxReached",
-                doingAction = "doingAction",
-                parseJson = "parseJson"
-                ;
-        }
-
-        /**
-         * @namespace neko::lang::keys::object
-         * @brief Object-related text
-         */
-        namespace object {
-            constexpr neko::strview
-                object = "Object",
-                maintenance = "maintenance",
-                update = "update",
-                error = "error"
-                ;
-        }
-
-        namespace update {
-            constexpr neko::strview
-                object = "Update",
-                checkingForUpdates = "checkingForUpdates",
-                noUpdatesAvailable = "noUpdatesAvailable",
-                updateAvailable = "updateAvailable",
-                updateAvailableMessage = "updateAvailableMessage",
-                downloadingUpdate = "downloadingUpdate",
-                applyingUpdate = "applyingUpdate",
-                updateCompleted = "updateCompleted",
-                mandatoryUpdateNotice = "mandatoryUpdateNotice",
-                optionalUpdateNotice = "optionalUpdateNotice";
-        }
-
-        /**
-         * @namespace neko::lang::keys::button
-         * @brief Button-related text
-         */
-        namespace button {
-            constexpr neko::strview
-                object = "Button",
-
-                ok = "ok",
-                open = "open",
-                retry = "retry",
-                apply = "apply",
-                update = "update",
-
-                cancel = "cancel",
-                close = "close",
-                quit = "quit";
-
-        }
+        constexpr neko::cstr language = "language";
 
         namespace maintenance {
-            constexpr neko::strview
-                object = "Maintenance",
-                message = "message";
-
-        }
-
-        /**
-         * @namespace neko::lang::keys::general
-         * @brief General purpose text
-         */
-        namespace general {
-            constexpr neko::strview
-                object = "General";
-
-        }
-
-        namespace minecraft {
-            constexpr neko::strview
-                object = "Minecraft",
-                missingAccessToken = "missingAccessToken";
-        }
+            constexpr neko::cstr
+                category = "maintenance",
+                title = "title",
+                message = "message",
+                checkingStatus = "checkingStatus",
+                parseIng = "parseIng",
+                downloadPoster = "downloadPoster";
+        } // namespace maintenance
 
         namespace error {
-            constexpr neko::strview
-                object = "Error",
-                unknownError = "unknownError",
+            constexpr neko::cstr
+                category = "error",
+                invalidInput = "invalidInput",
                 networkError = "networkError",
-                parseError = "parseError",
-                timeout = "timeout",
-                notFound = "notFound",
-                updateFailed = "updateFailed",
-                invalidInput = "invalidInput"
-                ;
+                parseError = "parseError";
+        } // namespace error
 
-        }
-        constexpr neko::strview language = "language";
+        namespace minecraft {
+            constexpr neko::cstr
+                category = "minecraft",
+                missingAccessToken = "missingAccessToken";
+        } // namespace minecraft
 
     } // namespace keys
 

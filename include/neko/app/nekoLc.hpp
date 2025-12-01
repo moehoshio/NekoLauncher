@@ -26,6 +26,8 @@ namespace neko::lc {
 
     constexpr neko::strview ClientConfigFileName = "config.ini";
 
+    constexpr neko::strview LanguageFolderName = "lang";
+
     /***************/
     /*** Network ***/
     /***************/

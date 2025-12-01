@@ -14,35 +14,9 @@
 
 namespace neko::event {
 
-    /*****************/
-    /* Global Events */
-    /*****************/
     struct NekoStartEvent {};
     struct NekoQuitEvent {};
 
-    /*****************/
-    /* Window Events */
-    /*****************/
-    struct ChangeWindowTitleEvent {
-        std::string title;
-    };
-    struct ChangeWindowIconEvent {
-        std::string iconPath;
-    };
-    struct CloseWindowEvent {};
-    struct MinimizeWindowEvent {};
-    struct MaximizeWindowEvent {};
-    struct RestoreWindowEvent {};
-    struct FocusWindowEvent {};
-
-    struct ResizeWindowEvent {
-        neko::uint32 width;
-        neko::uint32 height;
-    };
-    struct MoveWindowEvent {
-        neko::int32 x;
-        neko::int32 y;
-    };
     struct ChangeCurrentPageEvent {
         ui::Page page;
     };
@@ -55,15 +29,15 @@ namespace neko::event {
     struct ShowInputEvent : public neko::ui::InputMsg {
         ShowInputEvent(const neko::ui::InputMsg &msg) : neko::ui::InputMsg(msg) {}
     };
-    struct UpdateLoadingValEvent {
-        neko::uint32 progressVal;
+    struct UpdateLoadingValueEvent {
+        neko::uint32 progressValue;
     };
-    struct UpdateLoadingNowEvent {
+    struct UpdateLoadingStatusEvent {
         std::string process;
     };
-    struct UpdateLoadingEvent : public UpdateLoadingValEvent, public UpdateLoadingNowEvent {
-        UpdateLoadingEvent(const std::string &process, neko::uint32 progressVal)
-            : UpdateLoadingValEvent{progressVal}, UpdateLoadingNowEvent{process} {}
+    struct UpdateLoadingEvent : public UpdateLoadingValueEvent, public UpdateLoadingStatusEvent {
+        UpdateLoadingEvent(const std::string &process, neko::uint32 progressValue)
+            : UpdateLoadingValueEvent{progressValue}, UpdateLoadingStatusEvent{process} {}
     };
     
 

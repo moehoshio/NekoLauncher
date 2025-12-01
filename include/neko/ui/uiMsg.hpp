@@ -32,9 +32,9 @@ namespace neko::ui {
         std::string message;
 
         /**
-         * @brief Path to the background image (poster).
+         * @brief Path to the background image
          */
-        std::string poster;
+        std::string posterPath;
 
         /**
          * @brief Each string represents a line, returned by getLines method ( in ui::InputDialog::getLines), maintaining the same order as input.
@@ -88,9 +88,9 @@ namespace neko::ui {
         std::string message;
 
         /**
-         * @brief Path to the background image (poster).
+         * @brief Path to the background image
          */
-        std::string poster;
+        std::string posterPath;
 
         /**
          * @brief Path to the loading icon (gif).
@@ -129,9 +129,9 @@ namespace neko::ui {
         std::string message;
 
         /**
-         * @brief Path to the background image (poster).
+         * @brief Path to the background image
          */
-        std::string poster;
+        std::string posterPath;
 
         /**
          * @brief Text labels for each button in the dialog.
@@ -179,9 +179,9 @@ namespace neko::ui {
         std::string message;
 
         /**
-         * @brief Path to the background image (poster).
+         * @brief Path to the background image
          */
-        std::string poster;
+        std::string posterPath;
 
         /**
          * @brief A two-dimensional vector where each inner vector represents a choice column,

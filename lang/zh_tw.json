@@ -1,3 +1,12 @@
 {
-    "language": "正體中文"
+    "language": "正體中文",
+    "maintenance": {
+        "title": "維護中",
+        "message": "伺服器正在維護中。\n 開始時間：{startTime}\n 預計結束時間：{exEndTime}\n 詳細資訊：{description}",
+        "checkingStatus": "正在檢查維護狀態...",
+        "parseIng": "正在解析維護狀態...",
+        "downloadPoster": "正在下載維護海報..."
+    },
+    "errors": {
+    }
 }

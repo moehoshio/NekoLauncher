@@ -203,7 +203,7 @@ namespace neko::minecraft::auth {
 
         // Need at least username and password
         if (inData.size() < 2) {
-            result.error = lang::tr(std::string(lang::keys::error::invalidInput));
+            result.error = lang::tr(lang::keys::error::category, lang::keys::error::invalidInput);
             return result;
         }
 
@@ -227,7 +227,7 @@ namespace neko::minecraft::auth {
 
             if (!netResult.isSuccess() || !netResult.hasContent()) {
                 log::error("Failed to authenticate: {}", {} ,netResult.errorMessage);
-                result.error = lang::tr(std::string(lang::keys::error::networkError));
+                result.error = lang::tr(lang::keys::error::category, lang::keys::error::networkError);
                 return result;
             }
 
@@ -236,7 +236,7 @@ namespace neko::minecraft::auth {
                 resData = nlohmann::json::parse(netResult.content);
             } catch (const nlohmann::json::parse_error &e) {
                 log::error("Failed to parse authentication response: {}", {} , e.what());
-                result.error = lang::tr(std::string(lang::keys::error::parseError)) + e.what();
+                result.error = lang::tr(lang::keys::error::category, lang::keys::error::parseError) + e.what();
                 return result;
             }
 
@@ -249,7 +249,7 @@ namespace neko::minecraft::auth {
 
             if (!resData.contains("accessToken") || !resData.contains("selectedProfile") || !resData["selectedProfile"].is_object()) {
                 log::error("Missing accessToken in response");
-                result.error = lang::tr(std::string(lang::keys::minecraft::missingAccessToken)) + netResult.errorMessage;
+                result.error = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::missingAccessToken) + netResult.errorMessage;
                 return result;
             }
 
