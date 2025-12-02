@@ -196,19 +196,48 @@ namespace neko::lang {
                 downloadPoster = "downloadPoster";
         } // namespace maintenance
 
-        namespace error {
+        namespace update {
             constexpr neko::cstr
-                category = "error",
-                invalidInput = "invalidInput",
-                networkError = "networkError",
-                parseError = "parseError";
-        } // namespace error
+                category = "update",
+                title = "title",
+                startingUpdate = "startingUpdate",
+                checkingForUpdates = "checkingForUpdates",
+                parsingUpdateData = "parsingUpdateData",
+                updateAvailable = "updateAvailable",
+                noUpdateAvailable = "noUpdateAvailable",
+                downloadingUpdate = "downloadingUpdate",
+                applyingUpdate = "applyingUpdate";
+            
+        } // namespace update
+
+        namespace button {
+            constexpr neko::cstr
+                category = "button",
+                open = "open",
+                quit = "quit",
+                retry = "retry",
+                ok = "ok",
+                cancel = "cancel",
+                yes = "yes",
+                no = "no";
+        } // namespace button
 
         namespace minecraft {
             constexpr neko::cstr
                 category = "minecraft",
                 missingAccessToken = "missingAccessToken";
         } // namespace minecraft
+
+        namespace error {
+            constexpr neko::cstr
+                category = "error",
+                invalidInput = "invalidInput",
+                networkError = "networkError",
+                parseError = "parseError",
+                updateFailed = "updateFailed";
+        } // namespace error
+
+        
 
     } // namespace keys
 

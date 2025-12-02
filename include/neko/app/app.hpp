@@ -29,9 +29,7 @@ namespace neko::app {
 
         info.eventLoopThreadId = ids[ids.size() - 1];
 
-        info.eventLoopFuture = bus::thread::submitToWorker(info.eventLoopThreadId, [] {
-            bus::event::run();
-        });
+        info.eventLoopFuture = bus::thread::submitToWorker(info.eventLoopThreadId,&bus::event::run);
         bus::event::publish<event::NekoStartEvent>({});
 
         return info;

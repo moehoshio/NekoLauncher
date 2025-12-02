@@ -7,6 +7,32 @@
         "parseIng": "正在解析維護狀態...",
         "downloadPoster": "正在下載維護海報..."
     },
-    "errors": {
+    "update": {
+        "title": "更新",
+        "startingUpdate": "正在開始更新...",
+        "checkingForUpdates": "正在檢查更新...",
+        "parsingUpdateData": "正在解析更新資料...",
+        "updateAvailable": "有可用的更新",
+        "noUpdateAvailable": "目前已是最新版本",
+        "downloadingUpdate": "正在下載更新...",
+        "applyingUpdate": "正在套用更新..."
+    },
+    "button": {
+        "open": "開啟",
+        "quit": "退出",
+        "retry": "重試",
+        "ok": "確定",
+        "cancel": "取消",
+        "yes": "是",
+        "no": "否"
+    },
+    "minecraft": {
+        "missingAccessToken": "缺少存取權杖，無法登入 Minecraft 帳號。"
+    },
+    "error": {
+        "invalidInput": "無效的輸入",
+        "networkError": "網路錯誤",
+        "parseError": "解析錯誤",
+        "updateFailed": "更新失敗"
     }
 }

@@ -8,20 +8,18 @@
 #include <neko/log/nlog.hpp>
 #include <neko/schema/types.hpp>
 
-#include <neko/system/platform.hpp>
-#include <neko/network/network.hpp>
-#include <neko/network/networkCommon.hpp>
 #include <neko/function/utilities.hpp>
 #include <neko/function/uuid.hpp>
-
+#include <neko/network/network.hpp>
+#include <neko/network/networkCommon.hpp>
+#include <neko/system/platform.hpp>
 
 #include "neko/app/appinfo.hpp"
-#include "neko/app/lang.hpp"
 #include "neko/app/clientConfig.hpp"
+#include "neko/app/lang.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/threadBus.hpp"
-
 
 #include <sstream>
 
@@ -86,7 +84,7 @@ namespace neko::app::init {
         bus::thread::setThreadCount(threadCount);
 
         log::setCurrentThreadName("Main Thread");
-        log::info("Initializing thread pool with {} threads", {} , threadCount);
+        log::info("Initializing thread pool with {} threads", {}, threadCount);
 
         auto ids = bus::thread::getWorkerIds();
 
@@ -100,7 +98,7 @@ namespace neko::app::init {
                     log::info("Hello thread " + threadName);
                 });
             } catch (const ex::OutOfRange &e) {
-                log::error("Not Found Worker Thread {}", {} ,i_str);
+                log::error("Not Found Worker Thread {}", {}, i_str);
             }
         }
     }
@@ -118,7 +116,7 @@ namespace neko::app::init {
     inline void configInfoPrint(const ClientConfig &config) {
 
         log::info("config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , useSysWindowFrame: {} , headBarKeepRight : {} , deviceID : {} , resourceVersion : {}",
-                {},
+                  {},
                   config.main.lang,
                   config.main.backgroundType,
                   config.main.background,
@@ -171,23 +169,17 @@ namespace neko::app::init {
                   config.minecraft.joinServerPort);
 
         log::info("config other : temp : {} ",
-                  {} ,
-                  config.other.tempFolder
-                  );
+                  {},
+                  config.other.tempFolder);
     }
 
-    inline void initialize() {
-        bus::config::load(app::getConfigFileName());
-
-        initLog();
-        initThreads();
-
-        initDeviceID();
-
+    inline void initLanguage() {
         auto cfg = bus::config::getClientConfig();
         lang::language(cfg.main.lang);
-        configInfoPrint(bus::config::getClientConfig());
+    }
 
+    inline void initNetwork() {
+        auto cfg = bus::config::getClientConfig();
         network::initialize([cfg](network::config::NetConfig &config) {
             std::string proxy(cfg.net.proxy);
             bool
@@ -225,13 +217,27 @@ namespace neko::app::init {
                 auto result = net.executeWithRetry(cfg);
 
                 if (result.isSuccess()) {
-                    neko::log::info( "Network::initialize() : Testing host available, host: {} , statusCode: {}", {} , it, result.statusCode);
+                    neko::log::info("Network::initialize() : Testing host available, host: {} , statusCode: {}", {}, it, result.statusCode);
                     config.pushAvailableHost(std::string(it));
                     continue;
                 }
 
-                neko::log::warn("Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", {} , it, std::to_string(result.statusCode), result.errorMessage);
+                neko::log::warn("Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", {}, it, std::to_string(result.statusCode), result.errorMessage);
             }
         });
+    }
+
+    inline void initialize() {
+        bus::config::load(app::getConfigFileName());
+
+        initLog();
+        initThreads();
+
+        initDeviceID();
+        initLanguage();
+
+        configInfoPrint(bus::config::getClientConfig());
+
+        initNetwork();
     }
 } // namespace neko::app::init
