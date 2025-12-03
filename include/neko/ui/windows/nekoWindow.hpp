@@ -14,12 +14,16 @@
 #include <QtGui/QScreen>
 
 class QWidget;
+class QGraphicsBlurEffect;
 
 namespace neko::ui::window {
+
     class NekoWindow : public QMainWindow {
     private:
         Page currentPage;
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
+
+        QGraphicsBlurEffect *blurEffect;
 
         // Widgets
         widget::HeadBarWidget *headBar;
@@ -33,6 +37,7 @@ namespace neko::ui::window {
     public:
         NekoWindow(const ClientConfig &config);
         ~NekoWindow();
+        void settingFromConfig(const ClientConfig &config);
         void switchToPage(Page page);
         void resizeItems(int width, int height);
     protected:

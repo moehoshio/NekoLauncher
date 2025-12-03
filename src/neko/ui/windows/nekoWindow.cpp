@@ -1,18 +1,19 @@
 #include "neko/ui/windows/nekoWindow.hpp"
-#include "neko/app/nekoLc.hpp"
 #include "neko/app/app.hpp"
+#include "neko/app/nekoLc.hpp"
 #include "neko/bus/configBus.hpp"
 
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDragMoveEvent>
 #include <QtGui/QDropEvent>
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QWidget>
-
 #include <QtGui/QHoverEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QWindow>
+
+#include <QtWidgets/QGraphicsBlurEffect>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QWidget>
 
 namespace neko::ui::window {
 
@@ -20,13 +21,8 @@ namespace neko::ui::window {
         : headBar(new widget::HeadBarWidget(this, this)),
           pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           homePage(new page::HomePage(this)),
-          centralWidget(new QWidget(this)) {
-
-        if (config.main.useSysWindowFrame) {
-            headBar->hideHeadBar();
-        } else {
-            headBar->showHeadBar();
-        }
+          centralWidget(new QWidget(this)),
+          blurEffect(new QGraphicsBlurEffect(this)) {
 
         // Setup widget stacking order
         pixmapWidget->lower();
@@ -35,9 +31,7 @@ namespace neko::ui::window {
 
         // Setup themes
         homePage->setupTheme(ui::homeTheme);
-
-        pixmapWidget->setPixmap(config.main.background);
-
+        pixmapWidget->setGraphicsEffect(blurEffect);
 
         this->setMinimumSize(800, 420);
         this->setMaximumSize(scrSize);
@@ -48,9 +42,38 @@ namespace neko::ui::window {
 
         switchToPage(Page::home);
 
+        settingFromConfig(config);
+
         resizeItems(this->width(), this->height());
     }
     NekoWindow::~NekoWindow() = default;
+
+    void NekoWindow::settingFromConfig(const ClientConfig &config) {
+
+        if (config.main.useSysWindowFrame) {
+            headBar->hideHeadBar();
+        } else {
+            headBar->showHeadBar();
+        }
+
+        if (neko::strview("none") != config.main.backgroundType) {
+            pixmapWidget->setPixmap(config.main.background);
+        }
+
+        if (config.style.blurRadius > 0) {
+            blurEffect->setBlurRadius(static_cast<qreal>(config.style.blurRadius));
+        } else {
+            blurEffect->setBlurRadius(0);
+        }
+
+        if (config.style.blurEffect == "performance") {
+            blurEffect->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
+        } else if (config.style.blurEffect == "quality") {
+            blurEffect->setBlurHints(QGraphicsBlurEffect::QualityHint);
+        } else {
+            blurEffect->setBlurHints(QGraphicsBlurEffect::AnimationHint);
+        }
+    }
 
     void NekoWindow::switchToPage(Page page) {
         if (currentPage == page) {
@@ -75,6 +98,8 @@ namespace neko::ui::window {
             default:
                 break;
         }
+
+        resizeItems(this->width(), this->height());
     }
 
     void NekoWindow::resizeItems(int width, int height) {

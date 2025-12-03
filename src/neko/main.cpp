@@ -27,6 +27,12 @@ int main(int argc, char *argv[]) {
         app::init::initialize();
         auto runingInfo = app::run();
 
+        if (bus::config::getClientConfig().style.theme == "dark") {
+            ui::setCurrentTheme(ui::darkTheme);
+        } else {
+            ui::setCurrentTheme(ui::lightTheme);
+        }
+
         ui::window::NekoWindow window(bus::config::getClientConfig());
         window.show();
 

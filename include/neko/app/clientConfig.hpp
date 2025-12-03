@@ -33,6 +33,7 @@ namespace neko {
          * @brief Style and appearance settings
          */
         struct Style {
+            neko::cstr theme;
             neko::cstr blurEffect;
             long blurRadius;
             long fontPointSize;
@@ -113,7 +114,8 @@ namespace neko {
             main.resourceVersion = cfg.GetValue("main", "resourceVersion", "");
             main.deviceID = cfg.GetValue("main", "deviceID", "");
 
-            style.blurEffect = cfg.GetValue("style", "blurEffect", "Animation");
+            style.theme = cfg.GetValue("style", "theme", "dark");
+            style.blurEffect = cfg.GetValue("style", "blurEffect", "animation");
             style.blurRadius = cfg.GetLongValue("style", "blurRadius", 10);
             style.fontPointSize = cfg.GetLongValue("style", "fontPointSize", 10);
             style.fontFamilies = cfg.GetValue("style", "fontFamilies", "");
@@ -170,6 +172,7 @@ namespace neko {
             cfg.SetValue("main", "resourceVersion", main.resourceVersion);
             cfg.SetValue("main", "deviceID", main.deviceID);
 
+            cfg.SetValue("style", "theme", style.theme);
             cfg.SetValue("style", "blurEffect", style.blurEffect);
             cfg.SetLongValue("style", "blurRadius", style.blurRadius);
             cfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
