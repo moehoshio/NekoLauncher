@@ -1,6 +1,3 @@
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 
 #include "neko/minecraft/authMinecraft.hpp"
 #include <gtest/gtest.h>

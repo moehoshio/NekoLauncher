@@ -1,25 +1,44 @@
 #pragma once
 
 #include "neko/ui/theme.hpp"
+#include "neko/ui/page.hpp"
+
 #include "neko/ui/widgets/headBarWidget.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"
+#include "neko/ui/pages/homePage.hpp"
 
 #include "neko/app/clientConfig.hpp"
 
 #include <QtWidgets/QMainWindow>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QScreen>
 
-class QLabel;
+class QWidget;
 
-namespace neko::ui::window
-{
-    class NekoWindow : public QMainWindow
-    {
+namespace neko::ui::window {
+    class NekoWindow : public QMainWindow {
     private:
-        widget::HeadBarWidget* headBar;
-        widget::PixmapWidget* pixmapWidget;
+        Page currentPage;
+        const QSize scrSize = QGuiApplication::primaryScreen()->size();
+
+        // Widgets
+        widget::HeadBarWidget *headBar;
+        widget::PixmapWidget *pixmapWidget;
+
+        QWidget *centralWidget;
+
+        // Pages
+        page::HomePage *homePage;
+
     public:
-        NekoWindow(const ClientConfig& config);
+        NekoWindow(const ClientConfig &config);
         ~NekoWindow();
+        void switchToPage(Page page);
+        void resizeItems(int width, int height);
+    protected:
+        void resizeEvent(QResizeEvent *event) override;
+        void closeEvent(QCloseEvent *event) override;
+        bool event(QEvent *event) override;
     };
-    
-} // namespace ui
+
+} // namespace neko::ui::window

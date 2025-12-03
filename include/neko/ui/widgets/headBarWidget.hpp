@@ -38,7 +38,7 @@ namespace neko::ui::widget {
         HeadBarWidget(QWidget *topWin, QWidget *parent = nullptr);
 
         ToolBarWidget * getToolBar();
-        void setupStyle(const Theme& theme);
+        void setupTheme(const Theme& theme);
         void setupText();
         void showHeadBar();
         void hideHeadBar();

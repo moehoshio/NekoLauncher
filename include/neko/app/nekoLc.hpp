@@ -34,7 +34,7 @@ namespace neko::lc {
     /*** Network ***/
     /***************/
 
-    constexpr neko::strview NetworkHostList[] = {"svc.oha.li/neko","api.example.com", "www.example.org"};
+    constexpr neko::strview NetworkHostList[] = {"svc.oha.li/neko","www.example.com"};
 
     // Authlib-Injector for Minecraft
     constexpr neko::strview NetworkAuthlibHost = "skin.example.org";

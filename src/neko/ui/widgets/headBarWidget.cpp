@@ -58,6 +58,7 @@ namespace neko::ui::widget {
         spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
         setupText();
+        setupTheme(ui::getCurrentTheme());
         setHeadBarAlignmentRight();
         
         connect(this->toolbar, &ToolBarWidget::requestMoveWindow,
@@ -85,7 +86,7 @@ namespace neko::ui::widget {
         return toolbar;
     }
 
-    void HeadBarWidget::setupStyle(const Theme &theme) {
+    void HeadBarWidget::setupTheme(const Theme &theme) {
         QString styleSheet =
             QString(
                 "QToolBar {"
@@ -101,9 +102,9 @@ namespace neko::ui::widget {
                 "QToolButton:hover {"
                 "background-color: %3;"
                 "}")
-                .arg(theme.backgroundColor.data())
-                .arg(theme.textColor.data())
-                .arg(theme.hoverColor.data());
+                .arg(theme.colors.background.data())
+                .arg(theme.colors.text.data())
+                .arg(theme.colors.hover.data());
 
         toolbar->setStyleSheet(styleSheet);
     }

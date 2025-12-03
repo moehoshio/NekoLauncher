@@ -1,6 +1,3 @@
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 
 #include "neko/app/configManager.hpp"
 #include <gtest/gtest.h>

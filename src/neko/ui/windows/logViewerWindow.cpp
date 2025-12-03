@@ -30,6 +30,7 @@ namespace neko::ui::window {
         textEdit->setLineWrapMode(QTextEdit::NoWrap);
         textEdit->setFontPointSize(10);
         resize(QGuiApplication::primaryScreen()->size() * 0.75);
+        setupTheme(ui::getCurrentTheme());
     }
     void LogViewerWindow::setupTheme(const Theme &theme) {
         QString styleSheet =
@@ -38,7 +39,7 @@ namespace neko::ui::window {
                 "background-color: %1;"
                 "border: none;"
                 "}")
-                .arg(theme.backgroundColor.data());
+                .arg(theme.colors.background.data());
         textEdit->setStyleSheet(styleSheet);
     }
 

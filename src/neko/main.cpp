@@ -1,8 +1,3 @@
-#ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif // NOMINMAX
-#endif // _WIN32
 
 #include <neko/log/nlog.hpp>
 

@@ -1,6 +1,3 @@
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 
 #include "neko/minecraft/launcherMinecraft.hpp"
 #include <gtest/gtest.h>

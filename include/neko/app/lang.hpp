@@ -219,6 +219,8 @@ namespace neko::lang {
                 cancel = "cancel",
                 yes = "yes",
                 no = "no",
+                start = "start",
+                menu = "menu",
                 maximize = "maximize",
                 minimize = "minimize",
                 restore = "restore",
