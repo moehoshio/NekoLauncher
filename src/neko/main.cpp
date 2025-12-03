@@ -14,6 +14,7 @@
 #include "neko/event/eventTypes.hpp"
 
 #include "neko/ui/windows/nekoWindow.hpp"
+#include "neko/ui/windows/logViewerWindow.hpp"
 
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/QApplication>
@@ -37,6 +38,15 @@ int main(int argc, char *argv[]) {
         // Start Qt event loop
         qtApp.exec();
         runingInfo.eventLoopFuture.get();
+
+        {
+            auto cfg = bus::config::getClientConfig();
+            if (cfg.dev.enable && cfg.dev.debug) {
+                ui::window::LogViewerWindow logWindow(QString::fromStdString(system::workPath()) + "/logs/new-debug.log");
+                logWindow.show();
+                return qtApp.exec();
+            }
+        }
     } catch (const ex::Exception &e) {
         log::error("Unhandled Exception: " + std::string(e.what()));
     } catch (const std::exception &e) {

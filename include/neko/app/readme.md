@@ -35,7 +35,7 @@ auto config = neko::bus::config::getClientConfig();
 
 // Atomic update
 neko::bus::config::updateClientConfig([](neko::ClientConfig& cfg) {
-    cfg.main.lang = "zh_tw";
+    cfg.main.lang = "zh_hant";
 });
 
 // Save/load
@@ -105,6 +105,8 @@ The application info module integrates both static constants (such as app name v
 neko::app::getAppName();       // "NekoLauncher"
 neko::app::getVersion();       // "v0.0.1"
 neko::app::getBuildID();       // "v0.0.1-20250710184724-hash"
+neko::app::getDeviceId();    // e.g. "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6"
+neko::app::getResourceVersion(); // e.g. "1.0.0"
 ```
 
 ### Constants (nekoLc.hpp)
