@@ -18,13 +18,18 @@
         "applyingUpdate": "正在套用更新..."
     },
     "button": {
-        "open": "開啟",
-        "quit": "退出",
-        "retry": "重試",
+        "open": "打開",
+        "close": "關閉",
         "ok": "確定",
         "cancel": "取消",
         "yes": "是",
-        "no": "否"
+        "no": "否",
+        "maximize": "最大化",
+        "minimize": "最小化",
+        "restore": "還原",
+        "apply": "套用",
+        "quit": "退出",
+        "retry": "重試"
     },
     "minecraft": {
         "missingAccessToken": "缺少存取權杖，無法登入 Minecraft 帳號。"

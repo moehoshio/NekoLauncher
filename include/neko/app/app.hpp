@@ -20,7 +20,7 @@ namespace neko::app {
      * @return RunningInfo containing information about the running application.
      * @throws ex::Runtime if no worker threads are available.
      */
-    RunningInfo run() {
+    inline RunningInfo run() {
         RunningInfo info;
         auto ids = bus::thread::getWorkerIds();
         if (ids.empty()) {
@@ -35,7 +35,7 @@ namespace neko::app {
         return info;
     }
 
-    void quit() {
+    inline void quit() {
         bus::event::publish<event::NekoQuitEvent>({});
     }
 

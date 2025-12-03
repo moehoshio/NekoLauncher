@@ -4,38 +4,42 @@
 #endif // NOMINMAX
 #endif // _WIN32
 
+#include <neko/log/nlog.hpp>
+
 #include "neko/app/app.hpp"
 #include "neko/app/appinit.hpp"
 
-#include <neko/log/nlog.hpp>
+#include "neko/bus/configBus.hpp"
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
+
+#include "neko/ui/windows/nekoWindow.hpp"
+
+#include <QtGui/QGuiApplication>
+#include <QtWidgets/QApplication>
 
 #include <iostream>
 #include <thread>
 
 using namespace neko;
 
-int main() {
+int main(int argc, char *argv[]) {
     try {
+
+        // Initialize Application
+        QApplication qtApp(argc, argv);
         app::init::initialize();
-        bus::event::subscribe<event::NekoStartEvent>([](const event::NekoStartEvent &) {
-            log::info("NekoLc has started.");
-        });
-        bus::event::subscribe<event::NekoQuitEvent>([](const event::NekoQuitEvent &) {
-            log::info("NekoLc is quitting...");
-            bus::event::stopLoop();
-        });
-        bus::event::publishAfter(13000, event::NekoQuitEvent{});
         auto runingInfo = app::run();
-        // The main thread should be in the Qt event loop.
-        // Before the UI is available, we wait for the event loop to exit.
+
+        ui::window::NekoWindow window(bus::config::getClientConfig());
+        window.show();
+
+        // Start Qt event loop
+        qtApp.exec();
         runingInfo.eventLoopFuture.get();
     } catch (const ex::Exception &e) {
         log::error("Unhandled Exception: " + std::string(e.what()));
     } catch (const std::exception &e) {
         log::error("Unexpected error: " + std::string(e.what()));
     }
-
-    return 0;
 }

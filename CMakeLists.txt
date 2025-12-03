@@ -246,6 +246,11 @@ list(APPEND NEKO_INCLUDE_DIRS
 list(APPEND NEKO_SRCFILES
     # Core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
+    # UI
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/headBarWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/widgets/headBarWidget.hpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/main.cpp
 )

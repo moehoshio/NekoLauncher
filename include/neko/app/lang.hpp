@@ -155,7 +155,7 @@ namespace neko::lang {
      * @param replacements A map of placeholder names to their replacement values.
      * @return The modified string with placeholders replaced.
      */
-    std::string withPlaceholdersReplaced(
+    inline std::string withPlaceholdersReplaced(
         const std::string &input,
         std::map<std::string, std::string> replacements = {
             {"{key}", "value"}}) {
@@ -177,7 +177,7 @@ namespace neko::lang {
      * @param replacements A map of placeholder names to their replacement values.
      * @return The translated string with placeholders replaced.
      */
-    std::string trWithReplaced(const std::string &category, const std::string &key, std::map<std::string, std::string> replacements) {
+    inline std::string trWithReplaced(const std::string &category, const std::string &key, std::map<std::string, std::string> replacements) {
         std::string input = tr(category, key);
         return withPlaceholdersReplaced(input, replacements);
     };
@@ -214,12 +214,17 @@ namespace neko::lang {
             constexpr neko::cstr
                 category = "button",
                 open = "open",
-                quit = "quit",
-                retry = "retry",
+                close = "close",
                 ok = "ok",
                 cancel = "cancel",
                 yes = "yes",
-                no = "no";
+                no = "no",
+                maximize = "maximize",
+                minimize = "minimize",
+                restore = "restore",
+                apply = "apply",
+                quit = "quit",
+                retry = "retry";
         } // namespace button
 
         namespace minecraft {

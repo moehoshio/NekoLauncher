@@ -21,6 +21,8 @@ namespace neko::lc {
 
     constexpr neko::strview AppVersion = "v0.0.1";
 
+    constexpr neko::strview AppIconPath = "img/icon.png";
+
     // Options: "custom", "minecraft"
     constexpr neko::strview LauncherMode = "minecraft";
 

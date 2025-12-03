@@ -290,7 +290,7 @@ namespace neko::api {
                 return LauncherConfigResponse::empty() && checkUpdateUrls.empty();
             }
 
-            std::optional<std::string> getCheckUpdateUrl(const std::string & os, const std::string & arch, const std::string & osVersionRegex) const noexcept {
+            std::optional<std::string> getCheckUpdateUrl(const std::string &os, const std::string &arch, const std::string &osVersionRegex) const noexcept {
                 if (checkUpdateUrls.empty()) {
                     return std::nullopt;
                 }
@@ -326,23 +326,21 @@ namespace neko::api {
         }
     };
 
-    //Error
-    void to_json(nlohmann::json &j, const Error &e) {
+    // Error
+    inline void to_json(nlohmann::json &j, const Error &e) {
         j = nlohmann::json{
             {"error", e.error},
             {"errorType", e.errorType},
             {"errorMessage", e.errorMessage}};
     }
-    void from_json(const nlohmann::json &j, Error &e) {
+    inline void from_json(const nlohmann::json &j, Error &e) {
         e.error = j.value("error", "");
         e.errorType = j.value("errorType", "");
         e.errorMessage = j.value("errorMessage", "");
     }
 
-
-
-    //Meta
-    void to_json(nlohmann::json &j, const Meta &meta) {
+    // Meta
+    inline void to_json(nlohmann::json &j, const Meta &meta) {
         j = nlohmann::json{
             {"apiVersion", meta.apiVersion},
             {"minApiVersion", meta.minApiVersion},
@@ -352,7 +350,7 @@ namespace neko::api {
             {"timestamp", meta.timestamp},
             {"isDeprecated", meta.isDeprecated}};
     }
-    void from_json(const nlohmann::json &j, Meta &meta) {
+    inline void from_json(const nlohmann::json &j, Meta &meta) {
         meta.apiVersion = j.value("apiVersion", "");
         meta.minApiVersion = j.value("minApiVersion", "");
         meta.buildVersion = j.value("buildVersion", "");
@@ -362,140 +360,133 @@ namespace neko::api {
         meta.isDeprecated = j.value("isDeprecated", false);
     }
 
-
-    //Preferences
-    void to_json(nlohmann::json &j, const Preferences &preferences) {
+    // Preferences
+    inline void to_json(nlohmann::json &j, const Preferences &preferences) {
         j = nlohmann::json{
             {"language", preferences.language}};
     }
-    void from_json(const nlohmann::json &j, Preferences &preferences) {
+    inline void from_json(const nlohmann::json &j, Preferences &preferences) {
         preferences.language = j.value("language", "");
     }
 
-
-    //App
-    void to_json(nlohmann::json &j, const App &app) {
+    // App
+    inline void to_json(nlohmann::json &j, const App &app) {
         j = nlohmann::json{
             {"appName", app.appName},
             {"coreVersion", app.coreVersion},
             {"resourceVersion", app.resourceVersion},
             {"buildId", app.buildId}};
     }
-    void from_json(const nlohmann::json &j, App &app) {
+    inline void from_json(const nlohmann::json &j, App &app) {
         app.appName = j.value("appName", "");
         app.coreVersion = j.value("coreVersion", "");
         app.resourceVersion = j.value("resourceVersion", "");
         app.buildId = j.value("buildId", "");
     }
 
-    //System
-    void to_json(nlohmann::json &j, const System &system) {
+    // System
+    inline void to_json(nlohmann::json &j, const System &system) {
         j = nlohmann::json{
             {"os", system.os},
             {"arch", system.arch},
             {"osVersion", system.osVersion}};
     }
-    void from_json(const nlohmann::json &j, System &system) {
+    inline void from_json(const nlohmann::json &j, System &system) {
         system.os = j.value("os", "");
         system.arch = j.value("arch", "");
         system.osVersion = j.value("osVersion", "");
     }
 
-    //Extra
-    void to_json(nlohmann::json &j, const Extra &extra) {
+    // Extra
+    inline void to_json(nlohmann::json &j, const Extra &extra) {
         j = nlohmann::json::object(); // Empty object for now
     }
 
-    void from_json(const nlohmann::json &j, Extra &extra) {
+    inline void from_json(const nlohmann::json &j, Extra &extra) {
         // No fields to parse, just an empty object
         extra = Extra();
     }
 
-
-    //ClientInfo
-    void to_json(nlohmann::json &j, const ClientInfo &clientInfo) {
+    // ClientInfo
+    inline void to_json(nlohmann::json &j, const ClientInfo &clientInfo) {
         j = nlohmann::json{
             {"app", clientInfo.app},
             {"system", clientInfo.system},
             {"extra", clientInfo.extra},
             {"deviceId", clientInfo.deviceId}};
     }
-    void from_json(const nlohmann::json &j, ClientInfo &clientInfo) {
+    inline void from_json(const nlohmann::json &j, ClientInfo &clientInfo) {
         from_json(j.at("app"), clientInfo.app);
         from_json(j.at("system"), clientInfo.system);
         from_json(j.at("extra"), clientInfo.extra);
         clientInfo.deviceId = j.value("deviceId", "");
     }
 
-
-    //Account
-    void to_json(nlohmann::json &j, const Auth::Account &account) {
+    // Account
+    inline void to_json(nlohmann::json &j, const Auth::Account &account) {
         j = nlohmann::json{
             {"username", account.username},
             {"password", account.password}};
     }
-    void from_json(const nlohmann::json &j, Auth::Account &account) {
+    inline void from_json(const nlohmann::json &j, Auth::Account &account) {
         account.username = j.value("username", "");
         account.password = j.value("password", "");
     }
 
-    //Signature
-    void to_json(nlohmann::json &j, const Auth::Signature &signature) {
+    // Signature
+    inline void to_json(nlohmann::json &j, const Auth::Signature &signature) {
         j = nlohmann::json{
             {"identifier", signature.identifier},
             {"timestamp", signature.timestamp},
             {"signature", signature.signature}};
     }
-    void from_json(const nlohmann::json &j, Auth::Signature &signature) {
+    inline void from_json(const nlohmann::json &j, Auth::Signature &signature) {
         signature.identifier = j.value("identifier", "");
         signature.timestamp = j.value("timestamp", 0);
         signature.signature = j.value("signature", "");
     }
 
-
     // Token
-    void to_json(nlohmann::json &j, const Auth::Token &token) {
+    inline void to_json(nlohmann::json &j, const Auth::Token &token) {
         j = nlohmann::json{
             {"accessToken", token.accessToken},
             {"refreshToken", token.refreshToken}};
     }
-    void from_json(const nlohmann::json &j, Auth::Token &token){
+    inline void from_json(const nlohmann::json &j, Auth::Token &token) {
         token.accessToken = j.value("accessToken", "");
         token.refreshToken = j.value("refreshToken", "");
     }
 
-
     // Auth
-    void to_json(nlohmann::json &j, const Auth &auth) {
+    inline void to_json(nlohmann::json &j, const Auth &auth) {
         j = nlohmann::json{
             {"account", auth.account},
             {"signature", auth.signature},
             {"token", auth.token},
             {"preferences", auth.preferences}};
     }
-    void from_json(const nlohmann::json &j, Auth &auth) {
+    inline void from_json(const nlohmann::json &j, Auth &auth) {
         from_json(j.at("account"), auth.account);
         from_json(j.at("signature"), auth.signature);
         from_json(j.at("token"), auth.token);
         from_json(j.at("preferences"), auth.preferences);
     }
 
-
     // WebSocket
-    void to_json(nlohmann::json &j, const LauncherConfigResponse::WebSocket &webSocket) {
+    inline void to_json(nlohmann::json &j, const LauncherConfigResponse::WebSocket &webSocket) {
         j = nlohmann::json{
             {"enable", webSocket.enable},
             {"socketHost", webSocket.socketHost},
             {"heartbeatIntervalSec", webSocket.heartbeatIntervalSec}};
     }
-    void from_json(const nlohmann::json &j, LauncherConfigResponse::WebSocket &webSocket) {
+    inline void from_json(const nlohmann::json &j, LauncherConfigResponse::WebSocket &webSocket) {
         webSocket.enable = j.value("enable", false);
         webSocket.socketHost = j.value("socketHost", "");
         webSocket.heartbeatIntervalSec = j.value("heartbeatIntervalSec", 0);
     }
 
     // Security
-    void to_json(nlohmann::json &j, const LauncherConfigResponse::Security &security) {
+    inline void to_json(nlohmann::json &j, const LauncherConfigResponse::Security &security) {
         j = nlohmann::json{
             {"enableAuthentication", security.enableAuthentication},
             {"tokenExpirationSec", security.tokenExpirationSec},
@@ -504,7 +495,7 @@ namespace neko::api {
             {"logoutUrl", security.logoutUrl},
             {"refreshTokenUrl", security.refreshTokenUrl}};
     }
-    void from_json(const nlohmann::json &j, LauncherConfigResponse::Security &security) {
+    inline void from_json(const nlohmann::json &j, LauncherConfigResponse::Security &security) {
         security.enableAuthentication = j.value("enableAuthentication", false);
         security.tokenExpirationSec = j.value("tokenExpirationSec", 0);
         security.refreshTokenExpirationDays = j.value("refreshTokenExpirationDays", 0);
@@ -514,7 +505,7 @@ namespace neko::api {
     }
 
     // LauncherConfigResponse
-    void to_json(nlohmann::json &j, const LauncherConfigResponse &config) {
+    inline void to_json(nlohmann::json &j, const LauncherConfigResponse &config) {
         j = nlohmann::json{
             {"host", config.host},
             {"retryIntervalSec", config.retryIntervalSec},
@@ -523,7 +514,7 @@ namespace neko::api {
             {"security", config.security},
             {"meta", config.meta}};
     }
-    void from_json(const nlohmann::json &j, LauncherConfigResponse &config) {
+    inline void from_json(const nlohmann::json &j, LauncherConfigResponse &config) {
         config.host = j.value("host", std::vector<std::string>{});
         config.retryIntervalSec = j.value("retryIntervalSec", 0);
         config.maxRetryCount = j.value("maxRetryCount", 0);
@@ -532,9 +523,8 @@ namespace neko::api {
         from_json(j.at("meta"), config.meta);
     }
 
-
     // MaintenanceResponse
-    void to_json(nlohmann::json &j, const MaintenanceResponse &maintenance) {
+    inline void to_json(nlohmann::json &j, const MaintenanceResponse &maintenance) {
         j = nlohmann::json{
             {"status", maintenance.status},
             {"message", maintenance.message},
@@ -544,7 +534,7 @@ namespace neko::api {
             {"link", maintenance.link},
             {"meta", maintenance.meta}};
     }
-    void from_json(const nlohmann::json &j, MaintenanceResponse &maintenance) {
+    inline void from_json(const nlohmann::json &j, MaintenanceResponse &maintenance) {
         maintenance.status = j.value("status", "");
         maintenance.message = j.value("message", "");
         maintenance.startTime = j.value("startTime", "");
@@ -555,7 +545,7 @@ namespace neko::api {
     }
 
     // UpdateResponse::File
-    void to_json(nlohmann::json &j, const UpdateResponse::File &file) {
+    inline void to_json(nlohmann::json &j, const UpdateResponse::File &file) {
         j = nlohmann::json{
             {"url", file.url},
             {"fileName", file.fileName},
@@ -565,7 +555,7 @@ namespace neko::api {
             {"isCoreFile", file.isCoreFile},
             {"isAbsoluteUrl", file.isAbsoluteUrl}};
     }
-    void from_json(const nlohmann::json &j, UpdateResponse::File &file) {
+    inline void from_json(const nlohmann::json &j, UpdateResponse::File &file) {
         file.url = j.value("url", "");
         file.fileName = j.value("fileName", "");
         file.checksum = j.value("checksum", "");
@@ -576,7 +566,7 @@ namespace neko::api {
     }
 
     // UpdateResponse
-    void to_json(nlohmann::json &j, const UpdateResponse &update) {
+    inline void to_json(nlohmann::json &j, const UpdateResponse &update) {
         j = nlohmann::json{
             {"title", update.title},
             {"description", update.description},
@@ -587,7 +577,7 @@ namespace neko::api {
             {"meta", update.meta},
             {"files", update.files}};
     }
-    void from_json(const nlohmann::json &j, UpdateResponse &update) {
+    inline void from_json(const nlohmann::json &j, UpdateResponse &update) {
         update.title = j.value("title", "");
         update.description = j.value("description", "");
         update.posterUrl = j.value("posterUrl", "");
@@ -595,7 +585,7 @@ namespace neko::api {
         update.resourceVersion = j.value("resourceVersion", "");
         update.isMandatory = j.value("isMandatory", false);
         from_json(j.at("meta"), update.meta);
-        
+
         if (j.contains("files")) {
             for (const auto &fileJson : j.at("files")) {
                 UpdateResponse::File file;
@@ -606,14 +596,14 @@ namespace neko::api {
     }
 
     // FeedbackLogRequest
-    void to_json(nlohmann::json &j, const FeedbackLogRequest &request) {
+    inline void to_json(nlohmann::json &j, const FeedbackLogRequest &request) {
         j = nlohmann::json{
             {"clientInfo", request.clientInfo},
             {"timestamp", request.timestamp},
             {"logContent", request.logContent},
             {"preferences", request.preferences}};
     }
-    void from_json(const nlohmann::json &j, FeedbackLogRequest &request) {
+    inline void from_json(const nlohmann::json &j, FeedbackLogRequest &request) {
         from_json(j.at("clientInfo"), request.clientInfo);
         request.timestamp = j.value("timestamp", 0);
         request.logContent = j.value("logContent", "");
@@ -621,20 +611,20 @@ namespace neko::api {
     }
 
     // WebSocketServerSide::NotifyChanged
-    void to_json(nlohmann::json &j, const WebSocketServerSide::NotifyChanged &notifyChanged) {
+    inline void to_json(nlohmann::json &j, const WebSocketServerSide::NotifyChanged &notifyChanged) {
         j = nlohmann::json{
             {"type", notifyChanged.type},
             {"message", notifyChanged.message},
             {"clientInfo", notifyChanged.clientInfo}};
     }
-    void from_json(const nlohmann::json &j, WebSocketServerSide::NotifyChanged &notifyChanged) {
+    inline void from_json(const nlohmann::json &j, WebSocketServerSide::NotifyChanged &notifyChanged) {
         notifyChanged.type = j.value("type", "");
         notifyChanged.message = j.value("message", "");
         from_json(j.at("clientInfo"), notifyChanged.clientInfo);
     }
 
     // WebSocketServerSide
-    void to_json(nlohmann::json &j, const WebSocketServerSide &ws) {
+    inline void to_json(nlohmann::json &j, const WebSocketServerSide &ws) {
         j = nlohmann::json{
             {"action", ws.action},
             {"messageId", ws.messageId},
@@ -642,7 +632,7 @@ namespace neko::api {
             {"meta", ws.meta},
             {"notifyChanged", ws.notifyChanged}};
     }
-    void from_json(const nlohmann::json &j, WebSocketServerSide &ws) {
+    inline void from_json(const nlohmann::json &j, WebSocketServerSide &ws) {
         ws.action = j.value("action", "");
         ws.messageId = j.value("messageId", "");
         ws.errors = j.value("errors", std::vector<Error>{});
@@ -655,7 +645,7 @@ namespace neko::api {
     }
 
     // WebSocketClientSide
-    void to_json(nlohmann::json &j, const WebSocketClientSide &ws) {
+    inline void to_json(nlohmann::json &j, const WebSocketClientSide &ws) {
         j = nlohmann::json{
             {"action", ws.action},
             {"accessToken", ws.accessToken},
@@ -663,7 +653,7 @@ namespace neko::api {
             {"clientInfo", ws.clientInfo},
             {"preferences", ws.preferences}};
     }
-    void from_json(const nlohmann::json &j, WebSocketClientSide &ws) {
+    inline void from_json(const nlohmann::json &j, WebSocketClientSide &ws) {
         ws.action = j.value("action", "");
         ws.accessToken = j.value("accessToken", "");
         ws.lastMessageId = j.value("lastMessageId", "");
@@ -672,11 +662,12 @@ namespace neko::api {
     }
 
     // StaticLauncherConfig
-    void to_json(nlohmann::json &j, const StaticConfig::StaticLauncherConfig &config) {
+    inline void to_json(nlohmann::json &j, const StaticConfig::StaticLauncherConfig &config) {
         nlohmann::json checkUpdateUrlsJson = nlohmann::json::array();
         for (const auto &url : config.checkUpdateUrls) {
-            checkUpdateUrlsJson.push_back({{"system", url.system},
-                                           {"url", url.url}});
+            checkUpdateUrlsJson.push_back(
+                {{"system", url.system},
+                 {"url", url.url}});
         }
         j = nlohmann::json{
             {"host", config.host},
@@ -687,7 +678,7 @@ namespace neko::api {
             {"meta", config.meta},
             {"checkUpdateUrls", checkUpdateUrlsJson}};
     }
-    void from_json(const nlohmann::json &j, StaticConfig::StaticLauncherConfig &config) {
+    inline void from_json(const nlohmann::json &j, StaticConfig::StaticLauncherConfig &config) {
         config.host = j.value("host", std::vector<std::string>{});
         config.retryIntervalSec = j.value("retryIntervalSec", 0);
         config.maxRetryCount = j.value("maxRetryCount", 0);
@@ -706,34 +697,33 @@ namespace neko::api {
     }
 
     // StaticMaintenanceInfo
-    void to_json(nlohmann::json &j, const StaticConfig::StaticMaintenanceInfo &info) {
+    inline void to_json(nlohmann::json &j, const StaticConfig::StaticMaintenanceInfo &info) {
         to_json(j, static_cast<const MaintenanceResponse &>(info));
     }
 
-    void from_json(const nlohmann::json &j, StaticConfig::StaticMaintenanceInfo &info) {
+    inline void from_json(const nlohmann::json &j, StaticConfig::StaticMaintenanceInfo &info) {
         from_json(j, static_cast<MaintenanceResponse &>(info));
     }
 
     // StaticConfig
-    void to_json(nlohmann::json &j, const StaticConfig &config) {
+    inline void to_json(nlohmann::json &j, const StaticConfig &config) {
         j = nlohmann::json{
             {"staticLauncherConfig", config.staticLauncherConfig},
             {"staticMaintenanceInfo", config.staticMaintenanceInfo}};
     }
-    void from_json(const nlohmann::json &j, StaticConfig &config) {
+    inline void from_json(const nlohmann::json &j, StaticConfig &config) {
         from_json(j.at("staticLauncherConfig"), config.staticLauncherConfig);
         from_json(j.at("staticMaintenanceInfo"), config.staticMaintenanceInfo);
     }
 
-    
     // StaticUpdateInfo
-    void to_json(nlohmann::json &j, const StaticUpdateInfo &info) {
+    inline void to_json(nlohmann::json &j, const StaticUpdateInfo &info) {
         j = nlohmann::json{
             {"coreVersion", info.coreVersion},
             {"resourceVersion", info.resourceVersion},
             {"updateResponse", info.updateResponse}};
     }
-    void from_json(const nlohmann::json &j, StaticUpdateInfo &info) {
+    inline void from_json(const nlohmann::json &j, StaticUpdateInfo &info) {
         info.coreVersion = j.value("coreVersion", "");
         info.resourceVersion = j.value("resourceVersion", "");
         from_json(j.at("updateResponse"), info.updateResponse);
