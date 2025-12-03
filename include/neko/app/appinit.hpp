@@ -17,6 +17,11 @@
 #include "neko/app/appinfo.hpp"
 #include "neko/app/clientConfig.hpp"
 #include "neko/app/lang.hpp"
+#include "neko/app/appSubscribe.hpp"
+
+#include "neko/core/coreSubscribe.hpp"
+
+#include "neko/minecraft/minecraftSubscribe.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/threadBus.hpp"
@@ -197,6 +202,12 @@ namespace neko::app::init {
                 .setProtocol((dev && !tls) ? "http://" : "https://");
             log::info("Network initialized with UserAgent: {}, Proxy: {}, Protocol: {}", {}, config.getUserAgent(), config.getProxy(), config.getProtocol());
 
+            if (cfg.dev.enable && std::string(cfg.dev.server) != "auto" && util::check::isUrl(network::buildUrl("/path",cfg.dev.server)) ){
+                config.pushAvailableHost(std::string(cfg.dev.server));
+                log::info("Network::initialize() : Developer mode enabled, using custom server host: {}", {}, cfg.dev.server);
+                return;
+            }
+
             log::info("Network::initialize : Starting test hosts...");
 
             for (auto it : lc::NetworkHostList) {
@@ -239,5 +250,9 @@ namespace neko::app::init {
         configInfoPrint(bus::config::getClientConfig());
 
         initNetwork();
+
+        app::subscribeToAppEvent();
+        core::subscribeToCoreEvents();
+        minecraft::subscribeToMinecraftEvents();
     }
 } // namespace neko::app::init
