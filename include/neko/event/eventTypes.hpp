@@ -17,7 +17,7 @@ namespace neko::event {
     struct NekoStartEvent {};
     struct NekoQuitEvent {};
 
-    struct ChangeCurrentPageEvent {
+    struct CurrentPageChangeEvent {
         ui::Page page;
     };
     struct ShowNoticeEvent : public neko::ui::NoticeMsg {

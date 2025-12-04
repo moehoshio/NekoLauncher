@@ -1,4 +1,6 @@
+#include "neko/ui/fonts.hpp"
 #include "neko/ui/windows/nekoWindow.hpp"
+
 #include "neko/app/app.hpp"
 #include "neko/app/lang.hpp"
 #include "neko/app/nekoLc.hpp"
@@ -69,6 +71,11 @@ namespace neko::ui::window {
         loadingPage->setupTheme(theme);
     }
 
+    void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
+        homePage->setupFont(textFont, h1Font, h2Font);
+        loadingPage->setupFont(textFont, h1Font, h2Font);
+    }
+
     void NekoWindow::setupConnections() {
         connect(this, &NekoWindow::switchToPageD, this, &NekoWindow::switchToPage);
         connect(this, &NekoWindow::setLoadingValueD, loadingPage,&page::LoadingPage::setLoadingValue);
@@ -76,6 +83,16 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::settingFromConfig(const ClientConfig &config) {
+
+        QFont textFont(config.style.fontFamilies);
+        if (config.style.fontPointSize > 0) {
+            textFont.setPointSize(static_cast<int>(config.style.fontPointSize));
+        } else {
+            textFont.setPointSize(10);
+        }
+
+        auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
+        setupFont(textFont, h1Font, h2Font);
 
         if (config.main.useSysWindowFrame) {
             headBarWidget->hideHeadBar();

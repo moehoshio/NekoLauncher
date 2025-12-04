@@ -41,6 +41,7 @@ namespace neko::ui::window {
         void switchToPage(Page page);
         void resizeItems(int width, int height);
         void setupTheme(const Theme &theme);
+        void setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font);
         void setupConnections();
     protected:
         void resizeEvent(QResizeEvent *event) override;

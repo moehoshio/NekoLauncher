@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
         bus::thread::submit([](){
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             for (int i = 0; i < 100; i++) {
-                bus::event::publish<event::UpdateLoadingValueEvent>({.progressValue = static_cast<neko::uint32>(i)});
+                bus::event::publish<event::LoadingValueChangedEvent>({.progressValue = static_cast<neko::uint32>(i)});
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
             bus::event::publish<event::UpdateCompleteEvent>({});
