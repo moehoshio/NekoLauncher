@@ -23,6 +23,8 @@ namespace neko::lc {
 
     constexpr neko::strview AppIconPath = "img/icon.png";
 
+    constexpr neko::strview LoadingIconPath = "img/loading.gif";
+
     // Options: "custom", "minecraft"
     constexpr neko::strview LauncherMode = "minecraft";
 

@@ -6,6 +6,7 @@
 #include "neko/ui/widgets/headBarWidget.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"
 #include "neko/ui/pages/homePage.hpp"
+#include "neko/ui/pages/loadingPage.hpp"
 
 #include "neko/app/clientConfig.hpp"
 
@@ -23,16 +24,14 @@ namespace neko::ui::window {
         Page currentPage;
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
 
-        QGraphicsBlurEffect *blurEffect;
-
-        // Widgets
-        widget::HeadBarWidget *headBar;
-        widget::PixmapWidget *pixmapWidget;
-
         QWidget *centralWidget;
-
+        QGraphicsBlurEffect *blurEffect;
+        // Widgets
+        widget::HeadBarWidget *headBarWidget;
+        widget::PixmapWidget *pixmapWidget;
         // Pages
         page::HomePage *homePage;
+        page::LoadingPage *loadingPage;
 
     public:
         NekoWindow(const ClientConfig &config);

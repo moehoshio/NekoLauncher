@@ -1,4 +1,3 @@
-
 #include "neko/app/app.hpp"
 #include <gtest/gtest.h>
 

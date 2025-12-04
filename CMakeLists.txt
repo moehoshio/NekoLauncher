@@ -231,6 +231,10 @@ add_definitions(
     -DNEKO_LC_GIT_COMMIT_ID="${NEKO_LC_GIT_COMMIT_ID}"
 )
 
+if (WIN32)
+    add_definitions(-DNOMINMAX)
+endif()
+
 # ================
 # === Add Src ====
 # ================
@@ -248,6 +252,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
     # UI
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
     
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
@@ -256,6 +261,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
     # Headers (for Qt MOC)
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/homePage.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/loadingPage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/widgets/headBarWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
     

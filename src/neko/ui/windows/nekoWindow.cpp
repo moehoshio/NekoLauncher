@@ -18,9 +18,10 @@
 namespace neko::ui::window {
 
     NekoWindow::NekoWindow(const ClientConfig &config)
-        : headBar(new widget::HeadBarWidget(this, this)),
+        : headBarWidget(new widget::HeadBarWidget(this, this)),
           pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           homePage(new page::HomePage(this)),
+          loadingPage(new page::LoadingPage(this)),
           centralWidget(new QWidget(this)),
           blurEffect(new QGraphicsBlurEffect(this)) {
 
@@ -28,9 +29,14 @@ namespace neko::ui::window {
         pixmapWidget->lower();
         centralWidget->raise();
         homePage->raise();
+        loadingPage->raise();
+
+        homePage->hide();
+        loadingPage->hide();
 
         // Setup themes
         homePage->setupTheme(ui::homeTheme);
+        loadingPage->setupTheme(ui::getCurrentTheme());
         pixmapWidget->setGraphicsEffect(blurEffect);
 
         this->setMinimumSize(800, 420);
@@ -38,12 +44,20 @@ namespace neko::ui::window {
         this->setCentralWidget(centralWidget);
         this->setWindowTitle(lc::AppName.data());
         this->setWindowIcon(QIcon(lc::AppIconPath.data()));
-        this->addToolBar(headBar->getToolBar());
+        this->addToolBar(headBarWidget->getToolBar());
 
-        switchToPage(Page::home);
-
+        switchToPage(Page::loading);
+        loadingPage->showLoading({.type = LoadMsg::Type::All,
+                                 .process = "Initializing...",
+                                 .h1 = "Welcome to NekoLauncher",
+                                 .h2 = "Loading...",
+                                 .message = "Preparing the launcher...",
+                                 .posterPath = "img/bg.png",
+                                 .icon = "img/loading.gif",
+                                 .speed = 100,
+                                 .progressVal = 0,
+                                 .progressMax = 100});
         settingFromConfig(config);
-
         resizeItems(this->width(), this->height());
     }
     NekoWindow::~NekoWindow() = default;
@@ -51,9 +65,9 @@ namespace neko::ui::window {
     void NekoWindow::settingFromConfig(const ClientConfig &config) {
 
         if (config.main.useSysWindowFrame) {
-            headBar->hideHeadBar();
+            headBarWidget->hideHeadBar();
         } else {
-            headBar->showHeadBar();
+            headBarWidget->showHeadBar();
         }
 
         if (neko::strview("none") != config.main.backgroundType) {
@@ -84,6 +98,9 @@ namespace neko::ui::window {
             case Page::home:
                 homePage->hide();
                 break;
+            case Page::loading:
+                loadingPage->hide();
+                break;
             default:
                 break;
         }
@@ -94,6 +111,10 @@ namespace neko::ui::window {
             case Page::home:
                 homePage->show();
                 homePage->raise();
+                break;
+            case Page::loading:
+                loadingPage->show();
+                loadingPage->raise();
                 break;
             default:
                 break;
@@ -106,6 +127,7 @@ namespace neko::ui::window {
         pixmapWidget->resize(width, height);
         centralWidget->resize(width, height);
         homePage->resizeItems(width, height);
+        loadingPage->resizeItems(width, height);
     }
 
     void NekoWindow::resizeEvent(QResizeEvent *event) {
@@ -125,7 +147,7 @@ namespace neko::ui::window {
                 auto p = dynamic_cast<QHoverEvent *>(event)->pos();
                 bool pointXGreaterWidthBorder = (p.x() > width() - border);
                 bool pointXLessWidthBorder = (p.x() < border);
-                bool pointYGreaterHeightToolBar = (p.y() > headBar->height());
+                bool pointYGreaterHeightToolBar = (p.y() > headBarWidget->height());
                 bool pointYGreaterHeightBorder = (p.y() > height() - border);
                 if (pointYGreaterHeightBorder) {
                     if (pointXLessWidthBorder) {
