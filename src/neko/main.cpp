@@ -8,6 +8,7 @@
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
+#include "neko/ui/uiEventDispatcher.hpp"
 #include "neko/ui/windows/nekoWindow.hpp"
 #include "neko/ui/windows/logViewerWindow.hpp"
 
@@ -27,18 +28,25 @@ int main(int argc, char *argv[]) {
         app::init::initialize();
         auto runingInfo = app::run();
 
-        if (bus::config::getClientConfig().style.theme == "dark") {
-            ui::setCurrentTheme(ui::darkTheme);
-        } else {
-            ui::setCurrentTheme(ui::lightTheme);
-        }
+        ui::setCurrentTheme(ui::darkTheme);
 
         ui::window::NekoWindow window(bus::config::getClientConfig());
+        ui::UiEventDispatcher::setMainWindow(&window);
         window.show();
+        
+        bus::thread::submit([](){
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            for (int i = 0; i < 100; i++) {
+                bus::event::publish<event::UpdateLoadingValueEvent>({.progressValue = static_cast<neko::uint32>(i)});
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+            bus::event::publish<event::UpdateCompleteEvent>({});
+        });
 
         // Start Qt event loop
         qtApp.exec();
         runingInfo.eventLoopFuture.get();
+        ui::UiEventDispatcher::clearMainWindow();
 
         {
             auto cfg = bus::config::getClientConfig();

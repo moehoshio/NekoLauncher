@@ -263,6 +263,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/homePage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/loadingPage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/widgets/headBarWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
     
     # Main

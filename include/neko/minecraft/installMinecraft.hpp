@@ -133,7 +133,7 @@
 
 //         auto assetIndexJson = nlohmann::json::parse(std::ifstream(exec::sum<std::string>(installPath, "/assets/indexes/", versionJson["assetIndex"]["id"].get<std::string>(), ".json")), nullptr, false);
 
-//         neko::ui::LoadMsg msg{neko::ui::LoadMsg::Progress, "Downloading libraries"};
+//         neko::ui::LoadingMsg msg{neko::ui::LoadingMsg::Progress, "Downloading libraries"};
 //         msg.progressMax = (libSize + assetIndexJson.size());
 //         if (showLoading)
 //             showLoading(msg);
@@ -163,7 +163,7 @@
 //     }
 
 //     // Should not be called from the main thread, as it will block the incoming thread until completion.
-//     inline void installMinecraft(std::string_view installPath = "./.minecraft", std::string_view targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official, std::function<void(const ui::HintMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
+//     inline void installMinecraft(std::string_view installPath = "./.minecraft", std::string_view targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official, std::function<void(const ui::NoticeMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadingMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
 //         std::string EnterMsg = exec::sum<std::string>("Enter , downloadSource : ", downloadSourceMap.at(downloadSource), ", installPath : ", installPath, ", targetVersion : ", targetVersion);
 //         nlog::autoLog log{EnterMsg};
 

@@ -51,19 +51,19 @@ namespace neko::ui::page {
         connect(this, &LoadingPage::setLoadingStatusD, this, &LoadingPage::setLoadingStatus);
     }
 
-    void LoadingPage::showLoading(const LoadMsg &m) {
+    void LoadingPage::showLoading(const LoadingMsg &m) {
         this->show();
         process->setText(QString::fromStdString(m.process));
-        loadingMv->setFileName(QString::fromStdString(m.icon));
+        loadingMv->setFileName(QString::fromStdString(m.loadingIconPath));
         loadingMv->start();
 
-        if (m.type == LoadMsg::Type::Text || m.type == LoadMsg::Type::All) {
+        if (m.type == LoadingMsg::Type::Text || m.type == LoadingMsg::Type::All) {
             h1Title->setText(QString::fromStdString(m.h1));
             h2Title->setText(QString::fromStdString(m.h2));
             text->setText(QString::fromStdString(m.message));
         }
 
-        if (m.type == LoadMsg::Type::Progress || m.type == LoadMsg::Type::All) {
+        if (m.type == LoadingMsg::Type::Progress || m.type == LoadingMsg::Type::All) {
             progressBar->setMaximum(m.progressMax);
             progressBar->setValue(m.progressVal);
         }
@@ -79,19 +79,19 @@ namespace neko::ui::page {
             loadingMv->setSpeed(m.speed);
 
         switch (m.type) {
-            case LoadMsg::Type::Text:
+            case LoadingMsg::Type::Text:
                 progressBar->hide();
                 textLayoutWidget->show();
                 break;
-            case LoadMsg::Type::Progress:
+            case LoadingMsg::Type::Progress:
                 progressBar->show();
                 textLayoutWidget->hide();
                 break;
-            case LoadMsg::Type::OnlyRaw:
+            case LoadingMsg::Type::OnlyRaw:
                 progressBar->hide();
                 textLayoutWidget->hide();
                 break;
-            case LoadMsg::Type::All:
+            case LoadingMsg::Type::All:
                 progressBar->show();
                 textLayoutWidget->show();
                 break;
@@ -172,8 +172,6 @@ namespace neko::ui::page {
     }
 
     void LoadingPage::resizeItems(int windowWidth, int windowHeight) {
-        if (!isVisible())
-            return;
 
         resize(windowWidth, windowHeight);
 
@@ -184,8 +182,8 @@ namespace neko::ui::page {
         int cy = (windowHeight - ch) / 2;
         textLayoutWidget->setGeometry(cx, cy, cw, ch);
 
-        progressBar->setGeometry(windowWidth * 0.3, windowHeight * 0.85, windowWidth * 0.08, windowHeight * 0.08);
-        loadingLabel->setGeometry(3, windowHeight * 0.8, windowWidth * 0.08, windowHeight * 0.08);
+        progressBar->setGeometry(windowWidth * 0.3, windowHeight * 0.82, windowWidth * 0.4, windowHeight * 0.1);
+        loadingLabel->setGeometry(3, windowHeight * 0.8, windowWidth * 0.08, windowHeight * 0.12);
 
         process->setGeometry(5, windowHeight * 0.9, windowWidth * 0.3, windowHeight * 0.05);
     }

@@ -51,14 +51,14 @@ namespace neko::ui {
     /**
      * @brief Structure representing a loading message page.
      */
-    struct LoadMsg {
+    struct LoadingMsg {
         /**
          * @brief Enum for the type of loading message to display.
          */
         enum class Type {
-            OnlyRaw,  /**< Only show loading icon and process text */
-            Text,     /**< Show text widget, process, and loading icon */
-            Progress, /**< Show progress bar, process, and loading icon */
+            OnlyRaw,  /**< Only show loading loadingIconPath and process text */
+            Text,     /**< Show text widget, process, and loading loadingIconPath */
+            Progress, /**< Show progress bar, process, and loading loadingIconPath */
             All       /**< Show all elements */
         };
 
@@ -93,13 +93,13 @@ namespace neko::ui {
         std::string posterPath;
 
         /**
-         * @brief Path to the loading icon (gif).
-         * This icon is displayed during the loading process.
+         * @brief Path to the loading loadingIconPath (gif).
+         * This loadingIconPath is displayed during the loading process.
          */
-        std::string icon = "img/loading.gif"; /**< Path to the loading icon (gif) */
+        std::string loadingIconPath = "img/loading.gif"; /**< Path to the loading loadingIconPath (gif) */
 
         /**
-         * @brief Speed of the loading icon (gif) animation in Percent
+         * @brief Speed of the loading loadingIconPath (gif) animation in Percent
          */
         neko::uint32 speed = 100;
 
@@ -115,11 +115,11 @@ namespace neko::ui {
     };
 
     /**
-     * @brief Structure representing a hint or alert message dialog.
+     * @brief Structure representing an informational dialog message.
      */
-    struct HintMsg {
+    struct NoticeMsg {
         /**
-         * @brief The title of the hint dialog.
+         * @brief The title of the info dialog.
          */
         std::string title;
 

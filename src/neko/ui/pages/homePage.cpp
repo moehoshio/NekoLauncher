@@ -77,9 +77,6 @@ namespace neko::ui::page {
                 .arg(QString::fromStdString(app::getResourceVersion())));
     }
     void HomePage::resizeItems(int windowWidth, int windowHeight) {
-        if (!isVisible())
-            return;
-
         resize(windowWidth, windowHeight);
 
         startButton->setGeometry(windowWidth * 0.3, windowHeight * 0.75, windowWidth * 0.4, windowHeight * 0.18);

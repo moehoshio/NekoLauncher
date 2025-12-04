@@ -23,6 +23,8 @@
 
 #include "neko/minecraft/minecraftSubscribe.hpp"
 
+#include "neko/ui/uiSubscribe.hpp"
+
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/threadBus.hpp"
 
@@ -254,5 +256,6 @@ namespace neko::app::init {
         app::subscribeToAppEvent();
         core::subscribeToCoreEvents();
         minecraft::subscribeToMinecraftEvents();
+        ui::subscribeToUiEvent();
     }
 } // namespace neko::app::init

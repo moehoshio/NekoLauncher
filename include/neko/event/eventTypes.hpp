@@ -20,24 +20,24 @@ namespace neko::event {
     struct ChangeCurrentPageEvent {
         ui::Page page;
     };
-    struct ShowHintEvent : public neko::ui::HintMsg {
-        ShowHintEvent(const neko::ui::HintMsg &msg) : neko::ui::HintMsg(msg) {}
+    struct ShowNoticeEvent : public neko::ui::NoticeMsg {
+        ShowNoticeEvent(const neko::ui::NoticeMsg &msg) : neko::ui::NoticeMsg(msg) {}
     };
-    struct ShowLoadEvent : public neko::ui::LoadMsg {
-        ShowLoadEvent(const neko::ui::LoadMsg &msg) : neko::ui::LoadMsg(msg) {}
+    struct ShowLoadingEvent : public neko::ui::LoadingMsg {
+        ShowLoadingEvent(const neko::ui::LoadingMsg &msg) : neko::ui::LoadingMsg(msg) {}
     };
     struct ShowInputEvent : public neko::ui::InputMsg {
         ShowInputEvent(const neko::ui::InputMsg &msg) : neko::ui::InputMsg(msg) {}
     };
-    struct UpdateLoadingValueEvent {
+    struct LoadingValueChangedEvent {
         neko::uint32 progressValue;
     };
-    struct UpdateLoadingStatusEvent {
-        std::string process;
+    struct LoadingStatusChangedEvent {
+        std::string statusMessage;
     };
-    struct UpdateLoadingEvent : public UpdateLoadingValueEvent, public UpdateLoadingStatusEvent {
-        UpdateLoadingEvent(const std::string &process, neko::uint32 progressValue)
-            : UpdateLoadingValueEvent{progressValue}, UpdateLoadingStatusEvent{process} {}
+    struct LoadingChangedEvent : public LoadingValueChangedEvent, public LoadingStatusChangedEvent {
+        LoadingChangedEvent(const std::string &statusMessage, neko::uint32 progressValue)
+            : LoadingValueChangedEvent{progressValue}, LoadingStatusChangedEvent{statusMessage} {}
     };
     
 
@@ -45,8 +45,8 @@ namespace neko::event {
     /** Core Events **/
     /*****************/
 
-    struct MaintenanceEvent : public neko::ui::HintMsg {
-        MaintenanceEvent(const neko::ui::HintMsg &msg) : neko::ui::HintMsg(msg) {}
+    struct MaintenanceEvent : public neko::ui::NoticeMsg {
+        MaintenanceEvent(const neko::ui::NoticeMsg &msg) : neko::ui::NoticeMsg(msg) {}
     };
     struct UpdateAvailableEvent : api::UpdateResponse {};
     struct UpdateCompleteEvent {};

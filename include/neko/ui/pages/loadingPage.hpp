@@ -36,7 +36,7 @@ namespace neko::ui::page {
     public:
         LoadingPage(QWidget *parent = nullptr);
 
-        void showLoading(const LoadMsg &m);
+        void showLoading(const LoadingMsg &m);
         void hideLoading();
         
         void setLoadingValue(neko::uint32 val);

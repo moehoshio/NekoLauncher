@@ -45,8 +45,8 @@ namespace neko::core {
 
         // Update process to checking maintenance status
         std::string process = lang::tr(lang::keys::maintenance::category, lang::keys::maintenance::checkingStatus);
-        bus::event::publish(event::ShowLoadEvent(ui::LoadMsg{
-            .type = ui::LoadMsg::Type::OnlyRaw,
+        bus::event::publish(event::ShowLoadingEvent(ui::LoadingMsg{
+            .type = ui::LoadingMsg::Type::OnlyRaw,
             .process = process}));
 
         nlohmann::json maintenanceRequest = app::getRequestJson("maintenanceRequest");

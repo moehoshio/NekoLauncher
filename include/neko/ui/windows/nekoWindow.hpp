@@ -20,6 +20,7 @@ class QGraphicsBlurEffect;
 namespace neko::ui::window {
 
     class NekoWindow : public QMainWindow {
+        Q_OBJECT
     private:
         Page currentPage;
         const QSize scrSize = QGuiApplication::primaryScreen()->size();
@@ -39,10 +40,17 @@ namespace neko::ui::window {
         void settingFromConfig(const ClientConfig &config);
         void switchToPage(Page page);
         void resizeItems(int width, int height);
+        void setupTheme(const Theme &theme);
+        void setupConnections();
     protected:
         void resizeEvent(QResizeEvent *event) override;
         void closeEvent(QCloseEvent *event) override;
         bool event(QEvent *event) override;
+
+    signals:
+        void switchToPageD(Page page);
+        void setLoadingValueD(int value);
+        void setLoadingStatusD(const std::string& msg);
     };
 
 } // namespace neko::ui::window
