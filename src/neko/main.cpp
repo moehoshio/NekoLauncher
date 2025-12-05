@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
             ui::setCurrentTheme(ui::lightTheme);
         }
         ui::window::NekoWindow window(cfg);
-        ui::UiEventDispatcher::setMainWindow(&window);
+        ui::UiEventDispatcher::setNekoWindow(&window);
         window.show();
         
         bus::thread::submit([](){
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         // Start Qt event loop
         qtApp.exec();
         runingInfo.eventLoopFuture.get();
-        ui::UiEventDispatcher::clearMainWindow();
+        ui::UiEventDispatcher::clearNekoWindow();
 
         {
             auto cfg = bus::config::getClientConfig();

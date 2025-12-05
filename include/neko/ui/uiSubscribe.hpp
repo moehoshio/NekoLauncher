@@ -15,11 +15,11 @@ namespace neko::ui {
 
         bus::event::subscribe<event::UpdateCompleteEvent>(
             [](const event::UpdateCompleteEvent &) {
-                if (auto mainWindow = UiEventDispatcher::getMainWindow()) {
-                    emit mainWindow->switchToPageD(Page::home);
-                    emit mainWindow->showNoticeD(NoticeMsg{
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->switchToPageD(Page::home);
+                    emit nekoWindow->showNoticeD(NoticeMsg{
                         .title = "Update Complete",
-                        .message = "The application has been updated successfully.",
+                        .message = "The application has been updated successfully.\nPlease restart to apply the changes.\nThank you for using NekoLauncher!",
                         .posterPath = "",
                         .buttonText = {
                             "OK",
@@ -34,15 +34,15 @@ namespace neko::ui {
 
         bus::event::subscribe<event::LoadingValueChangedEvent>(
             [](const event::LoadingValueChangedEvent &e) {
-                if (auto mainWindow = UiEventDispatcher::getMainWindow()) {
-                    emit mainWindow->setLoadingValueD(static_cast<neko::uint32>(e.progressValue));
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->setLoadingValueD(static_cast<neko::uint32>(e.progressValue));
                 }
             });
 
         bus::event::subscribe<event::LoadingStatusChangedEvent>(
             [](const event::LoadingStatusChangedEvent &e) {
-                if (auto mainWindow = UiEventDispatcher::getMainWindow()) {
-                    emit mainWindow->setLoadingStatusD(e.statusMessage);
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->setLoadingStatusD(e.statusMessage);
                 }
             });
     }

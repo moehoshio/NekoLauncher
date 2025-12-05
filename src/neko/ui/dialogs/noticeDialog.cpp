@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include <QtCore/QTimer>
+#include <QtGui/QMouseEvent>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -30,6 +31,9 @@ namespace neko::ui::dialog {
                     buttonLayout(new QHBoxLayout(buttonContainer)) {
 
         this->setAttribute(Qt::WA_TranslucentBackground, true);
+        // The overlay will be sized to just the card, so we keep mouse events enabled here.
+        poster->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        centralWidget->setAttribute(Qt::WA_TransparentForMouseEvents, false);
 
         centralWidget->setObjectName("noticeCentral");
         buttonContainer->setObjectName("noticeButtons");
@@ -43,6 +47,9 @@ namespace neko::ui::dialog {
         centralWidgetLayout->setContentsMargins(24, 16, 24, 20);
         centralWidgetLayout->setSpacing(12);
         centralWidget->setLayout(centralWidgetLayout);
+
+        // Hidden until first showNotice
+        this->hide();
 
         title->setAlignment(Qt::AlignLeft);
         line->setFrameShape(QFrame::HLine);
@@ -230,21 +237,27 @@ namespace neko::ui::dialog {
         }
     }
 
-    void NoticeDialog::resizeItems(int windowWidth, int windowHeight) {
-        if (!this->isVisible())
+    void NoticeDialog::resizeItems(int windowWidth, int windowHeight, int topPadding) {
+        if (topPadding < 0)
+            topPadding = 0;
+        if (topPadding > windowHeight)
+            topPadding = windowHeight;
+
+        const int availableHeight = windowHeight - topPadding;
+        if (availableHeight <= 0 || !centralWidget)
             return;
 
-        resize(windowWidth, windowHeight);
+        int cw = static_cast<int>(windowWidth * 0.4);
+        int ch = static_cast<int>(availableHeight * 0.4);
+        int cx = (windowWidth - cw) / 2;
+        int cy = topPadding + (availableHeight - ch) / 2;
 
-        if (poster) {
-            poster->setGeometry(0, 0, windowWidth, windowHeight);
-        }
-        if (centralWidget) {
-            int cw = windowWidth * 0.4;
-            int ch = windowHeight * 0.4;
-            int cx = (windowWidth - cw) / 2;
-            int cy = (windowHeight - ch) / 2;
-            centralWidget->setGeometry(cx, cy, cw, ch);
-        }
+        // Only occupy the card area; do not blanket the head bar or full window.
+        setGeometry(cx, cy, cw, ch);
+        raise();
+
+        poster->setGeometry(0, 0, cw, ch);
+        centralWidget->setGeometry(0, 0, cw, ch);
     }
+
 } // namespace neko::ui::dialog

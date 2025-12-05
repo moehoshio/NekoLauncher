@@ -19,7 +19,7 @@ namespace neko::ui::widget {
     // ===================
     // == ToolBarWidget ==
     // ===================
-    
+
     ToolBarWidget::ToolBarWidget(QWidget *parent) : QToolBar(parent) {
         setMovable(false);
         setFloatable(false);
@@ -60,7 +60,7 @@ namespace neko::ui::widget {
         setupText();
         setupTheme(ui::getCurrentTheme());
         setHeadBarAlignmentRight();
-        
+
         connect(this->toolbar, &ToolBarWidget::requestMoveWindow,
                 [=, this] {
                     topWindow->windowHandle()->startSystemMove();
@@ -82,7 +82,7 @@ namespace neko::ui::widget {
                 [=, this]() { topWindow->setWindowState(Qt::WindowMinimized); });
     }
 
-    ToolBarWidget * HeadBarWidget::getToolBar() {
+    ToolBarWidget *HeadBarWidget::getToolBar() {
         return toolbar;
     }
 
@@ -110,24 +110,36 @@ namespace neko::ui::widget {
     }
 
     void HeadBarWidget::setupText() {
-        closeAction->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::close,"Close")) );
-        maximize->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::maximize,"Maximize")) );
-        minimize->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::minimize,"Minimize")) );
+        closeAction->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::close, "Close")));
+        maximize->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::maximize, "Maximize")));
+        minimize->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::minimize, "Minimize")));
     }
 
     void HeadBarWidget::showHeadBar() {
         this->show();
         toolbar->show();
         toolbar->raise();
-        topWindow->setWindowFlags(
-            topWindow->windowFlags() & Qt::Window | Qt::FramelessWindowHint);
+
+        const auto state = topWindow->windowState();
+        Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint;
+        topWindow->setWindowFlags(flags);
+        topWindow->show();
+        topWindow->setWindowState(state);
     }
 
     void HeadBarWidget::hideHeadBar() {
         this->hide();
         toolbar->hide();
-        topWindow->setWindowFlags(
-            topWindow->windowFlags() & Qt::Window);
+
+        const auto state = topWindow->windowState();
+        Qt::WindowFlags flags = Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint |
+                                Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint |
+                                Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint;
+        flags &= ~Qt::MSWindowsFixedSizeDialogHint;
+        topWindow->setWindowFlags(flags);
+        topWindow->setWindowFlag(Qt::MSWindowsFixedSizeDialogHint, false);
+        topWindow->show();
+        topWindow->setWindowState(state);
     }
 
     void HeadBarWidget::setHeadBarAlignmentRight(bool keepRight) {

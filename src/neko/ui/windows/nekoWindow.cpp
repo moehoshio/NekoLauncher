@@ -44,7 +44,7 @@ namespace neko::ui::window {
         pixmapWidget->setGraphicsEffect(blurEffect);
 
         this->setMinimumSize(800, 420);
-        this->setMaximumSize(scrSize);
+        // Remove hard max size so native maximize stays available
         this->setCentralWidget(centralWidget);
         this->setWindowTitle(lc::AppName.data());
         this->setWindowIcon(QIcon(lc::AppIconPath.data()));
@@ -86,6 +86,8 @@ namespace neko::ui::window {
 
     void NekoWindow::showNotice(const NoticeMsg &m) {
         noticeDialog->showNotice(m);
+        headBarWidget->raise();
+        headBarWidget->getToolBar()->raise();
     }
 
     void NekoWindow::showLoading(const LoadingMsg &m) {
@@ -118,8 +120,13 @@ namespace neko::ui::window {
         } else {
             headBarWidget->showHeadBar();
         }
+        if (config.main.headBarKeepRight) {
+            headBarWidget->setHeadBarAlignmentRight(true);
+        } else {
+            headBarWidget->setHeadBarAlignmentRight(false);
+        }
 
-        if (neko::strview("none") != config.main.backgroundType) {
+        if (neko::strview("image") == config.main.backgroundType) {
             pixmapWidget->setPixmap(config.main.background);
         }
 
@@ -175,7 +182,10 @@ namespace neko::ui::window {
     void NekoWindow::resizeItems(int width, int height) {
         pixmapWidget->resize(width, height);
         centralWidget->resize(width, height);
-        noticeDialog->resizeItems(width, height);
+        const int headBarHeight = headBarWidget->isVisible() ? headBarWidget->height() : 0;
+        noticeDialog->resizeItems(width, height, headBarHeight);
+        headBarWidget->raise();
+        headBarWidget->getToolBar()->raise();
         if (this->currentPage == Page::home) {
             homePage->resizeItems(width, height);
         } else if (this->currentPage == Page::loading) {

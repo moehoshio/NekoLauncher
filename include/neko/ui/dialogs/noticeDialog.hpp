@@ -14,6 +14,8 @@ class QLabel;
 class QPushButton;
 class QVBoxLayout;
 class QWidget;
+class QEvent;
+class QEvent;
 
 namespace neko::ui::dialog {
 
@@ -41,7 +43,7 @@ namespace neko::ui::dialog {
         void resetState();
         void resetButtons();
 
-        void resizeItems(int windowWidth, int windowHeight);
+        void resizeItems(int windowWidth, int windowHeight, int topPadding = 0);
     signals:
         void showNoticeD(const NoticeMsg &m);
         void resetStateD();

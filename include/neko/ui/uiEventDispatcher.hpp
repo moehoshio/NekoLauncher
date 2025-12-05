@@ -7,24 +7,24 @@
 namespace neko::ui {
 
     /**
-     * @brief Thin bridge that lets non-UI initialization code emit signals on the main window once it exists.
+     * @brief Thin bridge that lets non-UI initialization code emit signals on the neko window once it exists.
      */
     class UiEventDispatcher {
     public:
-        static void setMainWindow(window::NekoWindow *window) noexcept {
-            mainWindow.store(window, std::memory_order_release);
+        static void setNekoWindow(window::NekoWindow *window) noexcept {
+            nekoWindow.store(window, std::memory_order_release);
         }
 
-        static void clearMainWindow() noexcept {
-            mainWindow.store(nullptr, std::memory_order_release);
+        static void clearNekoWindow() noexcept {
+            nekoWindow.store(nullptr, std::memory_order_release);
         }
 
-        static window::NekoWindow *getMainWindow() noexcept {
-            return mainWindow.load(std::memory_order_acquire);
+        static window::NekoWindow *getNekoWindow() noexcept {
+            return nekoWindow.load(std::memory_order_acquire);
         }
 
     private:
-        static inline std::atomic<window::NekoWindow *> mainWindow{nullptr};
+        static inline std::atomic<window::NekoWindow *> nekoWindow{nullptr};
     };
 
 } // namespace neko::ui
