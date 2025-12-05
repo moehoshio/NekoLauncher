@@ -42,6 +42,9 @@ namespace neko::ui::window {
         page::HomePage *homePage;
         page::LoadingPage *loadingPage;
 
+        bool useImageBackground = false;
+        void applyCentralBackground(const Theme &theme);
+
     public:
         NekoWindow(const ClientConfig &config);
         ~NekoWindow();

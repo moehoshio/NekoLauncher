@@ -43,6 +43,9 @@ namespace neko::ui::window {
         noticeDialog->hide();
         inputDialog->hide();
 
+        centralWidget->setObjectName("centralWidget");
+        centralWidget->setAttribute(Qt::WA_StyledBackground, true);
+
         // Setup themes
         setupTheme(ui::getCurrentTheme());
         pixmapWidget->setGraphicsEffect(blurEffect);
@@ -55,19 +58,17 @@ namespace neko::ui::window {
         this->addToolBar(headBarWidget->getToolBar());
 
         switchToPage(Page::home);
-        inputDialog->showInput({
-            .title = "Test Input Dialog",
-            .message = "This is a test of the input dialog. Please enter some text below:",
-            .posterPath = "",
-            .lineText = {"1", "2", "3"},
-            .callback = [this](bool confirmed) {
-                log::info("Input dialog confirmed: {}",{}, confirmed);
-                if (!confirmed){
-                    emit this->hideInputD();
-                    return;
-                }
-            }
-        });
+        inputDialog->showInput({.title = "Test Input Dialog",
+                                .message = "This is a test of the input dialog. Please enter some text below:",
+                                .posterPath = "",
+                                .lineText = {"1", "2", "3"},
+                                .callback = [this](bool confirmed) {
+                                    log::info("Input dialog confirmed: {}", {}, confirmed);
+                                    if (!confirmed) {
+                                        emit this->hideInputD();
+                                        return;
+                                    }
+                                }});
         // loadingPage->showLoading(
         //     {.type = LoadingMsg::Type::All,
         //      .process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates),
@@ -91,10 +92,7 @@ namespace neko::ui::window {
         loadingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
         inputDialog->setupTheme(theme);
-
-        if (theme.info.type == ThemeType::Dark) {
-            centralWidget->setStyleSheet(QString("background-color: %1;").arg(theme.colors.background.data()));
-        }
+        applyCentralBackground(ui::homeTheme);
     }
 
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
@@ -102,6 +100,17 @@ namespace neko::ui::window {
         loadingPage->setupFont(textFont, h1Font, h2Font);
         noticeDialog->setupFont(textFont, h2Font);
         inputDialog->setupFont(textFont, h2Font);
+    }
+
+    void NekoWindow::applyCentralBackground(const Theme &theme) {
+        if (useImageBackground) {
+            centralWidget->setStyleSheet(" #centralWidget { background-color: transparent; }");
+            centralWidget->setAutoFillBackground(false);
+        } else {
+            centralWidget->setStyleSheet(QString(" #centralWidget { background-color: %1; }")
+                                             .arg(theme.colors.background.data()));
+            centralWidget->setAutoFillBackground(true);
+        }
     }
 
     void NekoWindow::showNotice(const NoticeMsg &m) {
@@ -155,9 +164,13 @@ namespace neko::ui::window {
             headBarWidget->setHeadBarAlignmentRight(false);
         }
 
-        if (neko::strview("image") == config.main.backgroundType) {
+        useImageBackground = (neko::strview("image") == config.main.backgroundType);
+        if (useImageBackground) {
             pixmapWidget->setPixmap(config.main.background);
+        } else {
+            pixmapWidget->clearPixmap();
         }
+        applyCentralBackground(ui::homeTheme);
 
         if (config.style.blurRadius > 0) {
             blurEffect->setBlurRadius(static_cast<qreal>(config.style.blurRadius));

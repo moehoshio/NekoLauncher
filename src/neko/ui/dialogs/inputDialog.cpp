@@ -92,7 +92,6 @@ namespace neko::ui::dialog {
                 *did = true;
             });
 
-        // Do not connect to destroyed(): during app shutdown the callback target may already be dead.
     }
 
     void InputDialog::setLines(const std::vector<std::string> &vec) {
@@ -119,7 +118,6 @@ namespace neko::ui::dialog {
     }
     void InputDialog::resizeItems(int windowWidth, int windowHeight) {
         setGeometry(0, 0, windowWidth, windowHeight);
-        // raise();
         poster->setGeometry(0, 0, windowWidth, windowHeight);
 
         const int cw = static_cast<int>(windowWidth * 0.32);
@@ -155,9 +153,9 @@ namespace neko::ui::dialog {
                     "QPushButton { color: %2; background-color: %3; border-radius: 14px; padding: 10px 18px; }"
                     "QPushButton:hover { background-color: %4; }"
                     "QPushButton:disabled { background-color: %5; }")
-                .arg(theme.colors.primary.data())
+                .arg(theme.colors.accent.data())
                 .arg(theme.colors.text.data())
-                .arg(theme.colors.secondary.data())
+                .arg(theme.colors.accent.data())
                 .arg(theme.colors.hover.data())
                 .arg(theme.colors.disabled.data()));
     }

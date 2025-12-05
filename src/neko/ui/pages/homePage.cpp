@@ -11,6 +11,8 @@ namespace neko::ui::page {
           startButton(new QPushButton(this)),
           menuButton(new QPushButton(this)),
           versionButton(new QPushButton(this)) {
+            
+        this->setAttribute(Qt::WA_TranslucentBackground);
         startButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
         menuButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
         versionButton->setFocusPolicy(Qt::FocusPolicy::NoFocus);

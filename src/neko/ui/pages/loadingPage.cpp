@@ -23,6 +23,8 @@ namespace neko::ui::page {
           loadingMv(new QMovie("img/loading.gif", QByteArray(), this)),
           process(new QLabel(this)) {
 
+        this->setAttribute(Qt::WA_TranslucentBackground);
+
         textLayout->addWidget(h1Title);
         textLayout->addWidget(h2Title);
         textLayout->addWidget(text);

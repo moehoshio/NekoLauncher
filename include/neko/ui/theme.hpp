@@ -92,7 +92,7 @@ namespace neko::ui {
         ThemeColors{
             .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100))",
             .secondary = "rgba(240, 240, 240, 225)",
-            .background = "transparent",
+            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255))",
             .text = "#212121",
             .accent = "",
             .success = "",
