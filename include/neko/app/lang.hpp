@@ -186,6 +186,16 @@ namespace neko::lang {
 
         constexpr neko::cstr language = "language";
 
+
+        namespace input {
+            constexpr neko::cstr
+                category = "input",
+                title = "title",
+                message = "message",
+                placeholder = "placeholder",
+                password = "password";
+        } // namespace input
+
         namespace maintenance {
             constexpr neko::cstr
                 category = "maintenance",
@@ -226,7 +236,8 @@ namespace neko::lang {
                 restore = "restore",
                 apply = "apply",
                 quit = "quit",
-                retry = "retry";
+                retry = "retry",
+                input = "input";
         } // namespace button
 
         namespace minecraft {

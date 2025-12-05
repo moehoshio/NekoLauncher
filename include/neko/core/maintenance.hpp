@@ -76,7 +76,7 @@ namespace neko::core {
 
         // Update process to parsing json
         process = lang::tr(lang::keys::maintenance::category, lang::keys::maintenance::parseIng);
-        bus::event::publish(event::UpdateLoadingStatusEvent{.process = process});
+        bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = process});
         log::info("maintenance response : " + response);
 
         try {
@@ -93,7 +93,7 @@ namespace neko::core {
 
             // Update process to downloading poster
             process = lang::tr(lang::keys::maintenance::category, lang::keys::maintenance::downloadPoster);
-            bus::event::publish(event::UpdateLoadingStatusEvent{.process = process});
+            bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = process});
             auto filePath = downloadPoster(maintenanceInfo.posterUrl);
 
             std::string command;

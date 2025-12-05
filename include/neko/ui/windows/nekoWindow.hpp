@@ -4,6 +4,7 @@
 #include "neko/ui/page.hpp"
 
 #include "neko/ui/dialogs/noticeDialog.hpp"
+#include "neko/ui/dialogs/inputDialog.hpp"
 
 #include "neko/ui/widgets/headBarWidget.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"
@@ -33,6 +34,7 @@ namespace neko::ui::window {
 
         // Dialogs
         dialog::NoticeDialog *noticeDialog;
+        dialog::InputDialog *inputDialog;
         // Widgets
         widget::HeadBarWidget *headBarWidget;
         widget::PixmapWidget *pixmapWidget;
@@ -50,6 +52,9 @@ namespace neko::ui::window {
         void setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font);
         void setupConnections();
         void showNotice(const NoticeMsg &m);
+        void showInput(const InputMsg &m);
+        void hideInput();
+        std::vector<std::string> getLines();
         void showLoading(const LoadingMsg &m);
     protected:
         void resizeEvent(QResizeEvent *event) override;
@@ -58,11 +63,15 @@ namespace neko::ui::window {
 
     signals:
         void showNoticeD(const NoticeMsg &m);
+        void showInputD(const InputMsg &m);
+        void hideInputD();
+        std::vector<std::string> getLinesD();
         void resetNoticeStateD();
         void resetNoticeButtonsD();
         void switchToPageD(Page page);
         void setLoadingValueD(int value);
         void setLoadingStatusD(const std::string& msg);
+        
     };
 
 } // namespace neko::ui::window

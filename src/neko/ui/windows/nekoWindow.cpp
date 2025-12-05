@@ -24,6 +24,7 @@ namespace neko::ui::window {
         : centralWidget(new QWidget(this)),
           blurEffect(new QGraphicsBlurEffect(this)),
           noticeDialog(new dialog::NoticeDialog(this)),
+          inputDialog(new dialog::InputDialog(this)),
           headBarWidget(new widget::HeadBarWidget(this, this)),
           pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           homePage(new page::HomePage(this)),
@@ -34,10 +35,13 @@ namespace neko::ui::window {
         centralWidget->raise();
         homePage->raise();
         loadingPage->raise();
+        inputDialog->raise();
         noticeDialog->raise();
 
         homePage->hide();
         loadingPage->hide();
+        noticeDialog->hide();
+        inputDialog->hide();
 
         // Setup themes
         setupTheme(ui::getCurrentTheme());
@@ -50,18 +54,31 @@ namespace neko::ui::window {
         this->setWindowIcon(QIcon(lc::AppIconPath.data()));
         this->addToolBar(headBarWidget->getToolBar());
 
-        switchToPage(Page::loading);
-        loadingPage->showLoading(
-            {.type = LoadingMsg::Type::All,
-             .process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates),
-             .h1 = "Welcome to NekoLauncher",
-             .h2 = "Starting up...",
-             .message = "Preparing the launcher...",
-             .posterPath = "img/loading_bg.png",
-             .loadingIconPath = "img/loading.gif",
-             .speed = 100,
-             .progressVal = 0,
-             .progressMax = 100});
+        switchToPage(Page::home);
+        inputDialog->showInput({
+            .title = "Test Input Dialog",
+            .message = "This is a test of the input dialog. Please enter some text below:",
+            .posterPath = "",
+            .lineText = {"1", "2", "3"},
+            .callback = [this](bool confirmed) {
+                log::info("Input dialog confirmed: {}",{}, confirmed);
+                if (!confirmed){
+                    emit this->hideInputD();
+                    return;
+                }
+            }
+        });
+        // loadingPage->showLoading(
+        //     {.type = LoadingMsg::Type::All,
+        //      .process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates),
+        //      .h1 = "Welcome to NekoLauncher",
+        //      .h2 = "Starting up...",
+        //      .message = "Preparing the launcher...",
+        //      .posterPath = "img/loading_bg.png",
+        //      .loadingIconPath = "img/loading.gif",
+        //      .speed = 100,
+        //      .progressVal = 0,
+        //      .progressMax = 100});
 
         settingFromConfig(config);
         setupConnections();
@@ -73,6 +90,7 @@ namespace neko::ui::window {
         homePage->setupTheme(theme);
         loadingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
+        inputDialog->setupTheme(theme);
 
         if (theme.info.type == ThemeType::Dark) {
             centralWidget->setStyleSheet(QString("background-color: %1;").arg(theme.colors.background.data()));
@@ -82,10 +100,18 @@ namespace neko::ui::window {
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
         homePage->setupFont(textFont, h1Font, h2Font);
         loadingPage->setupFont(textFont, h1Font, h2Font);
+        noticeDialog->setupFont(textFont, h2Font);
+        inputDialog->setupFont(textFont, h2Font);
     }
 
     void NekoWindow::showNotice(const NoticeMsg &m) {
         noticeDialog->showNotice(m);
+        headBarWidget->raise();
+        headBarWidget->getToolBar()->raise();
+    }
+
+    void NekoWindow::showInput(const InputMsg &m) {
+        inputDialog->showInput(m);
         headBarWidget->raise();
         headBarWidget->getToolBar()->raise();
     }
@@ -96,6 +122,9 @@ namespace neko::ui::window {
 
     void NekoWindow::setupConnections() {
         connect(this, &NekoWindow::showNoticeD, noticeDialog, &dialog::NoticeDialog::showNotice);
+        connect(this, &NekoWindow::showInputD, inputDialog, &dialog::InputDialog::showInput);
+        connect(this, &NekoWindow::hideInputD, inputDialog, &dialog::InputDialog::hideInput);
+        connect(this, &NekoWindow::getLinesD, inputDialog, &dialog::InputDialog::getLines);
         connect(this, &NekoWindow::resetNoticeStateD, noticeDialog, &dialog::NoticeDialog::resetState);
         connect(this, &NekoWindow::resetNoticeButtonsD, noticeDialog, &dialog::NoticeDialog::resetButtons);
         connect(this, &NekoWindow::switchToPageD, this, &NekoWindow::switchToPage);
@@ -184,6 +213,7 @@ namespace neko::ui::window {
         centralWidget->resize(width, height);
         const int headBarHeight = headBarWidget->isVisible() ? headBarWidget->height() : 0;
         noticeDialog->resizeItems(width, height, headBarHeight);
+        inputDialog->resizeItems(width, height);
         headBarWidget->raise();
         headBarWidget->getToolBar()->raise();
         if (this->currentPage == Page::home) {

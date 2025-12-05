@@ -1,5 +1,11 @@
 {
     "language": "正體中文",
+    "input": {
+        "title": "輸入",
+        "message": "請輸入以下內容：",
+        "placeholder": "在此輸入...",
+        "password": "密碼"
+    },
     "maintenance": {
         "title": "維護中",
         "message": "伺服器正在維護中。\n 開始時間：{startTime}\n 預計結束時間：{exEndTime}\n 詳細資訊：{description}",
@@ -7,6 +13,7 @@
         "parseIng": "正在解析維護狀態...",
         "downloadPoster": "正在下載維護海報..."
     },
+    
     "update": {
         "title": "更新",
         "startingUpdate": "正在開始更新...",

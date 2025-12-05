@@ -153,7 +153,7 @@ namespace neko::core::update {
         }
 
         auto notifyProgress = [&](const std::string &msg) {
-            bus::event::publish(event::UpdateLoadingStatusEvent{.process = msg});
+            bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = msg});
         };
 
         notifyProgress(lang::tr(lang::keys::update::category, lang::keys::update::startingUpdate));
@@ -211,7 +211,7 @@ namespace neko::core::update {
                 log::info(infoMsg);
 
                 int currentProgress = ++progress;
-                bus::event::publish(event::UpdateLoadingValueEvent{.progressValue = static_cast<neko::uint32>(currentProgress)});
+                bus::event::publish(event::LoadingValueChangedEvent{.progressValue = static_cast<neko::uint32>(currentProgress)});
 
                 return {neko::types::State::Completed, info};
             }
@@ -341,7 +341,7 @@ namespace neko::core::update {
         // Notify progress
         std::string process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates);
 
-        bus::event::publish(event::UpdateLoadingStatusEvent{.process = process});
+        bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = process});
 
         // Check for updates
         auto updateState = checkUpdate();

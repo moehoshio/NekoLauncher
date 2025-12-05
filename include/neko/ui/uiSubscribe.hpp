@@ -25,8 +25,28 @@ namespace neko::ui {
                             "OK",
                             "Close"
                         },
-                        .callback = [](neko::uint32 i){
+                        .callback = [=](neko::uint32 i){
                             log::info("User clicked button index: " + std::to_string(i));
+                            // emit nekoWindow->showInputD(InputMsg{
+                            //     .title = "Restart Required",
+                            //     .message = "Please restart the application to complete the update process.",
+                            //     .posterPath = "",
+                            //     .lineText = {
+                            //         "Restart Now",
+                            //         "Later"
+                            //     },
+                            //     .callback = [=](bool v){
+                            //         if (!v){
+                            //             emit nekoWindow->hideInputD();
+                            //             return;
+                            //         }
+
+                            //         auto input = emit nekoWindow->getLinesD();
+                            //         for (const auto &line : input) {
+                            //             log::info("User selected option: " + line);
+                            //         }
+                            //     }
+                            // });
                         }
                     });
                 }
