@@ -1,5 +1,5 @@
-#include "neko/ui/fonts.hpp"
 #include "neko/ui/windows/nekoWindow.hpp"
+#include "neko/ui/fonts.hpp"
 
 #include "neko/app/app.hpp"
 #include "neko/app/lang.hpp"
@@ -21,25 +21,26 @@
 namespace neko::ui::window {
 
     NekoWindow::NekoWindow(const ClientConfig &config)
-        : headBarWidget(new widget::HeadBarWidget(this, this)),
+        : centralWidget(new QWidget(this)),
+          blurEffect(new QGraphicsBlurEffect(this)),
+          noticeDialog(new dialog::NoticeDialog(this)),
+          headBarWidget(new widget::HeadBarWidget(this, this)),
           pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           homePage(new page::HomePage(this)),
-          loadingPage(new page::LoadingPage(this)),
-          centralWidget(new QWidget(this)),
-          blurEffect(new QGraphicsBlurEffect(this)) {
+          loadingPage(new page::LoadingPage(this)) {
 
         // Setup widget stacking order
         pixmapWidget->lower();
         centralWidget->raise();
         homePage->raise();
         loadingPage->raise();
+        noticeDialog->raise();
 
         homePage->hide();
         loadingPage->hide();
 
         // Setup themes
-        homePage->setupTheme(ui::homeTheme);
-        loadingPage->setupTheme(ui::getCurrentTheme());
+        setupTheme(ui::getCurrentTheme());
         pixmapWidget->setGraphicsEffect(blurEffect);
 
         this->setMinimumSize(800, 420);
@@ -50,16 +51,18 @@ namespace neko::ui::window {
         this->addToolBar(headBarWidget->getToolBar());
 
         switchToPage(Page::loading);
-        loadingPage->showLoading({.type = LoadingMsg::Type::All,
-                                  .process = lang::tr(lang::keys::update::category,lang::keys::update::checkingForUpdates),
-                                  .h1 = "Welcome to NekoLauncher",
-                                  .h2 = "Starting up...",
-                                  .message = "Preparing the launcher...",
-                                  .posterPath = "img/loading_bg.png",
-                                  .loadingIconPath = "img/loading.gif",
-                                  .speed = 100,
-                                  .progressVal = 0,
-                                  .progressMax = 100});
+        loadingPage->showLoading(
+            {.type = LoadingMsg::Type::All,
+             .process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates),
+             .h1 = "Welcome to NekoLauncher",
+             .h2 = "Starting up...",
+             .message = "Preparing the launcher...",
+             .posterPath = "img/loading_bg.png",
+             .loadingIconPath = "img/loading.gif",
+             .speed = 100,
+             .progressVal = 0,
+             .progressMax = 100});
+
         settingFromConfig(config);
         setupConnections();
         resizeItems(this->width(), this->height());
@@ -69,6 +72,11 @@ namespace neko::ui::window {
     void NekoWindow::setupTheme(const Theme &theme) {
         homePage->setupTheme(theme);
         loadingPage->setupTheme(theme);
+        noticeDialog->setupTheme(theme);
+
+        if (theme.info.type == ThemeType::Dark) {
+            centralWidget->setStyleSheet(QString("background-color: %1;").arg(theme.colors.background.data()));
+        }
     }
 
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
@@ -76,9 +84,20 @@ namespace neko::ui::window {
         loadingPage->setupFont(textFont, h1Font, h2Font);
     }
 
+    void NekoWindow::showNotice(const NoticeMsg &m) {
+        noticeDialog->showNotice(m);
+    }
+
+    void NekoWindow::showLoading(const LoadingMsg &m) {
+        loadingPage->showLoading(m);
+    }
+
     void NekoWindow::setupConnections() {
+        connect(this, &NekoWindow::showNoticeD, noticeDialog, &dialog::NoticeDialog::showNotice);
+        connect(this, &NekoWindow::resetNoticeStateD, noticeDialog, &dialog::NoticeDialog::resetState);
+        connect(this, &NekoWindow::resetNoticeButtonsD, noticeDialog, &dialog::NoticeDialog::resetButtons);
         connect(this, &NekoWindow::switchToPageD, this, &NekoWindow::switchToPage);
-        connect(this, &NekoWindow::setLoadingValueD, loadingPage,&page::LoadingPage::setLoadingValue);
+        connect(this, &NekoWindow::setLoadingValueD, loadingPage, &page::LoadingPage::setLoadingValue);
         connect(this, &NekoWindow::setLoadingStatusD, loadingPage, &page::LoadingPage::setLoadingStatus);
     }
 
@@ -156,9 +175,10 @@ namespace neko::ui::window {
     void NekoWindow::resizeItems(int width, int height) {
         pixmapWidget->resize(width, height);
         centralWidget->resize(width, height);
-        if (this->currentPage == Page::home){
+        noticeDialog->resizeItems(width, height);
+        if (this->currentPage == Page::home) {
             homePage->resizeItems(width, height);
-        } else if (this->currentPage == Page::loading){
+        } else if (this->currentPage == Page::loading) {
             loadingPage->resizeItems(width, height);
         }
     }

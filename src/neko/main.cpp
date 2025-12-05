@@ -28,9 +28,13 @@ int main(int argc, char *argv[]) {
         app::init::initialize();
         auto runingInfo = app::run();
 
-        ui::setCurrentTheme(ui::darkTheme);
-
-        ui::window::NekoWindow window(bus::config::getClientConfig());
+        auto cfg = bus::config::getClientConfig();
+        if (cfg.style.theme == std::string("dark")) {
+            ui::setCurrentTheme(ui::darkTheme);
+        } else {
+            ui::setCurrentTheme(ui::lightTheme);
+        }
+        ui::window::NekoWindow window(cfg);
         ui::UiEventDispatcher::setMainWindow(&window);
         window.show();
         
@@ -38,7 +42,7 @@ int main(int argc, char *argv[]) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             for (int i = 0; i < 100; i++) {
                 bus::event::publish<event::LoadingValueChangedEvent>({.progressValue = static_cast<neko::uint32>(i)});
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                std::this_thread::sleep_for(std::chrono::milliseconds(30));
             }
             bus::event::publish<event::UpdateCompleteEvent>({});
         });
