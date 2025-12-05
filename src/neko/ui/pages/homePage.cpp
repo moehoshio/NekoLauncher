@@ -17,6 +17,8 @@ namespace neko::ui::page {
         menuButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
         versionButton->setFocusPolicy(Qt::FocusPolicy::NoFocus);
         setupText();
+
+        connect(menuButton, &QPushButton::clicked, this, &HomePage::menuButtonClicked);
     }
     void HomePage::setupTheme(const Theme &theme) {
         QString startButtonStyle =

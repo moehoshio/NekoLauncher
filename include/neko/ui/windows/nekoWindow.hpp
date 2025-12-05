@@ -11,6 +11,7 @@
 
 #include "neko/ui/pages/homePage.hpp"
 #include "neko/ui/pages/loadingPage.hpp"
+#include "neko/ui/pages/settingPage.hpp"
 
 #include "neko/app/clientConfig.hpp"
 
@@ -41,6 +42,7 @@ namespace neko::ui::window {
         // Pages
         page::HomePage *homePage;
         page::LoadingPage *loadingPage;
+        page::SettingPage *settingPage;
 
         bool useImageBackground = false;
         void applyCentralBackground(const Theme &theme);

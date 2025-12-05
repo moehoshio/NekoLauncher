@@ -4,6 +4,7 @@
 #include "neko/app/app.hpp"
 #include "neko/app/lang.hpp"
 #include "neko/app/nekoLc.hpp"
+#include "neko/app/appinfo.hpp"
 #include "neko/bus/configBus.hpp"
 
 #include <neko/function/utilities.hpp>
@@ -30,13 +31,15 @@ namespace neko::ui::window {
           headBarWidget(new widget::HeadBarWidget(this, this)),
           pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           homePage(new page::HomePage(this)),
-          loadingPage(new page::LoadingPage(this)) {
+          loadingPage(new page::LoadingPage(this)),
+          settingPage(new page::SettingPage(this))  {
 
         // Setup widget stacking order
         pixmapWidget->lower();
         centralWidget->raise();
         homePage->raise();
         loadingPage->raise();
+        settingPage->raise();
         inputDialog->raise();
         noticeDialog->raise();
 
@@ -44,6 +47,7 @@ namespace neko::ui::window {
         loadingPage->hide();
         noticeDialog->hide();
         inputDialog->hide();
+        settingPage->hide();
 
         centralWidget->setObjectName("centralWidget");
         centralWidget->setAttribute(Qt::WA_StyledBackground, true);
@@ -69,6 +73,7 @@ namespace neko::ui::window {
     void NekoWindow::setupTheme(const Theme &theme) {
         homePage->setupTheme(theme);
         loadingPage->setupTheme(theme);
+        settingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
         inputDialog->setupTheme(theme);
         applyCentralBackground(ui::homeTheme);
@@ -77,6 +82,7 @@ namespace neko::ui::window {
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
         homePage->setupFont(textFont, h1Font, h2Font);
         loadingPage->setupFont(textFont, h1Font, h2Font);
+        settingPage->setupFont(textFont, h1Font, h2Font);
         noticeDialog->setupFont(textFont, h2Font);
         inputDialog->setupFont(textFont, h2Font);
     }
@@ -118,6 +124,14 @@ namespace neko::ui::window {
         connect(this, &NekoWindow::switchToPageD, this, &NekoWindow::switchToPage);
         connect(this, &NekoWindow::setLoadingValueD, loadingPage, &page::LoadingPage::setLoadingValue);
         connect(this, &NekoWindow::setLoadingStatusD, loadingPage, &page::LoadingPage::setLoadingStatus);
+
+        connect(homePage, &page::HomePage::menuButtonClicked, this, [this]() {
+            switchToPage(Page::setting);
+        });
+
+        connect(settingPage, &page::SettingPage::closeRequested, this, [this]() {
+            switchToPage(Page::home);
+        });
     }
 
     void NekoWindow::settingFromConfig(const ClientConfig &config) {
@@ -159,6 +173,7 @@ namespace neko::ui::window {
 
         auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
         setupFont(textFont, h1Font, h2Font);
+        settingPage->settingFromConfig(config);
 
         if (config.style.blurRadius > 0) {
             blurEffect->setBlurRadius(static_cast<qreal>(config.style.blurRadius));
@@ -187,6 +202,9 @@ namespace neko::ui::window {
             case Page::loading:
                 loadingPage->hide();
                 break;
+            case Page::setting:
+                settingPage->hide();
+                break;
             default:
                 break;
         }
@@ -201,6 +219,10 @@ namespace neko::ui::window {
             case Page::loading:
                 loadingPage->show();
                 loadingPage->raise();
+                break;
+            case Page::setting:
+                settingPage->show();
+                settingPage->raise();
                 break;
             default:
                 break;
@@ -221,6 +243,8 @@ namespace neko::ui::window {
             homePage->resizeItems(width, height);
         } else if (this->currentPage == Page::loading) {
             loadingPage->resizeItems(width, height);
+        } else if (this->currentPage == Page::setting) {
+            settingPage->resizeItems(width, height);
         }
     }
 
@@ -230,6 +254,10 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::closeEvent(QCloseEvent *event) {
+        bus::config::updateClientConfig([this](ClientConfig &cfg) {
+            settingPage->writeToConfig(cfg);
+        });
+        bus::config::save(app::getConfigFileName());
         QMainWindow::closeEvent(event);
         app::quit();
     }

@@ -6,6 +6,8 @@
 
 #include <neko/schema/types.hpp>
 #include <SimpleIni.h>
+#include <string>
+#include <vector>
 
 namespace neko {
     /**
@@ -14,6 +16,16 @@ namespace neko {
      * Stores all settings and preferences for the launcher application
      */
     struct ClientConfig {
+    private:
+        std::vector<std::string> ownedStrings;
+
+    public:
+        // Keep ownership of string data when assigning from temporary/std::string
+        const char *own(std::string value) {
+            ownedStrings.emplace_back(std::move(value));
+            return ownedStrings.back().c_str();
+        }
+
         /**
          * @brief Main launcher configuration settings
          */

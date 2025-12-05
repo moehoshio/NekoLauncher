@@ -10,6 +10,7 @@ class QPushButton;
 namespace neko::ui::page {
     
     class HomePage : public QWidget {
+        Q_OBJECT
     private:
         QPushButton *startButton;
         QPushButton *menuButton;
@@ -22,6 +23,9 @@ namespace neko::ui::page {
         void setupFont(QFont text, QFont h1Font, QFont h2Font);
 
         void resizeItems(int windowWidth, int windowHeight);
+
+    signals:
+        void menuButtonClicked();
 
     };
 } // namespace neko::ui::page
