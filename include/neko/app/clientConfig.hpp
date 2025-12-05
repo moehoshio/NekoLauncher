@@ -22,7 +22,7 @@ namespace neko {
             neko::cstr backgroundType;
             neko::cstr background;
             neko::cstr windowSize;
-            long launcherMethod;
+            neko::cstr launcherMethod;
             bool useSysWindowFrame;
             bool headBarKeepRight;
             neko::cstr resourceVersion;
@@ -108,7 +108,7 @@ namespace neko {
             main.backgroundType = cfg.GetValue("main", "backgroundType", "image");
             main.background = cfg.GetValue("main", "background", "img/bg.png");
             main.windowSize = cfg.GetValue("main", "windowSize", "");
-            main.launcherMethod = cfg.GetLongValue("main", "launcherMethod", 1);
+            main.launcherMethod = cfg.GetValue("main", "launcherMethod", "launchVisible");
             main.useSysWindowFrame = cfg.GetBoolValue("main", "useSystemWindowFrame", true);
             main.headBarKeepRight = cfg.GetBoolValue("main", "headBarKeepRight", true);
             main.resourceVersion = cfg.GetValue("main", "resourceVersion", "");
@@ -166,7 +166,7 @@ namespace neko {
             cfg.SetValue("main", "backgroundType", main.backgroundType);
             cfg.SetValue("main", "background", main.background);
             cfg.SetValue("main", "windowSize", main.windowSize);
-            cfg.SetLongValue("main", "launcherMethod", main.launcherMethod);
+            cfg.SetValue("main", "launcherMethod", main.launcherMethod);
             cfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
             cfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
             cfg.SetValue("main", "resourceVersion", main.resourceVersion);

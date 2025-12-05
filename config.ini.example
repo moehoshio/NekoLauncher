@@ -3,7 +3,8 @@ language = en
 backgroundType = image
 background = img/bg.png
 windowSize = 1280x720
-launcherMethod = 1
+; launchVisible, launchExit, launchHideRestore
+launcherMethod = launchVisible
 useSystemWindowFrame = true
 headBarKeepRight = true
 resourceVersion = v1.0.0

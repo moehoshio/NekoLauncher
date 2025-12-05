@@ -6,6 +6,8 @@
 #include "neko/app/nekoLc.hpp"
 #include "neko/bus/configBus.hpp"
 
+#include <neko/function/utilities.hpp>
+
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDragMoveEvent>
 #include <QtGui/QDropEvent>
@@ -58,29 +60,6 @@ namespace neko::ui::window {
         this->addToolBar(headBarWidget->getToolBar());
 
         switchToPage(Page::home);
-        inputDialog->showInput({.title = "Test Input Dialog",
-                                .message = "This is a test of the input dialog. Please enter some text below:",
-                                .posterPath = "",
-                                .lineText = {"1", "2", "3"},
-                                .callback = [this](bool confirmed) {
-                                    log::info("Input dialog confirmed: {}", {}, confirmed);
-                                    if (!confirmed) {
-                                        emit this->hideInputD();
-                                        return;
-                                    }
-                                }});
-        // loadingPage->showLoading(
-        //     {.type = LoadingMsg::Type::All,
-        //      .process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates),
-        //      .h1 = "Welcome to NekoLauncher",
-        //      .h2 = "Starting up...",
-        //      .message = "Preparing the launcher...",
-        //      .posterPath = "img/loading_bg.png",
-        //      .loadingIconPath = "img/loading.gif",
-        //      .speed = 100,
-        //      .progressVal = 0,
-        //      .progressMax = 100});
-
         settingFromConfig(config);
         setupConnections();
         resizeItems(this->width(), this->height());
@@ -143,15 +122,15 @@ namespace neko::ui::window {
 
     void NekoWindow::settingFromConfig(const ClientConfig &config) {
 
-        QFont textFont(config.style.fontFamilies);
-        if (config.style.fontPointSize > 0) {
-            textFont.setPointSize(static_cast<int>(config.style.fontPointSize));
-        } else {
-            textFont.setPointSize(10);
-        }
+        // Main
 
-        auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
-        setupFont(textFont, h1Font, h2Font);
+        useImageBackground = (neko::strview("image") == config.main.backgroundType);
+        if (useImageBackground) {
+            pixmapWidget->setPixmap(config.main.background);
+        } else {
+            pixmapWidget->clearPixmap();
+        }
+        applyCentralBackground(ui::homeTheme);
 
         if (config.main.useSysWindowFrame) {
             headBarWidget->hideHeadBar();
@@ -164,13 +143,22 @@ namespace neko::ui::window {
             headBarWidget->setHeadBarAlignmentRight(false);
         }
 
-        useImageBackground = (neko::strview("image") == config.main.backgroundType);
-        if (useImageBackground) {
-            pixmapWidget->setPixmap(config.main.background);
-        } else {
-            pixmapWidget->clearPixmap();
+        auto resolution = util::check::matchResolution(config.main.windowSize);
+        if (resolution){
+            this->resize(std::stoi(resolution->width), std::stoi(resolution->height));
         }
-        applyCentralBackground(ui::homeTheme);
+        
+
+        // Style
+        QFont textFont(config.style.fontFamilies);
+        if (config.style.fontPointSize > 0) {
+            textFont.setPointSize(static_cast<int>(config.style.fontPointSize));
+        } else {
+            textFont.setPointSize(10);
+        }
+
+        auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
+        setupFont(textFont, h1Font, h2Font);
 
         if (config.style.blurRadius > 0) {
             blurEffect->setBlurRadius(static_cast<qreal>(config.style.blurRadius));

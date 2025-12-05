@@ -14,8 +14,16 @@
 
 namespace neko::event {
 
+    /*****************/
+    /** App Events **/
+    /*****************/
+
     struct NekoStartEvent {};
     struct NekoQuitEvent {};
+
+    /*****************/
+    /*** UI Events ***/
+    /*****************/
 
     struct CurrentPageChangeEvent {
         ui::Page page;
@@ -39,7 +47,8 @@ namespace neko::event {
         LoadingChangedEvent(const std::string &statusMessage, neko::uint32 progressValue)
             : LoadingValueChangedEvent{progressValue}, LoadingStatusChangedEvent{statusMessage} {}
     };
-    
+    struct HideInputEvent {};
+
 
     /*****************/
     /** Core Events **/
