@@ -76,7 +76,7 @@ namespace neko::ui::window {
         settingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
         inputDialog->setupTheme(theme);
-        applyCentralBackground(ui::homeTheme);
+        applyCentralBackground(theme);
     }
 
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
@@ -92,8 +92,9 @@ namespace neko::ui::window {
             centralWidget->setStyleSheet(" #centralWidget { background-color: transparent; }");
             centralWidget->setAutoFillBackground(false);
         } else {
+            const auto backdrop = !theme.colors.canvas.empty() ? theme.colors.canvas : theme.colors.background;
             centralWidget->setStyleSheet(QString(" #centralWidget { background-color: %1; }")
-                                             .arg(theme.colors.background.data()));
+                                             .arg(backdrop.data()));
             centralWidget->setAutoFillBackground(true);
         }
     }
@@ -144,7 +145,7 @@ namespace neko::ui::window {
         } else {
             pixmapWidget->clearPixmap();
         }
-        applyCentralBackground(ui::homeTheme);
+        applyCentralBackground(ui::getCurrentTheme());
 
         if (config.main.useSysWindowFrame) {
             headBarWidget->hideHeadBar();
@@ -164,7 +165,7 @@ namespace neko::ui::window {
         
 
         // Style
-        QFont textFont(config.style.fontFamilies);
+        QFont textFont(QString::fromStdString(config.style.fontFamilies));
         if (config.style.fontPointSize > 0) {
             textFont.setPointSize(static_cast<int>(config.style.fontPointSize));
         } else {

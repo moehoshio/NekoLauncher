@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
         // Start Qt event loop
         qtApp.exec();
         runingInfo.eventLoopFuture.get();
+        app::shutdown();
         ui::UiEventDispatcher::clearNekoWindow();
 
         {

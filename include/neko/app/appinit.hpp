@@ -34,15 +34,13 @@ namespace neko::app::init {
 
     inline void initDeviceID() {
         auto cfg = bus::config::getClientConfig();
-        std::string deviceID = cfg.main.deviceID ? cfg.main.deviceID : "";
-        if (!deviceID.empty()) {
+        if (!cfg.main.deviceID.empty()) {
             return;
         }
 
-        bus::config::updateClientConfig([&deviceID](neko::ClientConfig &cfg) {
-            deviceID = util::uuid::uuidV4();
-            cfg.main.deviceID = deviceID.c_str();
-            log::info("Device ID not set, generating new one: " + deviceID);
+        bus::config::updateClientConfig([](neko::ClientConfig &c) {
+            c.main.deviceID = util::uuid::uuidV4();
+            log::info("Device ID not set, generating new one: " + c.main.deviceID);
         });
         bus::config::save(app::getConfigFileName());
     }
@@ -114,9 +112,9 @@ namespace neko::app::init {
         using namespace neko::ops::pipe;
 
         ClientConfig cfg = bus::config::getClientConfig();
-        std::string tempDir = cfg.other.tempFolder ? cfg.other.tempFolder : "";
-        if (!tempDir.empty() && std::filesystem::is_directory(tempDir)) {
-            system::tempFolder(tempDir | util::unifiedPath);
+        
+        if (!cfg.other.tempFolder.empty() && std::filesystem::is_directory(cfg.other.tempFolder)) {
+            system::tempFolder(cfg.other.tempFolder | util::unifiedPath);
         }
     }
 
@@ -153,7 +151,7 @@ namespace neko::app::init {
                   config.dev.server,
                   util::logic::boolTo<neko::cstr>(config.dev.tls));
 
-        std::string accToken = config.minecraft.accessToken ? config.minecraft.accessToken : "";
+        std::string accToken = config.minecraft.accessToken;
         std::string maskToken = accToken.empty() ? "null" : "**********" + accToken.substr(accToken.size() - 4); // Hide accessToken for security
         log::info("config minecraft : folder : {} , javaPath : {} , account : {} , name : {} , uuid : {} , accessToken : {} , targetVersion : {} , maxMemory : {} , minMemory : {} , needMemory : {} , authlibName : {} , authlibPrefetched : {} , authlibSha256 : {} , tolerantMode : {} , customResolution : {} , joinServerAddress : {} , joinServerPort : {}",
                   {},

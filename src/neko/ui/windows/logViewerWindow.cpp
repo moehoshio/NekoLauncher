@@ -9,6 +9,9 @@
 
 #include <QtGui/QScreen>
 #include <QtGui/QTextCharFormat>
+#include <QtGui/QColor>
+
+#include <string_view>
 
 namespace neko::ui::window {
 
@@ -33,13 +36,18 @@ namespace neko::ui::window {
         setupTheme(ui::getCurrentTheme());
     }
     void LogViewerWindow::setupTheme(const Theme &theme) {
+        activeTheme = theme;
         QString styleSheet =
             QString(
                 "QTextEdit {"
                 "background-color: %1;"
+                "color: %2;"
                 "border: none;"
+                "selection-background-color: %3;"
                 "}")
-                .arg(theme.colors.background.data());
+                .arg(theme.colors.surface.data())
+                .arg(theme.colors.text.data())
+                .arg(theme.colors.focus.data());
         textEdit->setStyleSheet(styleSheet);
     }
 
@@ -63,16 +71,20 @@ namespace neko::ui::window {
 
     void LogViewerWindow::appendLogLine(const QString &line) {
         QTextCharFormat format;
+        auto colorFrom = [](std::string_view hex) {
+            return QColor(QString::fromUtf8(hex.data(), static_cast<int>(hex.size())));
+        };
+
         if (line.contains(" [Debug]"))
-            format.setForeground(Qt::darkGray);
+            format.setForeground(colorFrom(activeTheme.colors.disabled));
         else if (line.contains(" [Info]"))
-            format.setForeground(Qt::darkBlue);
+            format.setForeground(colorFrom(activeTheme.colors.info));
         else if (line.contains(" [Warn]"))
-            format.setForeground(Qt::darkYellow);
+            format.setForeground(colorFrom(activeTheme.colors.warning));
         else if (line.contains(" [Error]"))
-            format.setForeground(Qt::red);
+            format.setForeground(colorFrom(activeTheme.colors.error));
         else
-            format.setForeground(Qt::gray);
+            format.setForeground(colorFrom(activeTheme.colors.text));
 
         QTextCursor cursor = textEdit->textCursor();
         cursor.movePosition(QTextCursor::End);

@@ -9,6 +9,10 @@
 #include <shared_mutex>
 #include <string>
 
+#ifdef _DEBUG
+#    include <crtdbg.h>
+#endif
+
 namespace neko::app {
 
     class ConfigManager {
@@ -32,10 +36,16 @@ namespace neko::app {
          * @param updaterFunc Function to update the client configuration. After assignment is completed, the value will be written back to ini object
          */
         void updateClientConfig(std::function<void(neko::ClientConfig &)> updaterFunc) {
+#ifdef _DEBUG
+            _ASSERTE(_CrtCheckMemory());
+#endif
             std::unique_lock lock(mutex);
             neko::ClientConfig cfg(ini);
             updaterFunc(cfg);
             cfg.setToConfig(ini);
+#ifdef _DEBUG
+            _ASSERTE(_CrtCheckMemory());
+#endif
         }
 
         /**

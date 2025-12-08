@@ -1,5 +1,10 @@
 #include "neko/ui/pages/settingPage.hpp"
 
+#include "neko/bus/configBus.hpp"
+
+#include <neko/log/nlog.hpp>
+
+#include <QtCore/QDir>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFileDialog>
@@ -9,13 +14,11 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QToolButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QTabWidget>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
-#include <QtCore/QDir>
-#include <string>
 
 namespace neko::ui::page {
 
@@ -32,14 +35,14 @@ namespace neko::ui::page {
     } // namespace
 
     SettingPage::SettingPage(QWidget *parent)
-                : QWidget(parent),
-                    tabWidget(new QTabWidget(this)),
-                    authScroll(new QScrollArea(tabWidget)),
-                    authTab(new QWidget()),
+        : QWidget(parent),
+          tabWidget(new QTabWidget(this)),
+          authScroll(new QScrollArea(tabWidget)),
+          authTab(new QWidget()),
           authStatusLabel(new QLabel(authTab)),
           authButton(new QPushButton(authTab)),
-                    mainScroll(new QScrollArea(tabWidget)),
-                    mainTab(new QWidget()),
+          mainScroll(new QScrollArea(tabWidget)),
+          mainTab(new QWidget()),
           mainGroup(new QGroupBox(QStringLiteral("Main"), mainTab)),
           backgroundTypeCombo(new QComboBox(mainGroup)),
           backgroundPathEdit(new QLineEdit(mainGroup)),
@@ -252,24 +255,45 @@ namespace neko::ui::page {
 
     void SettingPage::setupTheme(const Theme &theme) {
         applyGroupStyle(theme);
+        const QString tabPaneBg = theme.colors.background.data();
         tabWidget->setStyleSheet(
-            QString("QTabWidget::pane { border: 1px solid %1; background: transparent; }"
-                    "QTabBar::tab { background: %2; color: %3; padding: 8px 14px; border-top-left-radius: 10px; border-top-right-radius: 10px; }"
-                    "QTabBar::tab:selected { background: %4; color: %5; }"
-                    "QTabBar::tab:hover { background: %4; }")
+            QString("QTabWidget::pane { border: 1px solid %1; background: %2; }"
+                    "QTabWidget::tab-bar { left: 8px; }"
+                    "QTabBar::tab { background: %3; color: %4; padding: 8px 14px; border-top-left-radius: 10px; border-top-right-radius: 10px; margin-right: 4px; }"
+                    "QTabBar::tab:selected { background: %5; color: %4; }"
+                    "QTabBar::tab:hover { background: %6; }"
+                    "QScrollArea { background: transparent; border: none; }"
+                    "QScrollArea QWidget { background: transparent; }"
+                    "QLabel { color: %4; background: transparent; }")
                 .arg(theme.colors.accent.data())
-                .arg(theme.colors.primary.data())
+                .arg(tabPaneBg.data())
+                .arg(theme.colors.surface.data())
                 .arg(theme.colors.text.data())
-                .arg(theme.colors.hover.data())
-                .arg(theme.colors.text.data()));
+                .arg(theme.colors.primary.data())
+                .arg(theme.colors.hover.data()));
+
+        const QString scrollStyle = QString(
+                                         "QScrollBar:vertical { width: 10px; background: transparent; margin: 4px 0 4px 0; }"
+                                         "QScrollBar::handle:vertical { background: %1; min-height: 30px; border-radius: 5px; }"
+                                         "QScrollBar::handle:vertical:hover { background: %2; }"
+                                         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
+                                         "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }"
+                                         "QScrollBar:horizontal { height: 10px; background: transparent; margin: 0 4px 0 4px; }"
+                                         "QScrollBar::handle:horizontal { background: %1; min-width: 30px; border-radius: 5px; }"
+                                         "QScrollBar::handle:horizontal:hover { background: %2; }"
+                                         "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; }"
+                                         "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }")
+                                         .arg(theme.colors.disabled.data())
+                                         .arg(theme.colors.focus.data());
+        tabWidget->setStyleSheet(tabWidget->styleSheet() + scrollStyle);
 
         const QString editStyle = QString(
-                                      "QLineEdit { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px; }"
-                                      "QComboBox { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 4px 6px; }"
-                                      "QSpinBox { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 4px 6px; }")
-                                      .arg(theme.colors.background.data())
+                                      "QLineEdit, QComboBox, QSpinBox { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px; }"
+                                      "QLineEdit:focus, QComboBox:focus, QSpinBox:focus { border: 1px solid %4; }")
+                                      .arg(theme.colors.surface.data())
                                       .arg(theme.colors.text.data())
-                                      .arg(theme.colors.accent.data());
+                                      .arg(theme.colors.disabled.data())
+                                      .arg(theme.colors.focus.data());
         for (auto *w : {static_cast<QWidget *>(backgroundPathEdit), static_cast<QWidget *>(windowSizeEdit),
                         static_cast<QWidget *>(themeEdit), static_cast<QWidget *>(fontFamiliesEdit),
                         static_cast<QWidget *>(devServerEdit), static_cast<QWidget *>(proxyEdit), static_cast<QWidget *>(customTempDirEdit),
@@ -282,26 +306,30 @@ namespace neko::ui::page {
                         static_cast<QWidget *>(fontPointSizeSpin), static_cast<QWidget *>(threadSpin),
                         static_cast<QWidget *>(downloadSourceCombo), static_cast<QWidget *>(joinServerPortSpin),
                         static_cast<QWidget *>(customTempDirBrowseBtn)}) {
+            w->setStyleSheet(editStyle);
         }
 
         const QString checkStyle = QString(
-                                       "QCheckBox { color: %1; }"
+                                       "QCheckBox { color: %1; background: transparent; }"
                                        "QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid %2; border-radius: 4px; background: %3; }"
-                                       "QCheckBox::indicator:checked { background: %2; }")
+                                       "QCheckBox::indicator:checked { background: %4; border-color: %4; }"
+                                       "QCheckBox::indicator:hover { border-color: %5; }")
                                        .arg(theme.colors.text.data())
+                                       .arg(theme.colors.disabled.data())
+                                       .arg(theme.colors.surface.data())
                                        .arg(theme.colors.accent.data())
-                                       .arg(theme.colors.background.data());
+                                       .arg(theme.colors.focus.data());
         for (auto *c : {useSysWindowFrameCheck, headBarKeepRightCheck, proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
             c->setStyleSheet(checkStyle);
         }
 
         const QString toolBtnStyle = QString(
-                                           "QToolButton { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px 10px; }"
-                                           "QToolButton:hover { background-color: %4; }")
-                                           .arg(theme.colors.primary.data())
-                                           .arg(theme.colors.text.data())
-                                           .arg(theme.colors.accent.data())
-                                           .arg(theme.colors.hover.data());
+                                         "QToolButton { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px 10px; }"
+                                         "QToolButton:hover { background-color: %4; border-color: %3; }")
+                                         .arg(theme.colors.surface.data())
+                                         .arg(theme.colors.text.data())
+                                         .arg(theme.colors.accent.data())
+                                         .arg(theme.colors.hover.data());
         for (auto *tb : {customTempDirBrowseBtn, closeTabButton}) {
             tb->setStyleSheet(toolBtnStyle);
         }
@@ -319,7 +347,7 @@ namespace neko::ui::page {
         const QString groupStyle = QString(
                                        "QGroupBox { background-color: %1; border: 1px solid %2; border-radius: 12px; margin-top: 12px; color: %3; padding: 8px; }"
                                        "QGroupBox:title { subcontrol-origin: margin; left: 12px; padding: 0 4px; }")
-                                       .arg(theme.colors.background.data())
+                                       .arg(theme.colors.surface.data())
                                        .arg(theme.colors.accent.data())
                                        .arg(theme.colors.text.data());
         for (auto *g : {mainGroup, styleGroup, networkGroup, otherGroup, minecraftGroup, devGroup}) {
@@ -359,15 +387,15 @@ namespace neko::ui::page {
 
     void SettingPage::settingFromConfig(const neko::ClientConfig &cfg) {
 
-        backgroundTypeCombo->setCurrentText(cfg.main.backgroundType);
+        backgroundTypeCombo->setCurrentText(QString::fromStdString(cfg.main.backgroundType));
         backgroundPathEdit->setText(QString::fromStdString(cfg.main.background));
         windowSizeEdit->setText(QString::fromStdString(cfg.main.windowSize));
-        launcherMethodCombo->setCurrentText(cfg.main.launcherMethod);
+        launcherMethodCombo->setCurrentText(QString::fromStdString(cfg.main.launcherMethod));
         useSysWindowFrameCheck->setChecked(cfg.main.useSysWindowFrame);
         headBarKeepRightCheck->setChecked(cfg.main.headBarKeepRight);
 
         themeEdit->setText(QString::fromStdString(cfg.style.theme));
-        blurEffectCombo->setCurrentText(cfg.style.blurEffect);
+        blurEffectCombo->setCurrentText(QString::fromStdString(cfg.style.blurEffect));
         blurRadiusSpin->setValue(static_cast<int>(cfg.style.blurRadius));
         fontPointSizeSpin->setValue(static_cast<int>(cfg.style.fontPointSize));
         fontFamiliesEdit->setText(QString::fromStdString(cfg.style.fontFamilies));
@@ -381,7 +409,7 @@ namespace neko::ui::page {
         customTempDirEdit->setText(QString::fromStdString(cfg.other.tempFolder));
 
         javaPathEdit->setText(QString::fromStdString(cfg.minecraft.javaPath));
-        downloadSourceCombo->setCurrentText(cfg.minecraft.downloadSource);
+        downloadSourceCombo->setCurrentText(QString::fromStdString(cfg.minecraft.downloadSource));
         playerNameEdit->setText(QString::fromStdString(cfg.minecraft.playerName));
         customResolutionEdit->setText(QString::fromStdString(cfg.minecraft.customResolution));
         joinServerAddressEdit->setText(QString::fromStdString(cfg.minecraft.joinServerAddress));
@@ -409,46 +437,90 @@ namespace neko::ui::page {
         }
     }
 
-    void SettingPage::writeToConfig(neko::ClientConfig &cfg) const {
-        // Main
-        cfg.main.backgroundType = cfg.own(backgroundTypeCombo->currentText().toStdString());
-        cfg.main.background = cfg.own(backgroundPathEdit->text().toStdString());
-        cfg.main.windowSize = cfg.own(windowSizeEdit->text().toStdString());
-        cfg.main.launcherMethod = cfg.own(launcherMethodCombo->currentText().toStdString());
-        cfg.main.useSysWindowFrame = useSysWindowFrameCheck->isChecked();
-        cfg.main.headBarKeepRight = headBarKeepRightCheck->isChecked();
+    void SettingPage::writeToConfig(ClientConfig &cfg) const {
 
-        // Style
-        cfg.style.theme = cfg.own(themeEdit->text().toStdString());
-        cfg.style.blurEffect = cfg.own(blurEffectCombo->currentText().toStdString());
-        cfg.style.blurRadius = blurRadiusSpin->value();
-        cfg.style.fontPointSize = fontPointSizeSpin->value();
-        cfg.style.fontFamilies = cfg.own(fontFamiliesEdit->text().toStdString());
+            const QString bgType = backgroundTypeCombo->currentText();
+            auto bgTypeStd = bgType.toStdString();
+            cfg.main.backgroundType = std::move(bgTypeStd);
+            const QString bgPath = backgroundPathEdit->text();
+            auto bgStd = bgPath.toStdString();
+            cfg.main.background = std::move(bgStd);
+            const QString ws = windowSizeEdit->text();
+            auto wsStd = ws.toStdString();
+            cfg.main.windowSize = std::move(wsStd);
+            const QString lm = launcherMethodCombo->currentText();
+            auto lmStd = lm.toStdString();
+            cfg.main.launcherMethod = std::move(lmStd);
+            cfg.main.useSysWindowFrame = useSysWindowFrameCheck->isChecked();
+            cfg.main.headBarKeepRight = headBarKeepRightCheck->isChecked();
+            const QString th = themeEdit->text();
+            auto thStd = th.toStdString();
+            cfg.style.theme = std::move(thStd);
+            const QString be = blurEffectCombo->currentText();
+            auto beStd = be.toStdString();
+            cfg.style.blurEffect = std::move(beStd);
+            cfg.style.blurRadius = blurRadiusSpin->value();
+            cfg.style.fontPointSize = fontPointSizeSpin->value();
+            const QString ff = fontFamiliesEdit->text();
+            auto ffStd = ff.toStdString();
+            cfg.style.fontFamilies = std::move(ffStd);
 
-        // Network
-        cfg.net.thread = threadSpin->value();
-        if (proxyCheck->isChecked()) {
-            cfg.net.proxy = "true";
-        } else {
-            cfg.net.proxy = cfg.own(proxyEdit->text().toStdString());
-        }
+            std::string().swap(cfg.net.proxy); // free buffer completely
 
-        // Other
-        cfg.other.tempFolder = cfg.own(customTempDirEdit->text().toStdString());
+            cfg.net.thread = threadSpin->value();
 
-        // Minecraft
-        cfg.minecraft.javaPath = cfg.own(javaPathEdit->text().toStdString());
-        cfg.minecraft.downloadSource = cfg.own(downloadSourceCombo->currentText().toStdString());
-        cfg.minecraft.playerName = cfg.own(playerNameEdit->text().toStdString());
-        cfg.minecraft.customResolution = cfg.own(customResolutionEdit->text().toStdString());
-        cfg.minecraft.joinServerAddress = cfg.own(joinServerAddressEdit->text().toStdString());
-        cfg.minecraft.joinServerPort = cfg.own(std::to_string(joinServerPortSpin->value()));
+            if (proxyCheck->isChecked()) {
+                cfg.net.proxy = "true";
+            } else {
+                const QString pr = proxyEdit->text();
+                auto prStd = pr.toStdString();
+                cfg.net.proxy = std::move(prStd);
+            }
 
-        // Dev
-        cfg.dev.enable = devEnableCheck->isChecked();
-        cfg.dev.debug = devDebugCheck->isChecked();
-        cfg.dev.server = devServerCheck->isChecked() ? cfg.own(std::string("auto")) : cfg.own(devServerEdit->text().toStdString());
-        cfg.dev.tls = devTlsCheck->isChecked();
+            std::string().swap(cfg.other.tempFolder); // free buffer completely
+
+            const QString tp = customTempDirEdit->text();
+
+            auto tpStd = tp.toStdString();
+            cfg.other.tempFolder = std::move(tpStd);
+
+            const QString jp = javaPathEdit->text();
+
+            auto jpStd = jp.toStdString();
+
+            cfg.minecraft.javaPath = std::move(jpStd);
+
+            const QString ds = downloadSourceCombo->currentText();
+            auto dsStd = ds.toStdString();
+            cfg.minecraft.downloadSource = std::move(dsStd);
+
+            const QString pn = playerNameEdit->text();
+
+            auto pnStd = pn.toStdString();
+            cfg.minecraft.playerName = std::move(pnStd);
+            const QString cr = customResolutionEdit->text();
+            auto crStd = cr.toStdString();
+            cfg.minecraft.customResolution = std::move(crStd);
+            const QString js = joinServerAddressEdit->text();
+
+            auto jsStd = js.toStdString();
+
+            cfg.minecraft.joinServerAddress = std::move(jsStd);
+            cfg.minecraft.joinServerPort = std::to_string(joinServerPortSpin->value());
+
+            cfg.dev.enable = devEnableCheck->isChecked();
+
+            cfg.dev.debug = devDebugCheck->isChecked();
+            std::string serverVal;
+            if (devServerCheck->isChecked()) {
+                serverVal = "auto";
+            } else {
+                const QString ds = devServerEdit->text();
+                serverVal = ds.toStdString();
+            }
+            cfg.dev.server = std::move(serverVal);
+
+            cfg.dev.tls = devTlsCheck->isChecked();
     }
 
 } // namespace neko::ui::page

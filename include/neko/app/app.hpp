@@ -39,4 +39,15 @@ namespace neko::app {
         bus::event::publish<event::NekoQuitEvent>({});
     }
 
+    /**
+     * @brief Gracefully shut down background subsystems.
+     *
+     * Stops the event loop (idempotent) and then stops the thread pool so no
+     * worker threads are running while statics are being torn down.
+     */
+    inline void shutdown() {
+        bus::event::stopLoop();
+        bus::thread::stop(true);
+    }
+
 } // namespace neko::app

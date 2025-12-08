@@ -7,7 +7,6 @@
 #include <neko/schema/types.hpp>
 #include <SimpleIni.h>
 #include <string>
-#include <vector>
 
 namespace neko {
     /**
@@ -16,40 +15,31 @@ namespace neko {
      * Stores all settings and preferences for the launcher application
      */
     struct ClientConfig {
-    private:
-        std::vector<std::string> ownedStrings;
-
     public:
-        // Keep ownership of string data when assigning from temporary/std::string
-        const char *own(std::string value) {
-            ownedStrings.emplace_back(std::move(value));
-            return ownedStrings.back().c_str();
-        }
-
         /**
          * @brief Main launcher configuration settings
          */
         struct Main {
-            neko::cstr lang;
-            neko::cstr backgroundType;
-            neko::cstr background;
-            neko::cstr windowSize;
-            neko::cstr launcherMethod;
+            std::string lang;
+            std::string backgroundType;
+            std::string background;
+            std::string windowSize;
+            std::string launcherMethod;
             bool useSysWindowFrame;
             bool headBarKeepRight;
-            neko::cstr resourceVersion;
-            neko::cstr deviceID;
+            std::string resourceVersion;
+            std::string deviceID;
         } main;
 
         /**
          * @brief Style and appearance settings
          */
         struct Style {
-            neko::cstr theme;
-            neko::cstr blurEffect;
+            std::string theme;
+            std::string blurEffect;
             long blurRadius;
             long fontPointSize;
-            neko::cstr fontFamilies;
+            std::string fontFamilies;
         } style;
 
         /**
@@ -57,7 +47,7 @@ namespace neko {
          */
         struct Net {
             long thread;
-            neko::cstr proxy;
+            std::string proxy;
         } net;
 
         /**
@@ -66,7 +56,7 @@ namespace neko {
         struct Dev {
             bool enable;
             bool debug;
-            neko::cstr server;
+            std::string server;
             bool tls;
         } dev;
 
@@ -74,37 +64,37 @@ namespace neko {
          * @brief Additional configuration options
          */
         struct Other {
-            neko::cstr tempFolder;
+            std::string tempFolder;
         } other;
 
         /**
          * @brief Minecraft settings
          */
         struct Minecraft {
-            neko::cstr minecraftFolder;
-            neko::cstr javaPath; // Path to the Java executable
-            neko::cstr downloadSource;
+            std::string minecraftFolder;
+            std::string javaPath; // Path to the Java executable
+            std::string downloadSource;
 
-            neko::cstr playerName;
-            neko::cstr account;
-            neko::cstr uuid;
-            neko::cstr accessToken;
+            std::string playerName;
+            std::string account;
+            std::string uuid;
+            std::string accessToken;
 
-            neko::cstr targetVersion; // Minecraft version to launch
+            std::string targetVersion; // Minecraft version to launch
 
             long maxMemoryLimit;
             long minMemoryLimit;
             long needMemoryLimit;
 
-            neko::cstr authlibName; // Name of the authlib injector jar file
-            neko::cstr authlibPrefetched;
-            neko::cstr authlibSha256;
+            std::string authlibName; // Name of the authlib injector jar file
+            std::string authlibPrefetched;
+            std::string authlibSha256;
 
             bool tolerantMode; // Whether to use tolerant mode for launching Minecraft
 
-            neko::cstr customResolution;  // Custom resolution for Minecraft, if any. for example, "1920x1080"
-            neko::cstr joinServerAddress; // Address of the server to join
-            neko::cstr joinServerPort;    // Port of the server to join
+            std::string customResolution;  // Custom resolution for Minecraft, if any. for example, "1920x1080"
+            std::string joinServerAddress; // Address of the server to join
+            std::string joinServerPort;    // Port of the server to join
         } minecraft;
 
         ClientConfig() = default;
@@ -174,56 +164,56 @@ namespace neko {
          * @param cfg SimpleIni configuration object to save settings to
          */
         void setToConfig(CSimpleIniA &cfg) const noexcept {
-            cfg.SetValue("main", "language", main.lang);
-            cfg.SetValue("main", "backgroundType", main.backgroundType);
-            cfg.SetValue("main", "background", main.background);
-            cfg.SetValue("main", "windowSize", main.windowSize);
-            cfg.SetValue("main", "launcherMethod", main.launcherMethod);
+            cfg.SetValue("main", "language", main.lang.c_str());
+            cfg.SetValue("main", "backgroundType", main.backgroundType.c_str());
+            cfg.SetValue("main", "background", main.background.c_str());
+            cfg.SetValue("main", "windowSize", main.windowSize.c_str());
+            cfg.SetValue("main", "launcherMethod", main.launcherMethod.c_str());
             cfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
             cfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
-            cfg.SetValue("main", "resourceVersion", main.resourceVersion);
-            cfg.SetValue("main", "deviceID", main.deviceID);
+            cfg.SetValue("main", "resourceVersion", main.resourceVersion.c_str());
+            cfg.SetValue("main", "deviceID", main.deviceID.c_str());
 
-            cfg.SetValue("style", "theme", style.theme);
-            cfg.SetValue("style", "blurEffect", style.blurEffect);
+            cfg.SetValue("style", "theme", style.theme.c_str());
+            cfg.SetValue("style", "blurEffect", style.blurEffect.c_str());
             cfg.SetLongValue("style", "blurRadius", style.blurRadius);
             cfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
-            cfg.SetValue("style", "fontFamilies", style.fontFamilies);
+            cfg.SetValue("style", "fontFamilies", style.fontFamilies.c_str());
 
             cfg.SetLongValue("net", "thread", net.thread);
-            cfg.SetValue("net", "proxy", net.proxy);
+            cfg.SetValue("net", "proxy", net.proxy.c_str());
 
             cfg.SetBoolValue("dev", "enable", dev.enable);
             cfg.SetBoolValue("dev", "debug", dev.debug);
-            cfg.SetValue("dev", "server", dev.server);
+            cfg.SetValue("dev", "server", dev.server.c_str());
             cfg.SetBoolValue("dev", "tls", dev.tls);
 
-            cfg.SetValue("other", "customTempDir", other.tempFolder);
+            cfg.SetValue("other", "customTempDir", other.tempFolder.c_str());
 
-            cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder);
-            cfg.SetValue("minecraft", "javaPath", minecraft.javaPath);
-            cfg.SetValue("minecraft", "downloadSource", minecraft.downloadSource);
+            cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder.c_str());
+            cfg.SetValue("minecraft", "javaPath", minecraft.javaPath.c_str());
+            cfg.SetValue("minecraft", "downloadSource", minecraft.downloadSource.c_str());
 
-            cfg.SetValue("minecraft", "playerName", minecraft.playerName);
-            cfg.SetValue("minecraft", "account", minecraft.account);
-            cfg.SetValue("minecraft", "uuid", minecraft.uuid);
-            cfg.SetValue("minecraft", "accessToken", minecraft.accessToken);
+            cfg.SetValue("minecraft", "playerName", minecraft.playerName.c_str());
+            cfg.SetValue("minecraft", "account", minecraft.account.c_str());
+            cfg.SetValue("minecraft", "uuid", minecraft.uuid.c_str());
+            cfg.SetValue("minecraft", "accessToken", minecraft.accessToken.c_str());
 
-            cfg.SetValue("minecraft", "targetVersion", minecraft.targetVersion);
+            cfg.SetValue("minecraft", "targetVersion", minecraft.targetVersion.c_str());
 
             cfg.SetLongValue("minecraft", "maxMemoryLimit", minecraft.maxMemoryLimit);
             cfg.SetLongValue("minecraft", "minMemoryLimit", minecraft.minMemoryLimit);
             cfg.SetLongValue("minecraft", "needMemoryLimit", minecraft.needMemoryLimit);
 
-            cfg.SetValue("minecraft", "authlibName", minecraft.authlibName);
-            cfg.SetValue("minecraft", "authlibPrefetched", minecraft.authlibPrefetched);
-            cfg.SetValue("minecraft", "authlibSha256", minecraft.authlibSha256);
+            cfg.SetValue("minecraft", "authlibName", minecraft.authlibName.c_str());
+            cfg.SetValue("minecraft", "authlibPrefetched", minecraft.authlibPrefetched.c_str());
+            cfg.SetValue("minecraft", "authlibSha256", minecraft.authlibSha256.c_str());
 
             cfg.SetBoolValue("minecraft", "tolerantMode", minecraft.tolerantMode);
 
-            cfg.SetValue("minecraft", "customResolution", minecraft.customResolution);
-            cfg.SetValue("minecraft", "joinServerAddress", minecraft.joinServerAddress);
-            cfg.SetValue("minecraft", "joinServerPort", minecraft.joinServerPort);
+            cfg.SetValue("minecraft", "customResolution", minecraft.customResolution.c_str());
+            cfg.SetValue("minecraft", "joinServerAddress", minecraft.joinServerAddress.c_str());
+            cfg.SetValue("minecraft", "joinServerPort", minecraft.joinServerPort.c_str());
         }
     };
 } // namespace neko

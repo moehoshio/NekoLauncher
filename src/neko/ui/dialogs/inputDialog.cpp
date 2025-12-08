@@ -136,26 +136,28 @@ namespace neko::ui::dialog {
     }
     void InputDialog::setupTheme(const Theme &theme) {
         centralWidget->setStyleSheet(
-            QString("QWidget { background-color: %1; border-radius: 22px; }"
-                    "QLineEdit { background-color: %1; color: %2; border: 1px solid %3; padding: 8px 10px; border-radius: 12px; }")
-                .arg(theme.colors.background.data())
+            QString("QWidget { background-color: %1; border: 1px solid %2; border-radius: 22px; }"
+                    "QLineEdit { background-color: %1; color: %3; border: 1px solid %4; padding: 8px 10px; border-radius: 12px; }"
+                    "QLineEdit:focus { border: 1px solid %5; }")
+                .arg(theme.colors.surface.data())
+                .arg(theme.colors.accent.data())
                 .arg(theme.colors.text.data())
-                .arg(theme.colors.accent.data()));
+                .arg(theme.colors.disabled.data())
+                .arg(theme.colors.focus.data()));
 
         title->setStyleSheet(
             QString("QLabel { color: %1; font-weight: bold; }")
                 .arg(theme.colors.accent.data()));
         msg->setStyleSheet(
-            QString("QLabel { color: %1; border-radius: 30%; }")
+            QString("QLabel { color: %1; }")
                 .arg(theme.colors.text.data()));
         dialogButton->setStyleSheet(
-            QString("QDialogButtonBox { background-color: %1; border-radius: 14px; padding: 6px 10px; }"
-                    "QPushButton { color: %2; background-color: %3; border-radius: 14px; padding: 10px 18px; }"
-                    "QPushButton:hover { background-color: %4; }"
-                    "QPushButton:disabled { background-color: %5; }")
-                .arg(theme.colors.accent.data())
+            QString("QDialogButtonBox { background-color: transparent; border: none; }"
+                    "QPushButton { color: %1; background-color: %2; border: none; border-radius: 14px; padding: 10px 18px; }"
+                    "QPushButton:hover { background-color: %3; }"
+                    "QPushButton:disabled { background-color: %4; }")
                 .arg(theme.colors.text.data())
-                .arg(theme.colors.accent.data())
+                .arg(theme.colors.primary.data())
                 .arg(theme.colors.hover.data())
                 .arg(theme.colors.disabled.data()));
     }

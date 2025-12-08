@@ -16,6 +16,7 @@ namespace neko::ui::window {
 
     private:
         QTextEdit *textEdit;
+        Theme activeTheme = ui::lightTheme;
 
     public:
         explicit LogViewerWindow(QWidget *parent = nullptr);

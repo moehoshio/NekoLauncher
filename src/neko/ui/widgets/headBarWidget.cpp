@@ -92,17 +92,19 @@ namespace neko::ui::widget {
                 "QToolBar {"
                 "background-color: %1;"
                 "border: none;"
+                "border-bottom: 1px solid %2;"
                 "border-radius: 0px;"
                 "}"
                 "QToolButton {"
                 "background-color: transparent;"
                 "border: none;"
-                "color: %2;"
+                "color: %3;"
                 "}"
                 "QToolButton:hover {"
-                "background-color: %3;"
+                "background-color: %4;"
                 "}")
-                .arg(theme.colors.background.data())
+                .arg(theme.colors.surface.data())
+                .arg(theme.colors.accent.data())
                 .arg(theme.colors.text.data())
                 .arg(theme.colors.hover.data());
 

@@ -78,15 +78,16 @@ namespace neko::ui::dialog {
         centralWidget->setAttribute(Qt::WA_StyledBackground, true);
         centralWidget->setStyleSheet(
             QString(
-                "#noticeCentral { background-color: %1; border-radius: 22px; }"
+                "#noticeCentral { background-color: %1; border: 1px solid %2; border-radius: 22px; }"
                 "#noticeButtons { background-color: transparent; }"
-                "QLabel { color: %2; }"
-                "QPushButton { background-color: %3; color: %2; border-radius: 14px; padding: 14px 18px; }"
-                "QPushButton:hover { background-color: %6; }"
-                "QPushButton:disabled { background-color: %7; }")
-                .arg(theme.colors.background.data())
-                .arg(theme.colors.text.data())
+                "QLabel { color: %3; }"
+                "QPushButton { background-color: %4; color: %3; border-radius: 14px; padding: 14px 18px; }"
+                "QPushButton:hover { background-color: %5; }"
+                "QPushButton:disabled { background-color: %6; }")
+                .arg(theme.colors.surface.data())
                 .arg(theme.colors.accent.data())
+                .arg(theme.colors.text.data())
+                .arg(theme.colors.primary.data())
                 .arg(theme.colors.hover.data())
                 .arg(theme.colors.disabled.data()));
 

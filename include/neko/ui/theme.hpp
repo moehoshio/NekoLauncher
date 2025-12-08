@@ -23,6 +23,7 @@ namespace neko::ui {
         neko::strview primary;
         neko::strview secondary;
         neko::strview background;
+        neko::strview canvas; // large area/window backdrop
         neko::strview text;
         neko::strview accent;
         neko::strview success;
@@ -48,19 +49,20 @@ namespace neko::ui {
             .author = "Hoshi",
             .type = ThemeType::Light},
         ThemeColors{
-            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(3,169,244,255), stop:0.5 rgba(66,165,245,220), stop:1 rgba(144,202,249,200))",
-            .secondary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(255,128,171,220), stop:0.6 rgba(255,183,197,200), stop:1 rgba(255,224,178,180))",
-            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255,255,255,255), stop:1 rgba(245,250,255,240))",
-            .text = "rgba(33,33,33,230)",
-            .accent = "rgba(255,152,0,230)",
-            .success = "rgba(76,175,80,220)",
-            .warning = "rgba(255,152,0,220)",
-            .error = "rgba(244,67,54,220)",
-            .info = "rgba(33,150,243,220)",
-            .surface = "rgba(245,245,245,255)",
-            .disabled = "rgba(189,189,189,220)",
-            .hover = "rgba(227,242,253,255)",
-            .focus = "rgba(25,118,210,200)"}};
+            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #8cc5ff, stop:1 #4f93ff)",
+            .secondary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #7ae0d6, stop:1 #36cfc9)",
+            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #f9fafb, stop:1 #eef2f7)",
+            .canvas = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #fff1d6, stop:0.28 #f6c4ff, stop:0.56 #c7ddff, stop:0.8 #8ee0ff, stop:1 #c7f9ff)",
+            .text = "#0f172a",
+            .accent = "#f59e0b",
+            .success = "#16a34a",
+            .warning = "#fbbf24",
+            .error = "#dc2626",
+            .info = "#0ea5e9",
+            .surface = "rgba(255,255,255,0.94)",
+            .disabled = "#cbd5e1",
+            .hover = "rgba(37,99,235,0.14)",
+            .focus = "rgba(14,165,233,0.32)"}};
 
     constexpr Theme darkTheme = {
         ThemeInfo{
@@ -69,19 +71,20 @@ namespace neko::ui {
             .author = "Hoshi",
             .type = ThemeType::Dark},
         ThemeColors{
-            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(100,181,246,240), stop:0.6 rgba(41,121,255,220), stop:1 rgba(26,35,126,200))",
-            .secondary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(244,143,177,220), stop:1 rgba(171,71,188,200))",
-            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(28,28,30,255), stop:1 rgba(16,18,25,230))",
-            .text = "rgba(255,255,255,230)",
-            .accent = "rgba(255,183,77,210)",
-            .success = "rgba(129,199,132,210)",
-            .warning = "rgba(255,183,77,210)",
-            .error = "rgba(239,83,80,220)",
-            .info = "rgba(100,181,246,210)",
-            .surface = "rgba(30,30,30,255)",
-            .disabled = "rgba(117,117,117,200)",
-            .hover = "rgba(51,51,51,230)",
-            .focus = "rgba(144,202,249,200)"}};
+            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #5ba8ff, stop:1 #2563eb)",
+            .secondary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #22d3ee, stop:1 #10b981)",
+            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #0b1220, stop:1 #0f172a)",
+            .canvas = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #090f1c, stop:0.28 #111c34, stop:0.58 #0e2a47, stop:0.78 #0f3c5f, stop:1 #0f172a)",
+            .text = "#e5e7eb",
+            .accent = "#f59e0b",
+            .success = "#22c55e",
+            .warning = "#f59e0b",
+            .error = "#f87171",
+            .info = "#38bdf8",
+            .surface = "#1f2937",
+            .disabled = "#4b5563",
+            .hover = "rgba(255,255,255,0.08)",
+            .focus = "rgba(56,189,248,0.32)"}};
 
     constexpr Theme homeTheme = {
         ThemeInfo{
@@ -90,19 +93,20 @@ namespace neko::ui {
             .author = "Hoshi",
             .type = ThemeType::Custom},
         ThemeColors{
-            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba( 248,248,255,105), stop:0.51 rgba(150,188,215,165), stop:1 rgba( 248,248,255,100))",
-            .secondary = "rgba(240, 240, 240, 225)",
-            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(238, 130, 238, 255), stop:0.33 rgba(155,120,236,255) , stop:0.75 rgba(79,146,245,255),stop:1 rgba(40,198, 177,255))",
-            .text = "#212121",
-            .accent = "",
-            .success = "",
-            .warning = "",
-            .error = "",
-            .info = "",
-            .surface = "#F5F5F5",
-            .disabled = "#BDBDBD",
-            .hover = "#E3F2FD",
-            .focus = "#1976D2"}};
+            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #b7c7ff, stop:1 #6ec1ff)",
+            .secondary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #ffe0b2, stop:1 #ffb374)",
+            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #fdf2ff, stop:0.35 #dbeafe, stop:0.7 #cffafe, stop:1 #dcfce7)",
+            .canvas = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #fdf2ff, stop:0.33 #fce7f3, stop:0.66 #dbeafe, stop:1 #e0f2fe)",
+            .text = "#1f2937",
+            .accent = "#f97316",
+            .success = "#16a34a",
+            .warning = "#f59e0b",
+            .error = "#ef4444",
+            .info = "#0ea5e9",
+            .surface = "rgba(255,255,255,0.96)",
+            .disabled = "#cbd5e1",
+            .hover = "rgba(15,118,110,0.12)",
+            .focus = "rgba(14,165,233,0.28)"}};
 
     class ThemeManager {
     public:
@@ -120,7 +124,7 @@ namespace neko::ui {
         }
 
     private:
-        ThemeManager() = default;
+        ThemeManager() : currentTheme(lightTheme) {}
         Theme currentTheme;
     };
 

@@ -18,7 +18,7 @@ project(
 # === Config ====
 # ================
 
-option(NEKO_LC_STATIC_LINK "Neko Launcher Static Link Libraries" ON)
+option(NEKO_LC_STATIC_LINK "Neko Launcher Static Link Libraries" OFF)
 option(NEKO_LC_BUILD_TESTS "Neko Launcher Build tests" ON)
 
 # Package path
@@ -30,8 +30,16 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
 endif()
 
-if(NEKO_LC_STATIC_LINK AND MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if(MSVC)
+    if(NEKO_LC_STATIC_LINK)
+        set(NEKO_FUNCTION_STATIC_LINK ON CACHE BOOL "NekoFunction static link" FORCE)
+        set(NEKO_SYSTEM_STATIC_LINK ON CACHE BOOL "NekoSystem static link" FORCE)
+        set(NEKO_NETWORK_STATIC_LINK ON CACHE BOOL "NekoNetwork static link" FORCE)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    else()
+        # Align with prebuilt Qt (uses /MD or /MDd)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    endif()
 endif()
 
 # Get the current git commit ID and build time
@@ -64,6 +72,10 @@ endif()
 
 if (NOT Qt6_FOUND)
     message(FATAL_ERROR "Required Qt6 but not found ; please make sure to set -DNEKO_LC_LIBRARY_DIRS=<Qt_install_path> correctly.")
+endif()
+
+if(NEKO_LC_STATIC_LINK AND DEFINED QT_BUILD_SHARED_LIBS AND QT_BUILD_SHARED_LIBS)
+    message(FATAL_ERROR "NEKO_LC_STATIC_LINK=ON requires a static Qt build, but the found Qt is shared (QT_BUILD_SHARED_LIBS=ON). Either provide a static Qt or turn NEKO_LC_STATIC_LINK=OFF to use /MD(/MDd).")
 endif()
 
 # Automatically fetch missing dependencies if not found

@@ -129,24 +129,27 @@ namespace neko::ui::page {
         QString textLayoutStyle =
             QString(
                 "background-color: %1;"
-                "border-radius: 25%;"
-                )
-                .arg(theme.colors.background.data());
+                "border: 1px solid %2;"
+                "border-radius: 18px;")
+                .arg(theme.colors.surface.data())
+                .arg(theme.colors.accent.data());
         textLayoutWidget->setStyleSheet(textLayoutStyle);
         QString progressBarStyle =
             QString(
                 "QProgressBar {"
                 "background-color: %1;"
                 "color: %2;"
-                "border: none;"
-                "border-radius: 10%;"
+                "border: 1px solid %3;"
+                "border-radius: 10px;"
+                "padding: 2px 6px;"
                 "}"
                 "QProgressBar::chunk {"
-                "background-color: %3;"
-                "border-radius: 10%;"
+                "background-color: %4;"
+                "border-radius: 8px;"
                 "}")
-                .arg(theme.colors.background.data())
+                .arg(theme.colors.surface.data())
                 .arg(theme.colors.text.data())
+                .arg(theme.colors.accent.data())
                 .arg(theme.colors.primary.data());
 
         progressBar->setStyleSheet(progressBarStyle);
