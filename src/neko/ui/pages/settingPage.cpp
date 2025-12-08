@@ -1,13 +1,16 @@
 #include "neko/ui/pages/settingPage.hpp"
 
+#include "neko/app/lang.hpp"
 #include "neko/bus/configBus.hpp"
 
 #include <neko/log/nlog.hpp>
 
 #include <QtCore/QDir>
+#include <QtCore/QSignalBlocker>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QHBoxLayout>
@@ -15,6 +18,7 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
+#include <QtWidgets/QSlider>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QToolButton>
@@ -44,18 +48,20 @@ namespace neko::ui::page {
           mainScroll(new QScrollArea(tabWidget)),
           mainTab(new QWidget()),
           mainGroup(new QGroupBox(QStringLiteral("Main"), mainTab)),
+          languageCombo(new QComboBox(mainGroup)),
           backgroundTypeCombo(new QComboBox(mainGroup)),
           backgroundPathEdit(new QLineEdit(mainGroup)),
+          backgroundBrowseBtn(new QToolButton(mainGroup)),
           windowSizeEdit(new QLineEdit(mainGroup)),
           launcherMethodCombo(new QComboBox(mainGroup)),
           useSysWindowFrameCheck(new QCheckBox(mainGroup)),
           headBarKeepRightCheck(new QCheckBox(mainGroup)),
           styleGroup(new QGroupBox(QStringLiteral("Style"), mainTab)),
-          themeEdit(new QLineEdit(styleGroup)),
+          themeCombo(new QComboBox(styleGroup)),
           blurEffectCombo(new QComboBox(styleGroup)),
-          blurRadiusSpin(new QSpinBox(styleGroup)),
+          blurRadiusSlider(new QSlider(Qt::Horizontal, styleGroup)),
           fontPointSizeSpin(new QSpinBox(styleGroup)),
-          fontFamiliesEdit(new QLineEdit(styleGroup)),
+          fontFamiliesCombo(new QFontComboBox(styleGroup)),
           networkGroup(new QGroupBox(QStringLiteral("Network"), mainTab)),
           threadSpin(new QSpinBox(networkGroup)),
           proxyCheck(new QCheckBox(networkGroup)),
@@ -66,6 +72,7 @@ namespace neko::ui::page {
           closeTabButton(new QToolButton(tabWidget)),
           minecraftGroup(new QGroupBox(QStringLiteral("Minecraft"), mainTab)),
           javaPathEdit(new QLineEdit(minecraftGroup)),
+          javaPathBrowseBtn(new QToolButton(minecraftGroup)),
           downloadSourceCombo(new QComboBox(minecraftGroup)),
           playerNameEdit(new QLineEdit(minecraftGroup)),
           customResolutionEdit(new QLineEdit(minecraftGroup)),
@@ -82,7 +89,8 @@ namespace neko::ui::page {
         this->setAttribute(Qt::WA_TranslucentBackground);
         buildUi();
         setupCombos();
-        setAuthState(false, "Not logged in");
+        retranslateUi();
+        setAuthState(false, {});
     }
 
     void SettingPage::buildUi() {
@@ -130,44 +138,77 @@ namespace neko::ui::page {
 
         // main group content
         auto *mainGroupLayout = makeVBox(mainGroup, 12, 8);
-        mainGroupLayout->addWidget(new QLabel(QStringLiteral("Background Type"), mainGroup));
+        auto *languageLabel = new QLabel(mainGroup);
+        languageLabel->setObjectName(QStringLiteral("languageLabel"));
+        mainGroupLayout->addWidget(languageLabel);
+        mainGroupLayout->addWidget(languageCombo);
+        auto *backgroundTypeLabel = new QLabel(mainGroup);
+        backgroundTypeLabel->setObjectName(QStringLiteral("backgroundTypeLabel"));
+        mainGroupLayout->addWidget(backgroundTypeLabel);
         mainGroupLayout->addWidget(backgroundTypeCombo);
-        mainGroupLayout->addWidget(new QLabel(QStringLiteral("Background"), mainGroup));
-        mainGroupLayout->addWidget(backgroundPathEdit);
-        mainGroupLayout->addWidget(new QLabel(QStringLiteral("Window Size"), mainGroup));
+        auto *backgroundLabel = new QLabel(mainGroup);
+        backgroundLabel->setObjectName(QStringLiteral("backgroundLabel"));
+        mainGroupLayout->addWidget(backgroundLabel);
+        auto *backgroundRow = new QHBoxLayout();
+        backgroundRow->setContentsMargins(0, 0, 0, 0);
+        backgroundRow->setSpacing(8);
+        backgroundBrowseBtn->setText("...");
+        backgroundRow->addWidget(backgroundPathEdit, 1);
+        backgroundRow->addWidget(backgroundBrowseBtn, 0);
+        mainGroupLayout->addLayout(backgroundRow);
+        auto *windowSizeLabel = new QLabel(mainGroup);
+        windowSizeLabel->setObjectName(QStringLiteral("windowSizeLabel"));
+        mainGroupLayout->addWidget(windowSizeLabel);
         mainGroupLayout->addWidget(windowSizeEdit);
-        mainGroupLayout->addWidget(new QLabel(QStringLiteral("Launcher Method"), mainGroup));
+        auto *launcherMethodLabel = new QLabel(mainGroup);
+        launcherMethodLabel->setObjectName(QStringLiteral("launcherMethodLabel"));
+        mainGroupLayout->addWidget(launcherMethodLabel);
         mainGroupLayout->addWidget(launcherMethodCombo);
-        useSysWindowFrameCheck->setText(QStringLiteral("Use system window frame"));
-        headBarKeepRightCheck->setText(QStringLiteral("Head bar keep right"));
+        useSysWindowFrameCheck->setObjectName(QStringLiteral("useSysWindowFrameCheck"));
+        headBarKeepRightCheck->setObjectName(QStringLiteral("headBarKeepRightCheck"));
         mainGroupLayout->addWidget(useSysWindowFrameCheck);
         mainGroupLayout->addWidget(headBarKeepRightCheck);
         mainGroupLayout->addStretch();
 
         // style group content
         auto *styleLayout = makeVBox(styleGroup, 12, 8);
-        styleLayout->addWidget(new QLabel(QStringLiteral("Theme"), styleGroup));
-        styleLayout->addWidget(themeEdit);
-        styleLayout->addWidget(new QLabel(QStringLiteral("Blur effect"), styleGroup));
+        auto *themeLabel = new QLabel(styleGroup);
+        themeLabel->setObjectName(QStringLiteral("themeLabel"));
+        styleLayout->addWidget(themeLabel);
+        styleLayout->addWidget(themeCombo);
+        auto *blurEffectLabel = new QLabel(styleGroup);
+        blurEffectLabel->setObjectName(QStringLiteral("blurEffectLabel"));
+        styleLayout->addWidget(blurEffectLabel);
         styleLayout->addWidget(blurEffectCombo);
-        styleLayout->addWidget(new QLabel(QStringLiteral("Blur radius"), styleGroup));
-        blurRadiusSpin->setRange(0, 128);
-        styleLayout->addWidget(blurRadiusSpin);
-        styleLayout->addWidget(new QLabel(QStringLiteral("Font size"), styleGroup));
+        auto *blurRadiusLabel = new QLabel(styleGroup);
+        blurRadiusLabel->setObjectName(QStringLiteral("blurRadiusLabel"));
+        styleLayout->addWidget(blurRadiusLabel);
+        blurRadiusSlider->setRange(0, 255);
+        blurRadiusSlider->setSingleStep(1);
+        blurRadiusSlider->setPageStep(8);
+        styleLayout->addWidget(blurRadiusSlider);
+        auto *fontSizeLabel = new QLabel(styleGroup);
+        fontSizeLabel->setObjectName(QStringLiteral("fontSizeLabel"));
+        styleLayout->addWidget(fontSizeLabel);
         fontPointSizeSpin->setRange(6, 48);
         styleLayout->addWidget(fontPointSizeSpin);
-        styleLayout->addWidget(new QLabel(QStringLiteral("Font families"), styleGroup));
-        styleLayout->addWidget(fontFamiliesEdit);
+        auto *fontFamiliesLabel = new QLabel(styleGroup);
+        fontFamiliesLabel->setObjectName(QStringLiteral("fontFamiliesLabel"));
+        styleLayout->addWidget(fontFamiliesLabel);
+        fontFamiliesCombo->setEditable(true);
+        styleLayout->addWidget(fontFamiliesCombo);
         styleLayout->addStretch();
 
         // network group content
         auto *netLayout = makeVBox(networkGroup, 12, 8);
-        netLayout->addWidget(new QLabel(QStringLiteral("Threads"), networkGroup));
+        auto *threadsLabel = new QLabel(networkGroup);
+        threadsLabel->setObjectName(QStringLiteral("threadsLabel"));
+        netLayout->addWidget(threadsLabel);
         threadSpin->setRange(0, 128);
         netLayout->addWidget(threadSpin);
-        proxyCheck->setText(QStringLiteral("Use system proxy"));
+        proxyCheck->setObjectName(QStringLiteral("proxyCheck"));
         netLayout->addWidget(proxyCheck);
-        proxyEdit->setPlaceholderText(QStringLiteral("http://host:port or socks5://..."));
+        proxyEdit->setObjectName(QStringLiteral("proxyEdit"));
         proxyEdit->setVisible(false);
         netLayout->addWidget(proxyEdit);
         connect(proxyCheck, &QCheckBox::toggled, this, [this](bool checked) {
@@ -178,12 +219,13 @@ namespace neko::ui::page {
 
         // other group
         auto *otherLayout = makeVBox(otherGroup, 12, 8);
-        otherLayout->addWidget(new QLabel(QStringLiteral("Custom temp dir"), otherGroup));
+        auto *customTempDirLabel = new QLabel(otherGroup);
+        customTempDirLabel->setObjectName(QStringLiteral("customTempDirLabel"));
+        otherLayout->addWidget(customTempDirLabel);
         auto *otherRow = new QHBoxLayout();
         otherRow->setContentsMargins(0, 0, 0, 0);
         otherRow->setSpacing(8);
         customTempDirBrowseBtn->setText("...");
-        customTempDirBrowseBtn->setToolTip(QStringLiteral("Browse"));
         otherRow->addWidget(customTempDirEdit, 1);
         otherRow->addWidget(customTempDirBrowseBtn, 0);
         otherLayout->addLayout(otherRow);
@@ -191,25 +233,70 @@ namespace neko::ui::page {
 
         connect(customTempDirBrowseBtn, &QToolButton::clicked, this, [this]() {
             const QString startDir = customTempDirEdit->text().isEmpty() ? QDir::homePath() : customTempDirEdit->text();
-            const QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("Select temp folder"), startDir);
+            const QString dir = QFileDialog::getExistingDirectory(
+                this,
+                QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::selectTempDir, "Select temp folder")),
+                startDir);
             if (!dir.isEmpty()) {
                 customTempDirEdit->setText(dir);
             }
         });
 
+        connect(backgroundBrowseBtn, &QToolButton::clicked, this, [this]() {
+            const QString startDir = backgroundPathEdit->text().isEmpty() ? QDir::homePath() : QFileInfo(backgroundPathEdit->text()).absolutePath();
+            const QString file = QFileDialog::getOpenFileName(
+                this,
+                QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::selectBackground, "Select background image")),
+                startDir,
+                QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::imageFileFilter, "Images (*.png *.jpg *.jpeg *.bmp *.gif);;All Files (*.*)")));
+            if (!file.isEmpty()) {
+                backgroundPathEdit->setText(file);
+            }
+        });
+
+        connect(javaPathBrowseBtn, &QToolButton::clicked, this, [this]() {
+            const QString startDir = javaPathEdit->text().isEmpty() ? QDir::homePath() : javaPathEdit->text();
+            const QString file = QFileDialog::getOpenFileName(
+                this,
+                QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::browseJava, "Select Java executable")),
+                startDir,
+                QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::javaExecutableFilter, "Executables (*.exe);;All Files (*.*)")));
+            if (!file.isEmpty()) {
+                javaPathEdit->setText(file);
+            }
+        });
+
         // minecraft group
         auto *mcLayout = makeVBox(minecraftGroup, 12, 8);
-        mcLayout->addWidget(new QLabel(QStringLiteral("Java path"), minecraftGroup));
-        mcLayout->addWidget(javaPathEdit);
-        mcLayout->addWidget(new QLabel(QStringLiteral("Download source"), minecraftGroup));
+        auto *javaPathLabel = new QLabel(minecraftGroup);
+        javaPathLabel->setObjectName(QStringLiteral("javaPathLabel"));
+        mcLayout->addWidget(javaPathLabel);
+        auto *javaRow = new QHBoxLayout();
+        javaRow->setContentsMargins(0, 0, 0, 0);
+        javaRow->setSpacing(8);
+        javaPathBrowseBtn->setText("...");
+        javaRow->addWidget(javaPathEdit, 1);
+        javaRow->addWidget(javaPathBrowseBtn, 0);
+        mcLayout->addLayout(javaRow);
+        auto *downloadSourceLabel = new QLabel(minecraftGroup);
+        downloadSourceLabel->setObjectName(QStringLiteral("downloadSourceLabel"));
+        mcLayout->addWidget(downloadSourceLabel);
         mcLayout->addWidget(downloadSourceCombo);
-        mcLayout->addWidget(new QLabel(QStringLiteral("Player name"), minecraftGroup));
+        auto *playerNameLabel = new QLabel(minecraftGroup);
+        playerNameLabel->setObjectName(QStringLiteral("playerNameLabel"));
+        mcLayout->addWidget(playerNameLabel);
         mcLayout->addWidget(playerNameEdit);
-        mcLayout->addWidget(new QLabel(QStringLiteral("Custom resolution"), minecraftGroup));
+        auto *customResolutionLabel = new QLabel(minecraftGroup);
+        customResolutionLabel->setObjectName(QStringLiteral("customResolutionLabel"));
+        mcLayout->addWidget(customResolutionLabel);
         mcLayout->addWidget(customResolutionEdit);
-        mcLayout->addWidget(new QLabel(QStringLiteral("Join server address"), minecraftGroup));
+        auto *joinServerAddressLabel = new QLabel(minecraftGroup);
+        joinServerAddressLabel->setObjectName(QStringLiteral("joinServerAddressLabel"));
+        mcLayout->addWidget(joinServerAddressLabel);
         mcLayout->addWidget(joinServerAddressEdit);
-        mcLayout->addWidget(new QLabel(QStringLiteral("Join server port"), minecraftGroup));
+        auto *joinServerPortLabel = new QLabel(minecraftGroup);
+        joinServerPortLabel->setObjectName(QStringLiteral("joinServerPortLabel"));
+        mcLayout->addWidget(joinServerPortLabel);
         joinServerPortSpin->setRange(1, 65535);
         mcLayout->addWidget(joinServerPortSpin);
         mcLayout->addStretch();
@@ -226,15 +313,17 @@ namespace neko::ui::page {
         tabWidget->addTab(advancedScroll, QStringLiteral("Advanced"));
 
         auto *devLayout = makeVBox(devGroup, 12, 8);
-        devEnableCheck->setText(QStringLiteral("Enable dev"));
-        devDebugCheck->setText(QStringLiteral("Debug"));
-        devTlsCheck->setText(QStringLiteral("TLS"));
+        devEnableCheck->setObjectName(QStringLiteral("devEnableCheck"));
+        devDebugCheck->setObjectName(QStringLiteral("devDebugCheck"));
+        devTlsCheck->setObjectName(QStringLiteral("devTlsCheck"));
         devLayout->addWidget(devEnableCheck);
         devLayout->addWidget(devDebugCheck);
-        devLayout->addWidget(new QLabel(QStringLiteral("Server"), devGroup));
-        devServerCheck->setText(QStringLiteral("Use default server"));
+        auto *devServerLabel = new QLabel(devGroup);
+        devServerLabel->setObjectName(QStringLiteral("devServerLabel"));
+        devLayout->addWidget(devServerLabel);
+        devServerCheck->setObjectName(QStringLiteral("devServerCheck"));
         devLayout->addWidget(devServerCheck);
-        devServerEdit->setPlaceholderText(QStringLiteral("https://example.com"));
+        devServerEdit->setObjectName(QStringLiteral("devServerEdit"));
         devServerEdit->setVisible(false);
         devLayout->addWidget(devServerEdit);
         devLayout->addWidget(devTlsCheck);
@@ -244,13 +333,167 @@ namespace neko::ui::page {
             devServerEdit->setVisible(!checked);
             emit devServerModeChanged(checked);
         });
+
+        // Live update signals
+        connect(languageCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+            const QString langCode = languageCombo->itemData(index).toString();
+            if (langCode.isEmpty()) {
+                return;
+            }
+            lang::language(langCode.toStdString());
+            retranslateUi();
+            emit languageChanged(langCode);
+        });
+        connect(themeCombo, &QComboBox::currentTextChanged, this, &SettingPage::themeChanged);
+        connect(fontPointSizeSpin, qOverload<int>(&QSpinBox::valueChanged), this, &SettingPage::fontPointSizeChanged);
+        connect(fontFamiliesCombo, &QFontComboBox::currentFontChanged, this, [this](const QFont &f) {
+            emit fontFamiliesChanged(f.family());
+        });
+        connect(blurEffectCombo, &QComboBox::currentTextChanged, this, &SettingPage::blurEffectChanged);
+        connect(blurRadiusSlider, &QSlider::valueChanged, this, [this](int value) {
+            if (value == 1) {
+                return; // skip problematic radius
+            }
+            emit blurRadiusChanged(value);
+        });
+        connect(backgroundTypeCombo, &QComboBox::currentTextChanged, this, &SettingPage::backgroundTypeChanged);
+        connect(backgroundPathEdit, &QLineEdit::textChanged, this, &SettingPage::backgroundPathChanged);
+    }
+
+    QString SettingPage::getBackgroundPath() const {
+        return backgroundPathEdit->text();
     }
 
     void SettingPage::setupCombos() {
         backgroundTypeCombo->addItems({"image", "none"});
         blurEffectCombo->addItems({"performance", "quality", "animation"});
-        launcherMethodCombo->addItems({"launchVisible", "launchHidden"});
-        downloadSourceCombo->addItems({"Official", "BMCLAPI", "Mojang"});
+        launcherMethodCombo->addItems({"launchVisible", "launchHidden","launchHideRestore"});
+        downloadSourceCombo->addItems({"Official", "BMCLAPI"});
+        themeCombo->addItems({"Light", "Dark"});
+
+        languageCombo->clear();
+        try {
+            const auto languages = lang::getLanguages();
+            if (!languages.empty()) {
+                for (const auto &[code, name] : languages) {
+                    languageCombo->addItem(QString::fromStdString(name), QString::fromStdString(code));
+                }
+            }
+        } catch (const std::exception &e) {
+            log::warn("Failed to load languages: {}", {}, e.what());
+        }
+        if (languageCombo->count() == 0) {
+            languageCombo->addItem(QStringLiteral("English"), QStringLiteral("en"));
+        }
+        const QString currentLang = QString::fromStdString(lang::language());
+        const int langIndex = languageCombo->findData(currentLang);
+        if (langIndex >= 0) {
+            languageCombo->setCurrentIndex(langIndex);
+        }
+
+        fontFamiliesCombo->setWritingSystem(QFontDatabase::Any);
+        fontFamiliesCombo->setMaxVisibleItems(8);
+    }
+
+    void SettingPage::retranslateUi() {
+        const auto tr = [](neko::cstr category, neko::cstr key, const char *fallback) {
+            return QString::fromStdString(lang::tr(category, key, fallback));
+        };
+
+        tabWidget->setTabText(tabWidget->indexOf(authScroll), tr(lang::keys::setting::category, lang::keys::setting::tabAccount, "Account"));
+        tabWidget->setTabText(tabWidget->indexOf(mainScroll), tr(lang::keys::setting::category, lang::keys::setting::tabMain, "Main"));
+        tabWidget->setTabText(tabWidget->indexOf(advancedScroll), tr(lang::keys::setting::category, lang::keys::setting::tabAdvanced, "Advanced"));
+
+        mainGroup->setTitle(tr(lang::keys::setting::category, lang::keys::setting::groupMain, "Main"));
+        styleGroup->setTitle(tr(lang::keys::setting::category, lang::keys::setting::groupStyle, "Style"));
+        networkGroup->setTitle(tr(lang::keys::setting::category, lang::keys::setting::groupNetwork, "Network"));
+        otherGroup->setTitle(tr(lang::keys::setting::category, lang::keys::setting::groupOther, "Other"));
+        minecraftGroup->setTitle(tr(lang::keys::setting::category, lang::keys::setting::groupMinecraft, "Minecraft"));
+        devGroup->setTitle(tr(lang::keys::setting::category, lang::keys::setting::groupAdvanced, "Advanced"));
+
+        if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("languageLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::language, "Language"));
+        }
+        if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("backgroundTypeLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::backgroundType, "Background Type"));
+        }
+        if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("backgroundLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::background, "Background"));
+        }
+        backgroundBrowseBtn->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::selectBackground, "Select background image"));
+        if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("windowSizeLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::windowSize, "Window Size"));
+        }
+        if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("launcherMethodLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::launcherMethod, "Launcher Method"));
+        }
+        useSysWindowFrameCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::useSysWindowFrame, "Use system window frame"));
+        headBarKeepRightCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::headBarKeepRight, "Head bar keep right"));
+
+        if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("themeLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::theme, "Theme"));
+        }
+        if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("blurEffectLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::blurEffect, "Blur effect"));
+        }
+        if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("blurRadiusLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::blurRadius, "Blur radius"));
+        }
+        if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("fontSizeLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::fontSize, "Font size"));
+        }
+        if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("fontFamiliesLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::fontFamilies, "Font families"));
+        }
+
+        if (auto *label = networkGroup->findChild<QLabel *>(QStringLiteral("threadsLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::threads, "Threads"));
+        }
+        proxyCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::useSystemProxy, "Use system proxy"));
+        proxyEdit->setPlaceholderText(tr(lang::keys::setting::category, lang::keys::setting::proxyPlaceholder, "http://host:port or socks5://..."));
+
+        if (auto *label = otherGroup->findChild<QLabel *>(QStringLiteral("customTempDirLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::customTempDir, "Custom temp dir"));
+        }
+
+        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("javaPathLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::javaPath, "Java path"));
+        }
+        javaPathBrowseBtn->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::browseJava, "Browse for Java executable"));
+        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("downloadSourceLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::downloadSource, "Download source"));
+        }
+        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("playerNameLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::playerName, "Player name"));
+        }
+        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("customResolutionLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::customResolution, "Custom resolution"));
+        }
+        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("joinServerAddressLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::joinServerAddress, "Join server address"));
+        }
+        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("joinServerPortLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::joinServerPort, "Join server port"));
+        }
+
+        devEnableCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devEnable, "Enable dev"));
+        devDebugCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devDebug, "Debug"));
+        devTlsCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devTls, "TLS"));
+        if (auto *label = devGroup->findChild<QLabel *>(QStringLiteral("devServerLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::devServer, "Server"));
+        }
+        devServerCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::useDefaultServer, "Use default server"));
+        devServerEdit->setPlaceholderText(tr(lang::keys::setting::category, lang::keys::setting::devServerPlaceholder, "https://example.com"));
+
+        customTempDirBrowseBtn->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::selectTempDir, "Select temp folder"));
+        closeTabButton->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::close, "Close"));
+
+        const std::string status = authStatusText.empty()
+                                       ? lang::tr(lang::keys::setting::category, lang::keys::setting::notLoggedIn, "__not_logged_in__")
+                                       : authStatusText;
+        authStatusLabel->setText(QString::fromStdString(status));
+        authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, loggedIn ? lang::keys::setting::logout : lang::keys::setting::login,
+                                                            loggedIn ? "__logout__" : "__login__")));
     }
 
     void SettingPage::setupTheme(const Theme &theme) {
@@ -273,41 +516,51 @@ namespace neko::ui::page {
                 .arg(theme.colors.hover.data()));
 
         const QString scrollStyle = QString(
-                                         "QScrollBar:vertical { width: 10px; background: transparent; margin: 4px 0 4px 0; }"
-                                         "QScrollBar::handle:vertical { background: %1; min-height: 30px; border-radius: 5px; }"
-                                         "QScrollBar::handle:vertical:hover { background: %2; }"
-                                         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
-                                         "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }"
-                                         "QScrollBar:horizontal { height: 10px; background: transparent; margin: 0 4px 0 4px; }"
-                                         "QScrollBar::handle:horizontal { background: %1; min-width: 30px; border-radius: 5px; }"
-                                         "QScrollBar::handle:horizontal:hover { background: %2; }"
-                                         "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; }"
-                                         "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }")
-                                         .arg(theme.colors.disabled.data())
-                                         .arg(theme.colors.focus.data());
+                                        "QScrollBar:vertical { width: 10px; background: transparent; margin: 4px 0 4px 0; }"
+                                        "QScrollBar::handle:vertical { background: %1; min-height: 30px; border-radius: 5px; }"
+                                        "QScrollBar::handle:vertical:hover { background: %2; }"
+                                        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
+                                        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }"
+                                        "QScrollBar:horizontal { height: 10px; background: transparent; margin: 0 4px 0 4px; }"
+                                        "QScrollBar::handle:horizontal { background: %1; min-width: 30px; border-radius: 5px; }"
+                                        "QScrollBar::handle:horizontal:hover { background: %2; }"
+                                        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; }"
+                                        "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }")
+                                        .arg(theme.colors.disabled.data())
+                                        .arg(theme.colors.focus.data());
         tabWidget->setStyleSheet(tabWidget->styleSheet() + scrollStyle);
 
         const QString editStyle = QString(
-                                      "QLineEdit, QComboBox, QSpinBox { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px; }"
-                                      "QLineEdit:focus, QComboBox:focus, QSpinBox:focus { border: 1px solid %4; }")
+                                      "QLineEdit, QComboBox, QSpinBox, QFontComboBox { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px; }"
+                                      "QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QFontComboBox:focus { border: 1px solid %4; }")
                                       .arg(theme.colors.surface.data())
                                       .arg(theme.colors.text.data())
                                       .arg(theme.colors.disabled.data())
                                       .arg(theme.colors.focus.data());
         for (auto *w : {static_cast<QWidget *>(backgroundPathEdit), static_cast<QWidget *>(windowSizeEdit),
-                        static_cast<QWidget *>(themeEdit), static_cast<QWidget *>(fontFamiliesEdit),
+                        static_cast<QWidget *>(themeCombo), static_cast<QWidget *>(fontFamiliesCombo), static_cast<QWidget *>(languageCombo),
                         static_cast<QWidget *>(devServerEdit), static_cast<QWidget *>(proxyEdit), static_cast<QWidget *>(customTempDirEdit),
                         static_cast<QWidget *>(javaPathEdit), static_cast<QWidget *>(playerNameEdit),
                         static_cast<QWidget *>(customResolutionEdit), static_cast<QWidget *>(joinServerAddressEdit)}) {
             w->setStyleSheet(editStyle);
         }
         for (auto *w : {static_cast<QWidget *>(backgroundTypeCombo), static_cast<QWidget *>(blurEffectCombo),
-                        static_cast<QWidget *>(launcherMethodCombo), static_cast<QWidget *>(blurRadiusSpin),
+                        static_cast<QWidget *>(launcherMethodCombo), static_cast<QWidget *>(blurRadiusSlider),
                         static_cast<QWidget *>(fontPointSizeSpin), static_cast<QWidget *>(threadSpin),
                         static_cast<QWidget *>(downloadSourceCombo), static_cast<QWidget *>(joinServerPortSpin),
-                        static_cast<QWidget *>(customTempDirBrowseBtn)}) {
+                        static_cast<QWidget *>(customTempDirBrowseBtn), static_cast<QWidget *>(fontFamiliesCombo), static_cast<QWidget *>(backgroundBrowseBtn)}) {
             w->setStyleSheet(editStyle);
         }
+
+        const QString sliderStyle = QString(
+                                        "QSlider::groove:horizontal { height: 8px; background: %1; border: 1px solid %2; border-radius: 4px; }"
+                                        "QSlider::handle:horizontal { width: 14px; background: %3; border: 1px solid %2; margin: -4px 0; border-radius: 7px; }"
+                                        "QSlider::handle:horizontal:hover { background: %4; }")
+                                        .arg(theme.colors.surface.data())
+                                        .arg(theme.colors.focus.data())
+                                        .arg(theme.colors.accent.data())
+                                        .arg(theme.colors.hover.data());
+        blurRadiusSlider->setStyleSheet(sliderStyle);
 
         const QString checkStyle = QString(
                                        "QCheckBox { color: %1; background: transparent; }"
@@ -330,7 +583,7 @@ namespace neko::ui::page {
                                          .arg(theme.colors.text.data())
                                          .arg(theme.colors.accent.data())
                                          .arg(theme.colors.hover.data());
-        for (auto *tb : {customTempDirBrowseBtn, closeTabButton}) {
+        for (auto *tb : {customTempDirBrowseBtn, closeTabButton, javaPathBrowseBtn, backgroundBrowseBtn}) {
             tb->setStyleSheet(toolBtnStyle);
         }
 
@@ -359,16 +612,16 @@ namespace neko::ui::page {
         Q_UNUSED(h1Font);
         Q_UNUSED(h2Font);
 
-        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeEdit, fontFamiliesEdit, devServerEdit}) {
+        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, devServerEdit, languageCombo, backgroundBrowseBtn}) {
             w->setFont(text);
         }
-        for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSpin, fontPointSizeSpin, threadSpin}) {
+        for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
             w->setFont(text);
         }
         for (auto c : std::initializer_list<QWidget *>{useSysWindowFrameCheck, headBarKeepRightCheck, proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
             c->setFont(text);
         }
-        for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, playerNameEdit, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin}) {
+        for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, playerNameEdit, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin, javaPathBrowseBtn, themeCombo}) {
             w->setFont(text);
         }
         mainGroup->setFont(text);
@@ -378,6 +631,10 @@ namespace neko::ui::page {
         minecraftGroup->setFont(text);
         devGroup->setFont(text);
         tabWidget->setFont(text);
+    }
+
+    void SettingPage::setupText() {
+        retranslateUi();
     }
 
     void SettingPage::resizeItems(int windowWidth, int windowHeight) {
@@ -394,11 +651,25 @@ namespace neko::ui::page {
         useSysWindowFrameCheck->setChecked(cfg.main.useSysWindowFrame);
         headBarKeepRightCheck->setChecked(cfg.main.headBarKeepRight);
 
-        themeEdit->setText(QString::fromStdString(cfg.style.theme));
+        {
+            QSignalBlocker blocker(languageCombo);
+            const QString langCode = QString::fromStdString(cfg.main.lang);
+            const int langIndex = languageCombo->findData(langCode);
+            if (langIndex >= 0) {
+                languageCombo->setCurrentIndex(langIndex);
+            }
+        }
+        if (!cfg.main.lang.empty()) {
+            lang::language(cfg.main.lang);
+        }
+        retranslateUi();
+
+        themeCombo->setCurrentText(QString::fromStdString(cfg.style.theme));
         blurEffectCombo->setCurrentText(QString::fromStdString(cfg.style.blurEffect));
-        blurRadiusSpin->setValue(static_cast<int>(cfg.style.blurRadius));
+        const int blurRadiusVal = static_cast<int>(cfg.style.blurRadius);
+        blurRadiusSlider->setValue(blurRadiusVal == 1 ? 0 : blurRadiusVal);
         fontPointSizeSpin->setValue(static_cast<int>(cfg.style.fontPointSize));
-        fontFamiliesEdit->setText(QString::fromStdString(cfg.style.fontFamilies));
+        fontFamiliesCombo->setCurrentText(QString::fromStdString(cfg.style.fontFamilies));
 
         threadSpin->setValue(static_cast<int>(cfg.net.thread));
         const bool useSystemProxy = (cfg.net.proxy == neko::strview("true"));
@@ -429,98 +700,103 @@ namespace neko::ui::page {
     }
 
     void SettingPage::setAuthState(bool loggedIn, const std::string &statusText) {
-        authStatusLabel->setText(QString::fromStdString(statusText));
-        if (loggedIn) {
-            authButton->setText(QStringLiteral("Logout"));
-        } else {
-            authButton->setText(QStringLiteral("Login"));
-        }
+        this->loggedIn = loggedIn;
+        authStatusText = statusText;
+        const std::string status = statusText.empty()
+                                       ? lang::tr(lang::keys::setting::category, lang::keys::setting::notLoggedIn, "__not_logged_in__")
+                                       : statusText;
+        authStatusLabel->setText(QString::fromStdString(status));
+        authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, loggedIn ? lang::keys::setting::logout : lang::keys::setting::login,
+                                                            loggedIn ? "__logout__" : "__login__")));
     }
 
     void SettingPage::writeToConfig(ClientConfig &cfg) const {
 
-            const QString bgType = backgroundTypeCombo->currentText();
-            auto bgTypeStd = bgType.toStdString();
-            cfg.main.backgroundType = std::move(bgTypeStd);
-            const QString bgPath = backgroundPathEdit->text();
-            auto bgStd = bgPath.toStdString();
-            cfg.main.background = std::move(bgStd);
-            const QString ws = windowSizeEdit->text();
-            auto wsStd = ws.toStdString();
-            cfg.main.windowSize = std::move(wsStd);
-            const QString lm = launcherMethodCombo->currentText();
-            auto lmStd = lm.toStdString();
-            cfg.main.launcherMethod = std::move(lmStd);
-            cfg.main.useSysWindowFrame = useSysWindowFrameCheck->isChecked();
-            cfg.main.headBarKeepRight = headBarKeepRightCheck->isChecked();
-            const QString th = themeEdit->text();
-            auto thStd = th.toStdString();
-            cfg.style.theme = std::move(thStd);
-            const QString be = blurEffectCombo->currentText();
-            auto beStd = be.toStdString();
-            cfg.style.blurEffect = std::move(beStd);
-            cfg.style.blurRadius = blurRadiusSpin->value();
-            cfg.style.fontPointSize = fontPointSizeSpin->value();
-            const QString ff = fontFamiliesEdit->text();
-            auto ffStd = ff.toStdString();
-            cfg.style.fontFamilies = std::move(ffStd);
+        const QString langCode = languageCombo->currentData().toString();
+        cfg.main.lang = langCode.isEmpty() ? languageCombo->currentText().toStdString() : langCode.toStdString();
+        const QString bgType = backgroundTypeCombo->currentText();
+        auto bgTypeStd = bgType.toStdString();
+        cfg.main.backgroundType = std::move(bgTypeStd);
+        const QString bgPath = backgroundPathEdit->text();
+        auto bgStd = bgPath.toStdString();
+        cfg.main.background = std::move(bgStd);
+        const QString ws = windowSizeEdit->text();
+        auto wsStd = ws.toStdString();
+        cfg.main.windowSize = std::move(wsStd);
+        const QString lm = launcherMethodCombo->currentText();
+        auto lmStd = lm.toStdString();
+        cfg.main.launcherMethod = std::move(lmStd);
+        cfg.main.useSysWindowFrame = useSysWindowFrameCheck->isChecked();
+        cfg.main.headBarKeepRight = headBarKeepRightCheck->isChecked();
+        const QString th = themeCombo->currentText();
+        auto thStd = th.toStdString();
+        cfg.style.theme = std::move(thStd);
+        const QString be = blurEffectCombo->currentText();
+        auto beStd = be.toStdString();
+        cfg.style.blurEffect = std::move(beStd);
+        const int radiusVal = blurRadiusSlider->value();
+        cfg.style.blurRadius = (radiusVal == 1) ? 0 : radiusVal;
+        cfg.style.fontPointSize = fontPointSizeSpin->value();
+        const QString ff = fontFamiliesCombo->currentText();
+        auto ffStd = ff.toStdString();
+        cfg.style.fontFamilies = std::move(ffStd);
 
-            std::string().swap(cfg.net.proxy); // free buffer completely
+        std::string().swap(cfg.net.proxy); // free buffer completely
 
-            cfg.net.thread = threadSpin->value();
+        cfg.net.thread = threadSpin->value();
 
-            if (proxyCheck->isChecked()) {
-                cfg.net.proxy = "true";
-            } else {
-                const QString pr = proxyEdit->text();
-                auto prStd = pr.toStdString();
-                cfg.net.proxy = std::move(prStd);
-            }
+        if (proxyCheck->isChecked()) {
+            cfg.net.proxy = "true";
+        } else {
+            const QString pr = proxyEdit->text();
+            auto prStd = pr.toStdString();
+            cfg.net.proxy = std::move(prStd);
+        }
 
-            std::string().swap(cfg.other.tempFolder); // free buffer completely
+        std::string().swap(cfg.other.tempFolder); // free buffer completely
 
-            const QString tp = customTempDirEdit->text();
+        const QString tp = customTempDirEdit->text();
 
-            auto tpStd = tp.toStdString();
-            cfg.other.tempFolder = std::move(tpStd);
+        auto tpStd = tp.toStdString();
+        cfg.other.tempFolder = std::move(tpStd);
 
-            const QString jp = javaPathEdit->text();
+        const QString jp = javaPathEdit->text();
 
-            auto jpStd = jp.toStdString();
+        auto jpStd = jp.toStdString();
 
-            cfg.minecraft.javaPath = std::move(jpStd);
+        cfg.minecraft.javaPath = std::move(jpStd);
 
-            const QString ds = downloadSourceCombo->currentText();
-            auto dsStd = ds.toStdString();
-            cfg.minecraft.downloadSource = std::move(dsStd);
+        const QString ds = downloadSourceCombo->currentText();
+        auto dsStd = ds.toStdString();
+        cfg.minecraft.downloadSource = std::move(dsStd);
 
-            const QString pn = playerNameEdit->text();
+        const QString pn = playerNameEdit->text();
 
-            auto pnStd = pn.toStdString();
-            cfg.minecraft.playerName = std::move(pnStd);
-            const QString cr = customResolutionEdit->text();
-            auto crStd = cr.toStdString();
-            cfg.minecraft.customResolution = std::move(crStd);
-            const QString js = joinServerAddressEdit->text();
+        auto pnStd = pn.toStdString();
+        cfg.minecraft.playerName = std::move(pnStd);
+        const QString cr = customResolutionEdit->text();
+        auto crStd = cr.toStdString();
+        cfg.minecraft.customResolution = std::move(crStd);
+        const QString js = joinServerAddressEdit->text();
 
-            auto jsStd = js.toStdString();
+        auto jsStd = js.toStdString();
 
-            cfg.minecraft.joinServerAddress = std::move(jsStd);
-            cfg.minecraft.joinServerPort = std::to_string(joinServerPortSpin->value());
+        cfg.minecraft.joinServerAddress = std::move(jsStd);
+        cfg.minecraft.joinServerPort = std::to_string(joinServerPortSpin->value());
 
-            cfg.dev.enable = devEnableCheck->isChecked();
+        cfg.dev.enable = devEnableCheck->isChecked();
 
-            cfg.dev.debug = devDebugCheck->isChecked();
-            std::string serverVal;
-            if (devServerCheck->isChecked()) {
-                serverVal = "auto";
-            } else {
-                const QString ds = devServerEdit->text();
-                serverVal = ds.toStdString();
-            }
-            cfg.dev.server = std::move(serverVal);
+        cfg.dev.debug = devDebugCheck->isChecked();
+        std::string serverVal;
+        if (devServerCheck->isChecked()) {
+            serverVal = "auto";
+        } else {
+            const QString ds = devServerEdit->text();
+            serverVal = ds.toStdString();
+        }
+        cfg.dev.server = std::move(serverVal);
 
-            cfg.dev.tls = devTlsCheck->isChecked();
+        cfg.dev.tls = devTlsCheck->isChecked();
     }
 
 } // namespace neko::ui::page

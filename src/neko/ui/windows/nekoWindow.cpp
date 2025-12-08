@@ -54,6 +54,7 @@ namespace neko::ui::window {
 
         // Setup themes
         setupTheme(ui::getCurrentTheme());
+        setupText();
         pixmapWidget->setGraphicsEffect(blurEffect);
 
         this->setMinimumSize(800, 420);
@@ -85,6 +86,13 @@ namespace neko::ui::window {
         settingPage->setupFont(textFont, h1Font, h2Font);
         noticeDialog->setupFont(textFont, h2Font);
         inputDialog->setupFont(textFont, h2Font);
+    }
+
+    void NekoWindow::setupText() {
+        headBarWidget->setupText();
+        homePage->setupText();
+        settingPage->setupText();
+        // Add other widgets/pages here when they expose setupText.
     }
 
     void NekoWindow::applyCentralBackground(const Theme &theme) {
@@ -133,6 +141,87 @@ namespace neko::ui::window {
         connect(settingPage, &page::SettingPage::closeRequested, this, [this]() {
             switchToPage(Page::home);
         });
+
+        // Live setting updates
+        connect(settingPage, &page::SettingPage::languageChanged, this, &NekoWindow::onLanguageChanged);
+        connect(settingPage, &page::SettingPage::themeChanged, this, &NekoWindow::onThemeChanged);
+        connect(settingPage, &page::SettingPage::fontPointSizeChanged, this, &NekoWindow::onFontPointSizeChanged);
+        connect(settingPage, &page::SettingPage::fontFamiliesChanged, this, &NekoWindow::onFontFamiliesChanged);
+        connect(settingPage, &page::SettingPage::blurEffectChanged, this, &NekoWindow::onBlurEffectChanged);
+        connect(settingPage, &page::SettingPage::blurRadiusChanged, this, &NekoWindow::onBlurRadiusChanged);
+        connect(settingPage, &page::SettingPage::backgroundTypeChanged, this, &NekoWindow::onBackgroundTypeChanged);
+        connect(settingPage, &page::SettingPage::backgroundPathChanged, this, &NekoWindow::onBackgroundPathChanged);
+    }
+
+    void NekoWindow::onThemeChanged(const QString &themeName) {
+        // Basic mapping; extend as needed for custom themes.
+        const auto name = themeName.toLower();
+        if (name == "dark") {
+            ui::setCurrentTheme(ui::darkTheme);
+        } else if (name == "home") {
+            ui::setCurrentTheme(ui::homeTheme);
+        } else {
+            ui::setCurrentTheme(ui::lightTheme);
+        }
+        setupTheme(ui::getCurrentTheme());
+    }
+
+    void NekoWindow::onFontPointSizeChanged(int pointSize) {
+        QFont textFont = this->font();
+        if (pointSize > 0) {
+            textFont.setPointSize(pointSize);
+        } else {
+            textFont.setPointSize(10);
+        }
+        auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
+        setupFont(textFont, h1Font, h2Font);
+    }
+
+    void NekoWindow::onFontFamiliesChanged(const QString &families) {
+        QFont textFont = this->font();
+        textFont.setFamily(families);
+        auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
+        setupFont(textFont, h1Font, h2Font);
+    }
+
+    void NekoWindow::onBlurEffectChanged(const QString &effect) {
+        if (effect == "performance") {
+            blurEffect->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
+        } else if (effect == "quality") {
+            blurEffect->setBlurHints(QGraphicsBlurEffect::QualityHint);
+        } else {
+            blurEffect->setBlurHints(QGraphicsBlurEffect::AnimationHint);
+        }
+    }
+
+    void NekoWindow::onBlurRadiusChanged(int radius) {
+        if (radius == 1) {
+            return; // skip problematic radius
+        }
+        blurEffect->setBlurRadius(static_cast<qreal>(std::max(0, radius)));
+    }
+
+    void NekoWindow::onLanguageChanged(const QString &langCode) {
+        if (!langCode.isEmpty()) {
+            lang::language(langCode.toStdString());
+        }
+        setupText();
+    }
+
+    void NekoWindow::onBackgroundTypeChanged(const QString &type) {
+        useImageBackground = (type == "image");
+        if (useImageBackground) {
+            pixmapWidget->setPixmap(settingPage->getBackgroundPath());
+        } else {
+            pixmapWidget->clearPixmap();
+        }
+        applyCentralBackground(ui::getCurrentTheme());
+    }
+
+    void NekoWindow::onBackgroundPathChanged(const QString &path) {
+        if (useImageBackground) {
+            pixmapWidget->setPixmap(path.toStdString());
+        }
     }
 
     void NekoWindow::settingFromConfig(const ClientConfig &config) {
@@ -175,8 +264,9 @@ namespace neko::ui::window {
         auto [h1Font, h2Font] = ui::computeTitleFonts(textFont);
         setupFont(textFont, h1Font, h2Font);
         settingPage->settingFromConfig(config);
+        setupText();
 
-        if (config.style.blurRadius > 0) {
+        if (config.style.blurRadius > 0 && config.style.blurRadius != 1) {
             blurEffect->setBlurRadius(static_cast<qreal>(config.style.blurRadius));
         } else {
             blurEffect->setBlurRadius(0);

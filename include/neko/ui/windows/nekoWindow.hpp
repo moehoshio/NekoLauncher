@@ -18,6 +18,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
+#include <QtCore/QString>
 
 class QWidget;
 class QGraphicsBlurEffect;
@@ -55,6 +56,7 @@ namespace neko::ui::window {
         void resizeItems(int width, int height);
         void setupTheme(const Theme &theme);
         void setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font);
+        void setupText();
         void setupConnections();
         void showNotice(const NoticeMsg &m);
         void showInput(const InputMsg &m);
@@ -76,6 +78,16 @@ namespace neko::ui::window {
         void switchToPageD(Page page);
         void setLoadingValueD(int value);
         void setLoadingStatusD(const std::string& msg);
+
+    public slots:
+        void onThemeChanged(const QString &themeName);
+        void onFontPointSizeChanged(int pointSize);
+        void onFontFamiliesChanged(const QString &families);
+        void onBlurEffectChanged(const QString &effect);
+        void onBlurRadiusChanged(int radius);
+        void onBackgroundTypeChanged(const QString &type);
+        void onBackgroundPathChanged(const QString &path);
+        void onLanguageChanged(const QString &langCode);
         
     };
 

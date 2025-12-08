@@ -139,14 +139,7 @@ namespace neko::lang {
             return obj[category].value(key, fallback);
         };
 
-        auto res = check(langFile);
-
-        if (res == fallback) {
-            log::warn("Failed to load key : {} in category : {} for : {} , try to load default file", {}, key, category, langFile.value("language", "Empty lang"));
-            return check(loadTranslations("en"));
-        }
-
-        return res;
+        return check(langFile);
     }
 
     /**
@@ -185,6 +178,57 @@ namespace neko::lang {
     namespace keys {
 
         constexpr neko::cstr language = "language";
+
+        namespace setting {
+            constexpr neko::cstr
+                category = "setting",
+                tabAccount = "tabAccount",
+                tabMain = "tabMain",
+                tabAdvanced = "tabAdvanced",
+                groupMain = "groupMain",
+                groupStyle = "groupStyle",
+                groupNetwork = "groupNetwork",
+                groupOther = "groupOther",
+                groupMinecraft = "groupMinecraft",
+                groupAdvanced = "groupAdvanced",
+                language = "language",
+                backgroundType = "backgroundType",
+                background = "background",
+                selectBackground = "selectBackground",
+                imageFileFilter = "imageFileFilter",
+                windowSize = "windowSize",
+                launcherMethod = "launcherMethod",
+                useSysWindowFrame = "useSysWindowFrame",
+                headBarKeepRight = "headBarKeepRight",
+                theme = "theme",
+                blurEffect = "blurEffect",
+                blurRadius = "blurRadius",
+                fontSize = "fontSize",
+                fontFamilies = "fontFamilies",
+                threads = "threads",
+                useSystemProxy = "useSystemProxy",
+                proxyPlaceholder = "proxyPlaceholder",
+                customTempDir = "customTempDir",
+                selectTempDir = "selectTempDir",
+                javaPath = "javaPath",
+                browseJava = "browseJava",
+                javaExecutableFilter = "javaExecutableFilter",
+                downloadSource = "downloadSource",
+                playerName = "playerName",
+                customResolution = "customResolution",
+                joinServerAddress = "joinServerAddress",
+                joinServerPort = "joinServerPort",
+                devEnable = "devEnable",
+                devDebug = "devDebug",
+                devTls = "devTls",
+                devServer = "devServer",
+                useDefaultServer = "useDefaultServer",
+                devServerPlaceholder = "devServerPlaceholder",
+                notLoggedIn = "notLoggedIn",
+                login = "login",
+                logout = "logout",
+                close = "close";
+        } // namespace setting
 
 
         namespace input {
