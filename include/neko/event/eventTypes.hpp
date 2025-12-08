@@ -9,6 +9,7 @@
 #include <neko/schema/types.hpp>
 
 #include "neko/app/api.hpp"
+#include "neko/app/clientConfig.hpp"
 #include "neko/ui/page.hpp"
 #include "neko/ui/uiMsg.hpp"
 
@@ -20,6 +21,20 @@ namespace neko::event {
 
     struct NekoStartEvent {};
     struct NekoQuitEvent {};
+
+    struct ConfigLoadedEvent {
+        std::string path;
+        bool success = false;
+    };
+
+    struct ConfigSavedEvent {
+        std::string path;
+        bool success = false;
+    };
+
+    struct ConfigUpdatedEvent {
+        neko::ClientConfig config;
+    };
 
     /*****************/
     /*** UI Events ***/
@@ -55,9 +70,16 @@ namespace neko::event {
     /*****************/
 
     struct MaintenanceEvent : public neko::ui::NoticeMsg {
+        MaintenanceEvent() = default;
         MaintenanceEvent(const neko::ui::NoticeMsg &msg) : neko::ui::NoticeMsg(msg) {}
     };
-    struct UpdateAvailableEvent : api::UpdateResponse {};
+    struct UpdateAvailableEvent : api::UpdateResponse {
+        UpdateAvailableEvent() = default;
+        explicit UpdateAvailableEvent(const api::UpdateResponse &resp) : api::UpdateResponse(resp) {}
+    };
     struct UpdateCompleteEvent {};
+    struct UpdateFailedEvent {
+        std::string reason;
+    };
     
 } // namespace neko::event

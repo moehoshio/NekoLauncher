@@ -149,7 +149,9 @@ namespace neko::core::update {
      */
     UpdateState update(api::UpdateResponse data) noexcept {
         if (data.empty()) {
-            return {State::Failed, "Update data is empty"};
+            std::string reason = "Update data is empty";
+            bus::event::publish(event::UpdateFailedEvent{.reason = reason});
+            return {State::Failed, reason};
         }
 
         auto notifyProgress = [&](const std::string &msg) {
@@ -255,6 +257,7 @@ namespace neko::core::update {
         }
 
         if (!failureReason.empty()) {
+            bus::event::publish(event::UpdateFailedEvent{.reason = failureReason});
             return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = failureReason};
         }
 
@@ -300,9 +303,12 @@ namespace neko::core::update {
                 std::string infoMsg = "Executing update command: " + cmd;
                 log::info(infoMsg);
 
+                bus::event::publish(event::UpdateCompleteEvent{});
 
                 app::quit();
                 launcherNewProcess(cmd);
+
+                return UpdateState{.state = neko::types::State::Completed, .result = "", .errorMessage = ""};
 
             } catch (const std::filesystem::filesystem_error &e) {
                 std::string error = std::string("Filesystem error: ") + e.what();
@@ -310,6 +316,8 @@ namespace neko::core::update {
                 return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = error};
             }
         }
+
+        bus::event::publish(event::UpdateCompleteEvent{});
 
         return UpdateState{.state = neko::types::State::Completed, .result = "", .errorMessage = ""};
     }
@@ -346,6 +354,7 @@ namespace neko::core::update {
         // Check for updates
         auto updateState = checkUpdate();
         if (!updateState.errorMessage.empty()) {
+            bus::event::publish(event::UpdateFailedEvent{.reason = updateState.errorMessage});
             return UpdateState{.state = neko::types::State::RetryRequired, .result = "", .errorMessage = updateState.errorMessage};
         }
 
@@ -360,8 +369,11 @@ namespace neko::core::update {
         auto data = parseUpdate(updateState.result);
         if (data.empty()) {
             std::string error = "Failed to parse update data";
+            bus::event::publish(event::UpdateFailedEvent{.reason = error});
             return {neko::types::State::ActionNeeded, error};
         }
+
+        bus::event::publish(event::UpdateAvailableEvent{data});
 
         // Ask if user wants to update
         

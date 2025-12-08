@@ -74,12 +74,12 @@ TEST_F(ConfigManagerTest, GetClientConfig) {
     
     neko::ClientConfig config = manager.getClientConfig();
     
-    EXPECT_STREQ(config.main.lang, "en");
-    EXPECT_STREQ(config.main.resourceVersion, "1.0.0");
-    EXPECT_STREQ(config.main.deviceID, "test-device");
+    EXPECT_EQ(config.main.lang, "en");
+    EXPECT_EQ(config.main.resourceVersion, "1.0.0");
+    EXPECT_EQ(config.main.deviceID, "test-device");
     EXPECT_EQ(config.style.blurRadius, 10);
     EXPECT_EQ(config.net.thread, 4);
-    EXPECT_STREQ(config.minecraft.playerName, "TestPlayer");
+    EXPECT_EQ(config.minecraft.playerName, "TestPlayer");
     EXPECT_EQ(config.minecraft.maxMemoryLimit, 2048);
 }
 
@@ -96,12 +96,12 @@ TEST_F(ConfigManagerTest, UpdateClientConfig) {
     
     neko::ClientConfig config = manager.getClientConfig();
     
-    EXPECT_STREQ(config.main.lang, "zh_tw");
+    EXPECT_EQ(config.main.lang, "zh_tw");
     EXPECT_EQ(config.style.blurRadius, 20);
     EXPECT_EQ(config.minecraft.maxMemoryLimit, 4096);
     
     // Verify other values remain unchanged
-    EXPECT_STREQ(config.main.resourceVersion, "1.0.0");
+    EXPECT_EQ(config.main.resourceVersion, "1.0.0");
     EXPECT_EQ(config.net.thread, 4);
 }
 
@@ -124,9 +124,9 @@ TEST_F(ConfigManagerTest, MultipleUpdates) {
     
     neko::ClientConfig config = manager.getClientConfig();
     
-    EXPECT_STREQ(config.main.lang, "fr");
+    EXPECT_EQ(config.main.lang, "fr");
     EXPECT_EQ(config.style.blurRadius, 15);
-    EXPECT_STREQ(config.minecraft.playerName, "NewPlayer");
+    EXPECT_EQ(config.minecraft.playerName, "NewPlayer");
 }
 
 // Test update with empty function (should not crash)
@@ -142,7 +142,7 @@ TEST_F(ConfigManagerTest, EmptyUpdate) {
     
     auto after = manager.getClientConfig();
     
-    EXPECT_STREQ(before.main.lang, after.main.lang);
+    EXPECT_EQ(before.main.lang, after.main.lang);
     EXPECT_EQ(before.style.blurRadius, after.style.blurRadius);
 }
 
@@ -263,7 +263,7 @@ TEST_F(ConfigManagerTest, PersistenceAfterUpdate) {
     newManager.load(saveFile);
     
     neko::ClientConfig config = newManager.getClientConfig();
-    EXPECT_STREQ(config.main.lang, "ja");
+    EXPECT_EQ(config.main.lang, "ja");
     EXPECT_EQ(config.minecraft.maxMemoryLimit, 8192);
     
     std::filesystem::remove(saveFile);
@@ -278,11 +278,8 @@ TEST_F(ConfigManagerTest, GetClientConfigReturnsCopy) {
     neko::ClientConfig config2 = manager.getClientConfig();
     
     // Both should have the same values
-    EXPECT_STREQ(config1.main.lang, config2.main.lang);
-    
-    // Modify config1 (shouldn't affect config2 or manager's internal state)
-    // Note: Can't modify config1.main.lang directly as it's const char*
-    // This test verifies they are independent copies
+    EXPECT_EQ(config1.main.lang, config2.main.lang);
+    // Modify config1 if needed; copies should stay independent
 }
 
 // Test update doesn't affect previously retrieved configs
@@ -303,5 +300,5 @@ TEST_F(ConfigManagerTest, UpdateDoesntAffectPreviousConfigs) {
     EXPECT_EQ(oldLang, "en");
     
     // New config should have updated value
-    EXPECT_STREQ(newConfig.main.lang, "es");
+    EXPECT_EQ(newConfig.main.lang, "es");
 }

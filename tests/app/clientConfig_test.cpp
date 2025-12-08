@@ -88,15 +88,15 @@ TEST_F(ClientConfigTest, LoadFromSimpleIni) {
     ClientConfig config(ini);
     
     // Test main section
-    EXPECT_STREQ(config.main.lang, "en");
-    EXPECT_STREQ(config.main.backgroundType, "image");
-    EXPECT_STREQ(config.main.background, "img/bg.png");
-    EXPECT_STREQ(config.main.windowSize, "1920x1080");
-    EXPECT_EQ(config.main.launcherMethod, 1);
+    EXPECT_EQ(config.main.lang, "en");
+    EXPECT_EQ(config.main.backgroundType, "image");
+    EXPECT_EQ(config.main.background, "img/bg.png");
+    EXPECT_EQ(config.main.windowSize, "1920x1080");
+    EXPECT_EQ(config.main.launcherMethod, "1");
     EXPECT_TRUE(config.main.useSysWindowFrame);
     EXPECT_TRUE(config.main.headBarKeepRight);
-    EXPECT_STREQ(config.main.resourceVersion, "1.0.0");
-    EXPECT_STREQ(config.main.deviceID, "test-device-id");
+    EXPECT_EQ(config.main.resourceVersion, "1.0.0");
+    EXPECT_EQ(config.main.deviceID, "test-device-id");
 }
 
 // Test style section
@@ -108,10 +108,10 @@ TEST_F(ClientConfigTest, StyleSection) {
     
     ClientConfig config(ini);
     
-    EXPECT_STREQ(config.style.blurEffect, "Animation");
+    EXPECT_EQ(config.style.blurEffect, "Animation");
     EXPECT_EQ(config.style.blurRadius, 10);
     EXPECT_EQ(config.style.fontPointSize, 12);
-    EXPECT_STREQ(config.style.fontFamilies, "Arial,Sans");
+    EXPECT_EQ(config.style.fontFamilies, "Arial,Sans");
 }
 
 // Test net section
@@ -124,7 +124,7 @@ TEST_F(ClientConfigTest, NetSection) {
     ClientConfig config(ini);
     
     EXPECT_EQ(config.net.thread, 4);
-    EXPECT_STREQ(config.net.proxy, "true");
+    EXPECT_EQ(config.net.proxy, "true");
 }
 
 // Test dev section
@@ -138,7 +138,7 @@ TEST_F(ClientConfigTest, DevSection) {
     
     EXPECT_FALSE(config.dev.enable);
     EXPECT_FALSE(config.dev.debug);
-    EXPECT_STREQ(config.dev.server, "auto");
+    EXPECT_EQ(config.dev.server, "auto");
     EXPECT_TRUE(config.dev.tls);
 }
 
@@ -151,7 +151,7 @@ TEST_F(ClientConfigTest, OtherSection) {
     
     ClientConfig config(ini);
     
-    EXPECT_STREQ(config.other.tempFolder, "/tmp/test");
+    EXPECT_EQ(config.other.tempFolder, "/tmp/test");
 }
 
 // Test minecraft section
@@ -163,22 +163,22 @@ TEST_F(ClientConfigTest, MinecraftSection) {
     
     ClientConfig config(ini);
     
-    EXPECT_STREQ(config.minecraft.minecraftFolder, ".minecraft");
-    EXPECT_STREQ(config.minecraft.javaPath, "/usr/bin/java");
-    EXPECT_STREQ(config.minecraft.downloadSource, "Official");
-    EXPECT_STREQ(config.minecraft.playerName, "TestPlayer");
-    EXPECT_STREQ(config.minecraft.account, "test@example.com");
-    EXPECT_STREQ(config.minecraft.uuid, "12345678-1234-1234-1234-123456789012");
-    EXPECT_STREQ(config.minecraft.accessToken, "test-token");
-    EXPECT_STREQ(config.minecraft.targetVersion, "1.20.1");
+    EXPECT_EQ(config.minecraft.minecraftFolder, ".minecraft");
+    EXPECT_EQ(config.minecraft.javaPath, "/usr/bin/java");
+    EXPECT_EQ(config.minecraft.downloadSource, "Official");
+    EXPECT_EQ(config.minecraft.playerName, "TestPlayer");
+    EXPECT_EQ(config.minecraft.account, "test@example.com");
+    EXPECT_EQ(config.minecraft.uuid, "12345678-1234-1234-1234-123456789012");
+    EXPECT_EQ(config.minecraft.accessToken, "test-token");
+    EXPECT_EQ(config.minecraft.targetVersion, "1.20.1");
     EXPECT_EQ(config.minecraft.maxMemoryLimit, 4096);
     EXPECT_EQ(config.minecraft.minMemoryLimit, 1024);
     EXPECT_EQ(config.minecraft.needMemoryLimit, 2048);
-    EXPECT_STREQ(config.minecraft.authlibName, "authlib-injector.jar");
+    EXPECT_EQ(config.minecraft.authlibName, "authlib-injector.jar");
     EXPECT_FALSE(config.minecraft.tolerantMode);
-    EXPECT_STREQ(config.minecraft.customResolution, "1920x1080");
-    EXPECT_STREQ(config.minecraft.joinServerAddress, "mc.example.com");
-    EXPECT_STREQ(config.minecraft.joinServerPort, "25565");
+    EXPECT_EQ(config.minecraft.customResolution, "1920x1080");
+    EXPECT_EQ(config.minecraft.joinServerAddress, "mc.example.com");
+    EXPECT_EQ(config.minecraft.joinServerPort, "25565");
 }
 
 // Test default values when keys are missing
@@ -187,9 +187,9 @@ TEST_F(ClientConfigTest, DefaultValues) {
     ClientConfig config(ini);
     
     // Check some default values
-    EXPECT_STREQ(config.main.lang, "en");
-    EXPECT_STREQ(config.main.backgroundType, "image");
-    EXPECT_EQ(config.main.launcherMethod, 1);
+    EXPECT_EQ(config.main.lang, "en");
+    EXPECT_EQ(config.main.backgroundType, "image");
+    EXPECT_EQ(config.main.launcherMethod, "launchVisible");
     EXPECT_TRUE(config.main.useSysWindowFrame);
     EXPECT_EQ(config.style.blurRadius, 10);
     EXPECT_EQ(config.style.fontPointSize, 10);
@@ -242,9 +242,9 @@ TEST_F(ClientConfigTest, RoundTrip) {
     ClientConfig config2(ini2);
     
     // Values should be the same
-    EXPECT_STREQ(config2.main.lang, config1.main.lang);
+    EXPECT_EQ(config2.main.lang, config1.main.lang);
     EXPECT_EQ(config2.style.blurRadius, config1.style.blurRadius);
-    EXPECT_STREQ(config2.main.backgroundType, config1.main.backgroundType);
+    EXPECT_EQ(config2.main.backgroundType, config1.main.backgroundType);
     EXPECT_EQ(config2.net.thread, config1.net.thread);
 }
 

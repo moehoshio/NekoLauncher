@@ -105,6 +105,14 @@ namespace neko::core {
                 command = "open " + maintenanceInfo.link;
             }
 
+            // Notify listeners about maintenance state
+            bus::event::publish(event::MaintenanceEvent(neko::ui::NoticeMsg{
+                .title = lang::tr(lang::keys::maintenance::category, lang::keys::maintenance::title, "Maintenance"),
+                .message = maintenanceInfo.message,
+                .posterPath = filePath.value_or(""),
+                .buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")}
+            }));
+
             return {
                 .isMaintenance = true,
                 .message = maintenanceInfo.message,
