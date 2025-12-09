@@ -1,11 +1,11 @@
 #pragma once
 
-#include "neko/ui/theme.hpp"
 #include "neko/app/clientConfig.hpp"
+#include "neko/ui/theme.hpp"
 
+#include <QtCore/QString>
 #include <QtGui/QFont>
 #include <QtWidgets/QWidget>
-#include <QtCore/QString>
 
 #include <string>
 
@@ -25,101 +25,102 @@ class QScrollArea;
 
 namespace neko::ui::page {
 
-	class SettingPage : public QWidget {
-		Q_OBJECT
-	private:
-		QTabWidget *tabWidget;
+    class SettingPage : public QWidget {
+        Q_OBJECT
+    private:
+        QTabWidget *tabWidget;
 
-		QScrollArea *authScroll;
+        QScrollArea *authScroll;
 
-		// Auth tab
-		QWidget *authTab;
-		QLabel *authStatusLabel;
-		QPushButton *authButton;
+        // Auth tab
+        QWidget *authTab;
+        QLabel *authStatusLabel;
+        QPushButton *authButton;
 
-		// Main settings tab
-		QScrollArea *mainScroll;
-		QWidget *mainTab;
-		QGroupBox *mainGroup;
-		QComboBox *languageCombo;
-		QComboBox *backgroundTypeCombo;
-		QLineEdit *backgroundPathEdit;
-		QToolButton *backgroundBrowseBtn;
-		QLineEdit *windowSizeEdit;
-		QComboBox *launcherMethodCombo;
-		QCheckBox *useSysWindowFrameCheck;
-		QCheckBox *headBarKeepRightCheck;
+        // Main settings tab
+        QScrollArea *mainScroll;
+        QWidget *mainTab;
+        QGroupBox *mainGroup;
+        QComboBox *languageCombo;
+        QComboBox *backgroundTypeCombo;
+        QLineEdit *backgroundPathEdit;
+        QToolButton *backgroundBrowseBtn;
+        QLineEdit *windowSizeEdit;
+        QComboBox *launcherMethodCombo;
+        QCheckBox *useSysWindowFrameCheck;
+        QCheckBox *headBarKeepRightCheck;
 
-		QGroupBox *styleGroup;
-		QComboBox *themeCombo;
-		QComboBox *blurEffectCombo;
-		QSlider *blurRadiusSlider;
-		QSpinBox *fontPointSizeSpin;
-		QFontComboBox *fontFamiliesCombo;
+        QGroupBox *styleGroup;
+        QComboBox *themeCombo;
+        QComboBox *blurEffectCombo;
+        QSlider *blurRadiusSlider;
+        QSpinBox *fontPointSizeSpin;
+        QFontComboBox *fontFamiliesCombo;
 
-		QGroupBox *networkGroup;
-		QSpinBox *threadSpin;
-		QCheckBox *proxyCheck;
-			QLineEdit *proxyEdit;
+        QGroupBox *networkGroup;
+        QSpinBox *threadSpin;
+        QCheckBox *proxyCheck;
+        QLineEdit *proxyEdit;
 
-		QGroupBox *otherGroup;
-		QLineEdit *customTempDirEdit;
-		QToolButton *customTempDirBrowseBtn;
-			QToolButton *closeTabButton;
+        QGroupBox *otherGroup;
+        QLineEdit *customTempDirEdit;
+        QToolButton *customTempDirBrowseBtn;
+        QToolButton *closeTabButton;
 
-		QGroupBox *minecraftGroup;
-		QLineEdit *javaPathEdit;
-		QToolButton *javaPathBrowseBtn;
-		QComboBox *downloadSourceCombo;
-		QLineEdit *playerNameEdit;
-		QLineEdit *customResolutionEdit;
-		QLineEdit *joinServerAddressEdit;
-		QSpinBox *joinServerPortSpin;
+        QGroupBox *minecraftGroup;
+        QLineEdit *javaPathEdit;
+        QToolButton *javaPathBrowseBtn;
+        QComboBox *downloadSourceCombo;
+        QLineEdit *playerNameEdit;
+        QLineEdit *customResolutionEdit;
+        QLineEdit *joinServerAddressEdit;
+        QSpinBox *joinServerPortSpin;
 
-		// Advanced tab
-		QScrollArea *advancedScroll;
-		QWidget *advancedTab;
-		QGroupBox *devGroup;
-		QCheckBox *devEnableCheck;
-		QCheckBox *devDebugCheck;
-		QCheckBox *devServerCheck;
-		QLineEdit *devServerEdit;
-		QCheckBox *devTlsCheck;
+        // Advanced tab
+        QScrollArea *advancedScroll;
+        QWidget *advancedTab;
+        QGroupBox *devGroup;
+        QCheckBox *devEnableCheck;
+        QCheckBox *devDebugCheck;
+        QCheckBox *devServerCheck;
+        QLineEdit *devServerEdit;
+        QCheckBox *devTlsCheck;
 
-		bool loggedIn = false;
-		std::string authStatusText;
+        std::string authStatusText;
 
-		void buildUi();
-		void setupCombos();
-		void applyGroupStyle(const Theme &theme);
-		void retranslateUi();
+        void buildUi();
+        void setupCombos();
+        void applyGroupStyle(const Theme &theme);
+        void retranslateUi();
 
-	public:
-		SettingPage(QWidget *parent = nullptr);
+    public:
+        SettingPage(QWidget *parent = nullptr);
 
-		void setupTheme(const Theme &theme);
-		void setupFont(QFont text, QFont h1Font, QFont h2Font);
-		void setupText();
-		void resizeItems(int windowWidth, int windowHeight);
+        void setupTheme(const Theme &theme);
+        void setupFont(QFont text, QFont h1Font, QFont h2Font);
+        void setupText();
+        void resizeItems(int windowWidth, int windowHeight);
 
-		void settingFromConfig(const neko::ClientConfig &cfg);
-		void writeToConfig(neko::ClientConfig &cfg) const;
-		void setAuthState(bool loggedIn, const std::string &statusText);
+        void settingFromConfig(const neko::ClientConfig &cfg);
+        void writeToConfig(neko::ClientConfig &cfg) const;
+        void setAuthState(bool loggedIn, const std::string &statusText);
 
-		QString getBackgroundPath() const;
+        QString getBackgroundPath() const;
 
-	signals:
-		void closeRequested();
-		void languageChanged(const QString &langCode);
-		void proxyModeChanged(bool useSystemProxy);
-		void devServerModeChanged(bool useDefaultServer);
-		void themeChanged(const QString &themeName);
-		void fontPointSizeChanged(int pointSize);
-		void fontFamiliesChanged(const QString &families);
-		void blurEffectChanged(const QString &effect);
-		void blurRadiusChanged(int radius);
-		void backgroundTypeChanged(const QString &type);
-		void backgroundPathChanged(const QString &path);
-	};
+    signals:
+        void closeRequested();
+        void languageChanged(const QString &langCode);
+        void proxyModeChanged(bool useSystemProxy);
+        void devServerModeChanged(bool useDefaultServer);
+        void loginRequested();
+        void logoutRequested();
+        void themeChanged(const QString &themeName);
+        void fontPointSizeChanged(int pointSize);
+        void fontFamiliesChanged(const QString &families);
+        void blurEffectChanged(const QString &effect);
+        void blurRadiusChanged(int radius);
+        void backgroundTypeChanged(const QString &type);
+        void backgroundPathChanged(const QString &path);
+    };
 
 } // namespace neko::ui::page

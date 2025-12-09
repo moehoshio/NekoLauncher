@@ -103,8 +103,14 @@ namespace neko::ui::dialog {
     }
 
     void NoticeDialog::showNotice(const NoticeMsg &m) {
-        this->show();
-        this->raise();
+        // Clear any previous UI state so buttons do not accumulate between notices.
+        resetButtons();
+        disconnect(this, &QWidget::destroyed, nullptr, nullptr);
+        poster->clearPixmap();
+        title->clear();
+        msg->clear();
+
+        // Build buttons and content before showing to avoid any blank flash.
         title->setText(QString::fromStdString(m.title));
         msg->setText(QString::fromStdString(m.message));
         if (!m.posterPath.empty()){
@@ -173,6 +179,10 @@ namespace neko::ui::dialog {
             buttons[m.defaultButtonIndex]->setFocus();
         }
 
+        // Now show once everything is ready to avoid empty frames.
+        this->show();
+        this->raise();
+
         // If did ( user clicked ) , window is closed , the do not call the callback
         auto did = std::make_shared<bool>(false);
 
@@ -214,25 +224,26 @@ namespace neko::ui::dialog {
     }
 
     void NoticeDialog::resetState() {
+        this->hide();
         poster->clearPixmap();
         title->clear();
         msg->clear();
         resetButtons();
         disconnect(this, &QWidget::destroyed, nullptr, nullptr);
-        this->hide();
     }
     void NoticeDialog::resetButtons() {
         disconnect(buttonContainer);
         for (auto btn : buttons) {
             disconnect(btn);
-            btn->deleteLater();
+            btn->setParent(nullptr);
+            delete btn;
         }
         buttons.clear();
         while (buttonLayout->count() > 0) {
             auto item = buttonLayout->takeAt(0);
             if (auto widget = item->widget()) {
                 widget->setParent(nullptr);
-                widget->deleteLater();
+                delete widget;
             }
             delete item;
         }

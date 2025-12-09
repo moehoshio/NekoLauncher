@@ -8,6 +8,8 @@
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
+#include "neko/core/update.hpp"
+
 #include "neko/ui/uiEventDispatcher.hpp"
 #include "neko/ui/windows/nekoWindow.hpp"
 #include "neko/ui/windows/logViewerWindow.hpp"
@@ -39,12 +41,7 @@ int main(int argc, char *argv[]) {
         window.show();
         
         bus::thread::submit([](){
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            for (int i = 0; i < 100; i++) {
-                bus::event::publish<event::LoadingValueChangedEvent>({.progressValue = static_cast<neko::uint32>(i)});
-                std::this_thread::sleep_for(std::chrono::milliseconds(30));
-            }
-            bus::event::publish<event::UpdateCompleteEvent>({});
+            core::update::autoUpdate();
         });
 
         // Start Qt event loop

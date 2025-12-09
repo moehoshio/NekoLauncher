@@ -37,6 +37,16 @@ namespace neko::minecraft::auth {
         Offline
     };
 
+    inline bool isLoggedIn() noexcept {
+        auto cfg = bus::config::getClientConfig();
+        return !cfg.minecraft.accessToken.empty() && !cfg.minecraft.uuid.empty() && !cfg.minecraft.playerName.empty();
+    }
+
+    inline std::string getPlayerName() noexcept {
+        auto cfg = bus::config::getClientConfig();
+        return cfg.minecraft.playerName;
+    }
+
     /**
      * @brief This function checks if the Minecraft authlib prefetch data is already stored in the client configuration. If it is not, it attempts to fetch the data from the network.
      * @throws ex::NetworkError if the token refresh fails or the network request encounters an error.

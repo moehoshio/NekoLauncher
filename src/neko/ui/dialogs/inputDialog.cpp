@@ -61,6 +61,15 @@ namespace neko::ui::dialog {
         lines.clear();
         centralWidgetLayout->removeWidget(dialogButton);
         disconnect(dialogButton);
+
+        // Remove any spacers inserted by setLines to avoid layout stacking.
+        for (int i = centralWidgetLayout->count() - 1; i >= 0; --i) {
+            QLayoutItem *item = centralWidgetLayout->itemAt(i);
+            if (item && item->spacerItem()) {
+                auto taken = centralWidgetLayout->takeAt(i);
+                delete taken;
+            }
+        }
     }
 
     void InputDialog::showInput(const InputMsg &m) {

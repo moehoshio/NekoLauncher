@@ -3,6 +3,8 @@
 #include "neko/app/lang.hpp"
 #include "neko/bus/configBus.hpp"
 
+#include "neko/core/auth.hpp"
+
 #include <neko/log/nlog.hpp>
 
 #include <QtCore/QDir>
@@ -119,6 +121,13 @@ namespace neko::ui::page {
         authButton->setText(QStringLiteral("Login"));
         authLayout->addWidget(authButton);
         authLayout->addStretch();
+        connect(authButton, &QPushButton::clicked, this, [this]() {
+            if (core::auth::isLoggedIn()) {
+                emit logoutRequested();
+            } else {
+                emit loginRequested();
+            }
+        });
         tabWidget->addTab(authScroll, QStringLiteral("Account"));
 
         // Main tab layout
@@ -367,7 +376,7 @@ namespace neko::ui::page {
     void SettingPage::setupCombos() {
         backgroundTypeCombo->addItems({"image", "none"});
         blurEffectCombo->addItems({"performance", "quality", "animation"});
-        launcherMethodCombo->addItems({"launchVisible", "launchHidden","launchHideRestore"});
+        launcherMethodCombo->addItems({"launchVisible", "launchHidden", "launchHideRestore"});
         downloadSourceCombo->addItems({"Official", "BMCLAPI"});
         themeCombo->addItems({"Light", "Dark"});
 
@@ -492,8 +501,8 @@ namespace neko::ui::page {
                                        ? lang::tr(lang::keys::setting::category, lang::keys::setting::notLoggedIn, "__not_logged_in__")
                                        : authStatusText;
         authStatusLabel->setText(QString::fromStdString(status));
-        authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, loggedIn ? lang::keys::setting::logout : lang::keys::setting::login,
-                                                            loggedIn ? "__logout__" : "__login__")));
+        authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, core::auth::isLoggedIn() ? lang::keys::setting::logout : lang::keys::setting::login,
+                                                            core::auth::isLoggedIn() ? "__logout__" : "__login__")));
     }
 
     void SettingPage::setupTheme(const Theme &theme) {
@@ -700,14 +709,13 @@ namespace neko::ui::page {
     }
 
     void SettingPage::setAuthState(bool loggedIn, const std::string &statusText) {
-        this->loggedIn = loggedIn;
         authStatusText = statusText;
         const std::string status = statusText.empty()
                                        ? lang::tr(lang::keys::setting::category, lang::keys::setting::notLoggedIn, "__not_logged_in__")
                                        : statusText;
         authStatusLabel->setText(QString::fromStdString(status));
-        authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, loggedIn ? lang::keys::setting::logout : lang::keys::setting::login,
-                                                            loggedIn ? "__logout__" : "__login__")));
+        authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, core::auth::isLoggedIn() ? lang::keys::setting::logout : lang::keys::setting::login,
+                                                            core::auth::isLoggedIn() ? "__logout__" : "__login__")));
     }
 
     void SettingPage::writeToConfig(ClientConfig &cfg) const {

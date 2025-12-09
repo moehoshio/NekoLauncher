@@ -209,7 +209,7 @@ jobs:
     - name: Configure CMake (Windows)
       if: startsWith(matrix.config.os, 'windows')
       run: |
-        Write-Host "=== Configuring NekoFunction (Windows) ==="
+        Write-Host "=== Configuring NekoLauncher (Windows) ==="
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         $toolchainFile = "$vcpkgRoot\scripts\buildsystems\vcpkg.cmake"
         $installedPath = "$vcpkgRoot\installed\x64-windows-static"
@@ -219,25 +219,24 @@ jobs:
         Write-Host "CMAKE_PREFIX_PATH: $installedPath;$env:Qt6_DIR"
         
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" `
-          -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON `
+          -DNEKO_LC_BUILD_TESTS=ON -DNEKO_LC_AUTO_FETCH_DEPS=ON `
           -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
           -DVCPKG_TARGET_TRIPLET=x64-windows-static `
-          -DNEKO_LC_LIBRARY_DIRS="$installedPath" `
-          -DQt6_DIR="$env:Qt6_DIR" `
-          -DNEKO_FUNCTION_STATIC_LINK=ON `
+          -DNEKO_LC_LIBRARY_DIRS="$installedPath;$env:Qt6_DIR" `
+          -DNEKO_LC_STATIC_LINK=ON `
           -S .
       shell: powershell
 
     - name: Configure CMake (Ubuntu)
       if: "startsWith(matrix.config.os, 'ubuntu')"
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-linux -DQt6_DIR=$Qt6_DIR -S .
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_LC_BUILD_TESTS=ON -DNEKO_LC_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-linux -DQt6_DIR=$Qt6_DIR -S .
       shell: bash
 
     - name: Configure CMake (macOS)
       if: "startsWith(matrix.config.os, 'macos')"
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_FUNCTION_BUILD_TESTS=ON -DNEKO_FUNCTION_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos -DQt6_DIR=$Qt6_DIR -S .
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_LC_BUILD_TESTS=ON -DNEKO_LC_AUTO_FETCH_DEPS=ON -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DNEKO_LC_LIBRARY_DIRS=$VCPKG_ROOT/installed/x64-macos -DQt6_DIR=$Qt6_DIR -S .
       shell: bash
 
     - name: Build

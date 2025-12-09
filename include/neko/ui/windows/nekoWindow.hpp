@@ -88,6 +88,8 @@ namespace neko::ui::window {
         void onBackgroundTypeChanged(const QString &type);
         void onBackgroundPathChanged(const QString &path);
         void onLanguageChanged(const QString &langCode);
+		void onLoginRequested();
+		void onLogoutRequested();
         
     };
 

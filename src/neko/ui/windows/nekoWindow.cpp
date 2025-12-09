@@ -6,6 +6,7 @@
 #include "neko/app/nekoLc.hpp"
 #include "neko/app/appinfo.hpp"
 #include "neko/bus/configBus.hpp"
+#include "neko/minecraft/authMinecraft.hpp"
 
 #include <neko/function/utilities.hpp>
 
@@ -119,6 +120,14 @@ namespace neko::ui::window {
         headBarWidget->getToolBar()->raise();
     }
 
+    void NekoWindow::hideInput() {
+        inputDialog->hideInput();
+    }
+
+    std::vector<std::string> NekoWindow::getLines() {
+        return inputDialog->getLines();
+    }
+
     void NekoWindow::showLoading(const LoadingMsg &m) {
         loadingPage->showLoading(m);
     }
@@ -151,6 +160,8 @@ namespace neko::ui::window {
         connect(settingPage, &page::SettingPage::blurRadiusChanged, this, &NekoWindow::onBlurRadiusChanged);
         connect(settingPage, &page::SettingPage::backgroundTypeChanged, this, &NekoWindow::onBackgroundTypeChanged);
         connect(settingPage, &page::SettingPage::backgroundPathChanged, this, &NekoWindow::onBackgroundPathChanged);
+        connect(settingPage, &page::SettingPage::loginRequested, this, &NekoWindow::onLoginRequested);
+        connect(settingPage, &page::SettingPage::logoutRequested, this, &NekoWindow::onLogoutRequested);
     }
 
     void NekoWindow::onThemeChanged(const QString &themeName) {
@@ -206,6 +217,66 @@ namespace neko::ui::window {
             lang::language(langCode.toStdString());
         }
         setupText();
+    }
+
+    void NekoWindow::onLoginRequested() {
+        InputMsg msg;
+        msg.title = lang::tr(lang::keys::setting::category, lang::keys::setting::login, "Login");
+        msg.message = "Enter account and password";
+        msg.lineText = {
+            lang::tr(lang::keys::input::category, lang::keys::input::placeholder, "Account"),
+            lang::tr(lang::keys::input::category, lang::keys::input::password, "Password")};
+        msg.callback = [this](bool confirmed) {
+            if (!confirmed) {
+                hideInput();
+                return;
+            }
+
+            const auto lines = getLines();
+            hideInput();
+            if (lines.size() < 2 || lines[0].empty() || lines[1].empty()) {
+                NoticeMsg notice;
+                notice.title = lang::tr(lang::keys::setting::category, lang::keys::setting::login, "Login");
+                notice.message = lang::tr(lang::keys::error::category, lang::keys::error::invalidInput, "Invalid input");
+                notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
+                showNotice(notice);
+                settingPage->setAuthState(false, {});
+                return;
+            }
+
+            const auto result = minecraft::auth::authLogin(lines);
+            if (!result.error.empty()) {
+                NoticeMsg notice;
+                notice.title = lang::tr(lang::keys::setting::category, lang::keys::setting::login, "Login");
+                notice.message = result.error;
+                notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
+                showNotice(notice);
+                settingPage->setAuthState(false, result.error);
+                return;
+            }
+
+            settingPage->setAuthState(true, result.name);
+        };
+
+        showInput(msg);
+    }
+
+    void NekoWindow::onLogoutRequested() {
+        NoticeMsg notice;
+        notice.title = lang::tr(lang::keys::setting::category, lang::keys::setting::logout, "Logout");
+        notice.message = "Logout current account?";
+        notice.buttonText = {
+            lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK"),
+            lang::tr(lang::keys::button::category, lang::keys::button::cancel, "Cancel")};
+        notice.callback = [this](neko::uint32 idx) {
+            if (idx != 0) {
+                return;
+            }
+            minecraft::auth::authLogout();
+            settingPage->setAuthState(false, {});
+        };
+
+        showNotice(notice);
     }
 
     void NekoWindow::onBackgroundTypeChanged(const QString &type) {
@@ -265,6 +336,10 @@ namespace neko::ui::window {
         setupFont(textFont, h1Font, h2Font);
         settingPage->settingFromConfig(config);
         setupText();
+
+        const bool logged = minecraft::auth::isLoggedIn();
+        const auto playerName = minecraft::auth::getPlayerName();
+        settingPage->setAuthState(logged, logged ? playerName : std::string{});
 
         if (config.style.blurRadius > 0 && config.style.blurRadius != 1) {
             blurEffect->setBlurRadius(static_cast<qreal>(config.style.blurRadius));
