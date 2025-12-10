@@ -10,6 +10,7 @@
 
 #include <neko/function/utilities.hpp>
 #include <neko/function/hash.hpp>
+#include <neko/function/archive.hpp>
 #include <neko/system/platform.hpp>
 #include <neko/network/network.hpp>
 
@@ -189,6 +190,21 @@ namespace neko::core::update {
         std::atomic<int> progress(0);
         std::atomic<bool> shouldStop(false);
 
+        auto extractArchive = [](const std::string &filePath) -> std::optional<std::string> {
+            archive::ExtractConfig cfg{
+                .inputArchivePath = filePath,
+                .destDir = system::workPath(),
+                .overwrite = true};
+            try {
+                archive::zip::extract(cfg);
+                return std::nullopt;
+            } catch (const ex::Exception &e) {
+                return std::string{"Extract failed for "} + filePath + ": " + e.what();
+            } catch (const std::exception &e) {
+                return std::string{"Extract failed for "} + filePath + ": " + e.what();
+            }
+        };
+
         // Lambda: Download task
         auto downloadTask = [&shouldStop](neko::uint64 id, const api::UpdateResponse::File &info) -> ResultData {
             if (shouldStop.load(std::memory_order_acquire))
@@ -226,7 +242,7 @@ namespace neko::core::update {
                 return {neko::types::State::Completed, info};
             }
 
-            log::error("Hash mismatch: file: {}, expected: {}, actual: {}",{}, info.fileName, info.checksum, hash);
+            log::error("Hash mismatch: file: {}, expected: {}, actual: {}", {}, info.fileName, info.checksum, hash);
             return {neko::types::State::Failed, info};
         };
 
@@ -248,16 +264,13 @@ namespace neko::core::update {
             futures.push_back(bus::thread::submit(processFile, i, data.files[i]));
         }
 
-        // Collect results with early exit
+        // Collect results with early exit; drain remaining futures to avoid stray work
         std::string failureReason;
         for (auto &future : futures) {
-            if (shouldStop.load(std::memory_order_acquire))
-                break;
-
             auto result = future.get();
             if (result.state != neko::types::State::Completed) {
                 shouldStop.store(true, std::memory_order_release);
-                failureReason = "Update failed for file: " + result.fileInfo.fileName + 
+                failureReason = "Update failed for file: " + result.fileInfo.fileName +
                                 " (state: " + std::to_string(static_cast<int>(result.state)) + ")";
                 log::error(failureReason);
                 break;
@@ -265,8 +278,27 @@ namespace neko::core::update {
         }
 
         if (!failureReason.empty()) {
+            // Ensure any still-running tasks observe stop flag before returning
+            for (auto &future : futures) {
+                if (future.valid()) {
+                    future.wait();
+                }
+            }
+
             bus::event::publish(event::UpdateFailedEvent{.reason = failureReason});
             return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = failureReason};
+        }
+
+        // Extract compressed archives into work path (zip supported)
+        for (const auto &file : data.files) {
+            if (!util::string::matchExtensionNames(file.fileName, {".zip"})) {
+                continue;
+            }
+            if (auto err = extractArchive(file.fileName)) {
+                bus::event::publish(event::UpdateFailedEvent{.reason = *err});
+                return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = *err};
+            }
+            log::info("Extracted archive during update: {} -> {}", {}, file.fileName, system::workPath());
         }
 
         log::info("All files downloaded and verified successfully");
@@ -338,20 +370,23 @@ namespace neko::core::update {
     inline UpdateState autoUpdate() noexcept {
         log::autoLog log;
 
-        // Check maintenance mode
-        auto maintenanceState = checkMaintenance();
+        // Check maintenance mode (guard exceptions to avoid terminate in noexcept)
+        MaintenanceInfo maintenanceState{};
+        try {
+            maintenanceState = checkMaintenance();
+        } catch (const std::exception &e) {
+            std::string error = std::string("Failed to check maintenance: ") + e.what();
+            log::error(error);
+            bus::event::publish(event::UpdateFailedEvent{.reason = error});
+            return {neko::types::State::Failed, error};
+        }
 
         if (maintenanceState.isMaintenance) {
             std::string infoMsg = "Maintenance mode active: " + maintenanceState.message;
             log::info(infoMsg);
-            
-            bool shouldExit = true;
-            
-            if (shouldExit) {
-                app::quit();
-            }
-            
-            return {neko::types::State::Failed, "Maintenance mode active"};
+
+            // Maintenance notice is already shown; halt update without forcing exit
+            return {neko::types::State::ActionNeeded, "Maintenance mode active"};
         }
 
         // Notify progress
@@ -382,11 +417,6 @@ namespace neko::core::update {
         }
 
         bus::event::publish(event::UpdateAvailableEvent{data});
-
-        // Ask if user wants to update
-        
-            UpdateState result{neko::types::State::Completed, "Update cancelled by user"};
-            return result;
 
         // Perform update
         auto finalResult = update(data);

@@ -25,8 +25,6 @@ namespace neko {
             std::string background;
             std::string windowSize;
             std::string launcherMethod;
-            bool useSysWindowFrame;
-            bool headBarKeepRight;
             std::string resourceVersion;
             std::string deviceID;
         } main;
@@ -111,8 +109,6 @@ namespace neko {
             main.background = cfg.GetValue("main", "background", "img/bg.png");
             main.windowSize = cfg.GetValue("main", "windowSize", "");
             main.launcherMethod = cfg.GetValue("main", "launcherMethod", "launchVisible");
-            main.useSysWindowFrame = cfg.GetBoolValue("main", "useSystemWindowFrame", true);
-            main.headBarKeepRight = cfg.GetBoolValue("main", "headBarKeepRight", true);
             main.resourceVersion = cfg.GetValue("main", "resourceVersion", "");
             main.deviceID = cfg.GetValue("main", "deviceID", "");
 
@@ -169,8 +165,6 @@ namespace neko {
             cfg.SetValue("main", "background", main.background.c_str());
             cfg.SetValue("main", "windowSize", main.windowSize.c_str());
             cfg.SetValue("main", "launcherMethod", main.launcherMethod.c_str());
-            cfg.SetBoolValue("main", "useSystemWindowFrame", main.useSysWindowFrame);
-            cfg.SetBoolValue("main", "headBarKeepRight", main.headBarKeepRight);
             cfg.SetValue("main", "resourceVersion", main.resourceVersion.c_str());
             cfg.SetValue("main", "deviceID", main.deviceID.c_str());
 

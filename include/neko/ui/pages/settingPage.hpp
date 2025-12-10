@@ -47,8 +47,6 @@ namespace neko::ui::page {
         QToolButton *backgroundBrowseBtn;
         QLineEdit *windowSizeEdit;
         QComboBox *launcherMethodCombo;
-        QCheckBox *useSysWindowFrameCheck;
-        QCheckBox *headBarKeepRightCheck;
 
         QGroupBox *styleGroup;
         QComboBox *themeCombo;
@@ -71,7 +69,6 @@ namespace neko::ui::page {
         QLineEdit *javaPathEdit;
         QToolButton *javaPathBrowseBtn;
         QComboBox *downloadSourceCombo;
-        QLineEdit *playerNameEdit;
         QLineEdit *customResolutionEdit;
         QLineEdit *joinServerAddressEdit;
         QSpinBox *joinServerPortSpin;

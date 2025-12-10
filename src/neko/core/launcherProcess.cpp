@@ -142,33 +142,29 @@ namespace neko::core {
     void launcherNewProcess(const std::string &command, const std::string &workingDir) {
         try {
 #ifdef _WIN32
-            bool usePowershell = command.length() > windowsCommandLengthLimit;
-            std::string baseCommand = usePowershell ? "powershell" : "cmd";
-            std::string commandPrefix = usePowershell ? "-Command" : "/c";
-            
+            const bool usePowershell = command.length() > windowsCommandLengthLimit;
+            const std::string baseCommand = usePowershell ? "powershell" : "cmd";
+            const std::string commandPrefix = usePowershell ? "-Command" : "/c";
+
+            // Suppress extra windows and ensure the command is executed via shell
+            const std::string payload = usePowershell ? ("& " + command) : command;
+
             bp::child proc = workingDir.empty()
                 ? bp::child(
                     bp::search_path(baseCommand),
                     commandPrefix,
-                    command,
-                    bp::windows::hide)
+                    payload,
+                    bp::windows::create_no_window)
                 : bp::child(
                     bp::search_path(baseCommand),
                     commandPrefix,
-                    command,
+                    payload,
                     bp::start_dir = workingDir,
-                    bp::windows::hide);
+                    bp::windows::create_no_window);
 #else
             bp::child proc = workingDir.empty()
-                ? bp::child(
-                    "/bin/sh",
-                    "-c",
-                    command)
-                : bp::child(
-                    "/bin/sh",
-                    "-c",
-                    command,
-                    bp::start_dir = workingDir);
+                ? bp::child("/bin/sh", "-c", command)
+                : bp::child("/bin/sh", "-c", command, bp::start_dir = workingDir);
 #endif
             proc.detach();
         } catch (const std::system_error &e) {

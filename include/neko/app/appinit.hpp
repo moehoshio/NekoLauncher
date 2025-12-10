@@ -120,15 +120,13 @@ namespace neko::app::init {
 
     inline void configInfoPrint(const ClientConfig &config) {
 
-        log::info("config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , useSysWindowFrame: {} , headBarKeepRight : {} , deviceID : {} , resourceVersion : {}",
+        log::info("config main : lang : {} , backgroundType : {} , background : {} , windowSize : {} , launcherMethod : {} , deviceID : {} , resourceVersion : {}",
                   {},
                   config.main.lang,
                   config.main.backgroundType,
                   config.main.background,
                   config.main.windowSize,
                   config.main.launcherMethod,
-                  util::logic::boolTo<neko::cstr>(config.main.useSysWindowFrame),
-                  util::logic::boolTo<neko::cstr>(config.main.headBarKeepRight),
                   config.main.deviceID,
                   config.main.resourceVersion);
 

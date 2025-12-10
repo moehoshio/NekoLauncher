@@ -5,8 +5,6 @@ background = img/bg.png
 windowSize = 1280x720
 ; launchVisible, launchExit, launchHideRestore
 launcherMethod = launchVisible
-useSystemWindowFrame = true
-headBarKeepRight = true
 resourceVersion = v1.0.0
 deviceID = 38912750-4ede-40cf-8559-f2f746ab2093
 

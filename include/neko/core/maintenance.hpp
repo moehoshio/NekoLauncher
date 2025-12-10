@@ -13,6 +13,7 @@
 #include <neko/network/network.hpp>
 
 // NekoLc project
+#include "neko/app/app.hpp"
 #include "neko/app/appinfo.hpp"
 #include "neko/app/lang.hpp"
 #include "neko/app/nekoLc.hpp"
@@ -21,6 +22,7 @@
 #include "neko/event/eventTypes.hpp"
 
 #include "neko/core/downloadPoster.hpp"
+#include "neko/core/launcherProcess.hpp"
 
 namespace neko::core {
 
@@ -81,7 +83,11 @@ namespace neko::core {
 
         try {
 
-            auto jsonData = nlohmann::json::parse(response).at("maintenanceResponse");
+            auto root = nlohmann::json::parse(response);
+            auto jsonData = root.at("maintenanceResponse");
+            if (root.contains("meta") && root.at("meta").is_object()) {
+                jsonData["meta"] = root.at("meta");
+            }
             api::MaintenanceResponse maintenanceInfo = jsonData.get<api::MaintenanceResponse>();
 
             maintenanceInfo.message = lang::trWithReplaced(
@@ -97,24 +103,83 @@ namespace neko::core {
             auto filePath = downloadPoster(maintenanceInfo.posterUrl);
 
             std::string command;
-            if constexpr (system::isWindows()) {
-                command = "start " + maintenanceInfo.link;
-            } else if constexpr (system::isLinux()) {
-                command = "xdg-open " + maintenanceInfo.link;
-            } else if constexpr (system::isMacOS()) {
-                command = "open " + maintenanceInfo.link;
+            if (!maintenanceInfo.link.empty()) {
+                if constexpr (system::isWindows()) {
+                    command = "start \"\" \"" + maintenanceInfo.link + "\""; // empty title then URL
+                } else if constexpr (system::isLinux()) {
+                    command = "xdg-open \"" + maintenanceInfo.link + "\"";
+                } else if constexpr (system::isMacOS()) {
+                    command = "open \"" + maintenanceInfo.link + "\"";
+                }
             }
 
-            // Notify listeners about maintenance state
-            bus::event::publish(event::MaintenanceEvent(neko::ui::NoticeMsg{
+            neko::ui::NoticeMsg notice{
                 .title = lang::tr(lang::keys::maintenance::category, lang::keys::maintenance::title, "Maintenance"),
                 .message = maintenanceInfo.message,
-                .posterPath = filePath.value_or(""),
-                .buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")}
-            }));
+                .posterPath = filePath.value_or("")};
+
+            const bool inProgress = maintenanceInfo.isMaintenance();
+            const bool scheduled = maintenanceInfo.isScheduled();
+
+            if (inProgress) {
+                if (!command.empty()) {
+                    notice.buttonText = {
+                        lang::tr(lang::keys::button::category, lang::keys::button::open, "Open"),
+                        lang::tr(lang::keys::button::category, lang::keys::button::quit, "Quit")};
+                    notice.callback = [command](neko::uint32 index) {
+                        if (index == 0) {
+                            try {
+                                launcherNewProcess(command);
+                            } catch (const std::exception &e) {
+                                log::error(std::string("Failed to open maintenance link: ") + e.what());
+                            }
+                        }
+                        // Always quit on progress maintenance
+                        app::quit();
+                    };
+                } else {
+                    // No link: force quit only
+                    notice.buttonText = {
+                        lang::tr(lang::keys::button::category, lang::keys::button::quit, "Quit")};
+                    notice.callback = [](neko::uint32 /*index*/) {
+                        app::quit();
+                    };
+                }
+                notice.defaultButtonIndex = static_cast<neko::uint32>(notice.buttonText.size() > 1 ? 1 : 0);
+            } else {
+                // Scheduled or other statuses: do not force quit; keep explicit Quit option
+                if (!command.empty()) {
+                    notice.buttonText = {
+                        lang::tr(lang::keys::button::category, lang::keys::button::open, "Open"),
+                        lang::tr(lang::keys::button::category, lang::keys::button::quit, "Quit")};
+                    notice.callback = [command](neko::uint32 index) {
+                        if (index == 0) {
+                            try {
+                                launcherNewProcess(command);
+                            } catch (const std::exception &e) {
+                                log::error(std::string("Failed to open maintenance link: ") + e.what());
+                            }
+                        } else if (index == 1) {
+                            app::quit();
+                        }
+                    };
+                } else {
+                    notice.buttonText = {
+                        lang::tr(lang::keys::button::category, lang::keys::button::close, "Close"),
+                        lang::tr(lang::keys::button::category, lang::keys::button::quit, "Quit")};
+                    notice.callback = [](neko::uint32 index) {
+                        if (index == 1) {
+                            app::quit();
+                        }
+                    };
+                }
+            }
+
+            // Notify listeners about maintenance state; subscribers can choose how to display
+            bus::event::publish(event::MaintenanceEvent(notice));
 
             return {
-                .isMaintenance = true,
+                .isMaintenance = inProgress || scheduled,
                 .message = maintenanceInfo.message,
                 .posterPath = filePath.value_or(""),
                 .openLinkCmd = command};

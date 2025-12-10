@@ -56,8 +56,6 @@ namespace neko::ui::page {
           backgroundBrowseBtn(new QToolButton(mainGroup)),
           windowSizeEdit(new QLineEdit(mainGroup)),
           launcherMethodCombo(new QComboBox(mainGroup)),
-          useSysWindowFrameCheck(new QCheckBox(mainGroup)),
-          headBarKeepRightCheck(new QCheckBox(mainGroup)),
           styleGroup(new QGroupBox(QStringLiteral("Style"), mainTab)),
           themeCombo(new QComboBox(styleGroup)),
           blurEffectCombo(new QComboBox(styleGroup)),
@@ -76,7 +74,6 @@ namespace neko::ui::page {
           javaPathEdit(new QLineEdit(minecraftGroup)),
           javaPathBrowseBtn(new QToolButton(minecraftGroup)),
           downloadSourceCombo(new QComboBox(minecraftGroup)),
-          playerNameEdit(new QLineEdit(minecraftGroup)),
           customResolutionEdit(new QLineEdit(minecraftGroup)),
           joinServerAddressEdit(new QLineEdit(minecraftGroup)),
           joinServerPortSpin(new QSpinBox(minecraftGroup)),
@@ -173,10 +170,6 @@ namespace neko::ui::page {
         launcherMethodLabel->setObjectName(QStringLiteral("launcherMethodLabel"));
         mainGroupLayout->addWidget(launcherMethodLabel);
         mainGroupLayout->addWidget(launcherMethodCombo);
-        useSysWindowFrameCheck->setObjectName(QStringLiteral("useSysWindowFrameCheck"));
-        headBarKeepRightCheck->setObjectName(QStringLiteral("headBarKeepRightCheck"));
-        mainGroupLayout->addWidget(useSysWindowFrameCheck);
-        mainGroupLayout->addWidget(headBarKeepRightCheck);
         mainGroupLayout->addStretch();
 
         // style group content
@@ -291,10 +284,6 @@ namespace neko::ui::page {
         downloadSourceLabel->setObjectName(QStringLiteral("downloadSourceLabel"));
         mcLayout->addWidget(downloadSourceLabel);
         mcLayout->addWidget(downloadSourceCombo);
-        auto *playerNameLabel = new QLabel(minecraftGroup);
-        playerNameLabel->setObjectName(QStringLiteral("playerNameLabel"));
-        mcLayout->addWidget(playerNameLabel);
-        mcLayout->addWidget(playerNameEdit);
         auto *customResolutionLabel = new QLabel(minecraftGroup);
         customResolutionLabel->setObjectName(QStringLiteral("customResolutionLabel"));
         mcLayout->addWidget(customResolutionLabel);
@@ -436,8 +425,6 @@ namespace neko::ui::page {
         if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("launcherMethodLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::launcherMethod, "Launcher Method"));
         }
-        useSysWindowFrameCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::useSysWindowFrame, "Use system window frame"));
-        headBarKeepRightCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::headBarKeepRight, "Head bar keep right"));
 
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("themeLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::theme, "Theme"));
@@ -471,9 +458,6 @@ namespace neko::ui::page {
         javaPathBrowseBtn->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::browseJava, "Browse for Java executable"));
         if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("downloadSourceLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::downloadSource, "Download source"));
-        }
-        if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("playerNameLabel"))) {
-            label->setText(tr(lang::keys::setting::category, lang::keys::setting::playerName, "Player name"));
         }
         if (auto *label = minecraftGroup->findChild<QLabel *>(QStringLiteral("customResolutionLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::customResolution, "Custom resolution"));
@@ -549,8 +533,7 @@ namespace neko::ui::page {
         for (auto *w : {static_cast<QWidget *>(backgroundPathEdit), static_cast<QWidget *>(windowSizeEdit),
                         static_cast<QWidget *>(themeCombo), static_cast<QWidget *>(fontFamiliesCombo), static_cast<QWidget *>(languageCombo),
                         static_cast<QWidget *>(devServerEdit), static_cast<QWidget *>(proxyEdit), static_cast<QWidget *>(customTempDirEdit),
-                        static_cast<QWidget *>(javaPathEdit), static_cast<QWidget *>(playerNameEdit),
-                        static_cast<QWidget *>(customResolutionEdit), static_cast<QWidget *>(joinServerAddressEdit)}) {
+                        static_cast<QWidget *>(javaPathEdit), static_cast<QWidget *>(customResolutionEdit), static_cast<QWidget *>(joinServerAddressEdit)}) {
             w->setStyleSheet(editStyle);
         }
         for (auto *w : {static_cast<QWidget *>(backgroundTypeCombo), static_cast<QWidget *>(blurEffectCombo),
@@ -581,7 +564,7 @@ namespace neko::ui::page {
                                        .arg(theme.colors.surface.data())
                                        .arg(theme.colors.accent.data())
                                        .arg(theme.colors.focus.data());
-        for (auto *c : {useSysWindowFrameCheck, headBarKeepRightCheck, proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
+        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
             c->setStyleSheet(checkStyle);
         }
 
@@ -627,10 +610,10 @@ namespace neko::ui::page {
         for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
             w->setFont(text);
         }
-        for (auto c : std::initializer_list<QWidget *>{useSysWindowFrameCheck, headBarKeepRightCheck, proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
+        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
             c->setFont(text);
         }
-        for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, playerNameEdit, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin, javaPathBrowseBtn, themeCombo}) {
+        for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin, javaPathBrowseBtn, themeCombo}) {
             w->setFont(text);
         }
         mainGroup->setFont(text);
@@ -657,8 +640,6 @@ namespace neko::ui::page {
         backgroundPathEdit->setText(QString::fromStdString(cfg.main.background));
         windowSizeEdit->setText(QString::fromStdString(cfg.main.windowSize));
         launcherMethodCombo->setCurrentText(QString::fromStdString(cfg.main.launcherMethod));
-        useSysWindowFrameCheck->setChecked(cfg.main.useSysWindowFrame);
-        headBarKeepRightCheck->setChecked(cfg.main.headBarKeepRight);
 
         {
             QSignalBlocker blocker(languageCombo);
@@ -690,7 +671,6 @@ namespace neko::ui::page {
 
         javaPathEdit->setText(QString::fromStdString(cfg.minecraft.javaPath));
         downloadSourceCombo->setCurrentText(QString::fromStdString(cfg.minecraft.downloadSource));
-        playerNameEdit->setText(QString::fromStdString(cfg.minecraft.playerName));
         customResolutionEdit->setText(QString::fromStdString(cfg.minecraft.customResolution));
         joinServerAddressEdit->setText(QString::fromStdString(cfg.minecraft.joinServerAddress));
         bool okPort = false;
@@ -734,8 +714,6 @@ namespace neko::ui::page {
         const QString lm = launcherMethodCombo->currentText();
         auto lmStd = lm.toStdString();
         cfg.main.launcherMethod = std::move(lmStd);
-        cfg.main.useSysWindowFrame = useSysWindowFrameCheck->isChecked();
-        cfg.main.headBarKeepRight = headBarKeepRightCheck->isChecked();
         const QString th = themeCombo->currentText();
         auto thStd = th.toStdString();
         cfg.style.theme = std::move(thStd);
@@ -778,10 +756,6 @@ namespace neko::ui::page {
         auto dsStd = ds.toStdString();
         cfg.minecraft.downloadSource = std::move(dsStd);
 
-        const QString pn = playerNameEdit->text();
-
-        auto pnStd = pn.toStdString();
-        cfg.minecraft.playerName = std::move(pnStd);
         const QString cr = customResolutionEdit->text();
         auto crStd = cr.toStdString();
         cfg.minecraft.customResolution = std::move(crStd);

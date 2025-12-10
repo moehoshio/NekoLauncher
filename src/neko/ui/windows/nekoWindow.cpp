@@ -28,15 +28,14 @@
 namespace neko::ui::window {
 
     NekoWindow::NekoWindow(const ClientConfig &config)
-        : centralWidget(new QWidget(this)),
-          blurEffect(new QGraphicsBlurEffect(this)),
-          noticeDialog(new dialog::NoticeDialog(this)),
-          inputDialog(new dialog::InputDialog(this)),
-          headBarWidget(new widget::HeadBarWidget(this, this)),
-          pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
-          homePage(new page::HomePage(this)),
-          loadingPage(new page::LoadingPage(this)),
-          settingPage(new page::SettingPage(this)) {
+                : centralWidget(new QWidget(this)),
+                    blurEffect(new QGraphicsBlurEffect(this)),
+                    noticeDialog(new dialog::NoticeDialog(this)),
+                    inputDialog(new dialog::InputDialog(this)),
+                    pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
+                    homePage(new page::HomePage(this)),
+                    loadingPage(new page::LoadingPage(this)),
+                    settingPage(new page::SettingPage(this)) {
 
         // Setup widget stacking order
         pixmapWidget->lower();
@@ -66,7 +65,7 @@ namespace neko::ui::window {
         this->setCentralWidget(centralWidget);
         this->setWindowTitle(lc::AppName.data());
         this->setWindowIcon(QIcon(lc::AppIconPath.data()));
-        this->addToolBar(headBarWidget->getToolBar());
+        // Use the native window frame; no custom head bar.
 
         switchToPage(Page::home);
         settingFromConfig(config);
@@ -93,7 +92,6 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::setupText() {
-        headBarWidget->setupText();
         homePage->setupText();
         settingPage->setupText();
         // Add other widgets/pages here when they expose setupText.
@@ -113,14 +111,10 @@ namespace neko::ui::window {
 
     void NekoWindow::showNotice(const NoticeMsg &m) {
         noticeDialog->showNotice(m);
-        headBarWidget->raise();
-        headBarWidget->getToolBar()->raise();
     }
 
     void NekoWindow::showInput(const InputMsg &m) {
         inputDialog->showInput(m);
-        headBarWidget->raise();
-        headBarWidget->getToolBar()->raise();
     }
 
     void NekoWindow::hideInput() {
@@ -319,17 +313,6 @@ namespace neko::ui::window {
         }
         applyCentralBackground(ui::getCurrentTheme());
 
-        if (config.main.useSysWindowFrame) {
-            headBarWidget->hideHeadBar();
-        } else {
-            headBarWidget->showHeadBar();
-        }
-        if (config.main.headBarKeepRight) {
-            headBarWidget->setHeadBarAlignmentRight(true);
-        } else {
-            headBarWidget->setHeadBarAlignmentRight(false);
-        }
-
         auto resolution = util::check::matchResolution(config.main.windowSize);
         if (resolution) {
             this->resize(std::stoi(resolution->width), std::stoi(resolution->height));
@@ -410,18 +393,22 @@ namespace neko::ui::window {
 
     void NekoWindow::resizeItems(int width, int height) {
         pixmapWidget->resize(width, height);
-        centralWidget->resize(width, height);
-        const int headBarHeight = headBarWidget->isVisible() ? headBarWidget->height() : 0;
-        noticeDialog->resizeItems(width, height, headBarHeight);
+        centralWidget->setGeometry(0, 0, width, height);
+        const int contentX = 0;
+        const int contentY = 0;
+        const int contentWidth = width;
+        const int contentHeight = height;
+        noticeDialog->resizeItems(width, height, 0);
         inputDialog->resizeItems(width, height);
-        headBarWidget->raise();
-        headBarWidget->getToolBar()->raise();
         if (this->currentPage == Page::home) {
-            homePage->resizeItems(width, height);
+            homePage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+            homePage->resizeItems(contentWidth, contentHeight);
         } else if (this->currentPage == Page::loading) {
-            loadingPage->resizeItems(width, height);
+            loadingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+            loadingPage->resizeItems(contentWidth, contentHeight);
         } else if (this->currentPage == Page::setting) {
-            settingPage->resizeItems(width, height);
+            settingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+            settingPage->resizeItems(contentWidth, contentHeight);
         }
     }
 
@@ -440,54 +427,6 @@ namespace neko::ui::window {
     }
 
     bool NekoWindow::event(QEvent *event) {
-        constexpr qreal border = 11;
-        switch (event->type()) {
-            case QEvent::HoverMove: {
-                auto p = dynamic_cast<QHoverEvent *>(event)->pos();
-                bool pointXGreaterWidthBorder = (p.x() > width() - border);
-                bool pointXLessWidthBorder = (p.x() < border);
-                bool pointYGreaterHeightToolBar = (p.y() > headBarWidget->height());
-                bool pointYGreaterHeightBorder = (p.y() > height() - border);
-                if (pointYGreaterHeightBorder) {
-                    if (pointXLessWidthBorder) {
-                        this->setCursor(Qt::SizeBDiagCursor);
-                    } else if (pointXGreaterWidthBorder) {
-                        this->setCursor(Qt::SizeFDiagCursor);
-                    } else {
-                        this->setCursor(Qt::SizeVerCursor);
-                    }
-                } else if (pointYGreaterHeightToolBar && (pointXGreaterWidthBorder || pointXLessWidthBorder)) {
-                    this->setCursor(Qt::SizeHorCursor);
-                } else {
-                    setCursor(Qt::ArrowCursor);
-                }
-                break;
-            }
-            case QEvent::MouseButtonPress: {
-                auto currentFocus = focusWidget();
-                if (currentFocus) {
-                    currentFocus->clearFocus();
-                }
-                auto p = dynamic_cast<QMouseEvent *>(event)->pos();
-                bool pointXGreaterWidthBorder = (p.x() > width() - border);
-                bool pointXLessWidthBorder = (p.x() < border);
-                bool pointYGreaterHeightBorder = (p.y() > height() - border);
-                Qt::Edges edges;
-                if (pointXGreaterWidthBorder)
-                    edges |= Qt::RightEdge;
-                if (pointXLessWidthBorder)
-                    edges |= Qt::LeftEdge;
-                if (pointYGreaterHeightBorder)
-                    edges |= Qt::BottomEdge;
-                if (edges != 0) {
-                    this->windowHandle()->startSystemResize(edges);
-                }
-                break;
-            }
-            default:
-                break;
-        }
-
         return QMainWindow::event(event);
     }
 } // namespace neko::ui::window
