@@ -109,22 +109,30 @@ namespace neko::core::update {
         try {
             auto jsonData = nlohmann::json::parse(result).at("updateResponse");
             api::UpdateResponse updateInfo{
-                .title = jsonData.at("title").get<std::string>(),
-                .description = jsonData.at("description").get<std::string>(),
-                .posterUrl = jsonData.at("posterUrl").get<std::string>(),
-                .publishTime = jsonData.at("publishTime").get<std::string>(),
-                .resourceVersion = jsonData.at("resourceVersion").get<std::string>()};
+                .title = jsonData.value("title", ""),
+                .description = jsonData.value("description", ""),
+                .posterUrl = jsonData.value("posterUrl", ""),
+                .publishTime = jsonData.value("publishTime", ""),
+                .resourceVersion = jsonData.value("resourceVersion", "")};
 
-            updateInfo.isMandatory = jsonData.at("isMandatory").get<bool>();
+            updateInfo.isMandatory = jsonData.value("isMandatory", false);
+
+            if (jsonData.contains("meta")) {
+                api::from_json(jsonData.at("meta"), updateInfo.meta);
+            }
 
             for (const auto &it : jsonData.at("files")) {
-                updateInfo.files.push_back({it.at("url").get<std::string>(),
-                                      it.at("fileName").get<std::string>(),
-                                      it.at("checksum").get<std::string>(),
-                                      it.at("meta").at("hashAlgorithm").get<std::string>(),
-                                      it.at("meta").at("suggestMultiThread").get<bool>(),
-                                      it.at("meta").at("isCoreFile").get<bool>(),
-                                      it.at("meta").at("isAbsoluteUrl").get<bool>()});
+                const auto metaIt = it.contains("downloadMeta") ? it.find("downloadMeta") : it.find("meta");
+                const auto &meta = (metaIt != it.end() && metaIt->is_object()) ? *metaIt : nlohmann::json::object();
+
+                updateInfo.files.push_back({
+                    it.value("url", ""),
+                    it.value("fileName", ""),
+                    it.value("checksum", ""),
+                    meta.value("hashAlgorithm", ""),
+                    meta.value("suggestMultiThread", false),
+                    meta.value("isCoreFile", false),
+                    meta.value("isAbsoluteUrl", false)});
             }
             if (!updateInfo.files.empty()) {
                 return updateInfo;

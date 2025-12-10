@@ -24,6 +24,9 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <filesystem>
+#include <fstream>
+#include <optional>
 
 namespace bp = boost::process::v1;
 
@@ -36,51 +39,95 @@ namespace neko::core {
             bp::ipstream pipeStream;
 
 #ifdef _WIN32
-            bool usePowershell = processInfo.command.length() >= windowsCommandLengthLimit;
-            std::string baseCommand = usePowershell ? "powershell" : "cmd";
-            std::string commandPrefix = usePowershell ? "-Command" : "/c";
-            
+            // Use cmd for typical commands; if too long for the Windows limit, write to a temp .cmd file to avoid PowerShell parsing issues.
+            std::optional<std::filesystem::path> tempScript;
+            std::optional<std::ofstream> childLog;
+            std::string cmdToRun = processInfo.command;
+            if (processInfo.command.length() >= windowsCommandLengthLimit) {
+                auto tmpDir = std::filesystem::temp_directory_path();
+                auto scriptPath = tmpDir / ("nekolauncher-" + std::to_string(::GetCurrentProcessId()) + "-" + std::to_string(::GetTickCount64()) + ".cmd");
+                std::ofstream ofs(scriptPath, std::ios::out | std::ios::trunc);
+                if (!ofs.is_open()) {
+                    throw ex::Runtime("Failed to create temp launch script: " + scriptPath.string());
+                }
+                ofs << "@echo off\r\n" << processInfo.command << "\r\n";
+                ofs.close();
+                tempScript = scriptPath;
+                cmdToRun = "\"" + scriptPath.string() + "\""; // protect spaces
+            }
+
+            // Mirror child output to a temp log file to capture full Java stack traces.
+            std::filesystem::path childLogPath = std::filesystem::temp_directory_path() / "nekolauncher-child.log";
+            childLog.emplace(childLogPath, std::ios::out | std::ios::trunc);
+            if (!childLog->is_open()) {
+                childLog.reset();
+            } else {
+                log::info("Child output will also be written to: {}", {} , childLogPath.string());
+            }
+
             bp::child proc = processInfo.workingDir.empty()
                 ? bp::child(
-                    bp::search_path(baseCommand),
-                    commandPrefix,
-                    processInfo.command,
+                    bp::search_path("cmd"),
+                    "/c",
+                    cmdToRun,
                     bp::windows::hide,
-                    bp::std_out > pipeStream)
+                    bp::std_out > pipeStream,
+                    bp::std_err > pipeStream)
                 : bp::child(
-                    bp::search_path(baseCommand),
-                    commandPrefix,
-                    processInfo.command,
+                    bp::search_path("cmd"),
+                    "/c",
+                    cmdToRun,
                     bp::start_dir = processInfo.workingDir,
                     bp::windows::hide,
-                    bp::std_out > pipeStream);
+                    bp::std_out > pipeStream,
+                    bp::std_err > pipeStream);
 #else
             bp::child proc = processInfo.workingDir.empty()
                 ? bp::child(
                     "/bin/sh",
                     "-c",
                     processInfo.command,
-                    bp::std_out > pipeStream)
+                    bp::std_out > pipeStream,
+                    bp::std_err > pipeStream)
                 : bp::child(
                     "/bin/sh",
                     "-c",
                     processInfo.command,
                     bp::start_dir = processInfo.workingDir,
-                    bp::std_out > pipeStream);
+                    bp::std_out > pipeStream,
+                    bp::std_err > pipeStream);
 #endif
 
             if (processInfo.onStart) {
                 processInfo.onStart();
             }
-            if (processInfo.pipeStreamCb) {
-                std::string line;
-                while (std::getline(pipeStream, line)) {
+            // Always drain the pipe to avoid missing errors; log when no callback provided.
+            std::string line;
+            while (std::getline(pipeStream, line)) {
+                if (childLog) {
+                    (*childLog) << line << std::endl;
+                }
+                if (processInfo.pipeStreamCb) {
                     processInfo.pipeStreamCb(line);
+                } else {
+                    log::info("Launcher output: {}", {} , line);
                 }
             }
 
             proc.wait();
             int code = proc.exit_code();
+            // Cleanup temp script if created
+            if (tempScript.has_value()) {
+                std::error_code ec;
+                std::filesystem::remove(*tempScript, ec);
+                if (ec) {
+                    log::warn("Failed to remove temp launch script: {} , ec: {}", {} , tempScript->string(), ec.value());
+                }
+            }
+            if (childLog && childLog->is_open()) {
+                childLog->flush();
+            }
+            log::info("Launcher exit code: {}", {} , code);
 
             if (processInfo.onExit) {
                 processInfo.onExit(code);

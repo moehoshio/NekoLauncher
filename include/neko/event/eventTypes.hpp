@@ -65,6 +65,21 @@ namespace neko::event {
     struct HideInputEvent {};
 
 
+    /*********************/
+    /** Launching Events **/
+    /*********************/
+
+    struct LaunchRequestEvent {};
+    struct LaunchStartedEvent {};
+    struct LaunchFinishedEvent {
+        int exitCode = 0;
+    };
+    struct LaunchFailedEvent {
+        std::string reason;
+        int exitCode = -1;
+    };
+
+
     /*****************/
     /** Core Events **/
     /*****************/

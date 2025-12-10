@@ -71,6 +71,7 @@ namespace neko::ui::window {
     signals:
         void showNoticeD(const NoticeMsg &m);
         void showInputD(const InputMsg &m);
+        void showLoadingD(const LoadingMsg &m);
         void hideInputD();
         std::vector<std::string> getLinesD();
         void resetNoticeStateD();

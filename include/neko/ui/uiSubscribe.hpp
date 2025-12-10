@@ -19,6 +19,12 @@ namespace neko::ui {
                     emit nekoWindow->showNoticeD(static_cast<const neko::ui::NoticeMsg &>(e));
                 }
             });
+        bus::event::subscribe<event::ShowLoadingEvent>(
+            [](const event::ShowLoadingEvent &e) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->showLoadingD(static_cast<const neko::ui::LoadingMsg &>(e));
+                }
+            });
         
         bus::event::subscribe<event::ShowInputEvent>(
             [](const event::ShowInputEvent &e) {
@@ -31,6 +37,20 @@ namespace neko::ui {
             [](const event::HideInputEvent &) {
                 if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
                     emit nekoWindow->hideInputD();
+                }
+            });
+
+        bus::event::subscribe<event::CurrentPageChangeEvent>(
+            [](const event::CurrentPageChangeEvent &e) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->switchToPageD(e.page);
+                }
+            });
+
+        bus::event::subscribe<event::LaunchStartedEvent>(
+            [](const event::LaunchStartedEvent &) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->switchToPageD(ui::Page::home);
                 }
             });
 

@@ -2,13 +2,14 @@
 #include "neko/ui/fonts.hpp"
 
 #include "neko/app/app.hpp"
+#include "neko/app/appinfo.hpp"
 #include "neko/app/lang.hpp"
 #include "neko/app/nekoLc.hpp"
-#include "neko/app/appinfo.hpp"
 #include "neko/bus/configBus.hpp"
+#include "neko/bus/eventBus.hpp"
+#include "neko/event/eventTypes.hpp"
 
 #include "neko/core/auth.hpp"
-#include "neko/core/launcher.hpp"
 
 #include <neko/function/utilities.hpp>
 
@@ -35,7 +36,7 @@ namespace neko::ui::window {
           pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
           homePage(new page::HomePage(this)),
           loadingPage(new page::LoadingPage(this)),
-          settingPage(new page::SettingPage(this))  {
+          settingPage(new page::SettingPage(this)) {
 
         // Setup widget stacking order
         pixmapWidget->lower();
@@ -131,12 +132,13 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::showLoading(const LoadingMsg &m) {
-        loadingPage->showLoading(m);
+        emit showLoadingD(m);
     }
 
     void NekoWindow::setupConnections() {
         connect(this, &NekoWindow::showNoticeD, noticeDialog, &dialog::NoticeDialog::showNotice);
         connect(this, &NekoWindow::showInputD, inputDialog, &dialog::InputDialog::showInput);
+        connect(this, &NekoWindow::showLoadingD, loadingPage, &page::LoadingPage::showLoading);
         connect(this, &NekoWindow::hideInputD, inputDialog, &dialog::InputDialog::hideInput);
         connect(this, &NekoWindow::getLinesD, inputDialog, &dialog::InputDialog::getLines);
         connect(this, &NekoWindow::resetNoticeStateD, noticeDialog, &dialog::NoticeDialog::resetState);
@@ -146,38 +148,12 @@ namespace neko::ui::window {
         connect(this, &NekoWindow::setLoadingStatusD, loadingPage, &page::LoadingPage::setLoadingStatus);
 
         connect(homePage, &page::HomePage::startButtonClicked, this, [this]() {
-            auto onStart = [this]() {
-                emit this->switchToPage(Page::home);
-            };
-            auto onExit = [this](int exitCode) {
-                if (exitCode != 0) {
-                    NoticeMsg notice;
-                    notice.title = lang::tr(lang::keys::error::category, lang::keys::error::launchFailed, "Launch Failed");
-                    notice.message = lang::tr(lang::keys::error::category, lang::keys::error::seeLog, "See log for details.");
-                    notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
-                    emit this->showNoticeD(notice);
-                }
-            };
-            if (core::auth::isLoggedIn()) {
-                showLoading({
-                    .type = ui::LoadingMsg::Type::OnlyRaw
-                });
-                loadingPage->setLoadingStatus(lang::tr(lang::keys::loading::category, lang::keys::loading::starting, "Starting..."));
-                try{
-                    core::launcher(onStart,onExit);
-                }
-                catch (const ex::Exception &e) {
-                    NoticeMsg notice;
-                    notice.title = lang::tr(lang::keys::error::category, lang::keys::error::launchFailed, "Launch Failed");
-                    notice.message = e.what();
-                    notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
-                    emit this->showNoticeD(notice);
-                    emit this->switchToPage(Page::home);
-                }
-                
-            } else {
+            if (!core::auth::isLoggedIn()) {
                 onLoginRequested();
+                return;
             }
+
+            bus::event::publish<event::LaunchRequestEvent>({});
         });
         connect(homePage, &page::HomePage::menuButtonClicked, this, [this]() {
             switchToPage(Page::setting);
@@ -355,10 +331,9 @@ namespace neko::ui::window {
         }
 
         auto resolution = util::check::matchResolution(config.main.windowSize);
-        if (resolution){
+        if (resolution) {
             this->resize(std::stoi(resolution->width), std::stoi(resolution->height));
         }
-        
 
         // Style
         QFont textFont(QString::fromStdString(config.style.fontFamilies));

@@ -31,6 +31,7 @@
 
 #include <optional>
 #include <regex>
+#include <unordered_set>
 
 namespace neko::minecraft {
 
@@ -180,7 +181,8 @@ namespace neko::minecraft {
         }
 
         std::string buildMinecraftVersionJsonPath(const std::string &targetDir, const std::string &versionName) noexcept {
-            return util::math::sum(targetDir, "/", versionName, "/", versionName, ".json") | util::unifiedPath;
+            // targetDir already points to the version directory, so only append the json file once
+            return util::math::sum(targetDir, "/", versionName, ".json") | util::unifiedPath;
         }
 
         /// @param targetDir The target directory to check. e.g. "./.minecraft"
@@ -236,12 +238,74 @@ namespace neko::minecraft {
             return jsonOss.str();
         }
 
+        nlohmann::json mergeVersionJson(const nlohmann::json &parent, const nlohmann::json &child) {
+            nlohmann::json merged = parent;
+
+            auto mergeArrayField = [](nlohmann::json &dst, const nlohmann::json &src, const std::string &key) {
+                if (!src.contains(key) || !src.at(key).is_array()) {
+                    return;
+                }
+                if (!dst.contains(key) || !dst.at(key).is_array()) {
+                    dst[key] = nlohmann::json::array();
+                }
+                for (const auto &item : src.at(key)) {
+                    dst[key].push_back(item);
+                }
+            };
+
+            mergeArrayField(merged, child, "libraries");
+
+            if (child.contains("arguments") && child.at("arguments").is_object()) {
+                if (!merged.contains("arguments") || !merged.at("arguments").is_object()) {
+                    merged["arguments"] = nlohmann::json::object();
+                }
+                mergeArrayField(merged["arguments"], child.at("arguments"), "jvm");
+                mergeArrayField(merged["arguments"], child.at("arguments"), "game");
+            }
+
+            for (const auto &key : {"mainClass", "jar", "assetIndex", "logging"}) {
+                if (child.contains(key)) {
+                    merged[key] = child.at(key);
+                }
+            }
+
+            return merged;
+        }
+
+        nlohmann::json loadVersionJsonRecursive(const std::string &versionsRoot, const std::string &versionName, std::unordered_set<std::string> &visited) {
+            if (!visited.insert(versionName).second) {
+                throw ex::Parse{"Detected cyclic version inheritance at: " + versionName};
+            }
+
+            const std::string versionDir = buildMinecraftVersionDir(versionsRoot, versionName);
+            const std::string versionJsonPath = buildMinecraftVersionJsonPath(versionDir, versionName);
+            const std::string content = getMinecraftVersionJsonContent(versionJsonPath);
+
+            nlohmann::json current;
+            try {
+                current = nlohmann::json::parse(content);
+            } catch (const nlohmann::json::parse_error &e) {
+                throw ex::Parse{"Failed to parse minecraft version json: " + std::string(e.what()) + ", file : " + versionJsonPath};
+            }
+
+            if (current.contains("inheritsFrom")) {
+                const std::string parentName = current.at("inheritsFrom").get<std::string>();
+                auto parent = loadVersionJsonRecursive(versionsRoot, parentName, visited);
+                return mergeVersionJson(parent, current);
+            }
+
+            return current;
+        }
+
         /// @param path The file path to check and unified paths
         /// @returns The absolute file path as a string.
         /// @throws ex::FileError if the path does not exist or is not a regular file.
         std::string getAbsoluteFilePath(const std::string &path) {
+            if (path.empty()) {
+                throw ex::InvalidArgument("Path is empty; please configure the Java executable path.");
+            }
             if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)) {
-                throw ex::FileError(std::string("Path is not exists or is not a file: ") + path);
+                throw ex::FileError(std::string("Path does not exist or is not a file: ") + path);
             }
             return std::filesystem::absolute(path).string() | util::unifiedPath;
         }
@@ -273,6 +337,18 @@ namespace neko::minecraft {
             }
             throw ex::Parse{"Invalid raw name : " + rawName + ", expected format: package:name:version"};
         };
+
+        std::string constructNativePath(const std::string &rawName, const std::string &classifier) {
+            std::smatch match;
+            if (std::regex_match(rawName, match, std::regex("([^:]+):([^:]+):([^:]+)"))) {
+                std::string package = match[1].str();
+                std::string name = match[2].str();
+                std::string version = match[3].str();
+                std::replace(package.begin(), package.end(), '.', '/');
+                return package + "/" + name + "/" + version + "/" + name + "-" + version + "-" + classifier + ".jar";
+            }
+            throw ex::Parse{"Invalid raw name : " + rawName + ", expected format: package:name:version"};
+        }
 
         /**
          * @brief Constructs a classpath string from a vector of paths.
@@ -598,6 +674,14 @@ namespace neko::minecraft {
         std::vector<std::string> getLibrariesPaths(const nlohmann::json &libraries, const std::string &librariesPath, const std::string &nativePath, const LauncherMinecraftConfig &cfg) {
             std::vector<std::string> librariesPaths;
 
+            if (!nativePath.empty()) {
+                std::error_code ec;
+                std::filesystem::create_directories(nativePath, ec);
+                if (ec) {
+                    log::warn("Failed to create natives directory {} : {}", {} , nativePath, ec.message());
+                }
+            }
+
             for (const auto &lib : libraries) {
                 if (!isAllowedByRules(lib, cfg))
                     continue;
@@ -653,7 +737,15 @@ namespace neko::minecraft {
 
                 // If libNativePath is not empty and the check and repair pass, then decompress it.
                 if (!libNativePath.empty() && std::filesystem::is_directory(nativePath)) {
-                    uncompress(libNativePath, nativePath);
+                    try {
+                        uncompress(libNativePath, nativePath);
+                        log::info("Extracted natives: {} -> {}", {} , libNativePath, nativePath);
+                    } catch (const std::exception &e) {
+                        if (!cfg.tolerantMode) {
+                            throw;
+                        }
+                        log::warn("Failed to extract natives {} : {}", {} , libNativePath, e.what());
+                    }
                 }
 
                 // Note: Forge may not include fields like "downloads", so it cannot be repaired; just try to add it directly
@@ -768,29 +860,20 @@ namespace neko::minecraft {
         // minecraft absolute path (e.g /path/to/.minecraft)
         const std::string minecraftDir = internal::getAbsoluteMinecraftPath(cfg.minecraftFolder);
 
+        const std::string versionsRoot = minecraftDir + "/versions";
+
         // a <version>
-        const std::string minecraftVersionName = cfg.targetVersion.empty() ? internal::getMinecraftVersionName(minecraftDir + "/versions") : cfg.targetVersion;
+        const std::string minecraftVersionName = cfg.targetVersion.empty() ? internal::getMinecraftVersionName(versionsRoot) : cfg.targetVersion;
 
         log::info("minecraft version name : " + minecraftVersionName);
 
         // /path/to/.minecraft/versions/<version>
-        const std::string minecraftVersionDir = internal::buildMinecraftVersionDir(minecraftDir + "/versions/", minecraftVersionName);
+        const std::string minecraftVersionDir = internal::buildMinecraftVersionDir(versionsRoot + "/", minecraftVersionName);
 
         internal::assertDirectoryExists(minecraftVersionDir, "minecraft version directory not exists: ");
 
-        // /path/to/.minecraft/versions/<version>/<version>.json
-        const std::string minecraftVersionJsonPath = internal::buildMinecraftVersionJsonPath(minecraftVersionDir, minecraftVersionName);
-
-        const std::string minecraftVersionContent = internal::getMinecraftVersionJsonContent(minecraftVersionJsonPath);
-
-        log::info("version file : {} ,content len : {}", {} , minecraftVersionJsonPath, minecraftVersionContent.length());
-
-        nlohmann::json minecraftVersionJsonObj;
-        try {
-            minecraftVersionJsonObj = nlohmann::json::parse(minecraftVersionContent);
-        } catch (const nlohmann::json::parse_error &e) {
-            throw ex::Parse{"Failed to parse minecraft version json: " + std::string(e.what()) + ", file : " + minecraftVersionJsonPath};
-        }
+        std::unordered_set<std::string> visitedVersions;
+        const nlohmann::json minecraftVersionJsonObj = internal::loadVersionJsonRecursive(versionsRoot, minecraftVersionName, visitedVersions);
 
         nlohmann::json
             baseArguments, // base "arguments" in version json
@@ -803,7 +886,7 @@ namespace neko::minecraft {
             gameArguments = baseArguments.at("game");
             libraries = minecraftVersionJsonObj.at("libraries");
         } catch (const nlohmann::json::out_of_range &e) {
-            throw ex::OutOfRange{std::string("Required key not found in version json: ") + minecraftVersionJsonPath + ", error: " + e.what()};
+            throw ex::OutOfRange{std::string("Required key not found in version json for version: ") + minecraftVersionName + ", error: " + e.what()};
         }
 
         // jvm
@@ -811,7 +894,7 @@ namespace neko::minecraft {
             javaPath = internal::getAbsoluteFilePath(cfg.javaPath),
             mainClass = minecraftVersionJsonObj.value("mainClass", "net.minecraft.client.main.Main"),
             // /path/to/.minecraft/versions/<version>/<version>.jar
-            clientJarPath = minecraftVersionDir + "/" + minecraftVersionJsonObj.value("jar", "") + ".jar",
+            clientJarPath = minecraftVersionDir + "/" + minecraftVersionJsonObj.value("jar", minecraftVersionName) + ".jar",
             // /path/to/.minecraft/versions/<version>/natives
             nativesPath = minecraftVersionDir + "/natives",
             // /path/to/.minecraft/libraries
@@ -834,15 +917,92 @@ namespace neko::minecraft {
         try {
             gameAssetsId = minecraftVersionJsonObj.at("assetIndex").at("id").get<std::string>();
         } catch (const nlohmann::json::out_of_range &e) {
-            throw ex::OutOfRange{std::string("AssetIndex id not found in version json: ") + minecraftVersionJsonPath};
+            throw ex::OutOfRange{std::string("AssetIndex id not found in version json for version: ") + minecraftVersionName};
         }
 
         internal::assertDirectoryExists(librariesPath, "libraries directory not exists: ");
 
-        const std::string nativePath = system::tempFolder() + "/NekoLc_natives_" + util::random::generateRandomString(8);
-
         // libraries paths, each string is a path
-        const std::vector<std::string> librariesPaths = internal::getLibrariesPaths(libraries, librariesPath, nativePath, cfg);
+        std::vector<std::string> librariesPaths = internal::getLibrariesPaths(libraries, librariesPath, nativesPath, cfg);
+
+        if (librariesPaths.empty()) {
+            throw ex::Runtime("No libraries found for the selected Minecraft version; the version manifest may be incomplete.");
+        }
+
+        log::info("Resolved libraries count: {}", {} , librariesPaths.size());
+        std::unordered_set<std::string> libSet(librariesPaths.begin(), librariesPaths.end());
+        std::size_t lwjglCount = 0;
+        for (const auto &libPath : librariesPaths) {
+            if (libPath.find("lwjgl") != std::string::npos) {
+                ++lwjglCount;
+                log::info("LWJGL lib: {}", {} , libPath);
+            }
+        }
+        if (lwjglCount == 0) {
+            log::warn("No LWJGL libraries detected; attempting to append vanilla 1.16.5 libraries as a fallback.");
+
+            try {
+                const std::string fallbackVersion = "1.16.5";
+                std::unordered_set<std::string> visitedFallback;
+                auto fallbackJson = internal::loadVersionJsonRecursive(versionsRoot, fallbackVersion, visitedFallback);
+                const auto fallbackLibs = internal::getLibrariesPaths(fallbackJson.at("libraries"), librariesPath, nativesPath, cfg);
+                for (const auto &p : fallbackLibs) {
+                    if (libSet.insert(p).second) {
+                        librariesPaths.push_back(p);
+                        if (p.find("lwjgl") != std::string::npos) {
+                            ++lwjglCount;
+                            log::info("Fallback LWJGL lib: {}", {} , p);
+                        }
+                    }
+                }
+            } catch (const std::exception &e) {
+                log::warn("Fallback load of vanilla 1.16.5 libraries failed: {}", {} , e.what());
+            }
+
+            if (lwjglCount == 0) {
+                log::warn("Still no LWJGL after fallback; appending hardcoded LWJGL 3.2.2 jars if present.");
+                const std::vector<std::string> rawLwjglNames = {
+                    "org.lwjgl:lwjgl:3.2.2",
+                    "org.lwjgl:lwjgl-jemalloc:3.2.2",
+                    "org.lwjgl:lwjgl-openal:3.2.2",
+                    "org.lwjgl:lwjgl-opengl:3.2.2",
+                    "org.lwjgl:lwjgl-glfw:3.2.2",
+                    "org.lwjgl:lwjgl-stb:3.2.2",
+                    "org.lwjgl:lwjgl-tinyfd:3.2.2"};
+
+                for (const auto &raw : rawLwjglNames) {
+                    std::string path;
+                    try {
+                        path = librariesPath + "/" + internal::constructPath(raw);
+                    } catch (const std::exception &e) {
+                        log::warn("Failed to build LWJGL path for {} : {}", {} , raw, e.what());
+                        continue;
+                    }
+                    if (!std::filesystem::exists(path)) {
+                        log::warn("LWJGL jar missing: {}", {} , path);
+                        continue;
+                    }
+                    if (libSet.insert(path).second) {
+                        librariesPaths.push_back(path);
+                        ++lwjglCount;
+                        log::info("Hardcoded LWJGL lib: {}", {} , path);
+                    }
+
+                    // Also extract native classifier if present
+                    try {
+                        const std::string nativeJar = librariesPath + "/" + internal::constructNativePath(raw, "natives-windows");
+                        if (std::filesystem::exists(nativeJar) && std::filesystem::is_directory(nativesPath)) {
+                            internal::uncompress(nativeJar, nativesPath);
+                            log::info("Extracted hardcoded LWJGL natives: {} -> {}", {} , nativeJar, nativesPath);
+                        } else {
+                            log::debug("LWJGL native jar missing: {}", {} , nativeJar);
+                        }
+                    } catch (const std::exception &e) {
+                        log::warn("Failed to extract LWJGL native for {} : {}", {} , raw, e.what());
+                    }
+                }
+            }
+        }
 
         // All class path string, e.g  /path/to/.minecraft/libraries/<package>/<name>/<version>/<name>-<version>.jar; ... ; /path/to/.minecraft/version/<version>/<version>.jar
         const std::string classPath = internal::constructClassPath(librariesPaths, system::getOsName()) + ((system::getOsName() == std::string_view("windows")) ? ";" : ":") + clientJarPath;
@@ -952,6 +1112,25 @@ namespace neko::minecraft {
             authlibInjectorVector = internal::getAuthlibVector(minecraftDir, cfg);
 
         const std::string command = joinArgs({javaPath}) + joinArgs(jvmOptimizeArguments) + joinArgs(jvmArgumentsVector) + joinArgs(authlibInjectorVector) + joinArgs({mainClass}) + joinArgs(gameArgumentsVector);
+
+        // Dump the launch command to a temp file for debugging (mask access token) so users can run it manually if needed.
+        try {
+            auto tempCmdPath = std::filesystem::temp_directory_path() / "nekolauncher-last-command.txt";
+            std::string maskedCommand = command;
+            if (!gameAccessToken.empty()) {
+                auto pos = maskedCommand.find(gameAccessToken);
+                if (pos != std::string::npos) {
+                    maskedCommand.replace(pos, gameAccessToken.size(), "***********");
+                }
+            }
+            std::ofstream ofs(tempCmdPath, std::ios::out | std::ios::trunc);
+            if (ofs.is_open()) {
+                ofs << maskedCommand << std::endl;
+                log::info("Launch command saved to: {}", {} , tempCmdPath.string());
+            }
+        } catch (const std::exception &e) {
+            log::warn("Failed to write debug command file: {}", {} , e.what());
+        }
 
         // Mask the game token before logging to avoid security issues.
         internal::applyPlaceholders(gameArgumentsVector, {{gameAccessToken, "***********"}});
