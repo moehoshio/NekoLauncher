@@ -968,7 +968,7 @@ namespace neko::minecraft {
     /// @throws ex::OutOfRange if the minecraft version json does not contain required keys
     /// @throws ex::NetworkError if the download fails or the file hash does not match
     /// @brief Launches Minecraft with the specified configuration.
-    inline void launcherMinecraft(neko::ClientConfig cfg) {
+    inline void launcherMinecraft(neko::ClientConfig cfg, std::function<void()> onStart = nullptr, std::function<void(int)> onExit = nullptr) {
 
         auto resolution = util::check::matchResolution(cfg.minecraft.customResolution);
         LauncherMinecraftConfig launcherCfg{
@@ -997,7 +997,9 @@ namespace neko::minecraft {
         auto command = neko::minecraft::getLauncherMinecraftCommand(launcherCfg);
         core::ProcessInfo pi{
             .command = command,
-            .workingDir = internal::getAbsoluteMinecraftPath(cfg.minecraft.minecraftFolder)
+            .workingDir = internal::getAbsoluteMinecraftPath(cfg.minecraft.minecraftFolder),
+            .onStart = onStart,
+            .onExit = onExit
         };
         core::launcherProcess(pi);
     }

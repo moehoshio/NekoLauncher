@@ -230,6 +230,16 @@ namespace neko::lang {
                 close = "close";
         } // namespace setting
 
+        namespace loading {
+            constexpr neko::cstr
+                category = "loading",
+                starting = "starting...",
+                preparing = "preparing...",
+                downloading = "downloading...",
+                extracting = "extracting...",
+                finalizing = "finalizing...";
+        } // namespace loading
+
 
         namespace input {
             constexpr neko::cstr
@@ -296,7 +306,9 @@ namespace neko::lang {
                 invalidInput = "invalidInput",
                 networkError = "networkError",
                 parseError = "parseError",
-                updateFailed = "updateFailed";
+                updateFailed = "updateFailed",
+                launchFailed = "launchFailed",
+                seeLog = "seeLog";
         } // namespace error
 
         

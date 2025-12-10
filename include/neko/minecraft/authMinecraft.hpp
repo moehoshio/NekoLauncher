@@ -268,10 +268,10 @@ namespace neko::minecraft::auth {
             auto name = resData["selectedProfile"].value("name", "");
 
             bus::config::updateClientConfig([accessToken, uuid, name, inData](ClientConfig &clientConfig) {
-                clientConfig.minecraft.accessToken = accessToken.c_str();
-                clientConfig.minecraft.uuid = uuid.c_str();
-                clientConfig.minecraft.playerName = name.c_str();
-                clientConfig.minecraft.account = inData[0].c_str();
+                clientConfig.minecraft.accessToken = accessToken;
+                clientConfig.minecraft.uuid = uuid;
+                clientConfig.minecraft.playerName = name;
+                clientConfig.minecraft.account = inData[0];
             });
             bus::config::save(app::getConfigFileName());
 

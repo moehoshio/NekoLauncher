@@ -19,6 +19,7 @@ namespace neko::ui::page {
         setupText();
 
         connect(menuButton, &QPushButton::clicked, this, &HomePage::menuButtonClicked);
+        connect(startButton, &QPushButton::clicked, this, &HomePage::startButtonClicked);
     }
     void HomePage::setupTheme(const Theme &theme) {
         QString startButtonStyle =

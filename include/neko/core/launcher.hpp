@@ -18,7 +18,7 @@
 namespace neko::core {
 
     // Called when the user clicks.
-    inline void launcher() {
+    inline void launcher(std::function<void()> onStart = nullptr, std::function<void(int)> onExit = nullptr) {
         log::autoLog log;
 
         if constexpr (std::string_view("custom") == lc::LauncherMode) {
@@ -32,7 +32,7 @@ namespace neko::core {
                     minecraft::auth::authMinecraftAuthlibAndPrefetchedCheck();    
                 }
                 minecraft::auth::authMinecraftTokenRefresh(authMode);
-                minecraft::launcherMinecraft(bus::config::getClientConfig());
+                minecraft::launcherMinecraft(bus::config::getClientConfig(),onStart,onExit);
             } catch (const ex::Exception &e) {
                 log::error("Exception: " + std::string(e.what()));
                 throw;

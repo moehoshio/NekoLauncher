@@ -6,7 +6,9 @@
 #include "neko/app/nekoLc.hpp"
 #include "neko/app/appinfo.hpp"
 #include "neko/bus/configBus.hpp"
-#include "neko/minecraft/authMinecraft.hpp"
+
+#include "neko/core/auth.hpp"
+#include "neko/core/launcher.hpp"
 
 #include <neko/function/utilities.hpp>
 
@@ -143,6 +145,40 @@ namespace neko::ui::window {
         connect(this, &NekoWindow::setLoadingValueD, loadingPage, &page::LoadingPage::setLoadingValue);
         connect(this, &NekoWindow::setLoadingStatusD, loadingPage, &page::LoadingPage::setLoadingStatus);
 
+        connect(homePage, &page::HomePage::startButtonClicked, this, [this]() {
+            auto onStart = [this]() {
+                emit this->switchToPage(Page::home);
+            };
+            auto onExit = [this](int exitCode) {
+                if (exitCode != 0) {
+                    NoticeMsg notice;
+                    notice.title = lang::tr(lang::keys::error::category, lang::keys::error::launchFailed, "Launch Failed");
+                    notice.message = lang::tr(lang::keys::error::category, lang::keys::error::seeLog, "See log for details.");
+                    notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
+                    emit this->showNoticeD(notice);
+                }
+            };
+            if (core::auth::isLoggedIn()) {
+                showLoading({
+                    .type = ui::LoadingMsg::Type::OnlyRaw
+                });
+                loadingPage->setLoadingStatus(lang::tr(lang::keys::loading::category, lang::keys::loading::starting, "Starting..."));
+                try{
+                    core::launcher(onStart,onExit);
+                }
+                catch (const ex::Exception &e) {
+                    NoticeMsg notice;
+                    notice.title = lang::tr(lang::keys::error::category, lang::keys::error::launchFailed, "Launch Failed");
+                    notice.message = e.what();
+                    notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
+                    emit this->showNoticeD(notice);
+                    emit this->switchToPage(Page::home);
+                }
+                
+            } else {
+                onLoginRequested();
+            }
+        });
         connect(homePage, &page::HomePage::menuButtonClicked, this, [this]() {
             switchToPage(Page::setting);
         });
@@ -244,7 +280,7 @@ namespace neko::ui::window {
                 return;
             }
 
-            const auto result = minecraft::auth::authLogin(lines);
+            const auto result = core::auth::authLogin(lines);
             if (!result.error.empty()) {
                 NoticeMsg notice;
                 notice.title = lang::tr(lang::keys::setting::category, lang::keys::setting::login, "Login");

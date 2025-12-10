@@ -90,15 +90,20 @@ namespace neko::ui::dialog {
         if (!m.callback)
             return;
 
+        // Guard against double emission (Qt can emit both clicked/accepted or repeated signals)
         connect(
             dialogButton, &QDialogButtonBox::accepted, [did, m] {
-                m.callback(true);
+                if (*did)
+                    return;
                 *did = true;
+                m.callback(true);
             });
         connect(
             dialogButton, &QDialogButtonBox::rejected, [did, m] {
-                m.callback(false);
+                if (*did)
+                    return;
                 *did = true;
+                m.callback(false);
             });
 
     }

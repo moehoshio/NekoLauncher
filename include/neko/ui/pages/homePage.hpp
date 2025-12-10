@@ -26,6 +26,7 @@ namespace neko::ui::page {
 
     signals:
         void menuButtonClicked();
+        void startButtonClicked();
 
     };
 } // namespace neko::ui::page
