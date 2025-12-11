@@ -317,6 +317,9 @@ target_link_libraries(NekoLc PRIVATE
     Boost::process
 )
 
+# Tools
+add_subdirectory(tools/update)
+
 # Os-specific settings
 if(WIN32)
     
