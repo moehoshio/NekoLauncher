@@ -55,13 +55,13 @@
 
 namespace neko::core::update {
 
-    struct UpdateState {
-        neko::types::State state = neko::types::State::Completed;
-        std::string result;
-        std::string errorMessage;
-    };
-
-    inline UpdateState checkUpdate() noexcept {
+    /**
+     * @brief Check for updates from the update server.
+     * @return Optional JSON payload containing update info when available. nullopt if no update is available.
+     * @throws ex::NetworkError if the network request fails.
+     * @throws ex::Exception for unexpected responses.
+     */
+    inline std::optional<std::string> checkUpdate() {
         log::autoLog log;
         network::Network net;
 
@@ -86,23 +86,31 @@ namespace neko::core::update {
             log::error(errMsg);
             std::string dbgMsg = "result : " + result.content + " , detailedErrorMessage : " + result.detailedErrorMessage;
             log::debug(dbgMsg);
-            return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = "Failed to check update : " + result.errorMessage};
+            throw ex::NetworkError("Failed to check update : " + result.errorMessage);
         }
 
         if (result.statusCode == 204)
-            return UpdateState{};
+            return std::nullopt;
         if (result.hasContent() && result.statusCode == 200) {
             auto resultContent = result.content;
             std::string infoMsg = "Check update success, has update , result : " + resultContent;
             log::info(infoMsg);
-            return UpdateState{.state = neko::types::State::Completed, .result = resultContent, .errorMessage = ""};
+            return resultContent;
         }
 
-        return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = "Unknown error"};
+        throw ex::Exception("Unexpected response while checking updates: status = " + std::to_string(result.statusCode));
     }
 
-    // If any error occurs, return an empty object
-    inline api::UpdateResponse parseUpdate(const std::string &result) noexcept {
+
+    /**
+     * @brief Parse the update response from JSON string.
+     * @param result The JSON string containing the update response.
+     * @throws ex::Parse if JSON parsing fails.
+     * @throws ex::OutOfRange if expected keys are missing in the JSON.
+     * @throws ex::Exception for other exceptions during parsing.
+     * @return The parsed UpdateResponse object.
+     */
+    inline api::UpdateResponse parseUpdate(const std::string &result) {
         log::autoLog log;
 
         std::string dbgMsg = "result : " + result;
@@ -110,30 +118,30 @@ namespace neko::core::update {
         try {
             auto jsonData = nlohmann::json::parse(result).at("updateResponse");
             api::UpdateResponse updateInfo{
-                .title = jsonData.value("title", ""),
-                .description = jsonData.value("description", ""),
-                .posterUrl = jsonData.value("posterUrl", ""),
-                .publishTime = jsonData.value("publishTime", ""),
-                .resourceVersion = jsonData.value("resourceVersion", "")};
+                .title = jsonData["title"].get<std::string>(),
+                .description = jsonData["description"].get<std::string>(),
+                .posterUrl = jsonData["posterUrl"].get<std::string>(),
+                .publishTime = jsonData["publishTime"].get<std::string>(),
+                .resourceVersion = jsonData["resourceVersion"].get<std::string>()};
 
-            updateInfo.isMandatory = jsonData.value("isMandatory", false);
+            updateInfo.isMandatory = jsonData["isMandatory"].get<bool>();
 
             if (jsonData.contains("meta")) {
                 api::from_json(jsonData.at("meta"), updateInfo.meta);
             }
 
             for (const auto &it : jsonData.at("files")) {
-                const auto metaIt = it.contains("downloadMeta") ? it.find("downloadMeta") : it.find("meta");
+                const auto metaIt = it.find("downloadMeta");
                 const auto &meta = (metaIt != it.end() && metaIt->is_object()) ? *metaIt : nlohmann::json::object();
 
                 updateInfo.files.push_back({
-                    it.value("url", ""),
-                    it.value("fileName", ""),
-                    it.value("checksum", ""),
-                    meta.value("hashAlgorithm", ""),
-                    meta.value("suggestMultiThread", false),
-                    meta.value("isCoreFile", false),
-                    meta.value("isAbsoluteUrl", false)});
+                    it["url"].get<std::string>(),
+                    it["fileName"].get<std::string>(),
+                    it["checksum"].get<std::string>(),
+                    meta["hashAlgorithm"].get<std::string>(),
+                    meta["suggestMultiThread"].get<bool>(),
+                    meta["isCoreFile"].get<bool>(),
+                    meta["isAbsoluteUrl"].get<bool>()});
             }
             if (!updateInfo.files.empty()) {
                 return updateInfo;
@@ -142,12 +150,15 @@ namespace neko::core::update {
         } catch (nlohmann::json::parse_error &e) {
             std::string errMsg = "Failed to parse json: " + std::string(e.what());
             log::error(errMsg);
+            throw ex::Parse(errMsg);
         } catch (nlohmann::json::out_of_range &e) {
             std::string errMsg = "Json key not found: " + std::string(e.what());
             log::error(errMsg);
+            throw ex::OutOfRange(errMsg);
         } catch (std::exception &e) {
             std::string errMsg = "Exception occurred: " + std::string(e.what());
             log::error(errMsg);
+            throw ex::Exception(errMsg);
         }
         return {};
     }
@@ -155,12 +166,16 @@ namespace neko::core::update {
     /**
      * @brief Perform the update process with the given update data.
      * @param data The update response data.
+     * @throws ex::NetworkError if any network operation fails.
+     * @throws ex::FileError if file operations fail.
+     * @throws ex::InvalidArgument if the update data is invalid.
+     * @throws ex::Exception for other errors during the update process.
      */
-    UpdateState update(api::UpdateResponse data) noexcept {
+    void update(api::UpdateResponse data) {
         if (data.empty()) {
             std::string reason = "Update data is empty";
             bus::event::publish(event::UpdateFailedEvent{.reason = reason});
-            return {State::Failed, reason};
+            throw ex::InvalidArgument(reason);
         }
 
         auto notifyProgress = [&](const std::string &msg) {
@@ -184,6 +199,7 @@ namespace neko::core::update {
         struct ResultData {
             neko::State state;
             api::UpdateResponse::File fileInfo;
+            std::string failureReason;
         };
 
         std::vector<std::future<ResultData>> futures;
@@ -208,7 +224,7 @@ namespace neko::core::update {
         // Lambda: Download task
         auto downloadTask = [&shouldStop](neko::uint64 id, const api::UpdateResponse::File &info) -> ResultData {
             if (shouldStop.load(std::memory_order_acquire))
-                return {neko::types::State::Failed, info};
+                return {neko::types::State::Failed, info, "Update aborted"};
 
             network::Network net;
             network::RequestConfig reqConfig{
@@ -219,13 +235,17 @@ namespace neko::core::update {
 
             if (info.suggestMultiThread) {
                 if (!net.multiThreadedDownload(network::MultiDownloadConfig(reqConfig)))
-                    return {neko::types::State::RetryRequired, info};
+                    return {neko::types::State::RetryRequired, info, "Multi-threaded download failed"};
             } else {
                 auto result = net.executeWithRetry({reqConfig});
-                if (!result.isSuccess())
-                    return {neko::types::State::RetryRequired, info};
+                if (!result.isSuccess()) {
+                    std::string err = "Download failed for file: " + info.fileName +
+                                      ", status code: " + std::to_string(result.statusCode) +
+                                      ", error: " + result.errorMessage;
+                    return {neko::types::State::RetryRequired, info, err};
+                }
             }
-            return {neko::types::State::Completed, info};
+            return {neko::types::State::Completed, info, ""};
         };
 
         // Lambda: Hash verification
@@ -239,17 +259,20 @@ namespace neko::core::update {
                 int currentProgress = ++progress;
                 bus::event::publish(event::LoadingValueChangedEvent{.progressValue = static_cast<neko::uint32>(currentProgress)});
 
-                return {neko::types::State::Completed, info};
+                return {neko::types::State::Completed, info, ""};
             }
 
-            log::error("Hash mismatch: file: {}, expected: {}, actual: {}", {}, info.fileName, info.checksum, hash);
-            return {neko::types::State::Failed, info};
+            std::string err = "Hash mismatch for file: " + info.fileName +
+                              ", expected: " + info.checksum +
+                              ", actual: " + hash;
+            log::error(err);
+            return {neko::types::State::Failed, info, err};
         };
 
         // Lambda: Combined task
         auto processFile = [&](neko::uint64 i, const api::UpdateResponse::File &info) -> ResultData {
             if (shouldStop.load(std::memory_order_acquire))
-                return {neko::types::State::Failed, info};
+                return {neko::types::State::Failed, info, "Update aborted"};
 
             auto downloadResult = downloadTask(i, info);
             if (downloadResult.state != neko::types::State::Completed)
@@ -265,20 +288,23 @@ namespace neko::core::update {
         }
 
         // Collect results with early exit; drain remaining futures to avoid stray work
+        neko::types::State failureState = neko::types::State::Completed;
         std::string failureReason;
         for (auto &future : futures) {
             auto result = future.get();
             if (result.state != neko::types::State::Completed) {
                 shouldStop.store(true, std::memory_order_release);
-                failureReason = "Update failed for file: " + result.fileInfo.fileName +
-                                " (state: " + std::to_string(static_cast<int>(result.state)) + ")";
+                failureState = result.state;
+                failureReason = !result.failureReason.empty()
+                                   ? result.failureReason
+                                   : "Update failed for file: " + result.fileInfo.fileName +
+                                         " (state: " + std::to_string(static_cast<int>(result.state)) + ")";
                 log::error(failureReason);
                 break;
             }
         }
 
-        if (!failureReason.empty()) {
-            // Ensure any still-running tasks observe stop flag before returning
+        if (failureState != neko::types::State::Completed) {
             for (auto &future : futures) {
                 if (future.valid()) {
                     future.wait();
@@ -286,7 +312,10 @@ namespace neko::core::update {
             }
 
             bus::event::publish(event::UpdateFailedEvent{.reason = failureReason});
-            return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = failureReason};
+            if (failureState == neko::types::State::RetryRequired) {
+                throw ex::NetworkError(failureReason);
+            }
+            throw ex::Exception(failureReason);
         }
 
         // Extract compressed archives into work path (zip supported)
@@ -296,9 +325,9 @@ namespace neko::core::update {
             }
             if (auto err = extractArchive(file.fileName)) {
                 bus::event::publish(event::UpdateFailedEvent{.reason = *err});
-                return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = *err};
+                throw ex::FileError(*err);
             }
-            log::info("Extracted archive during update: {} -> {}", {}, file.fileName, system::workPath());
+            log::info("Extracted archive during update: " + file.fileName + " -> " + system::workPath());
         }
 
         log::info("All files downloaded and verified successfully");
@@ -327,7 +356,9 @@ namespace neko::core::update {
 
                 std::filesystem::path updateSourcePath = system::workPath() + "/update";
                 if (!std::filesystem::exists(updateSourcePath)) {
-                    return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = "Update executable not found: " + updateSourcePath.string()};
+                    std::string err = "Update executable not found: " + updateSourcePath.string();
+                    bus::event::publish(event::UpdateFailedEvent{.reason = err});
+                    throw ex::FileError(err);
                 }
 
                 std::filesystem::create_directories(updateExecPath);
@@ -348,80 +379,72 @@ namespace neko::core::update {
                 app::quit();
                 launcherNewProcess(cmd);
 
-                return UpdateState{.state = neko::types::State::Completed, .result = "", .errorMessage = ""};
+                return;
 
             } catch (const std::filesystem::filesystem_error &e) {
                 std::string error = std::string("Filesystem error: ") + e.what();
                 log::error(error);
-                return UpdateState{.state = neko::types::State::Failed, .result = "", .errorMessage = error};
+                bus::event::publish(event::UpdateFailedEvent{.reason = error});
+                throw ex::FileError(error);
             }
         }
 
         bus::event::publish(event::UpdateCompleteEvent{});
-
-        return UpdateState{.state = neko::types::State::Completed, .result = "", .errorMessage = ""};
     }
 
     /**
      * @brief Perform the auto-update process.
-     * @return UpdateState indicating the result of the update process.
      * @note This function publishes events to the event bus and may quit the application if maintenance mode is active.
      */
-    inline UpdateState autoUpdate() noexcept {
+    inline void autoUpdate() {
         log::autoLog log;
 
-        // Check maintenance mode (guard exceptions to avoid terminate in noexcept)
-        MaintenanceInfo maintenanceState{};
         try {
-            maintenanceState = checkMaintenance();
+            MaintenanceInfo maintenanceState = checkMaintenance();
+
+            if (maintenanceState.isMaintenance) {
+                std::string infoMsg = "Maintenance mode active: " + maintenanceState.message;
+                log::info(infoMsg);
+
+                // Maintenance notice is already shown; halt update without forcing exit
+                return;
+            }
+
+            // Notify progress
+            std::string process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates);
+            bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = process});
+
+            // Check for updates
+            auto updatePayload = checkUpdate();
+            if (!updatePayload.has_value()) {
+                return;
+            }
+
+            // Parse update data
+            process = lang::tr(lang::keys::update::category, lang::keys::update::parsingUpdateData);
+
+            auto data = parseUpdate(*updatePayload);
+            if (data.empty()) {
+                std::string error = "Failed to parse update data";
+                bus::event::publish(event::UpdateFailedEvent{.reason = error});
+                throw ex::Exception(error);
+            }
+
+            bus::event::publish(event::UpdateAvailableEvent{data});
+
+            // Perform update
+            update(std::move(data));
+        } catch (const ex::Exception &e) {
+            std::string reason = std::string("Auto-update failed: ") + e.what();
+            log::error(reason);
+            bus::event::publish(event::UpdateFailedEvent{.reason = reason});
+            throw;
         } catch (const std::exception &e) {
-            std::string error = std::string("Failed to check maintenance: ") + e.what();
-            log::error(error);
-            bus::event::publish(event::UpdateFailedEvent{.reason = error});
-            return {neko::types::State::Failed, error};
+            std::string reason = std::string("Unexpected error during auto-update: ") + e.what();
+            log::error(reason);
+            bus::event::publish(event::UpdateFailedEvent{.reason = reason});
+            throw ex::Exception(reason);
         }
-
-        if (maintenanceState.isMaintenance) {
-            std::string infoMsg = "Maintenance mode active: " + maintenanceState.message;
-            log::info(infoMsg);
-
-            // Maintenance notice is already shown; halt update without forcing exit
-            return {neko::types::State::ActionNeeded, "Maintenance mode active"};
-        }
-
-        // Notify progress
-        std::string process = lang::tr(lang::keys::update::category, lang::keys::update::checkingForUpdates);
-
-        bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = process});
-
-        // Check for updates
-        auto updateState = checkUpdate();
-        if (!updateState.errorMessage.empty()) {
-            bus::event::publish(event::UpdateFailedEvent{.reason = updateState.errorMessage});
-            return UpdateState{.state = neko::types::State::RetryRequired, .result = "", .errorMessage = updateState.errorMessage};
-        }
-
-        if (updateState.result.empty()) {
-            UpdateState result{.state = neko::types::State::Completed, .result = "", .errorMessage = "No update available"};
-            return result;
-        }
-
-        // Parse update data
-        process = lang::tr(lang::keys::update::category, lang::keys::update::parsingUpdateData);
-
-        auto data = parseUpdate(updateState.result);
-        if (data.empty()) {
-            std::string error = "Failed to parse update data";
-            bus::event::publish(event::UpdateFailedEvent{.reason = error});
-            return {neko::types::State::ActionNeeded, error};
-        }
-
-        bus::event::publish(event::UpdateAvailableEvent{data});
-
-        // Perform update
-        auto finalResult = update(data);
-        
-        return finalResult;
     }
 
 } // namespace neko::core::update

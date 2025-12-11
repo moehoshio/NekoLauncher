@@ -25,23 +25,6 @@ protected:
     fs::path testDir;
 };
 
-// Test UpdateState structure
-TEST_F(UpdateTest, UpdateStateCreation) {
-    neko::core::update::UpdateState state1;
-    EXPECT_EQ(state1.state, neko::types::State::Completed);
-    EXPECT_TRUE(state1.result.empty());
-    EXPECT_TRUE(state1.errorMessage.empty());
-
-    neko::core::update::UpdateState state2{
-        .state = neko::types::State::Failed,
-        .result = "test result",
-        .errorMessage = "test error"
-    };
-    EXPECT_EQ(state2.state, neko::types::State::Failed);
-    EXPECT_EQ(state2.result, "test result");
-    EXPECT_EQ(state2.errorMessage, "test error");
-}
-
 // Test parseUpdate with valid JSON
 TEST_F(UpdateTest, ParseUpdateValidJson) {
     std::string validJson = R"({
@@ -90,8 +73,7 @@ TEST_F(UpdateTest, ParseUpdateValidJson) {
 // Test parseUpdate with invalid JSON
 TEST_F(UpdateTest, ParseUpdateInvalidJson) {
     std::string invalidJson = "not a json";
-    auto result = neko::core::update::parseUpdate(invalidJson);
-    EXPECT_TRUE(result.empty());
+    EXPECT_THROW({ neko::core::update::parseUpdate(invalidJson); }, neko::ex::Parse);
 }
 
 // Test parseUpdate with missing fields
@@ -102,9 +84,8 @@ TEST_F(UpdateTest, ParseUpdateMissingFields) {
             "description": "Test Description"
         }
     })";
-    
-    auto result = neko::core::update::parseUpdate(incompleteJson);
-    EXPECT_TRUE(result.empty());
+
+    EXPECT_THROW({ neko::core::update::parseUpdate(incompleteJson); }, neko::ex::OutOfRange);
 }
 
 // Test parseUpdate with empty files array
@@ -128,11 +109,8 @@ TEST_F(UpdateTest, ParseUpdateEmptyFiles) {
 // Test update with empty data
 TEST_F(UpdateTest, UpdateWithEmptyData) {
     neko::api::UpdateResponse emptyData;
-    
-    auto result = neko::core::update::update(emptyData);
-    
-    EXPECT_EQ(result.state, neko::types::State::Failed);
-    EXPECT_EQ(result.result, "Update data is empty");
+
+    EXPECT_THROW({ neko::core::update::update(emptyData); }, neko::ex::InvalidArgument);
 }
 
 // Test UpdateResponse::File structure
