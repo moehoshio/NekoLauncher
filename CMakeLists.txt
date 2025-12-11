@@ -321,9 +321,9 @@ target_link_libraries(NekoLc PRIVATE
 if(WIN32)
     
     # Set not to use the console window
-    # if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    #     set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
-    # endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set_target_properties(NekoLc PROPERTIES WIN32_EXECUTABLE TRUE)
+    endif()
     target_sources(NekoLc PRIVATE resource/windows/icon.rc)
 
 elseif(APPLE)

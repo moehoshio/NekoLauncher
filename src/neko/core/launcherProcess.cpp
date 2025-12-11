@@ -37,11 +37,12 @@ namespace neko::core {
         try {
 
             bp::ipstream pipeStream;
+            // Platform-specific helpers declared here so cleanup logic below can compile everywhere.
+            std::optional<std::filesystem::path> tempScript;
+            std::optional<std::ofstream> childLog;
 
 #ifdef _WIN32
             // Use cmd for typical commands; if too long for the Windows limit, write to a temp .cmd file to avoid PowerShell parsing issues.
-            std::optional<std::filesystem::path> tempScript;
-            std::optional<std::ofstream> childLog;
             std::string cmdToRun = processInfo.command;
             if (processInfo.command.length() >= windowsCommandLengthLimit) {
                 auto tmpDir = std::filesystem::temp_directory_path();
