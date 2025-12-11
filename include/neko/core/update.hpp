@@ -145,10 +145,10 @@ namespace neko::core::update {
                     .url = it.at("url").get<std::string>(),
                     .fileName = it.at("fileName").get<std::string>(),
                     .checksum = it.at("checksum").get<std::string>(),
-                    .hashAlgorithm = meta.value("hashAlgorithm", std::string{}),
-                    .suggestMultiThread = meta.value("suggestMultiThread", false),
+                    .hashAlgorithm = meta.value("hashAlgorithm", "sha256"),
+                    .suggestMultiThread = meta.value("suggestMultiThread", true),
                     .isCoreFile = meta.value("isCoreFile", false),
-                    .isAbsoluteUrl = meta.value("isAbsoluteUrl", false)};
+                    .isAbsoluteUrl = meta.value("isAbsoluteUrl", true)};
 
                 updateInfo.files.push_back(std::move(file));
             }
