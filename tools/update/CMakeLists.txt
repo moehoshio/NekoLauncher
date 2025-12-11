@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 
 option(NEKO_UPDATE_STATIC_LINK "Build NekoLc update tool with static linkage" ON)
 
+# macOS does not support fully static linking; disable static mode there
+if(APPLE)
+    set(NEKO_UPDATE_STATIC_LINK OFF CACHE BOOL "Build NekoLc update tool with static linkage" FORCE)
+endif()
+
 if(NEKO_UPDATE_STATIC_LINK)
     set(NEKO_FUNCTION_STATIC_LINK ON CACHE BOOL "Static link NekoFunction for updater" FORCE)
 endif()
@@ -20,6 +25,6 @@ set_target_properties(NekoLcUpdateTool PROPERTIES
 
 if (WIN32)
     set_property(TARGET NekoLcUpdateTool PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-else()
+elseif(NOT APPLE AND NEKO_UPDATE_STATIC_LINK)
     target_link_options(NekoLcUpdateTool PRIVATE -static)
 endif()
