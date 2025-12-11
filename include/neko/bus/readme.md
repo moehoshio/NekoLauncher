@@ -1,10 +1,22 @@
 # Bus Modules
 
-Neko Bus is the bus module in NekoLauncher that manages global resources such as thread pools, event buses, and configuration managers.
+Lightweight access layer for shared services: event bus, config bus, and thread pool.
 
-It provides singleton-style global access interfaces, allowing modules to easily share resources without passing instances.
+## Surface
 
-## Testing
+- `eventBus.hpp` — publish/subscribe helpers for UI/core events
+- `configBus.hpp` — thread-safe config get/update/save
+- `threadBus.hpp` — shared thread pool submit/wrap
 
-Neko Bus does not undergo unit testing, as it is merely a wrapper for resource management and does not contain complex logic that requires testing.
-Testing for each resource should be performed within their respective modules, such as the thread pool or event system.
+## Usage
+
+```cpp
+bus::event::publish(neko::event::UpdateAvailableEvent{data});
+auto cfg = bus::config::getClientConfig();
+bus::thread::submit([]{ /* work */ });
+```
+
+## Notes
+
+- Thin wrappers; complex logic lives in the underlying modules (event, config, thread pool).
+- No standalone tests; covered by consumers.

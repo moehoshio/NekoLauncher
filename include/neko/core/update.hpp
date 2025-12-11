@@ -23,6 +23,7 @@
 
 #include "neko/app/app.hpp"
 #include "neko/app/appinfo.hpp"
+#include "neko/core/remoteConfig.hpp"
 #include "neko/core/downloadPoster.hpp"
 #include "neko/core/launcherProcess.hpp"
 #include "neko/core/maintenance.hpp"
@@ -61,7 +62,7 @@ namespace neko::core::update {
      * @throws ex::NetworkError if the network request fails.
      * @throws ex::Exception for unexpected responses.
      */
-    inline std::optional<std::string> checkUpdate() {
+    inline std::optional<std::string> checkUpdate(api::LauncherConfigResponse config = getRemoteLauncherConfig()) {
         log::autoLog log;
         network::Network net;
 
@@ -75,8 +76,8 @@ namespace neko::core::update {
 
         network::RetryConfig retryConfig{
             .config = reqConfig,
-            .maxRetries = 5,
-            .retryDelay = std::chrono::milliseconds(150),
+            .maxRetries = config.maxRetryCount,
+            .retryDelay = std::chrono::seconds(config.retryIntervalSec),
             .successCodes = {200, 204}};
 
         auto result = net.executeWithRetry(retryConfig);

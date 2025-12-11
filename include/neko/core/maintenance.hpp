@@ -21,6 +21,7 @@
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
+#include "neko/core/remoteConfig.hpp"
 #include "neko/core/downloadPoster.hpp"
 #include "neko/core/launcherProcess.hpp"
 
@@ -41,7 +42,7 @@ namespace neko::core {
      * @throws ex::OutOfRange if a required key is missing in the response
      * @note This function publishes events to update the UI about the maintenance check process.
      */
-    inline MaintenanceInfo checkMaintenance() {
+    inline MaintenanceInfo checkMaintenance(api::LauncherConfigResponse config = getRemoteLauncherConfig()) {
         log::autoLog log;
         network::Network net;
 
@@ -60,8 +61,8 @@ namespace neko::core {
             .postData = maintenanceRequest.dump()};
         network::RetryConfig retryConfig{
             .config = reqConfig,
-            .maxRetries = 5,
-            .retryDelay = std::chrono::milliseconds(150),
+            .maxRetries = config.maxRetryCount,
+            .retryDelay = std::chrono::seconds(config.retryIntervalSec),
             .successCodes = {200, 204}};
         auto result = net.executeWithRetry(retryConfig);
 
