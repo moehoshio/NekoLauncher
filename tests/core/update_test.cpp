@@ -40,7 +40,7 @@ TEST_F(UpdateTest, ParseUpdateValidJson) {
                     "url": "https://example.com/file1.zip",
                     "fileName": "file1.zip",
                     "checksum": "abc123",
-                    "meta": {
+                    "downloadMeta": {
                         "hashAlgorithm": "sha256",
                         "suggestMultiThread": true,
                         "isCoreFile": false,
@@ -160,7 +160,7 @@ TEST_F(UpdateTest, ParseUpdateMultipleFiles) {
                     "url": "file1.zip",
                     "fileName": "file1.zip",
                     "checksum": "hash1",
-                    "meta": {
+                    "downloadMeta": {
                         "hashAlgorithm": "sha256",
                         "suggestMultiThread": false,
                         "isCoreFile": true,
@@ -171,7 +171,7 @@ TEST_F(UpdateTest, ParseUpdateMultipleFiles) {
                     "url": "https://cdn.example.com/file2.zip",
                     "fileName": "file2.zip",
                     "checksum": "hash2",
-                    "meta": {
+                    "downloadMeta": {
                         "hashAlgorithm": "md5",
                         "suggestMultiThread": true,
                         "isCoreFile": false,
