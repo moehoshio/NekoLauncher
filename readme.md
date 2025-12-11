@@ -1,43 +1,61 @@
 # Neko Launcher
 
-Note: We are currently refactoring the project and it is temporarily unavailable. This will take some time, so please stay tuned!
+Note: We are refactoring the project and parts may be temporarily unavailable. Thanks for your patience.
 
 [正體中文](readme_zh_hant.md) | [简体中文](readme_zh_hans.md) | [English](readme.md)  
-Neko Launcher (NekoLc) is a modern, cross-platform, multi-language supported auto-updating launcher solution.  
-It can launch any target you want, and the current template can successfully launch Minecraft for Java.  
-It includes automatic content updates and self-updates (both your content and Neko Core itself), as well as automatic installation of your content.  
-If you're still searching for an auto-update solution, or if you're troubled by automating updates (users don't know how to operate, lack of automated update management solutions...), then try it.  
-The project is still in development, and any constructive ideas are welcome.  
-Preview :  
+
+Neko Launcher (NekoLc) is a modern, cross-platform, multi-language launcher with built-in auto-update. It can launch arbitrary targets; the current template ships with Minecraft: Java Edition support. It can update both your content and Neko Core, install assets automatically, and present a customizable UI.
+
+Preview:  
 ![img](resource/img/readme1.png)  
-Gif:  
-![img2](resource/img/readme2.gif)  
+![img2](resource/img/readme2.png)  
 
-## Become Contributors
+## Features
 
-Currently, the following aspects are still incomplete:
+- Auto-update pipeline for both the launcher and your distributed content
+- Cross-platform Qt UI with theme, font, and language customization
+- Template for launching Minecraft: Java Edition; extensible to other targets
+- Built-in dialogs for notices, inputs, and progress/loading states
 
-- **UI**: Transition animations, theme settings/style customization, and better art design.
+## Requirements
 
-- **Others**: more template examples, and Considering drag-and-drop mechanism for visual customization of the interface, maybe even adding music playback functionality?
+- CMake 3.20+ and a C++20 compiler (MSVC/Clang/GCC)
+- Qt 6 (Widgets + Gui + Core); Qt 5.15+ may work but is untested
+- Git (for submodules) and internet access for dependency fetch during configure
 
-Of course, I would be very grateful for any help you can provide or any ideas to make the project more robust. If you are interested, feel free to submit issues.
+## Quick Start (desktop)
 
-## Supported Platforms
+```powershell
+# Clone
+git clone https://github.com/moehoshio/NekoLauncher.git
+cd NekoLauncher
 
-I use Qt6 to build the GUI, However, it shouldn't use any special APIs.  
-You should be able to use Qt5 to build:  
-Ubuntu 18.04  
-macOS 10.13  
-Windows 7  
+# Configure (Visual Studio generator shown; adjust -A as needed)
+cmake -B build -S .
 
-Our main program also uses cross-platform methods, making it supported on most platforms.  
-In other words, you can also forgo the GUI; its core should still run properly.
+# Build (Debug|Release)
+cmake --build build --config Release
+
+# Run
+./build/Release/NekoLc.exe
+```
+
+For other toolchains, replace the generator/commands accordingly. Set `NEKO_LC_LIBRARY_PATH` if Qt is not auto-detected.
+
+## Configuration
+
+- `config.ini.example` shows available options; copy it to `config.ini` and adjust paths, background, and update endpoints.
+- Language files live in `lang/`; images live in `resource/`.
+
+## Contributing
+
+- UI: transition animations, richer theming/style presets, stronger visual design
+- Templates: additional launch targets beyond Minecraft
+- QoL: drag-and-drop layout customization, optional music playback, more tests
+
+Feel free to open issues or PRs. See the developer notes in `doc/dev.md`.
 
 ## Documentation
 
-For more detailed information, please refer to:
-[dev.md](doc/dev.md)
-
-After completing these steps, you'll need to deploy your server components:
-[Server](https://github.com/moehoshio/NekoLcServer)  
+- Developer guide: [doc/dev.md](doc/dev.md)
+- Server side: [NekoLcServer](https://github.com/moehoshio/NekoLcServer)

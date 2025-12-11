@@ -71,6 +71,12 @@ namespace neko::ui::window {
         settingFromConfig(config);
         setupConnections();
         resizeItems(this->width(), this->height());
+        showLoading({
+            .type = ui::LoadingMsg::Type::OnlyRaw,
+            .process = lang::tr(lang::keys::loading::category, lang::keys::loading::starting, "Starting...")
+        });
+
+        bus::event::publishAfter(5000, event::CurrentPageChangeEvent{Page::home});
     }
     NekoWindow::~NekoWindow() = default;
 
@@ -126,6 +132,7 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::showLoading(const LoadingMsg &m) {
+        switchToPage(Page::loading);
         emit showLoadingD(m);
     }
 
@@ -351,23 +358,10 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::switchToPage(Page page) {
-        if (currentPage == page) {
-            return;
-        }
-
-        switch (currentPage) {
-            case Page::home:
-                homePage->hide();
-                break;
-            case Page::loading:
-                loadingPage->hide();
-                break;
-            case Page::setting:
-                settingPage->hide();
-                break;
-            default:
-                break;
-        }
+        // Always hide all pages first to avoid overlapping views when switching.
+        homePage->hide();
+        loadingPage->hide();
+        settingPage->hide();
 
         currentPage = page;
 
@@ -400,16 +394,14 @@ namespace neko::ui::window {
         const int contentHeight = height;
         noticeDialog->resizeItems(width, height, 0);
         inputDialog->resizeItems(width, height);
-        if (this->currentPage == Page::home) {
-            homePage->setGeometry(contentX, contentY, contentWidth, contentHeight);
-            homePage->resizeItems(contentWidth, contentHeight);
-        } else if (this->currentPage == Page::loading) {
-            loadingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
-            loadingPage->resizeItems(contentWidth, contentHeight);
-        } else if (this->currentPage == Page::setting) {
-            settingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
-            settingPage->resizeItems(contentWidth, contentHeight);
-        }
+        homePage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+        homePage->resizeItems(contentWidth, contentHeight);
+
+        loadingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+        loadingPage->resizeItems(contentWidth, contentHeight);
+
+        settingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+        settingPage->resizeItems(contentWidth, contentHeight);
     }
 
     void NekoWindow::resizeEvent(QResizeEvent *event) {
