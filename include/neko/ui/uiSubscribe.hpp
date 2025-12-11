@@ -54,6 +54,15 @@ namespace neko::ui {
                 }
             });
 
+        bus::event::subscribe<event::LaunchFailedEvent>(
+            [](const event::LaunchFailedEvent &e) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    nekoWindow->showNotice({.title = lang::tr(lang::keys::launcher::category,lang::keys::launcher::launchFailedTitle),
+                                            .message = lang::tr(lang::keys::launcher::category ,lang::keys::launcher::launchFailedMessage) + e.reason,
+                                            .buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok)}});
+                }
+            });
+
         bus::event::subscribe<event::LoadingValueChangedEvent>(
             [](const event::LoadingValueChangedEvent &e) {
                 if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {

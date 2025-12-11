@@ -501,7 +501,8 @@ namespace neko::api {
         security.refreshTokenExpirationDays = j.value("refreshTokenExpirationDays", 0);
         security.loginUrl = j.value("loginUrl", "");
         security.logoutUrl = j.value("logoutUrl", "");
-        security.refreshTokenUrl = j.value("refreshTokenUrl", "");
+        // Accept both refreshTokenUrl and refreshUrl for compatibility
+        security.refreshTokenUrl = j.value("refreshTokenUrl", j.value("refreshUrl", ""));
     }
 
     // LauncherConfigResponse
@@ -515,12 +516,26 @@ namespace neko::api {
             {"meta", config.meta}};
     }
     inline void from_json(const nlohmann::json &j, LauncherConfigResponse &config) {
-        config.host = j.value("host", std::vector<std::string>{});
-        config.retryIntervalSec = j.value("retryIntervalSec", 0);
-        config.maxRetryCount = j.value("maxRetryCount", 0);
-        from_json(j.at("webSocket"), config.webSocket);
-        from_json(j.at("security"), config.security);
-        from_json(j.at("meta"), config.meta);
+        // Allow wrapped payload: {"launcherConfigResponse": {...}, "meta": {...}}
+        const nlohmann::json &payload = j.contains("launcherConfigResponse") ? j.at("launcherConfigResponse") : j;
+
+        config.host = payload.value("host", std::vector<std::string>{});
+        config.retryIntervalSec = payload.value("retryIntervalSec", 0);
+        config.maxRetryCount = payload.value("maxRetryCount", 0);
+
+        const auto &wsJson = payload.contains("webSocket") ? payload.at("webSocket") : nlohmann::json::object();
+        from_json(wsJson, config.webSocket);
+
+        const auto &securityJson = payload.contains("security") ? payload.at("security") : nlohmann::json::object();
+        from_json(securityJson, config.security);
+
+        if (payload.contains("meta")) {
+            from_json(payload.at("meta"), config.meta);
+        } else if (j.contains("meta")) {
+            from_json(j.at("meta"), config.meta);
+        } else {
+            config.meta = {};
+        }
     }
 
     // MaintenanceResponse

@@ -141,6 +141,7 @@ int main(int argc, char **argv) {
 
     std::cout << "All files processed successfully into: " << targetDir.string() << "\n";
 
+    fs::current_path(targetDir);
     // Relaunch main program after update.
     startMainProgram(targetDir);
 

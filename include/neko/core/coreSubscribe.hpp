@@ -3,11 +3,19 @@
 #include <neko/log/nlog.hpp>
 
 #include "neko/bus/eventBus.hpp"
+#include "neko/bus/threadBus.hpp"
 #include "neko/event/eventTypes.hpp"
+#include "neko/core/launcher.hpp"
 
 namespace neko::core {
 
     inline void subscribeToCoreEvents() {
+
+        (void)bus::event::subscribe<event::RestartRequestEvent>([](const event::RestartRequestEvent &evt) {
+            log::info("RestartRequestEvent received: Reason: {}, Command: {}", {}, evt.reason, evt.command);
+            launcherNewProcess(evt.command);
+            app::quit();
+        });
 
         (void)bus::event::subscribe<event::MaintenanceEvent>([](const event::MaintenanceEvent &evt) {
             log::warn("MaintenanceEvent received: Title: {}, Message: {}", {}, evt.title, evt.message);
@@ -31,6 +39,19 @@ namespace neko::core {
         });
         (void)bus::event::subscribe<event::UpdateFailedEvent>([](const event::UpdateFailedEvent &evt) {
             log::error("UpdateFailedEvent received: {}", {}, evt.reason);
+        });
+
+        (void)bus::event::subscribe<event::LaunchRequestEvent>([](const event::LaunchRequestEvent &evt) {
+            // Run launch flow on thread pool to keep UI responsive
+            bus::thread::submit([evt] {
+                try {
+                    bus::event::publish(event::LaunchStartedEvent{});
+                    core::launcher(evt.onStart, evt.onExit);
+                } catch (const std::exception &e) {
+                    bus::event::publish(event::LaunchFailedEvent{.reason = e.what(), .exitCode = -1});
+                    log::error("Launch failed: {}", {}, e.what());
+                }
+            });
         });
     }
 } // namespace neko::core

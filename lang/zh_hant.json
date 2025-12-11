@@ -24,6 +24,10 @@
         "downloadingUpdate": "正在下載更新...",
         "applyingUpdate": "正在套用更新..."
     },
+    "launcher": {
+        "launchFailedTitle": "啟動失敗",
+        "launchFailedMessage": "啟動過程中發生錯誤："
+    },
     "button": {
         "open": "打開",
         "close": "關閉",

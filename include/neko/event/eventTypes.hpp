@@ -13,6 +13,9 @@
 #include "neko/ui/page.hpp"
 #include "neko/ui/uiMsg.hpp"
 
+#include <string>
+#include <functional>
+
 namespace neko::event {
 
     /*****************/
@@ -69,7 +72,10 @@ namespace neko::event {
     /** Launching Events **/
     /*********************/
 
-    struct LaunchRequestEvent {};
+    struct LaunchRequestEvent {
+        std::function<void(void)> onStart;
+        std::function<void(int)> onExit;
+    };
     struct LaunchStartedEvent {};
     struct LaunchFinishedEvent {
         int exitCode = 0;
@@ -77,6 +83,11 @@ namespace neko::event {
     struct LaunchFailedEvent {
         std::string reason;
         int exitCode = -1;
+    };
+
+    struct RestartRequestEvent {
+        std::string reason;
+        std::string command;
     };
 
 

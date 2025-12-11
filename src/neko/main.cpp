@@ -42,6 +42,9 @@ int main(int argc, char *argv[]) {
         
         bus::thread::submit([](){
             core::update::autoUpdate();
+            bus::event::publish(event::CurrentPageChangeEvent{
+                .page = ui::Page::home
+            });
         });
 
         // Start Qt event loop

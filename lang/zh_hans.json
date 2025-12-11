@@ -23,6 +23,10 @@
         "downloadingUpdate": "正在下载更新...",
         "applyingUpdate": "正在应用更新..."
     },
+    "launcher": {
+        "launchFailedTitle": "启动失败",
+        "launchFailedMessage": "启动过程中发生错误："
+    },
     "button": {
         "open": "打开",
         "close": "关闭",

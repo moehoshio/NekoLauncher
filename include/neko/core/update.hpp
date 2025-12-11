@@ -376,12 +376,8 @@ namespace neko::core::update {
                 log::info(infoMsg);
 
                 bus::event::publish(event::UpdateCompleteEvent{});
-
-                app::quit();
-                launcherNewProcess(cmd);
-
+                bus::event::publish(event::RestartRequestEvent{.reason = "Update applied", .command = cmd});
                 return;
-
             } catch (const std::filesystem::filesystem_error &e) {
                 std::string error = std::string("Filesystem error: ") + e.what();
                 log::error(error);

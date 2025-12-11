@@ -241,6 +241,14 @@ namespace neko::lang {
         } // namespace loading
 
 
+        namespace launcher {
+            constexpr neko::cstr
+                category = "launcher",
+                launchFailedTitle = "launchFailedTitle",
+                launchFailedMessage = "launchFailedMessage";
+        } // namespace launcher
+
+
         namespace input {
             constexpr neko::cstr
                 category = "input",

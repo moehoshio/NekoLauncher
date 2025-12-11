@@ -69,6 +69,8 @@ namespace neko::core {
                 log::debug(std::string("Detailed error: ") + result.detailedErrorMessage);
                 throw ex::NetworkError("Failed to get remote launcher config: " + result.errorMessage);
             }
+            
+            log::debug("Remote launcher config response: {}", {}, result.content);
 
             try {
                 // Parse the response content as JSON

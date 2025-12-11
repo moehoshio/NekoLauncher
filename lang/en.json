@@ -23,6 +23,10 @@
         "downloadingUpdate": "Downloading update...",
         "applyingUpdate": "Applying update..."
     },
+    "launcher": {
+        "launchFailedTitle": "Launch Failed",
+        "launchFailedMessage": "An error occurred during launch: "
+    },
     "button": {
         "open": "Open",
         "close": "Close",
