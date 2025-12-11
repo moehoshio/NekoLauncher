@@ -83,20 +83,21 @@ namespace neko::core {
                     bp::std_out > pipeStream,
                     bp::std_err > pipeStream);
 #else
+            // POSIX: routing stderr to null avoids dup2 failures when binding both streams to one ipstream in some environments.
             bp::child proc = processInfo.workingDir.empty()
                 ? bp::child(
                     "/bin/sh",
                     "-c",
                     processInfo.command,
                     bp::std_out > pipeStream,
-                    bp::std_err > pipeStream)
+                    bp::std_err > bp::null)
                 : bp::child(
                     "/bin/sh",
                     "-c",
                     processInfo.command,
                     bp::start_dir = processInfo.workingDir,
                     bp::std_out > pipeStream,
-                    bp::std_err > pipeStream);
+                    bp::std_err > bp::null);
 #endif
 
             if (processInfo.onStart) {
