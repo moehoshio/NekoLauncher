@@ -84,7 +84,11 @@ namespace neko::ui::page {
           devDebugCheck(new QCheckBox(devGroup)),
           devServerCheck(new QCheckBox(devGroup)),
           devServerEdit(new QLineEdit(devGroup)),
-          devTlsCheck(new QCheckBox(devGroup)) {
+          devTlsCheck(new QCheckBox(devGroup)),
+          devPreviewLabel(new QLabel(devGroup)),
+          devShowNoticeBtn(new QPushButton(devGroup)),
+          devShowInputBtn(new QPushButton(devGroup)),
+          devShowLoadingBtn(new QPushButton(devGroup)) {
         this->setAttribute(Qt::WA_TranslucentBackground);
         buildUi();
         setupCombos();
@@ -325,11 +329,29 @@ namespace neko::ui::page {
         devServerEdit->setVisible(false);
         devLayout->addWidget(devServerEdit);
         devLayout->addWidget(devTlsCheck);
+        devPreviewLabel->setObjectName(QStringLiteral("devPreviewLabel"));
+        devLayout->addWidget(devPreviewLabel);
+        auto *devPreviewRow = new QHBoxLayout();
+        devPreviewRow->setContentsMargins(0, 0, 0, 0);
+        devPreviewRow->setSpacing(8);
+        devPreviewRow->addWidget(devShowNoticeBtn);
+        devPreviewRow->addWidget(devShowInputBtn);
+        devPreviewRow->addWidget(devShowLoadingBtn);
+        devLayout->addLayout(devPreviewRow);
         devLayout->addStretch();
 
         connect(devServerCheck, &QCheckBox::toggled, this, [this](bool checked) {
             devServerEdit->setVisible(!checked);
             emit devServerModeChanged(checked);
+        });
+        connect(devShowNoticeBtn, &QPushButton::clicked, this, [this]() {
+            emit showNoticePreviewRequested();
+        });
+        connect(devShowInputBtn, &QPushButton::clicked, this, [this]() {
+            emit showInputPreviewRequested();
+        });
+        connect(devShowLoadingBtn, &QPushButton::clicked, this, [this]() {
+            emit showLoadingPreviewRequested();
         });
 
         // Live update signals
@@ -477,6 +499,10 @@ namespace neko::ui::page {
         }
         devServerCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::useDefaultServer, "Use default server"));
         devServerEdit->setPlaceholderText(tr(lang::keys::setting::category, lang::keys::setting::devServerPlaceholder, "https://example.com"));
+        devPreviewLabel->setText(QStringLiteral("UI Preview"));
+        devShowNoticeBtn->setText(QStringLiteral("Show Notice"));
+        devShowInputBtn->setText(QStringLiteral("Show Input"));
+        devShowLoadingBtn->setText(QStringLiteral("Show Loading"));
 
         customTempDirBrowseBtn->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::selectTempDir, "Select temp folder"));
         closeTabButton->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::close, "Close"));
@@ -585,7 +611,9 @@ namespace neko::ui::page {
                                      .arg(theme.colors.primary.data())
                                      .arg(theme.colors.text.data())
                                      .arg(theme.colors.hover.data());
-        authButton->setStyleSheet(btnStyle);
+        for (auto *btn : {authButton, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
+            btn->setStyleSheet(btnStyle);
+        }
     }
 
     void SettingPage::applyGroupStyle(const Theme &theme) {
@@ -604,7 +632,7 @@ namespace neko::ui::page {
         Q_UNUSED(h1Font);
         Q_UNUSED(h2Font);
 
-        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, devServerEdit, languageCombo, backgroundBrowseBtn}) {
+        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, devServerEdit, languageCombo, backgroundBrowseBtn, devPreviewLabel, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
             w->setFont(text);
         }
         for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {

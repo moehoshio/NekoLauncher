@@ -13,6 +13,7 @@
 
 #include <neko/function/utilities.hpp>
 
+#include <QtCore/QTimer>
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDragMoveEvent>
 #include <QtGui/QDropEvent>
@@ -67,7 +68,7 @@ namespace neko::ui::window {
         this->setWindowIcon(QIcon(lc::AppIconPath.data()));
         // Use the native window frame; no custom head bar.
 
-        switchToPage(Page::home);
+        switchToPage(Page::loading);
         settingFromConfig(config);
         setupConnections();
         resizeItems(this->width(), this->height());
@@ -75,8 +76,6 @@ namespace neko::ui::window {
             .type = ui::LoadingMsg::Type::OnlyRaw,
             .process = lang::tr(lang::keys::loading::category, lang::keys::loading::starting, "Starting...")
         });
-
-        bus::event::publishAfter(5000, event::CurrentPageChangeEvent{Page::home});
     }
     NekoWindow::~NekoWindow() = default;
 
@@ -175,6 +174,67 @@ namespace neko::ui::window {
         connect(settingPage, &page::SettingPage::backgroundPathChanged, this, &NekoWindow::onBackgroundPathChanged);
         connect(settingPage, &page::SettingPage::loginRequested, this, &NekoWindow::onLoginRequested);
         connect(settingPage, &page::SettingPage::logoutRequested, this, &NekoWindow::onLogoutRequested);
+        connect(settingPage, &page::SettingPage::showNoticePreviewRequested, this, [this]() {
+            NoticeMsg notice;
+            notice.title = "Notice Preview";
+            notice.message = "This is a preview of the notice dialog.";
+            notice.buttonText = {"OK", "Cancel"};
+            notice.callback = [](neko::uint32) {};
+            showNotice(notice);
+        });
+        connect(settingPage, &page::SettingPage::showInputPreviewRequested, this, [this]() {
+            InputMsg msg;
+            msg.title = "Input Preview";
+            msg.message = "Enter demo values to preview the input dialog.";
+            msg.lineText = {"First field", "Second field"};
+            msg.callback = [this](bool confirmed) {
+                const auto lines = getLines();
+                hideInput();
+                NoticeMsg resultNotice;
+                resultNotice.title = "Input Preview";
+                if (!confirmed) {
+                    resultNotice.message = "Preview cancelled.";
+                } else {
+                    std::string summary;
+                    for (const auto &line : lines) {
+                        if (!summary.empty()) {
+                            summary += " | ";
+                        }
+                        summary += line;
+                    }
+                    resultNotice.message = summary.empty() ? "No input provided." : ("Captured: " + summary);
+                }
+                resultNotice.buttonText = {"OK"};
+                showNotice(resultNotice);
+            };
+            showInput(msg);
+        });
+        connect(settingPage, &page::SettingPage::showLoadingPreviewRequested, this, [this]() {
+            LoadingMsg msg;
+            msg.type = LoadingMsg::Type::All;
+            msg.h1 = "Loading Preview";
+            msg.h2 = "Demo task";
+            msg.message = "Showing loading page for preview.";
+            msg.process = "Preparing UI preview...";
+            msg.progressMax = 100;
+            msg.progressVal = 0;
+            showLoading(msg);
+
+            auto *timer = new QTimer(this);
+            timer->setInterval(250);
+            int progress = 0;
+            connect(timer, &QTimer::timeout, this, [this, timer, progress]() mutable {
+                progress = std::min(progress + 10, 100);
+                emit setLoadingValueD(progress);
+                emit setLoadingStatusD(progress >= 100 ? std::string("Done.") : std::string("Working..."));
+                if (progress >= 100) {
+                    timer->stop();
+                    timer->deleteLater();
+                    switchToPage(Page::setting);
+                }
+            });
+            timer->start();
+        });
     }
 
     void NekoWindow::onThemeChanged(const QString &themeName) {

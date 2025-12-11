@@ -82,6 +82,10 @@ namespace neko::ui::page {
         QCheckBox *devServerCheck;
         QLineEdit *devServerEdit;
         QCheckBox *devTlsCheck;
+        QLabel *devPreviewLabel;
+        QPushButton *devShowNoticeBtn;
+        QPushButton *devShowInputBtn;
+        QPushButton *devShowLoadingBtn;
 
         std::string authStatusText;
 
@@ -118,6 +122,9 @@ namespace neko::ui::page {
         void blurRadiusChanged(int radius);
         void backgroundTypeChanged(const QString &type);
         void backgroundPathChanged(const QString &path);
+        void showNoticePreviewRequested();
+        void showInputPreviewRequested();
+        void showLoadingPreviewRequested();
     };
 
 } // namespace neko::ui::page

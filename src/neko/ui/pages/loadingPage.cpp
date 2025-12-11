@@ -3,6 +3,7 @@
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include <QtGui/QMovie>
+#include <QtWidgets/QGraphicsDropShadowEffect>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
 #include <QtWidgets/QVBoxLayout>
@@ -44,6 +45,16 @@ namespace neko::ui::page {
         loadingLabel->setMovie(loadingMv);
         loadingLabel->setScaledContents(true);
         poster->lower();
+
+        auto *cardShadow = new QGraphicsDropShadowEffect(this);
+        cardShadow->setBlurRadius(32);
+        cardShadow->setOffset(0, 8);
+        textLayoutWidget->setGraphicsEffect(cardShadow);
+
+        auto *progressShadow = new QGraphicsDropShadowEffect(this);
+        progressShadow->setBlurRadius(24);
+        progressShadow->setOffset(0, 6);
+        progressBar->setGraphicsEffect(progressShadow);
 
         for (auto it : std::vector<QLabel *>{h1Title, h2Title, text}) {
             it->setAlignment(Qt::AlignCenter);
@@ -130,7 +141,8 @@ namespace neko::ui::page {
             QString(
                 "background-color: %1;"
                 "border: 1px solid %2;"
-                "border-radius: 18px;")
+                "border-radius: 18px;"
+                "padding: 16px 18px;")
                 .arg(theme.colors.surface.data())
                 .arg(theme.colors.accent.data());
         textLayoutWidget->setStyleSheet(textLayoutStyle);
@@ -140,12 +152,12 @@ namespace neko::ui::page {
                 "background-color: %1;"
                 "color: %2;"
                 "border: 1px solid %3;"
-                "border-radius: 10px;"
-                "padding: 2px 6px;"
+                "border-radius: 12px;"
+                "padding: 4px 10px;"
                 "}"
                 "QProgressBar::chunk {"
                 "background-color: %4;"
-                "border-radius: 8px;"
+                "border-radius: 10px;"
                 "}")
                 .arg(theme.colors.surface.data())
                 .arg(theme.colors.text.data())
@@ -159,6 +171,7 @@ namespace neko::ui::page {
                 "QLabel {"
                 "color: %1;"
                 "background-color: transparent;"
+                "border: none;"
                 "}")
                 .arg(theme.colors.text.data());
 
@@ -166,6 +179,7 @@ namespace neko::ui::page {
             it->setStyleSheet(labelStyle);
         }
 
+        process->setStyleSheet(QString("QLabel { color: %1; background-color: transparent; border: none; font-style: italic; }").arg(theme.colors.text.data()));
 
     }
 
@@ -181,16 +195,23 @@ namespace neko::ui::page {
         resize(windowWidth, windowHeight);
 
         poster->setGeometry(0, 0, windowWidth, windowHeight);
-        int cw = windowWidth * 0.4;
-        int ch = windowHeight * 0.4;
+        int cw = static_cast<int>(windowWidth * 0.62);
+        int ch = static_cast<int>(windowHeight * 0.50);
         int cx = (windowWidth - cw) / 2;
-        int cy = (windowHeight - ch) / 2;
+        int cy = static_cast<int>(windowHeight * 0.13);
         textLayoutWidget->setGeometry(cx, cy, cw, ch);
 
-        progressBar->setGeometry(windowWidth * 0.3, windowHeight * 0.82, windowWidth * 0.4, windowHeight * 0.1);
-        loadingLabel->setGeometry(3, windowHeight * 0.8, windowWidth * 0.08, windowHeight * 0.12);
+        const int barWidth = static_cast<int>(windowWidth * 0.52);
+        const int barHeight = static_cast<int>(windowHeight * 0.08);
+        const int barX = (windowWidth - barWidth) / 2;
+        const int barY = static_cast<int>(windowHeight * 0.78);
+        progressBar->setGeometry(barX, barY, barWidth, barHeight);
 
-        process->setGeometry(5, windowHeight * 0.9, windowWidth * 0.3, windowHeight * 0.05);
+        const int loadingSize = static_cast<int>(barHeight * 0.8);
+        loadingLabel->setGeometry(barX - loadingSize - 12, barY + (barHeight - loadingSize) / 2, loadingSize, loadingSize);
+
+        process->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        process->setGeometry(static_cast<int>(windowWidth * 0.04), static_cast<int>(windowHeight * 0.9), static_cast<int>(windowWidth * 0.4), static_cast<int>(windowHeight * 0.06));
     }
 
 } // namespace neko::ui::page
