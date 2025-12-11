@@ -72,32 +72,20 @@ TEST_F(LauncherProcessTest, ProcessOutputCapture) {
 
 // Test process with working directory
 TEST_F(LauncherProcessTest, ProcessWithWorkingDirectory) {
-    // Create a test file in test directory
-    auto testFile = testDir / "test.txt";
-    std::ofstream(testFile) << "test content";
+    ASSERT_TRUE(fs::exists(testDir));
 
-    std::vector<std::string> output;
     neko::core::ProcessInfo info;
     info.workingDir = testDir.string();
+
+    auto marker = testDir / "result.txt";
 #ifdef _WIN32
-    info.command = "dir /b";
+    info.command = "echo success > result.txt";
 #else
-    info.command = "ls";
+    info.command = "touch result.txt";
 #endif
-    info.pipeStreamCb = [&output](const std::string &line) {
-        output.push_back(line);
-    };
 
     ASSERT_NO_THROW(neko::core::launcherProcess(info));
-    
-    bool foundFile = false;
-    for (const auto &line : output) {
-        if (line.find("test.txt") != std::string::npos) {
-            foundFile = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFile);
+    EXPECT_TRUE(fs::exists(marker));
 }
 
 // Test process exit code handling

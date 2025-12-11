@@ -29,8 +29,6 @@ protected:
              << "background=img/bg.png\n"
              << "windowSize=1920x1080\n"
              << "launcherMethod=1\n"
-             << "useSystemWindowFrame=true\n"
-             << "headBarKeepRight=true\n"
              << "resourceVersion=1.0.0\n"
              << "deviceID=test-device-id\n"
              << "\n[style]\n"
@@ -93,8 +91,6 @@ TEST_F(ClientConfigTest, LoadFromSimpleIni) {
     EXPECT_EQ(config.main.background, "img/bg.png");
     EXPECT_EQ(config.main.windowSize, "1920x1080");
     EXPECT_EQ(config.main.launcherMethod, "1");
-    EXPECT_TRUE(config.main.useSysWindowFrame);
-    EXPECT_TRUE(config.main.headBarKeepRight);
     EXPECT_EQ(config.main.resourceVersion, "1.0.0");
     EXPECT_EQ(config.main.deviceID, "test-device-id");
 }
@@ -190,7 +186,6 @@ TEST_F(ClientConfigTest, DefaultValues) {
     EXPECT_EQ(config.main.lang, "en");
     EXPECT_EQ(config.main.backgroundType, "image");
     EXPECT_EQ(config.main.launcherMethod, "launchVisible");
-    EXPECT_TRUE(config.main.useSysWindowFrame);
     EXPECT_EQ(config.style.blurRadius, 10);
     EXPECT_EQ(config.style.fontPointSize, 10);
     EXPECT_EQ(config.net.thread, 0);
@@ -253,8 +248,6 @@ TEST_F(ClientConfigTest, BooleanValues) {
     CSimpleIniA ini;
     
     // Set boolean values in ini
-    ini.SetBoolValue("main", "useSystemWindowFrame", true);
-    ini.SetBoolValue("main", "headBarKeepRight", false);
     ini.SetBoolValue("dev", "enable", true);
     ini.SetBoolValue("dev", "debug", true);
     ini.SetBoolValue("minecraft", "tolerantMode", true);
@@ -262,8 +255,6 @@ TEST_F(ClientConfigTest, BooleanValues) {
     // Load config from ini
     ClientConfig config(ini);
     
-    EXPECT_TRUE(config.main.useSysWindowFrame);
-    EXPECT_FALSE(config.main.headBarKeepRight);
     EXPECT_TRUE(config.dev.enable);
     EXPECT_TRUE(config.dev.debug);
     EXPECT_TRUE(config.minecraft.tolerantMode);
@@ -273,8 +264,6 @@ TEST_F(ClientConfigTest, BooleanValues) {
     config.setToConfig(ini2);
     
     // Verify values are preserved
-    EXPECT_TRUE(ini2.GetBoolValue("main", "useSystemWindowFrame"));
-    EXPECT_FALSE(ini2.GetBoolValue("main", "headBarKeepRight"));
     EXPECT_TRUE(ini2.GetBoolValue("dev", "enable"));
     EXPECT_TRUE(ini2.GetBoolValue("dev", "debug"));
     EXPECT_TRUE(ini2.GetBoolValue("minecraft", "tolerantMode"));
