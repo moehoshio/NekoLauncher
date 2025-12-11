@@ -118,31 +118,39 @@ namespace neko::core::update {
         log::debug(dbgMsg);
         try {
             auto jsonData = nlohmann::json::parse(result).at("updateResponse");
-            api::UpdateResponse updateInfo{
-                .title = jsonData["title"].get<std::string>(),
-                .description = jsonData["description"].get<std::string>(),
-                .posterUrl = jsonData["posterUrl"].get<std::string>(),
-                .publishTime = jsonData["publishTime"].get<std::string>(),
-                .resourceVersion = jsonData["resourceVersion"].get<std::string>()};
 
-            updateInfo.isMandatory = jsonData["isMandatory"].get<bool>();
+            auto requiredString = [](const nlohmann::json &j, std::string_view key) -> std::string {
+                return j.at(key).get<std::string>();
+            };
+
+            api::UpdateResponse updateInfo{
+                .title = requiredString(jsonData, "title"),
+                .description = requiredString(jsonData, "description"),
+                .posterUrl = requiredString(jsonData, "posterUrl"),
+                .publishTime = requiredString(jsonData, "publishTime"),
+                .resourceVersion = requiredString(jsonData, "resourceVersion")};
+
+            updateInfo.isMandatory = jsonData.at("isMandatory").get<bool>();
 
             if (jsonData.contains("meta")) {
                 api::from_json(jsonData.at("meta"), updateInfo.meta);
             }
 
-            for (const auto &it : jsonData.at("files")) {
+            const auto &filesJson = jsonData.at("files");
+            for (const auto &it : filesJson) {
                 const auto metaIt = it.find("downloadMeta");
                 const auto &meta = (metaIt != it.end() && metaIt->is_object()) ? *metaIt : nlohmann::json::object();
 
-                updateInfo.files.push_back({
-                    it["url"].get<std::string>(),
-                    it["fileName"].get<std::string>(),
-                    it["checksum"].get<std::string>(),
-                    meta["hashAlgorithm"].get<std::string>(),
-                    meta["suggestMultiThread"].get<bool>(),
-                    meta["isCoreFile"].get<bool>(),
-                    meta["isAbsoluteUrl"].get<bool>()});
+                api::UpdateResponse::File file{
+                    .url = it.at("url").get<std::string>(),
+                    .fileName = it.at("fileName").get<std::string>(),
+                    .checksum = it.at("checksum").get<std::string>(),
+                    .hashAlgorithm = meta.value("hashAlgorithm", std::string{}),
+                    .suggestMultiThread = meta.value("suggestMultiThread", false),
+                    .isCoreFile = meta.value("isCoreFile", false),
+                    .isAbsoluteUrl = meta.value("isAbsoluteUrl", false)};
+
+                updateInfo.files.push_back(std::move(file));
             }
             if (!updateInfo.files.empty()) {
                 return updateInfo;
