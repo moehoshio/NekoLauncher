@@ -1,44 +1,15 @@
 # Developer documentation
  
-
-[Getting started](#getting-started)  
-[Build and run](#build-and-run)  
 [Project layout](#project-layout)  
 [Style guide](#style-guide)  
 [Bus](#bus)  
 [Links](#links)  
+[Tools](#tools)
 
-## Getting started
-
-### Prerequisites
-
-- CMake 3.20+ and a C++20 compiler (MSVC/Clang/GCC)
-- Qt 6 (Widgets/Gui/Core); set `NEKO_LC_LIBRARY_PATH` if Qt is not autodetected
-- Git with submodule support
-
-### Clone
-
-```bash
-git clone https://github.com/moehoshio/NekoLauncher.git
-cd NekoLauncher
-```
-
-## Build and run
-
-Typical Windows/Visual Studio flow:
-
-```powershell
-cmake -B build -S . -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
-./build/Release/NekoLc.exe
-```
-
-For MinGW/Clang/GCC, choose an appropriate generator and omit `-A`. If Qt is installed in a custom location, export or pass `CMAKE_PREFIX_PATH` (e.g., `C:/Qt/6.6.0/msvc2019_64/lib/cmake`).
-
-### Configuration
+## Configuration
 
 - Copy `config.ini.example` to `config.ini` and adjust background, window size, update endpoints, and paths.
-- Language packs live in `lang/`; assets in `resource/`.
+- Language packs live in `lang/`; assets in `resource/img/`.
 
 ### Testing
 
@@ -106,7 +77,15 @@ namespace neko {};
 
 NekoBus is essentially a singleton-wrapped bus that lets you access and manipulate the bus object via static methods without directly calling the singleton. This reduces global state and makes the code easier to test and maintain.
 
+## Tools
+
+`Update`: Update tool, which should be distributed with the client. It is used to perform Core updates. It replaces the NekoCore files and then restarts NekoLc.
+
+```shell
+cmake --build build --target NekoLcUpdateTool --config Release
+```
+
 ## Links
 
-- API: <https://github.com/moehoshio/NekoLcApi>
+- API: <https://github.com/moehoshio/NekoLcApi/wiki>
 - Server: <https://github.com/moehoshio/NekoLcServer>

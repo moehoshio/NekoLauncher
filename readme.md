@@ -30,8 +30,8 @@ Preview:
 git clone https://github.com/moehoshio/NekoLauncher.git
 cd NekoLauncher
 
-# Configure (Visual Studio generator shown; adjust -A as needed)
-cmake -B build -S .
+# Configure
+cmake -B build -DNEKO_LC_LIBRARY_PATH="<Qt_path>;<Package_path>" -DNEKO_LC_STATIC_LINK=ON -S .
 
 # Build (Debug|Release)
 cmake --build build --config Release
@@ -45,7 +45,7 @@ For other toolchains, replace the generator/commands accordingly. Set `NEKO_LC_L
 ## Configuration
 
 - `config.ini.example` shows available options; copy it to `config.ini` and adjust paths, background, and update endpoints.
-- Language files live in `lang/`; images live in `resource/`.
+- Language files live in `lang/`; images live in `resource/img/`.
 
 ## Contributing
 

@@ -305,7 +305,17 @@ namespace neko::lang {
         namespace minecraft {
             constexpr neko::cstr
                 category = "minecraft",
-                missingAccessToken = "missingAccessToken";
+                missingAccessToken = "missingAccessToken",
+                installStart = "installStart",
+                fetchVersionList = "fetchVersionList",
+                fetchVersionInfo = "fetchVersionInfo",
+                downloadingAssetIndex = "downloadingAssetIndex",
+                downloadingLibrary = "downloadingLibrary",
+                downloadingClient = "downloadingClient",
+                downloadingAssets = "downloadingAssets",
+                savingVersion = "savingVersion",
+                installing = "installing",
+                completed = "completed";
         } // namespace minecraft
 
         namespace error {

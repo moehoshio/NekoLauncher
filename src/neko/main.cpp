@@ -8,6 +8,7 @@
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
+#include "neko/core/install.hpp"
 #include "neko/core/update.hpp"
 
 #include "neko/ui/uiEventDispatcher.hpp"
@@ -41,7 +42,11 @@ int main(int argc, char *argv[]) {
         window.show();
         
         bus::thread::submit([](){
-            core::update::autoUpdate();
+            const bool installed = core::install::autoInstall();
+            if (!installed) {
+                core::update::autoUpdate();
+            }
+
             bus::event::publish(event::CurrentPageChangeEvent{
                 .page = ui::Page::home
             });

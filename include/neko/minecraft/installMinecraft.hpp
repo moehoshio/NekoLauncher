@@ -1,231 +1,238 @@
-// /**
-//  * @file installMinecraft.hpp
-//  * @brief Minecraft download and installation
-//  * @author moehoshio
-//  * @copyright Copyright (c) 2025 Hoshi
-//  * @license MIT OR Apache-2.0
-//  */
+/**
+ * @file installMinecraft.hpp
+ * @brief Minecraft download and installation
+ * @author moehoshio
+ * @copyright Copyright (c) 2025 Hoshi
+ * @license MIT OR Apache-2.0
+ */
 
-// #pragma once
+#pragma once
 
-// // Neko Module
-// #include <neko/schema/types.hpp>
-// #include <neko/log/nlog.hpp>
-// #include <neko/network/network.hpp>
+// Neko Module
+#include <neko/schema/types.hpp>
+#include <neko/log/nlog.hpp>
+#include <neko/network/network.hpp>
+#include <neko/function/utilities.hpp>
+#include <neko/schema/exception.hpp>
 
-// // NekoLc project
-// #include "neko/schema/clientConfig.hpp"
-// #include "neko/ui/uiMsg.hpp"
-// #include "neko/minecraft/downloadSource.hpp"
+// NekoLc project
+#include "neko/app/clientConfig.hpp"
+#include "neko/app/lang.hpp"
+#include "neko/ui/uiMsg.hpp"
+#include "neko/minecraft/downloadSource.hpp"
+#include "neko/bus/eventBus.hpp"
+#include "neko/event/eventTypes.hpp"
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
-// #include <filesystem>
-// #include <functional>
-// #include <string>
-// #include <string_view>
-// #include <vector>
+#include <filesystem>
+#include <fstream>
+#include <string>
+#include <string_view>
+#include <vector>
 
-// namespace neko::minecraft {
+namespace neko::minecraft {
 
-//     // Should not be called from the main thread, as it will block the incoming thread until completion.
-//     inline void setupMinecraftDownloads(DownloadSource downloadSource, std::string_view versionId, const nlohmann::json &versionJson, std::string_view installPath = "./.minecraft") {
-//         log::autoLog log;
+    // Should not be called from the main thread, as it will block the incoming thread until completion.
+    inline void setupMinecraftDownloads(
+        DownloadSource downloadSource,
+        std::string_view versionId,
+        const nlohmann::json &versionJson,
+        std::string_view installPath = "./.minecraft") {
 
-//         std::atomic<neko::uint32> now(0);
+        log::autoLog log;
 
-//         auto ensureDirectoryExists = [](std::string_view path) {
-//             if (!std::filesystem::exists(path)) {
-//                 std::filesystem::create_directories(path);
-//             }
-//         };
+        const std::filesystem::path basePath(installPath);
 
-//         auto downloadLibrary = [&](const nlohmann::json &library) {
-//             std::string libraryUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(library["downloads"]["artifact"]["url"]) : library["downloads"]["artifact"].value("url", "");
-//             std::string libraryPath = exec::sum<std::string>(installPath, "/libraries/", library["downloads"]["artifact"]["path"].get<std::string>());
-//             ensureDirectoryExists(libraryPath.substr(0, libraryPath.find_last_of('/')));
-//             if (setLoadingNow)
-//                 setLoadingNow("Downloading library: " + library["name"].get<std::string>());
+        auto sendStatus = [](const std::string &msg) {
+            bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = msg});
+        };
 
-//             log::Info(log::SrcLoc::current().function_name(), log::SrcLoc::current().line(), "%s : Downloading library: %s", log::SrcLoc::current().function_name(), libraryUrl.c_str());
+        auto ensureDirectoryExists = [](const std::filesystem::path &path) {
+            if (!std::filesystem::exists(path)) {
+                std::filesystem::create_directories(path);
+            }
+        };
 
-//             network::Network net;
-//             network::RequestConfig reqConfig;
-//             reqConfig.setUrl(libraryUrl)
-//                 .setFileName(libraryPath)
-//                 .setMethod(network::RequestType::DownloadFile)
-//                 .setRequestId("library-" + exec::generateRandomString(6));
+        auto downloadFile = [&](const std::string &url, const std::filesystem::path &dest, const std::string &prefix) {
+            network::Network net;
+            network::RequestConfig reqConfig{
+                .url = url,
+                .method = network::RequestType::DownloadFile,
+                .requestId = prefix + util::random::generateRandomString(6),
+                .fileName = dest.string()};
 
-//             auto res = net.executeWithRetry(reqConfig);
-//             if (!res.isSuccess()) {
-//                 throw ex::NetworkError("Failed to download library: " + library["name"].get<std::string>(), ex::ExceptionExtensionInfo{});
-//             }
-//             if (setLoadingVal)
-//                 setLoadingVal(++now);
-//         };
+            auto res = net.executeWithRetry({reqConfig});
+            if (!res.isSuccess()) {
+                throw ex::NetworkError("Download failed: " + url);
+            }
+        };
 
-//         auto downloadClient = [&]() {
-//             ensureDirectoryExists(installPath);
-//             ensureDirectoryExists(exec::sum<std::string>(installPath, "/versions/NekoServer_", versionId));
+        const auto &libraries = versionJson.at("libraries");
+        const auto &assetIndex = versionJson.at("assetIndex");
 
-//             std::string clientJarPath = exec::sum<std::string>(installPath, "/versions/NekoServer_", versionId, "/NekoServer_", versionId, ".jar");
-//             std::string clientJarUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(versionJson["downloads"]["client"]["url"]) : versionJson["downloads"]["client"].value("url", "");
+        // Download asset index first
+        const std::string assetIndexUrl = (downloadSource == DownloadSource::BMCLAPI)
+                                              ? replaceWithBMCLAPI(assetIndex.at("url").get<std::string>())
+                                              : assetIndex.at("url").get<std::string>();
+        const std::filesystem::path assetIndexPath = basePath / "assets" / "indexes" / (assetIndex.at("id").get<std::string>() + ".json");
+        ensureDirectoryExists(assetIndexPath.parent_path());
 
-//             nlog::Info(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), log::SrcLoc::current().function_name(), "%s : Downloading client jar: %s", log::SrcLoc::current().function_name(), clientJarUrl.c_str());
+        sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingAssetIndex, "Downloading asset index..."));
+        downloadFile(assetIndexUrl, assetIndexPath, "assetIndex-");
 
-//             network::Network net;
-//             network::RequestConfig reqConfig;
-//             reqConfig.setUrl(clientJarUrl)
-//                 .setFileName(clientJarPath)
-//                 .setMethod(network::RequestType::DownloadFile)
-//                 .setRequestId("client-" + exec::generateRandomString(6));
-//             auto res = net.executeWithRetry(reqConfig);
-//             if (!res.isSuccess()) {
-//                 throw ex::NetworkError("Failed to download client jar!", ex::ExceptionExtensionInfo{});
-//             }
-//         };
+        nlohmann::json assetIndexJson;
+        {
+            std::ifstream ifs(assetIndexPath);
+            if (!ifs.is_open()) {
+                throw ex::FileError("Failed to open asset index: " + assetIndexPath.string());
+            }
+            assetIndexJson = nlohmann::json::parse(ifs, nullptr, true, true);
+        }
 
-//         auto downloadAssetIndex = [&]() {
-//             std::string assetIndexUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI(versionJson["assetIndex"]["url"]) : versionJson["assetIndex"].value("url", "");
-//             std::string assetIndexPath = exec::sum<std::string>(installPath, "/assets/indexes/", versionJson["assetIndex"]["id"].get<std::string>(), ".json");
-//             ensureDirectoryExists(exec::sum<std::string>(installPath, "/assets/indexes"));
+        // Prepare progress display
+        const auto &assetsObj = assetIndexJson.at("objects");
+        const neko::uint32 progressMax = static_cast<neko::uint32>(libraries.size() + assetsObj.size() + 1); // +1 for client jar
 
-//             if (setLoadingNow)
-//                 setLoadingNow("Downloading asset index: " + versionJson["assetIndex"]["id"].get<std::string>());
-//             nlog::Debug(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), log::SrcLoc::current().function_name(), "%s : Downloading asset index: %s", log::SrcLoc::current().function_name(), assetIndexUrl.c_str());
+        // Notify UI to show progress bar
+        bus::event::publish(event::ShowLoadingEvent(neko::ui::LoadingMsg{
+            .type = neko::ui::LoadingMsg::Type::Progress,
+            .process = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::installing, "Installing Minecraft"),
+            .progressVal = 0,
+            .progressMax = progressMax}));
 
-//             network::Network net;
-//             network::RequestConfig reqConfig;
-//             reqConfig.setUrl(assetIndexUrl)
-//                 .setFileName(assetIndexPath)
-//                 .setMethod(network::RequestType::DownloadFile)
-//                 .setRequestId("assetIndex-" + exec::generateRandomString(6));
-//             auto res = net.executeWithRetry(reqConfig);
-//             if (!res.isSuccess()) {
-//                 throw ex::NetworkError("Failed to download asset index!", ex::ExceptionExtensionInfo{});
-//             }
-//             if (setLoadingVal)
-//                 setLoadingVal(++now);
-//         };
+        std::atomic<neko::uint32> progress{0};
+        auto bumpProgress = [&]() {
+            auto val = ++progress;
+            bus::event::publish(event::LoadingValueChangedEvent{.progressValue = val});
+        };
 
-//         auto downloadAsset = [&](const nlohmann::json &asset) {
-//             std::string assetHash = asset.value("hash", " ");
-//             std::string assetUrl = ((downloadSource == DownloadSource::BMCLAPI) ? "https://bmclapi2.bangbang93.com/assets/" : "https://resources.download.minecraft.net/") + assetHash.substr(0, 2) + "/" + assetHash;
+        // Download libraries
+        for (const auto &library : libraries) {
+            const auto &artifact = library.at("downloads").at("artifact");
+            std::string libraryUrl = (downloadSource == DownloadSource::BMCLAPI)
+                                         ? replaceWithBMCLAPI(artifact.at("url").get<std::string>())
+                                         : artifact.at("url").get<std::string>();
+            std::filesystem::path libraryPath = basePath / "libraries" / artifact.at("path").get<std::string>();
+            ensureDirectoryExists(libraryPath.parent_path());
 
-//             std::string assetPath = exec::sum<std::string>(installPath, "/assets/objects/", assetHash.substr(0, 2), "/", assetHash);
-//             ensureDirectoryExists(assetPath.substr(0, assetPath.find_last_of('/')));
+            sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingLibrary, "Downloading library...") + " " + library.value("name", ""));
 
-//             network::Network net;
-//             network::RequestConfig reqConfig;
-//             reqConfig.setUrl(assetUrl)
-//                 .setFileName(assetPath)
-//                 .setMethod(network::RequestType::DownloadFile)
-//                 .setRequestId("asset-" + exec::generateRandomString(6));
-//             auto res = net.executeWithRetry(reqConfig);
-//             if (!res.isSuccess()) {
-//                 throw ex::NetworkError("Failed to download asset!", ex::ExceptionExtensionInfo{});
-//             }
-//         };
+            downloadFile(libraryUrl, libraryPath, "library-");
+            bumpProgress();
+        }
 
-//         neko::uint32 libSize = versionJson["libraries"].size();
+        // Download client jar
+        const auto &client = versionJson.at("downloads").at("client");
+        std::string clientUrl = (downloadSource == DownloadSource::BMCLAPI)
+                                    ? replaceWithBMCLAPI(client.at("url").get<std::string>())
+                                    : client.at("url").get<std::string>();
+        std::filesystem::path versionDir = basePath / "versions" / (std::string("NekoServer_") + std::string(versionId));
+        ensureDirectoryExists(versionDir);
+        std::filesystem::path clientJarPath = versionDir / (std::string("NekoServer_") + std::string(versionId) + ".jar");
 
-//         downloadAssetIndex();
+        sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingClient, "Downloading client jar..."));
+        downloadFile(clientUrl, clientJarPath, "client-");
+        bumpProgress();
 
-//         auto assetIndexJson = nlohmann::json::parse(std::ifstream(exec::sum<std::string>(installPath, "/assets/indexes/", versionJson["assetIndex"]["id"].get<std::string>(), ".json")), nullptr, false);
+        // Download assets
+        for (const auto &[_, asset] : assetsObj.items()) {
+            std::string assetHash = asset.at("hash").get<std::string>();
+            std::string assetUrl = ((downloadSource == DownloadSource::BMCLAPI)
+                                        ? "https://bmclapi2.bangbang93.com/assets/"
+                                        : "https://resources.download.minecraft.net/") +
+                                    assetHash.substr(0, 2) + "/" + assetHash;
 
-//         neko::ui::LoadingMsg msg{neko::ui::LoadingMsg::Progress, "Downloading libraries"};
-//         msg.progressMax = (libSize + assetIndexJson.size());
-//         if (showLoading)
-//             showLoading(msg);
+            std::filesystem::path assetPath = basePath / "assets" / "objects" / assetHash.substr(0, 2) / assetHash;
+            ensureDirectoryExists(assetPath.parent_path());
 
-//         for (const auto &library : versionJson["libraries"]) {
-//             core::getThreadPool().enqueue([=]() {
-//                 downloadLibrary(library);
-//             });
-//         }
+            sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingAssets, "Downloading assets..."));
+            downloadFile(assetUrl, assetPath, "asset-");
+            bumpProgress();
+        }
 
-//         downloadClient();
+        // Save version manifest
+        auto saveJson = versionJson;
+        saveJson["id"] = std::string("NekoServer_") + std::string(versionId);
+        saveJson["jar"] = saveJson.value("id", "") + std::string(".jar");
 
-//         for (const auto &asset : assetIndexJson["objects"]) {
-//             core::getThreadPool().enqueue([=]() {
-//                 nlog::Warn(log::SrcLoc::current().file_name(), log::SrcLoc::current().line(), log::SrcLoc::current().function_name(), "%s : Downloading asset: %s", log::SrcLoc::current().function_name(), asset["hash"].get<std::string>().c_str());
-//                 downloadAsset(asset);
-//             });
-//         }
-//         auto saveJson = versionJson;
-//         saveJson["id"] = std::string("NekoServer_") + versionId;
-//         saveJson["jar"] = saveJson.value("id", "") + ".jar";
+        std::filesystem::path versionJsonPath = versionDir / (std::string("NekoServer_") + std::string(versionId) + ".json");
+        sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::savingVersion, "Saving version manifest..."));
 
-//         std::ofstream saveFile(exec::sum<std::string>(installPath, "/versions/NekoServer_", versionId, "/NekoServer_", versionId, ".json"));
-//         saveFile << saveJson.dump(4);
-//         saveFile.close();
-//         core::getThreadPool().wait_until_empty();
-//     }
+        std::ofstream saveFile(versionJsonPath);
+        if (!saveFile.is_open()) {
+            throw ex::FileError("Failed to save version json: " + versionJsonPath.string());
+        }
+        saveFile << saveJson.dump(4);
+        bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::completed, "Minecraft install completed")});
+    }
 
-//     // Should not be called from the main thread, as it will block the incoming thread until completion.
-//     inline void installMinecraft(std::string_view installPath = "./.minecraft", std::string_view targetVersion = "1.16.5", DownloadSource downloadSource = DownloadSource::Official, std::function<void(const ui::NoticeMsg &)> showHint = nullptr, std::function<void(const neko::ui::LoadingMsg &)> showLoading = nullptr, std::function<void(neko::uint32)> setLoadingVal = nullptr, std::function<void(neko::cstr)> setLoadingNow = nullptr) {
-//         std::string EnterMsg = exec::sum<std::string>("Enter , downloadSource : ", downloadSourceMap.at(downloadSource), ", installPath : ", installPath, ", targetVersion : ", targetVersion);
-//         nlog::autoLog log{EnterMsg};
+    // Should not be called from the main thread, as it will block the incoming thread until completion.
+    inline void installMinecraft(
+        std::string_view installPath = "./.minecraft",
+        std::string_view targetVersion = "1.16.5",
+        DownloadSource downloadSource = DownloadSource::Official) {
 
-//         setLoadingNow("Get version list..");
+        std::string enterMsg = "Install Minecraft: source=" + std::string(downloadSourceMap.at(downloadSource)) +
+                               ", installPath=" + std::string(installPath) +
+                               ", targetVersion=" + std::string(targetVersion);
+        log::autoLog log{enterMsg};
 
-//         auto url = getMinecraftListUrl(downloadSource);
-//         network::Network net;
-//         network::RequestConfig reqConfig;
-//         reqConfig.setUrl(url)
-//             .setMethod(network::RequestType::Get)
-//             .setUserAgent(network::NetworkBase::globalConfig.userAgent)
-//             .setRequestId("version-list-" + exec::generateRandomString(6));
-//         auto res = net.executeWithRetry(reqConfig);
-//         if (!res.isSuccess()) {
-//             throw ex::NetworkError("Failed to get version list!", ex::ExceptionExtensionInfo{});
-//         }
+        bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::fetchVersionList, "Getting version list...")});
 
-//         if (!res.hasContent()) {
-//             throw ex::NetworkError("Version list is empty!", ex::ExceptionExtensionInfo{});
-//         }
+        network::Network net;
+        auto res = net.executeWithRetry({
+            network::RequestConfig{
+                .url = getMinecraftListUrl(downloadSource),
+                .method = network::RequestType::Get,
+                .requestId = "version-list-" + util::random::generateRandomString(6)}});
 
-//         std::string versionList = res.content;
+        if (!res.isSuccess()) {
+            throw ex::NetworkError("Failed to get version list: " + res.errorMessage);
+        }
+        if (!res.hasContent()) {
+            throw ex::NetworkError("Version list is empty!");
+        }
 
-//         setLoadingNow("parse version list..");
+        nlohmann::json versionListJson;
+        try {
+            versionListJson = nlohmann::json::parse(res.content);
+        } catch (const std::exception &e) {
+            throw ex::Parse(std::string("Failed to parse version list json: ") + e.what());
+        }
 
-//         nlohmann::json versionListJson;
-//         try {
-//             versionListJson = nlohmann::json::parse(versionList);
-//         } catch (const std::exception& e) {
-//             std::throw_with_nested(ex::Parse("Failed to parse version list json!", ex::ExceptionExtensionInfo{}));
-//         }
+        const auto &versions = versionListJson.at("versions");
+        auto it = std::find_if(versions.begin(), versions.end(), [&](const auto &version) {
+            return version.value("type", "") == "release" && version.value("id", "") == targetVersion;
+        });
+        if (it == versions.end()) {
+            throw ex::Runtime("Failed to find target version: " + std::string(targetVersion));
+        }
 
-//         auto versions = versionListJson["versions"];
-//         auto it = std::find_if(versions.begin(), versions.end(), [&](const auto &version) {
-//             return version["type"] == "release" && version["id"] == targetVersion;
-//         });
+        bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::fetchVersionInfo, "Getting target version info...")});
 
-//         if (it == versions.end()) {
-//             throw ex::Runtime("Failed to find target version!", ex::ExceptionExtensionInfo{});
-//         }
+        std::string targetVersionUrl = (downloadSource == DownloadSource::BMCLAPI)
+                                           ? replaceWithBMCLAPI(it->value("url", ""))
+                                           : it->value("url", "");
 
-//         setLoadingNow("Get target version info..");
-//         std::string targetVersionUrl = (downloadSource == DownloadSource::BMCLAPI) ? replaceWithBMCLAPI((*it).value("url", "")) : (*it).value("url", "");
+        auto targetVersionRes = net.executeWithRetry({
+            network::RequestConfig{
+                .url = targetVersionUrl,
+                .method = network::RequestType::Get,
+                .requestId = "target-version-" + util::random::generateRandomString(6)}});
 
-//         network::RequestConfig reqConfigGetVersion;
-//         reqConfigGetVersion.setUrl(targetVersionUrl)
-//             .setMethod(network::RequestType::Get)
-//             .setUserAgent(network::NetworkBase::globalConfig.userAgent)
-//             .setRequestId("target-version-" + exec::generateRandomString(6));
-//         auto targetVersionRes = net.executeWithRetry(reqConfigGetVersion);
-//         if (!targetVersionRes.isSuccess()) {
-//             throw ex::NetworkError("Failed to get target version info!", ex::ExceptionExtensionInfo{});
-//         }
+        if (!targetVersionRes.isSuccess()) {
+            throw ex::NetworkError("Failed to get target version info: " + targetVersionRes.errorMessage);
+        }
 
-//         nlohmann::json versionJson;
-//         try {
-//             versionJson = nlohmann::json::parse(targetVersionRes.content);
-//         } catch (const std::exception& e) {
-//             std::throw_with_nested(ex::Parse("Failed to parse target version json!", ex::ExceptionExtensionInfo{}));
-//         }
+        nlohmann::json versionJson;
+        try {
+            versionJson = nlohmann::json::parse(targetVersionRes.content);
+        } catch (const std::exception &e) {
+            throw ex::Parse(std::string("Failed to parse target version json: ") + e.what());
+        }
 
-//         setupMinecraftDownloads(downloadSource, targetVersion, versionJson, installPath, showLoading, setLoadingVal, setLoadingNow);
-//     }
+        setupMinecraftDownloads(downloadSource, targetVersion, versionJson, installPath);
+    }
 
-// } // namespace neko::minecraft
+} // namespace neko::minecraft

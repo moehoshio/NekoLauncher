@@ -45,7 +45,17 @@
         "retry": "重試"
     },
     "minecraft": {
-        "missingAccessToken": "缺少存取權杖，無法登入 Minecraft 帳號。"
+        "missingAccessToken": "缺少存取權杖，無法登入 Minecraft 帳號。",
+        "installStart": "準備安裝 Minecraft...",
+        "fetchVersionList": "取得版本清單...",
+        "fetchVersionInfo": "取得目標版本資訊...",
+        "downloadingAssetIndex": "正在下載資源索引...",
+        "downloadingLibrary": "正在下載函式庫...",
+        "downloadingClient": "正在下載用戶端主程式...",
+        "downloadingAssets": "正在下載資源檔案...",
+        "savingVersion": "儲存版本描述檔...",
+        "installing": "正在安裝 Minecraft",
+        "completed": "Minecraft 安裝完成"
     },
     "error": {
         "invalidInput": "無效的輸入",

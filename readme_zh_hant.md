@@ -1,7 +1,5 @@
 # Neko Launcher
 
-提醒：專案正在重構，部分功能可能暫時不可用，感謝耐心等待。
-
 [正體中文](readme_zh_hant.md) | [简体中文](readme_zh_hans.md) | [English](readme.md)  
 
 Neko Launcher（NekoLc）是一個現代化、跨平台、多語言的啟動器，內建自動更新機制。它能啟動任意目標；目前模板預設支援 Minecraft Java 版。啟動器可同時更新你的內容與 Neko Core，本身也能自動安裝資源，並提供可自訂的 UI。
@@ -30,8 +28,8 @@ Neko Launcher（NekoLc）是一個現代化、跨平台、多語言的啟動器�
 git clone https://github.com/moehoshio/NekoLauncher.git
 cd NekoLauncher
 
-# Configure (Visual Studio 生成器示例，可依需求調整 -A)
-cmake -B build -S .
+# Configure
+cmake -B build -DNEKO_LC_LIBRARY_PATH="<Qt_path>;<Package_path>" -DNEKO_LC_STATIC_LINK=ON -S .
 
 # Build (Debug|Release)
 cmake --build build --config Release
@@ -45,7 +43,7 @@ cmake --build build --config Release
 ## 設定
 
 - `config.ini.example` 展示可用項目；複製為 `config.ini` 後調整路徑、背景與更新端點。
-- 語言檔位於 `lang/`；圖像資源位於 `resource/`。
+- 語言檔位於 `lang/`；圖像資源位於 `resource/img/`。
 
 ## 貢獻
 

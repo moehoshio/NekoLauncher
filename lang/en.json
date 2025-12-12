@@ -44,7 +44,17 @@
         "retry": "Retry"
     },
     "minecraft": {
-        "missingAccessToken": "Missing access token; cannot sign into Minecraft."
+        "missingAccessToken": "Missing access token; cannot sign into Minecraft.",
+        "installStart": "Preparing Minecraft install...",
+        "fetchVersionList": "Getting version list...",
+        "fetchVersionInfo": "Getting target version info...",
+        "downloadingAssetIndex": "Downloading asset index...",
+        "downloadingLibrary": "Downloading library...",
+        "downloadingClient": "Downloading client jar...",
+        "downloadingAssets": "Downloading assets...",
+        "savingVersion": "Saving version manifest...",
+        "installing": "Installing Minecraft",
+        "completed": "Minecraft install completed"
     },
     "error": {
         "invalidInput": "Invalid input",

@@ -30,8 +30,8 @@ Neko Launcher（NekoLc）是一个现代化、跨平台、多语言的启动器�
 git clone https://github.com/moehoshio/NekoLauncher.git
 cd NekoLauncher
 
-# Configure (以 Visual Studio 生成器为例，可按需调整 -A)
-cmake -B build -S .
+# Configure
+cmake -B build -DNEKO_LC_LIBRARY_PATH="<Qt_path>;<Package_path>" -DNEKO_LC_STATIC_LINK=ON -S .
 
 # Build (Debug|Release)
 cmake --build build --config Release
@@ -45,7 +45,7 @@ cmake --build build --config Release
 ## 配置
 
 - `config.ini.example` 展示可用项；复制为 `config.ini` 后调整路径、背景与更新端点。
-- 语言文件位于 `lang/`；图片资源位于 `resource/`。
+- 语言文件位于 `lang/`；图片资源位于 `resource/img/`。
 
 ## 贡献
 

@@ -44,7 +44,17 @@
         "retry": "重试"
     },
     "minecraft": {
-        "missingAccessToken": "缺少访问令牌，无法登录 Minecraft 账号。"
+        "missingAccessToken": "缺少访问令牌，无法登录 Minecraft 账号。",
+        "installStart": "准备安装 Minecraft...",
+        "fetchVersionList": "获取版本列表...",
+        "fetchVersionInfo": "获取目标版本信息...",
+        "downloadingAssetIndex": "正在下载资源索引...",
+        "downloadingLibrary": "正在下载库文件...",
+        "downloadingClient": "正在下载客户端主程序...",
+        "downloadingAssets": "正在下载资源文件...",
+        "savingVersion": "保存版本描述文件...",
+        "installing": "正在安装 Minecraft",
+        "completed": "Minecraft 安装完成"
     },
     "error": {
         "invalidInput": "无效的输入",

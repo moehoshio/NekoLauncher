@@ -317,6 +317,11 @@ target_link_libraries(NekoLc PRIVATE
     Boost::process
 )
 
+# MSVC object count guard
+if(MSVC)
+    target_compile_options(NekoLc PRIVATE /bigobj)
+endif()
+
 # Tools
 add_subdirectory(tools/update)
 
