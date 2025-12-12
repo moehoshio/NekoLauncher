@@ -42,7 +42,9 @@
         "restore": "還原",
         "apply": "套用",
         "quit": "退出",
-        "retry": "重試"
+        "retry": "重試",
+        "input": "輸入",
+        "edit": "編輯"
     },
     "minecraft": {
         "missingAccessToken": "缺少存取權杖，無法登入 Minecraft 帳號。",

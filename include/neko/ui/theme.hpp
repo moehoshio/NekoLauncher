@@ -2,7 +2,7 @@
 
 #include <neko/schema/types.hpp>
 
-#include <string_view>
+#include <string>
 
 namespace neko::ui {
 
@@ -13,27 +13,28 @@ namespace neko::ui {
     };
 
     struct ThemeInfo {
-        neko::strview name;
-        neko::strview description;
-        neko::strview author;
+        std::string name;
+        std::string description;
+        std::string author;
         ThemeType type;
     };
 
     struct ThemeColors {
-        neko::strview primary;
-        neko::strview secondary;
-        neko::strview background;
-        neko::strview canvas; // large area/window backdrop
-        neko::strview text;
-        neko::strview accent;
-        neko::strview success;
-        neko::strview warning;
-        neko::strview error;
-        neko::strview info;
-        neko::strview surface;
-        neko::strview disabled;
-        neko::strview hover;
-        neko::strview focus;
+        std::string primary;
+        std::string secondary;
+        std::string background;
+        std::string canvas; // large area/window backdrop
+        std::string text;
+        std::string accent;
+        std::string success;
+        std::string warning;
+        std::string error;
+        std::string info;
+        std::string surface;
+        std::string panel;   // card/dialog backgrounds
+        std::string disabled;
+        std::string hover;
+        std::string focus;
     };
 
     struct Theme {
@@ -42,7 +43,7 @@ namespace neko::ui {
     };
 
     // default themes
-    constexpr Theme lightTheme = {
+    inline const Theme lightTheme = {
         ThemeInfo{
             .name = "Light",
             .description = "Light Theme",
@@ -60,11 +61,12 @@ namespace neko::ui {
             .error = "#dc2626",
             .info = "#0ea5e9",
             .surface = "rgba(255,255,255,0.94)",
+            .panel = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(255,255,255,0.98), stop:0.45 rgba(246,250,255,0.96), stop:1 rgba(230,238,250,0.94))",
             .disabled = "#cbd5e1",
             .hover = "rgba(37,99,235,0.14)",
             .focus = "rgba(14,165,233,0.32)"}};
 
-    constexpr Theme darkTheme = {
+    inline const Theme darkTheme = {
         ThemeInfo{
             .name = "Dark",
             .description = "Dark Theme",
@@ -82,31 +84,10 @@ namespace neko::ui {
             .error = "#f87171",
             .info = "#38bdf8",
             .surface = "#1f2937",
+            .panel = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(32,38,50,0.96), stop:0.5 rgba(26,33,45,0.94), stop:1 rgba(22,30,42,0.9))",
             .disabled = "#4b5563",
             .hover = "rgba(255,255,255,0.08)",
             .focus = "rgba(56,189,248,0.32)"}};
-
-    constexpr Theme homeTheme = {
-        ThemeInfo{
-            .name = "Home",
-            .description = "Home Theme",
-            .author = "Hoshi",
-            .type = ThemeType::Custom},
-        ThemeColors{
-            .primary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #b7c7ff, stop:1 #6ec1ff)",
-            .secondary = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #ffe0b2, stop:1 #ffb374)",
-            .background = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #fdf2ff, stop:0.35 #dbeafe, stop:0.7 #cffafe, stop:1 #dcfce7)",
-            .canvas = "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #fdf2ff, stop:0.33 #fce7f3, stop:0.66 #dbeafe, stop:1 #e0f2fe)",
-            .text = "#1f2937",
-            .accent = "#f97316",
-            .success = "#16a34a",
-            .warning = "#f59e0b",
-            .error = "#ef4444",
-            .info = "#0ea5e9",
-            .surface = "rgba(255,255,255,0.96)",
-            .disabled = "#cbd5e1",
-            .hover = "rgba(15,118,110,0.12)",
-            .focus = "rgba(14,165,233,0.28)"}};
 
     class ThemeManager {
     public:

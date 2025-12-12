@@ -41,7 +41,9 @@
         "restore": "Restore",
         "apply": "Apply",
         "quit": "Quit",
-        "retry": "Retry"
+        "retry": "Retry",
+        "input": "Input",
+        "edit": "Edit"
     },
     "minecraft": {
         "missingAccessToken": "Missing access token; cannot sign into Minecraft.",

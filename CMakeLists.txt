@@ -265,10 +265,13 @@ list(APPEND NEKO_SRCFILES
     # UI
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/dialogs/noticeDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/dialogs/themeEditorDialog.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/pages/homePage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/pages/loadingPage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/pages/settingPage.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/themeIO.cpp
     
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
@@ -277,6 +280,7 @@ list(APPEND NEKO_SRCFILES
     # Headers (for Qt MOC)
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/dialogs/noticeDialog.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/dialogs/inputDialog.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/dialogs/themeEditorDialog.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/homePage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/loadingPage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/settingPage.hpp

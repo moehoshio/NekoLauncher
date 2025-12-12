@@ -11,6 +11,7 @@
 #include "neko/core/install.hpp"
 #include "neko/core/update.hpp"
 
+#include "neko/ui/themeIO.hpp"
 #include "neko/ui/uiEventDispatcher.hpp"
 #include "neko/ui/windows/nekoWindow.hpp"
 #include "neko/ui/windows/logViewerWindow.hpp"
@@ -32,11 +33,8 @@ int main(int argc, char *argv[]) {
         auto runingInfo = app::run();
 
         auto cfg = bus::config::getClientConfig();
-        if (cfg.style.theme == std::string("dark")) {
-            ui::setCurrentTheme(ui::darkTheme);
-        } else {
-            ui::setCurrentTheme(ui::lightTheme);
-        }
+        auto themeOpt = ui::themeio::loadThemeByName(cfg.style.theme, lc::ThemeFolderName.data());
+        ui::setCurrentTheme(themeOpt.value_or(ui::lightTheme));
         ui::window::NekoWindow window(cfg);
         ui::UiEventDispatcher::setNekoWindow(&window);
         window.show();

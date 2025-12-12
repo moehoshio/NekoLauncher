@@ -76,15 +76,16 @@ namespace neko::ui::dialog {
     void NoticeDialog::setupTheme(const Theme &theme) {
 
         centralWidget->setAttribute(Qt::WA_StyledBackground, true);
+        const auto cardBg = theme.colors.panel.empty() ? theme.colors.surface : theme.colors.panel;
         centralWidget->setStyleSheet(
             QString(
-                "#noticeCentral { background-color: %1; border: 1px solid %2; border-radius: 22px; }"
+                "#noticeCentral { background: %1; border: 1.5px solid %2; border-radius: 22px; }"
                 "#noticeButtons { background-color: transparent; }"
                 "QLabel { color: %3; }"
                 "QPushButton { background-color: %4; color: %3; border-radius: 14px; padding: 14px 18px; }"
                 "QPushButton:hover { background-color: %5; }"
                 "QPushButton:disabled { background-color: %6; }")
-                .arg(theme.colors.surface.data())
+                .arg(cardBg.data())
                 .arg(theme.colors.accent.data())
                 .arg(theme.colors.text.data())
                 .arg(theme.colors.primary.data())

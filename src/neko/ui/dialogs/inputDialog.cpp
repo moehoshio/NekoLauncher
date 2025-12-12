@@ -13,6 +13,7 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QGraphicsDropShadowEffect>
 
 namespace neko::ui::dialog {
 
@@ -35,11 +36,16 @@ namespace neko::ui::dialog {
 
                 centralWidget->setSizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
                 centralWidgetLayout->setContentsMargins(24, 16, 24, 20);
-                centralWidgetLayout->setSpacing(14);
+                centralWidgetLayout->setSpacing(18);
                 title->setAlignment(Qt::AlignCenter);
                 centralWidgetLayout->addWidget(title);
                 centralWidgetLayout->addWidget(msg);
                 centralWidget->setLayout(centralWidgetLayout);
+
+                auto *cardShadow = new QGraphicsDropShadowEffect(this);
+                cardShadow->setBlurRadius(36);
+                cardShadow->setOffset(0, 10);
+                centralWidget->setGraphicsEffect(cardShadow);
 
                 dialogButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
                 dialogButton->setStandardButtons(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
@@ -149,31 +155,37 @@ namespace neko::ui::dialog {
         title->setFont(titleFont);
     }
     void InputDialog::setupTheme(const Theme &theme) {
+        const auto cardBg = theme.colors.panel.empty() ? theme.colors.surface : theme.colors.panel;
         centralWidget->setStyleSheet(
-            QString("QWidget { background-color: %1; border: 1px solid %2; border-radius: 22px; }"
-                    "QLineEdit { background-color: %1; color: %3; border: 1px solid %4; padding: 8px 10px; border-radius: 12px; }"
-                    "QLineEdit:focus { border: 1px solid %5; }")
-                .arg(theme.colors.surface.data())
+            QString("QWidget { background: %1; border: 1.5px solid %2; border-radius: 22px; }"
+                    "QLineEdit { background-color: %3; color: %4; border: 1px solid %5; padding: 10px 12px; border-radius: 12px; selection-background-color: %6; }"
+                    "QLineEdit:focus { border: 1.5px solid %6; }"
+                    "QLineEdit::placeholder { color: %7; }")
+                .arg(cardBg.data())
                 .arg(theme.colors.accent.data())
+                .arg(theme.colors.surface.data())
                 .arg(theme.colors.text.data())
                 .arg(theme.colors.disabled.data())
-                .arg(theme.colors.focus.data()));
+                .arg(theme.colors.focus.data())
+                .arg(theme.colors.disabled.data()));
 
         title->setStyleSheet(
-            QString("QLabel { color: %1; font-weight: bold; }")
+            QString("QLabel { color: %1; font-weight: bold; background-color: transparent; border: none; }")
                 .arg(theme.colors.accent.data()));
         msg->setStyleSheet(
-            QString("QLabel { color: %1; }")
+            QString("QLabel { color: %1; background-color: transparent; border: none; }")
                 .arg(theme.colors.text.data()));
         dialogButton->setStyleSheet(
             QString("QDialogButtonBox { background-color: transparent; border: none; }"
-                    "QPushButton { color: %1; background-color: %2; border: none; border-radius: 14px; padding: 10px 18px; }"
+                    "QPushButton { color: %1; background-color: %2; border: none; border-radius: 16px; padding: 12px 20px; }"
                     "QPushButton:hover { background-color: %3; }"
+                    "QPushButton:pressed { background-color: %5; }"
                     "QPushButton:disabled { background-color: %4; }")
                 .arg(theme.colors.text.data())
                 .arg(theme.colors.primary.data())
                 .arg(theme.colors.hover.data())
-                .arg(theme.colors.disabled.data()));
+                .arg(theme.colors.disabled.data())
+                .arg(theme.colors.focus.data()));
     }
 
 } // namespace neko::ui::dialog

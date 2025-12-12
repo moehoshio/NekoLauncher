@@ -1,7 +1,10 @@
 #include "neko/ui/pages/settingPage.hpp"
 
 #include "neko/app/lang.hpp"
+#include "neko/app/nekoLc.hpp"
 #include "neko/bus/configBus.hpp"
+#include "neko/ui/dialogs/themeEditorDialog.hpp"
+#include "neko/ui/themeIO.hpp"
 
 #include "neko/core/auth.hpp"
 
@@ -40,9 +43,10 @@ namespace neko::ui::page {
         }
     } // namespace
 
-    SettingPage::SettingPage(QWidget *parent)
-        : QWidget(parent),
-          tabWidget(new QTabWidget(this)),
+        SettingPage::SettingPage(QWidget *parent)
+                : QWidget(parent),
+                    tabWidget(new QTabWidget(this)),
+                    themeDir(lc::ThemeFolderName.data()),
           authScroll(new QScrollArea(tabWidget)),
           authTab(new QWidget()),
           authStatusLabel(new QLabel(authTab)),
@@ -58,6 +62,7 @@ namespace neko::ui::page {
           launcherMethodCombo(new QComboBox(mainGroup)),
           styleGroup(new QGroupBox(QStringLiteral("Style"), mainTab)),
           themeCombo(new QComboBox(styleGroup)),
+          editThemeBtn(new QPushButton(QStringLiteral("Edit"), styleGroup)),
           blurEffectCombo(new QComboBox(styleGroup)),
           blurRadiusSlider(new QSlider(Qt::Horizontal, styleGroup)),
           fontPointSizeSpin(new QSpinBox(styleGroup)),
@@ -181,7 +186,14 @@ namespace neko::ui::page {
         auto *themeLabel = new QLabel(styleGroup);
         themeLabel->setObjectName(QStringLiteral("themeLabel"));
         styleLayout->addWidget(themeLabel);
-        styleLayout->addWidget(themeCombo);
+        auto *themeRow = new QHBoxLayout();
+        themeRow->setContentsMargins(0, 0, 0, 0);
+        themeRow->setSpacing(8);
+        themeRow->addWidget(themeCombo, 1);
+        editThemeBtn->setObjectName(QStringLiteral("editThemeBtn"));
+        editThemeBtn->setFixedWidth(72);
+        themeRow->addWidget(editThemeBtn, 0);
+        styleLayout->addLayout(themeRow);
         auto *blurEffectLabel = new QLabel(styleGroup);
         blurEffectLabel->setObjectName(QStringLiteral("blurEffectLabel"));
         styleLayout->addWidget(blurEffectLabel);
@@ -364,7 +376,30 @@ namespace neko::ui::page {
             retranslateUi();
             emit languageChanged(langCode);
         });
-        connect(themeCombo, &QComboBox::currentTextChanged, this, &SettingPage::themeChanged);
+        connect(themeCombo, &QComboBox::currentTextChanged, this, [this](const QString &name) {
+            updateEditThemeState();
+            emit themeChanged(name);
+        });
+        connect(editThemeBtn, &QPushButton::clicked, this, [this]() {
+            const std::string name = themeCombo->currentText().toStdString();
+            Theme base = themeio::loadThemeByName(name, themeDir).value_or(lightTheme);
+            dialog::ThemeEditorDialog dlg(base, this);
+            if (dlg.exec() != QDialog::Accepted) {
+                return;
+            }
+            Theme edited = dlg.getEditedTheme();
+            if (edited.info.name.empty()) {
+                edited.info.name = name.empty() ? std::string("Custom") : name;
+            }
+            std::string err;
+            if (!themeio::saveTheme(edited, themeDir, err)) {
+                log::warn("Failed to save theme: {}", {}, err);
+                return;
+            }
+            refreshThemeList();
+            themeCombo->setCurrentText(QString::fromStdString(edited.info.name));
+            emit themeChanged(QString::fromStdString(edited.info.name));
+        });
         connect(fontPointSizeSpin, qOverload<int>(&QSpinBox::valueChanged), this, &SettingPage::fontPointSizeChanged);
         connect(fontFamiliesCombo, &QFontComboBox::currentFontChanged, this, [this](const QFont &f) {
             emit fontFamiliesChanged(f.family());
@@ -389,7 +424,7 @@ namespace neko::ui::page {
         blurEffectCombo->addItems({"performance", "quality", "animation"});
         launcherMethodCombo->addItems({"launchVisible", "launchHidden", "launchHideRestore"});
         downloadSourceCombo->addItems({"Official", "BMCLAPI"});
-        themeCombo->addItems({"Light", "Dark"});
+        refreshThemeList();
 
         languageCombo->clear();
         try {
@@ -451,6 +486,7 @@ namespace neko::ui::page {
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("themeLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::theme, "Theme"));
         }
+        editThemeBtn->setText(tr(lang::keys::button::category, lang::keys::button::edit, "Edit"));
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("blurEffectLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::blurEffect, "Blur effect"));
         }
@@ -513,6 +549,15 @@ namespace neko::ui::page {
         authStatusLabel->setText(QString::fromStdString(status));
         authButton->setText(QString::fromStdString(lang::tr(lang::keys::setting::category, core::auth::isLoggedIn() ? lang::keys::setting::logout : lang::keys::setting::login,
                                                             core::auth::isLoggedIn() ? "__logout__" : "__login__")));
+    }
+
+    bool SettingPage::isBuiltinTheme(const QString &name) {
+        const QString lower = name.trimmed().toLower();
+        return lower == QString::fromLatin1(themeio::kLightName).toLower() || lower == QString::fromLatin1(themeio::kDarkName).toLower();
+    }
+
+    void SettingPage::updateEditThemeState() {
+        editThemeBtn->setEnabled(!isBuiltinTheme(themeCombo->currentText()));
     }
 
     void SettingPage::setupTheme(const Theme &theme) {
@@ -595,13 +640,15 @@ namespace neko::ui::page {
         }
 
         const QString toolBtnStyle = QString(
-                                         "QToolButton { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px 10px; }"
-                                         "QToolButton:hover { background-color: %4; border-color: %3; }")
+                                         "QToolButton, QPushButton#editThemeBtn { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px 10px; }"
+                                         "QToolButton:hover, QPushButton#editThemeBtn:hover { background-color: %4; border-color: %3; }"
+                                         "QToolButton:disabled, QPushButton#editThemeBtn:disabled { background-color: %5; color: %2; border-color: %5; }")
                                          .arg(theme.colors.surface.data())
                                          .arg(theme.colors.text.data())
                                          .arg(theme.colors.accent.data())
-                                         .arg(theme.colors.hover.data());
-        for (auto *tb : {customTempDirBrowseBtn, closeTabButton, javaPathBrowseBtn, backgroundBrowseBtn}) {
+                                         .arg(theme.colors.hover.data())
+                                         .arg(theme.colors.disabled.data());
+        for (auto *tb : std::initializer_list<QWidget *>{customTempDirBrowseBtn, closeTabButton, javaPathBrowseBtn, backgroundBrowseBtn, editThemeBtn}) {
             tb->setStyleSheet(toolBtnStyle);
         }
 
@@ -614,6 +661,7 @@ namespace neko::ui::page {
         for (auto *btn : {authButton, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
             btn->setStyleSheet(btnStyle);
         }
+
     }
 
     void SettingPage::applyGroupStyle(const Theme &theme) {
@@ -657,6 +705,22 @@ namespace neko::ui::page {
         retranslateUi();
     }
 
+    void SettingPage::refreshThemeList() {
+        const auto names = themeio::listThemeNames(themeDir);
+        const QString current = themeCombo->currentText();
+        themeCombo->blockSignals(true);
+        themeCombo->clear();
+        for (const auto &name : names) {
+            themeCombo->addItem(QString::fromStdString(name));
+        }
+        const int idx = themeCombo->findText(current, Qt::MatchFixedString);
+        if (idx >= 0) {
+            themeCombo->setCurrentIndex(idx);
+        }
+        themeCombo->blockSignals(false);
+        updateEditThemeState();
+    }
+
     void SettingPage::resizeItems(int windowWidth, int windowHeight) {
         setGeometry(0, 0, windowWidth, windowHeight);
         tabWidget->setGeometry(0, 0, windowWidth, windowHeight);
@@ -683,6 +747,7 @@ namespace neko::ui::page {
         retranslateUi();
 
         themeCombo->setCurrentText(QString::fromStdString(cfg.style.theme));
+        updateEditThemeState();
         blurEffectCombo->setCurrentText(QString::fromStdString(cfg.style.blurEffect));
         const int blurRadiusVal = static_cast<int>(cfg.style.blurRadius);
         blurRadiusSlider->setValue(blurRadiusVal == 1 ? 0 : blurRadiusVal);

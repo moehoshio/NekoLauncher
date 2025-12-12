@@ -25,12 +25,14 @@ namespace neko::lc {
 
     constexpr neko::strview LoadingIconPath = "img/loading.gif";
 
+    constexpr neko::strview ThemeFolderName = "themes";
+
     // Options: "custom", "minecraft"
     constexpr neko::strview LauncherMode = "minecraft";
 
     constexpr neko::strview ClientConfigFileName = "config.ini";
 
-    constexpr neko::strview LanguageFolderName = "lang";
+    constexpr neko::strview LanguageFolderName = "langs";
 
     /***************/
     /*** Network ***/

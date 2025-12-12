@@ -1,0 +1,25 @@
+{
+    "info": {
+        "name": "Aurora",
+        "description": "Cool teal-purple glow with soft panels",
+        "author": "Sample",
+        "type": "custom"
+    },
+    "colors": {
+        "primary": "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #6ad7e5, stop:1 #7c6ae5)",
+        "secondary": "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #7ee8b7, stop:1 #64c9f5)",
+        "background": "qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #0e1628, stop:1 #141c30)",
+        "canvas": "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #0a1222, stop:0.4 #11243a, stop:0.75 #1c3252, stop:1 #11243a)",
+        "text": "#e8ecf5",
+        "accent": "#8be9fd",
+        "success": "#4ade80",
+        "warning": "#fbbf24",
+        "error": "#f87171",
+        "info": "#38bdf8",
+        "surface": "rgba(26, 34, 52, 0.96)",
+        "panel": "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(35,45,70,0.96), stop:1 rgba(24,32,52,0.9))",
+        "disabled": "#475569",
+        "hover": "rgba(139,233,253,0.18)",
+        "focus": "rgba(124,106,229,0.32)"
+    }
+}

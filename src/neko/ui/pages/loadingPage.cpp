@@ -145,13 +145,14 @@ namespace neko::ui::page {
 
     void LoadingPage::setupTheme(const Theme &theme) {
 
+        const auto cardBg = theme.colors.panel.empty() ? theme.colors.surface : theme.colors.panel;
         QString textLayoutStyle =
             QString(
-                "background-color: %1;"
-                "border: 1px solid %2;"
-                "border-radius: 18px;"
-                "padding: 16px 18px;")
-                .arg(theme.colors.surface.data())
+                "background: %1;"
+                "border: 1.5px solid %2;"
+                "border-radius: 22px;"
+                "padding: 20px 22px;")
+                .arg(cardBg.data())
                 .arg(theme.colors.accent.data());
         textLayoutWidget->setStyleSheet(textLayoutStyle);
         QString progressBarStyle =
@@ -159,13 +160,13 @@ namespace neko::ui::page {
                 "QProgressBar {"
                 "background-color: %1;"
                 "color: %2;"
-                "border: 1px solid %3;"
-                "border-radius: 12px;"
-                "padding: 4px 10px;"
+                "border: 1.5px solid %3;"
+                "border-radius: 14px;"
+                "padding: 6px 12px;"
                 "}"
                 "QProgressBar::chunk {"
                 "background-color: %4;"
-                "border-radius: 10px;"
+                "border-radius: 12px;"
                 "}")
                 .arg(theme.colors.surface.data())
                 .arg(theme.colors.text.data())
@@ -215,11 +216,19 @@ namespace neko::ui::page {
         const int barY = static_cast<int>(windowHeight * 0.78);
         progressBar->setGeometry(barX, barY, barWidth, barHeight);
 
-        const int loadingSize = static_cast<int>(barHeight * 0.8);
-        loadingLabel->setGeometry(barX - loadingSize - 12, barY + (barHeight - loadingSize) / 2, loadingSize, loadingSize);
-
+        // Position progress text near bottom-left
+        const int processWidth = static_cast<int>(windowWidth * 0.4);
+        const int processHeight = static_cast<int>(windowHeight * 0.06);
+        const int processX = static_cast<int>(windowWidth * 0.04);
+        const int processY = static_cast<int>(windowHeight * 0.90);
         process->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        process->setGeometry(static_cast<int>(windowWidth * 0.04), static_cast<int>(windowHeight * 0.9), static_cast<int>(windowWidth * 0.4), static_cast<int>(windowHeight * 0.06));
+        process->setGeometry(processX, processY, processWidth, processHeight);
+
+        // Place loading GIF above the progress text instead of beside the bar
+        const int loadingSize = static_cast<int>(processHeight * 1.1);
+        const int loadingX = processX;
+        const int loadingY = processY - loadingSize - 6;
+        loadingLabel->setGeometry(loadingX, loadingY, loadingSize, loadingSize);
     }
 
 } // namespace neko::ui::page

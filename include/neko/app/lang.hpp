@@ -299,7 +299,8 @@ namespace neko::lang {
                 apply = "apply",
                 quit = "quit",
                 retry = "retry",
-                input = "input";
+                input = "input",
+                edit = "edit";
         } // namespace button
 
         namespace minecraft {

@@ -41,7 +41,9 @@
         "restore": "还原",
         "apply": "应用",
         "quit": "退出",
-        "retry": "重试"
+        "retry": "重试",
+        "input": "输入",
+        "edit": "编辑"
     },
     "minecraft": {
         "missingAccessToken": "缺少访问令牌，无法登录 Minecraft 账号。",

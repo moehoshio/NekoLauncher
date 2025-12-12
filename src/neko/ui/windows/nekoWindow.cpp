@@ -1,5 +1,7 @@
 #include "neko/ui/windows/nekoWindow.hpp"
 #include "neko/ui/fonts.hpp"
+#include "neko/ui/themeIO.hpp"
+#include "neko/app/nekoLc.hpp"
 
 #include "neko/app/app.hpp"
 #include "neko/app/appinfo.hpp"
@@ -238,16 +240,18 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::onThemeChanged(const QString &themeName) {
-        // Basic mapping; extend as needed for custom themes.
-        const auto name = themeName.toLower();
-        if (name == "dark") {
-            ui::setCurrentTheme(ui::darkTheme);
-        } else if (name == "home") {
-            ui::setCurrentTheme(ui::homeTheme);
-        } else {
-            ui::setCurrentTheme(ui::lightTheme);
+        const auto nameStd = themeName.toStdString();
+        auto themeOpt = ui::themeio::loadThemeByName(nameStd, lc::ThemeFolderName.data());
+        if (!themeOpt.has_value()) {
+            themeOpt = ui::lightTheme;
         }
+
+        // Avoid mid-apply repaints for a smoother switch
+        this->setUpdatesEnabled(false);
+        ui::setCurrentTheme(*themeOpt);
         setupTheme(ui::getCurrentTheme());
+        this->setUpdatesEnabled(true);
+        this->update();
     }
 
     void NekoWindow::onFontPointSizeChanged(int pointSize) {

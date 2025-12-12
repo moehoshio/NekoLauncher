@@ -29,6 +29,7 @@ namespace neko::ui::page {
         Q_OBJECT
     private:
         QTabWidget *tabWidget;
+        std::string themeDir;
 
         QScrollArea *authScroll;
 
@@ -50,6 +51,7 @@ namespace neko::ui::page {
 
         QGroupBox *styleGroup;
         QComboBox *themeCombo;
+        QPushButton *editThemeBtn;
         QComboBox *blurEffectCombo;
         QSlider *blurRadiusSlider;
         QSpinBox *fontPointSizeSpin;
@@ -91,8 +93,11 @@ namespace neko::ui::page {
 
         void buildUi();
         void setupCombos();
+        void refreshThemeList();
         void applyGroupStyle(const Theme &theme);
         void retranslateUi();
+        void updateEditThemeState();
+        static bool isBuiltinTheme(const QString &name);
 
     public:
         SettingPage(QWidget *parent = nullptr);
