@@ -43,12 +43,10 @@ namespace neko::core::install {
 		auto status = lang::tr(lang::keys::update::category, lang::keys::update::startingUpdate, "Installing resources...");
 		bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = status});
 
-		log::info("Resource version missing; starting resource install via update pipeline");
+		log::info("Resource version missing; starting resource install pipeline");
 
 		try {
-			update::autoUpdate();
-
-			// When launcher mode targets Minecraft, perform MC assets install once core resources are ready.
+			// For Minecraft mode: install Minecraft first, then run resource update so resourceVersion is only saved after MC succeeds.
 			if constexpr (lc::LauncherMode == neko::strview("minecraft")) {
 				const auto cfg = bus::config::getClientConfig();
 				const std::string targetVersion = cfg.minecraft.targetVersion.empty() ? "1.16.5" : cfg.minecraft.targetVersion;
@@ -59,10 +57,13 @@ namespace neko::core::install {
 					return minecraft::DownloadSource::Official;
 				};
 
+				auto mcStatus = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::installStart, "Preparing Minecraft install...");
+				bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = mcStatus});
 				log::info("LauncherMode=minecraft; starting Minecraft install. targetVersion={}, path={}", {}, targetVersion, installPath);
 				minecraft::installMinecraft(installPath, targetVersion, toSource(cfg.minecraft.downloadSource));
 			}
 
+			update::autoUpdate();
 			return true;
 		} catch (const ex::Exception &e) {
 			std::string reason = std::string("Auto-install failed: ") + e.what();

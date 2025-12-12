@@ -21,12 +21,16 @@
 #include "neko/ui/uiMsg.hpp"
 #include "neko/minecraft/downloadSource.hpp"
 #include "neko/bus/eventBus.hpp"
+#include "neko/bus/threadBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <fstream>
+#include <atomic>
+#include <future>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -107,6 +111,36 @@ namespace neko::minecraft {
             bus::event::publish(event::LoadingValueChangedEvent{.progressValue = val});
         };
 
+        std::mutex errorMutex;
+        std::string firstError;
+        std::atomic<bool> failed{false};
+
+        auto recordFailure = [&](const std::string &msg) {
+            failed.store(true, std::memory_order_release);
+            std::scoped_lock lock(errorMutex);
+            if (firstError.empty()) {
+                firstError = msg;
+            }
+        };
+
+        std::vector<std::future<void>> tasks;
+        tasks.reserve(libraries.size() + assetsObj.size());
+
+        auto scheduleDownload = [&](const std::string &url, const std::filesystem::path &dest, const std::string &prefix, const std::string &statusMsg) {
+            tasks.push_back(bus::thread::submit([=, &recordFailure, &bumpProgress, &failed, &sendStatus, &downloadFile]() {
+                if (failed.load(std::memory_order_acquire)) {
+                    return;
+                }
+                try {
+                    sendStatus(statusMsg);
+                    downloadFile(url, dest, prefix);
+                    bumpProgress();
+                } catch (const std::exception &e) {
+                    recordFailure(e.what());
+                }
+            }));
+        };
+
         // Download libraries
         for (const auto &library : libraries) {
             const auto &artifact = library.at("downloads").at("artifact");
@@ -116,10 +150,8 @@ namespace neko::minecraft {
             std::filesystem::path libraryPath = basePath / "libraries" / artifact.at("path").get<std::string>();
             ensureDirectoryExists(libraryPath.parent_path());
 
-            sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingLibrary, "Downloading library...") + " " + library.value("name", ""));
-
-            downloadFile(libraryUrl, libraryPath, "library-");
-            bumpProgress();
+            std::string status = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingLibrary, "Downloading library...") + " " + library.value("name", "");
+            scheduleDownload(libraryUrl, libraryPath, "library-", status);
         }
 
         // Download client jar
@@ -146,9 +178,15 @@ namespace neko::minecraft {
             std::filesystem::path assetPath = basePath / "assets" / "objects" / assetHash.substr(0, 2) / assetHash;
             ensureDirectoryExists(assetPath.parent_path());
 
-            sendStatus(lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingAssets, "Downloading assets..."));
-            downloadFile(assetUrl, assetPath, "asset-");
-            bumpProgress();
+            std::string status = lang::tr(lang::keys::minecraft::category, lang::keys::minecraft::downloadingAssets, "Downloading assets...");
+            scheduleDownload(assetUrl, assetPath, "asset-", status);
+        }
+
+        for (auto &task : tasks) {
+            task.wait();
+        }
+        if (failed.load(std::memory_order_acquire)) {
+            throw ex::Exception("Minecraft install failed: " + firstError);
         }
 
         // Save version manifest
