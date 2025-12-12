@@ -6,6 +6,7 @@
 #include "neko/bus/threadBus.hpp"
 #include "neko/event/eventTypes.hpp"
 #include "neko/core/launcher.hpp"
+#include "neko/core/launcherProcess.hpp"
 
 namespace neko::core {
 

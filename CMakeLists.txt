@@ -9,7 +9,7 @@ if(POLICY CMP0167)
 endif()
 
 project(
-    NekoLc LANGUAGES CXX VERSION 0.0.1
+    NekoLc LANGUAGES CXX VERSION 0.0.2
     DESCRIPTION "Neko Launcher Client"
     HOMEPAGE_URL "https://github.com/moehoshio/NekoLauncher"
 )
@@ -261,7 +261,16 @@ list(APPEND NEKO_INCLUDE_DIRS
 # Src files
 list(APPEND NEKO_SRCFILES
     # Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/maintenance.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/remoteConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/update.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
+
+    # Minecraft
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/minecraft/installMinecraft.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/minecraft/launcherMinecraft.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/minecraft/authMinecraft.cpp
+    
     # UI
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/dialogs/noticeDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/dialogs/inputDialog.cpp
