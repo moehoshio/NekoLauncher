@@ -41,10 +41,17 @@ namespace neko::ui::page {
         process->setWordWrap(true);
         text->setOpenExternalLinks(true);
 
+        // Cache all GIF frames to avoid disk stalls causing stutter
+        loadingMv->setCacheMode(QMovie::CacheAll);
+
         loadingLabel->setAttribute(Qt::WA_NoSystemBackground);
         loadingLabel->setMovie(loadingMv);
         loadingLabel->setScaledContents(true);
         poster->lower();
+
+        // Cache frames and force restart when GIF reports finite loop count
+        loadingMv->setCacheMode(QMovie::CacheAll);
+        connect(loadingMv, &QMovie::finished, loadingMv, &QMovie::start);
 
         auto *cardShadow = new QGraphicsDropShadowEffect(this);
         cardShadow->setBlurRadius(32);
@@ -68,6 +75,7 @@ namespace neko::ui::page {
         this->show();
         process->setText(QString::fromStdString(m.process));
         loadingMv->setFileName(QString::fromStdString(m.loadingIconPath));
+        loadingMv->jumpToFrame(0);
         loadingMv->start();
 
         if (m.type == LoadingMsg::Type::Text || m.type == LoadingMsg::Type::All) {
