@@ -73,7 +73,7 @@ TEST_F(UpdateTest, ParseUpdateValidJson) {
 // Test parseUpdate with invalid JSON
 TEST_F(UpdateTest, ParseUpdateInvalidJson) {
     std::string invalidJson = "not a json";
-    EXPECT_THROW({ neko::core::update::parseUpdate(invalidJson); }, neko::ex::Parse);
+    EXPECT_THROW({ neko::core::update::parseUpdate(invalidJson); }, neko::ex::ParseError);
 }
 
 // Test parseUpdate with missing fields
@@ -85,7 +85,7 @@ TEST_F(UpdateTest, ParseUpdateMissingFields) {
         }
     })";
 
-    EXPECT_THROW({ neko::core::update::parseUpdate(incompleteJson); }, neko::ex::OutOfRange);
+    EXPECT_THROW({ neko::core::update::parseUpdate(incompleteJson); }, neko::ex::RangeError);
 }
 
 // Test parseUpdate with empty files array
@@ -110,7 +110,7 @@ TEST_F(UpdateTest, ParseUpdateEmptyFiles) {
 TEST_F(UpdateTest, UpdateWithEmptyData) {
     neko::api::UpdateResponse emptyData;
 
-    EXPECT_THROW({ neko::core::update::update(emptyData); }, neko::ex::InvalidArgument);
+    EXPECT_THROW({ neko::core::update::update(emptyData); }, neko::ex::ArgumentError);
 }
 
 // Test UpdateResponse::File structure

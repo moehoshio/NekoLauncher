@@ -107,8 +107,8 @@ namespace neko::core::update {
     /**
      * @brief Parse the update response from JSON string.
      * @param result The JSON string containing the update response.
-     * @throws ex::Parse if JSON parsing fails.
-     * @throws ex::OutOfRange if expected keys are missing in the JSON.
+    * @throws ex::ParseError if JSON parsing fails.
+    * @throws ex::RangeError if expected keys are missing in the JSON.
      * @throws ex::Exception for other exceptions during parsing.
      * @return The parsed UpdateResponse object.
      */
@@ -160,11 +160,11 @@ namespace neko::core::update {
         } catch (nlohmann::json::parse_error &e) {
             std::string errMsg = "Failed to parse json: " + std::string(e.what());
             log::error(errMsg);
-            throw ex::Parse(errMsg);
+            throw ex::ParseError(errMsg);
         } catch (nlohmann::json::out_of_range &e) {
             std::string errMsg = "Json key not found: " + std::string(e.what());
             log::error(errMsg);
-            throw ex::OutOfRange(errMsg);
+            throw ex::RangeError(errMsg);
         } catch (std::exception &e) {
             std::string errMsg = "Exception occurred: " + std::string(e.what());
             log::error(errMsg);
@@ -178,14 +178,14 @@ namespace neko::core::update {
      * @param data The update response data.
      * @throws ex::NetworkError if any network operation fails.
      * @throws ex::FileError if file operations fail.
-     * @throws ex::InvalidArgument if the update data is invalid.
+    * @throws ex::ArgumentError if the update data is invalid.
      * @throws ex::Exception for other errors during the update process.
      */
     void update(api::UpdateResponse data) {
         if (data.empty()) {
             std::string reason = "Update data is empty";
             bus::event::publish(event::UpdateFailedEvent{.reason = reason});
-            throw ex::InvalidArgument(reason);
+            throw ex::ArgumentError(reason);
         }
 
         auto notifyProgress = [&](const std::string &msg) {

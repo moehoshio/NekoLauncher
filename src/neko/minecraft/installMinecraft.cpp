@@ -40,6 +40,13 @@ namespace neko::minecraft {
 
         const std::filesystem::path basePath(installPath);
 
+        // Ensure we have enough workers for thousands of download tasks; keep original to restore.
+        const auto originalThreads = bus::thread::getThreadCount();
+        if (originalThreads < 128) {
+            bus::thread::setThreadCount(128);
+            log::info("MC install: bump thread pool from {} to 128 for download parallelism", {}, originalThreads);
+        }
+
         auto sendStatus = [](const std::string &msg) {
             bus::event::publish(event::LoadingStatusChangedEvent{.statusMessage = msg});
         };
@@ -100,6 +107,7 @@ namespace neko::minecraft {
         std::atomic<neko::uint32> progress{0};
         auto bumpProgress = [&]() {
             auto val = ++progress;
+            log::info("MC install progress: {}/{}", {}, val, progressMax);
             bus::event::publish(event::LoadingValueChangedEvent{.progressValue = val});
         };
 
@@ -124,10 +132,13 @@ namespace neko::minecraft {
                     return;
                 }
                 try {
+                    log::info("MC install downloading: {} -> {}", {}, url, dest.string());
                     sendStatus(statusMsg);
                     downloadFile(url, dest, prefix);
+                    log::info("MC install downloaded: {}", {}, dest.string());
                     bumpProgress();
                 } catch (const std::exception &e) {
+                    log::error("MC install download failed: {} -> {} : {}", {}, url, dest.string(), e.what());
                     recordFailure(e.what());
                 }
             }));
@@ -176,6 +187,10 @@ namespace neko::minecraft {
 
         for (auto &task : tasks) {
             task.wait();
+        }
+        if (originalThreads < 128) {
+            bus::thread::setThreadCount(originalThreads);
+            log::info("MC install: restored thread pool size to {}", {}, originalThreads);
         }
         if (failed.load(std::memory_order_acquire)) {
             throw ex::Exception("Minecraft install failed: " + firstError);

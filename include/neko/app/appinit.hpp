@@ -14,6 +14,8 @@
 #include <neko/network/networkCommon.hpp>
 #include <neko/system/platform.hpp>
 
+#include <QtCore/QMetaType>
+
 #include "neko/app/appinfo.hpp"
 #include "neko/app/clientConfig.hpp"
 #include "neko/app/lang.hpp"
@@ -31,6 +33,11 @@
 #include <sstream>
 
 namespace neko::app::init {
+
+    inline void registerQtMetaTypes() {
+        qRegisterMetaType<std::string>("std::string");
+        qRegisterMetaType<neko::ui::LoadingMsg>("neko::ui::LoadingMsg");
+    }
 
     inline void initDeviceID() {
         auto cfg = bus::config::getClientConfig();
@@ -244,6 +251,8 @@ namespace neko::app::init {
 
         initDeviceID();
         initLanguage();
+
+        registerQtMetaTypes();
 
         configInfoPrint(bus::config::getClientConfig());
 
