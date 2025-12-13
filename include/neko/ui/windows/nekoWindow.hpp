@@ -45,6 +45,7 @@ namespace neko::ui::window {
 
         bool useImageBackground = false;
         void applyCentralBackground(const Theme &theme);
+        void showLangLoadWarningIfNeeded();
 
     public:
         NekoWindow(const ClientConfig &config);

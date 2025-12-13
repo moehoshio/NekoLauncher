@@ -3,11 +3,14 @@
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include <QtGui/QMovie>
+#include <QtCore/QFileInfo>
 #include <QtWidgets/QGraphicsDropShadowEffect>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+
+#include <neko/log/nlog.hpp>
 
 namespace neko::ui::page {
 
@@ -72,11 +75,24 @@ namespace neko::ui::page {
     }
 
     void LoadingPage::showLoading(const LoadingMsg &m) {
+        log::info("LoadingPage::showLoading type={} speed={} poster={}", {}, static_cast<int>(m.type), m.speed, m.posterPath);
         this->show();
         process->setText(QString::fromStdString(m.process));
-        loadingMv->setFileName(QString::fromStdString(m.loadingIconPath));
-        loadingMv->jumpToFrame(0);
-        loadingMv->start();
+        const QString moviePath = m.loadingIconPath.empty() ? QStringLiteral("img/loading.gif") : QString::fromStdString(m.loadingIconPath);
+        loadingMv->stop();
+        const QFileInfo fi(moviePath);
+        if (!fi.exists()) {
+            // Missing loading gif should be ignored silently.
+            loadingLabel->clear();
+        } else {
+            loadingMv->setFileName(moviePath);
+            if (loadingMv->isValid()) {
+                loadingMv->jumpToFrame(0);
+                loadingMv->start();
+            } else {
+                loadingLabel->clear();
+            }
+        }
 
         if (m.type == LoadingMsg::Type::Text || m.type == LoadingMsg::Type::All) {
             h1Title->setText(QString::fromStdString(m.h1));

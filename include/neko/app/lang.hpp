@@ -24,6 +24,26 @@
  */
 namespace neko::lang {
 
+    inline std::shared_mutex &langErrorMutex() {
+        static std::shared_mutex mtx;
+        return mtx;
+    }
+
+    inline std::string &langErrorRef() {
+        static std::string err;
+        return err;
+    }
+
+    inline void setLastLoadError(const std::string &msg) {
+        std::unique_lock lock(langErrorMutex());
+        langErrorRef() = msg;
+    }
+
+    inline std::string lastLoadError() {
+        std::shared_lock lock(langErrorMutex());
+        return langErrorRef();
+    }
+
     /**
      * @brief Sets or gets the preferred language (file name without extension).
      */
@@ -65,6 +85,24 @@ namespace neko::lang {
         static std::string cachedLangFolder;
         static nlohmann::json cachedJson;
 
+        auto tryLoadFile = [](const std::string &code, const std::string &folder, nlohmann::json &out, std::string &err) -> bool {
+            const std::string filePath = folder + "/" + code + ".json";
+            std::ifstream i(filePath);
+            if (!std::filesystem::exists(filePath) || !i.is_open()) {
+                err = "Language file does not exist or cannot be opened: " + filePath;
+                log::error("{}", {}, err);
+                return false;
+            }
+            try {
+                out = nlohmann::json::parse(i);
+            } catch (const nlohmann::json::parse_error &e) {
+                err = std::string("Failed to parse language file: ") + filePath + " | " + e.what();
+                log::error("{}", {}, err);
+                return false;
+            }
+            return true;
+        };
+
         {
             std::shared_lock lock(languageMutex);
             if (langCode == cachedLangCode && langFolder == cachedLangFolder) {
@@ -73,24 +111,34 @@ namespace neko::lang {
         }
 
         std::unique_lock uniqueLock(languageMutex);
-        std::string filePath = langFolder + "/" + langCode + ".json";
-        std::ifstream i(filePath);
-        if (!std::filesystem::exists(filePath) || !i.is_open()) {
-            log::error("Language file : {} , does not exist or cannot be opened !", {}, filePath);
+        nlohmann::json parsed;
+        std::string err;
+        if (!tryLoadFile(langCode, langFolder, parsed, err)) {
+            // Attempt to fallback to English if available
+            if (langCode != "en") {
+                nlohmann::json fallback;
+                std::string fallbackErr;
+                if (tryLoadFile("en", langFolder, fallback, fallbackErr)) {
+                    cachedJson = std::move(fallback);
+                    cachedLangCode = langCode;
+                    cachedLangFolder = langFolder;
+                    setLastLoadError(err + " | Falling back to en.json");
+                    return cachedJson;
+                }
+                err += " | Fallback en.json failed: " + fallbackErr;
+            }
             cachedJson = nlohmann::json::object();
+            cachedLangCode = langCode;
+            cachedLangFolder = langFolder;
+            setLastLoadError(err);
             return cachedJson;
         }
 
-        try {
-            cachedJson = nlohmann::json::parse(i);
-        } catch (const nlohmann::json::parse_error &e) {
-            log::error("Failed to parse language : {} , file : {}", {}, e.what(), filePath);
-            cachedJson = nlohmann::json::object();
-            return cachedJson;
-        }
-        log::info("Loaded language file : " + filePath);
+        log::info("Loaded language file : " + langFolder + "/" + langCode + ".json");
+        cachedJson = std::move(parsed);
         cachedLangCode = langCode;
         cachedLangFolder = langFolder;
+        setLastLoadError("");
         return cachedJson;
     }
 
@@ -101,6 +149,11 @@ namespace neko::lang {
      */
     inline std::vector<std::pair<std::string, std::string>> getLanguages(const std::string &langFolder = getLanguageFolder()) {
         std::vector<std::pair<std::string, std::string>> result;
+        if (!std::filesystem::exists(langFolder)) {
+            log::warn("Language folder does not exist: {}", {}, langFolder);
+            setLastLoadError("Language folder missing: " + langFolder);
+            return result;
+        }
         for (const auto &it : std::filesystem::directory_iterator(langFolder)) {
             if (it.is_regular_file() && util::string::matchExtensionName(it.path().string(), "json")) {
                 std::string langCode = it.path().stem().string();

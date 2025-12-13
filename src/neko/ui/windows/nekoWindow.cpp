@@ -40,6 +40,7 @@ namespace neko::ui::window {
                     loadingPage(new page::LoadingPage(this)),
                     settingPage(new page::SettingPage(this)) {
 
+        log::info("NekoWindow ctor: start widgets");
         // Setup widget stacking order
         pixmapWidget->lower();
         centralWidget->raise();
@@ -58,8 +59,9 @@ namespace neko::ui::window {
         centralWidget->setObjectName("centralWidget");
         centralWidget->setAttribute(Qt::WA_StyledBackground, true);
 
-        // Setup themes
+        log::info("NekoWindow ctor: setup theme");
         setupTheme(ui::getCurrentTheme());
+        log::info("NekoWindow ctor: setup text");
         setupText();
         pixmapWidget->setGraphicsEffect(blurEffect);
 
@@ -70,14 +72,22 @@ namespace neko::ui::window {
         this->setWindowIcon(QIcon(lc::AppIconPath.data()));
         // Use the native window frame; no custom head bar.
 
+        log::info("NekoWindow ctor: switch to loading page");
         switchToPage(Page::loading);
+        log::info("NekoWindow ctor: settingFromConfig start");
         settingFromConfig(config);
+        log::info("NekoWindow ctor: setup connections");
         setupConnections();
+        log::info("NekoWindow ctor: resizeItems start");
         resizeItems(this->width(), this->height());
+        log::info("NekoWindow ctor: showLoading start");
         showLoading({
             .type = ui::LoadingMsg::Type::OnlyRaw,
             .process = lang::tr(lang::keys::loading::category, lang::keys::loading::starting, "Starting...")
         });
+        log::info("NekoWindow ctor: showLangLoadWarningIfNeeded");
+        showLangLoadWarningIfNeeded();
+        log::info("NekoWindow ctor: done");
     }
     NekoWindow::~NekoWindow() = default;
 
@@ -114,6 +124,20 @@ namespace neko::ui::window {
                                              .arg(backdrop.data()));
             centralWidget->setAutoFillBackground(true);
         }
+    }
+
+    void NekoWindow::showLangLoadWarningIfNeeded() {
+        const std::string err = lang::lastLoadError();
+        if (err.empty()) {
+            return;
+        }
+        log::warn("Language load warning: {}", {}, err);
+        NoticeMsg notice;
+        notice.title = "Language missing";
+        notice.message = err + "\n" + std::string("Falling back to default text.");
+        notice.buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")};
+        notice.callback = [](neko::uint32) {};
+        showNotice(notice);
     }
 
     void NekoWindow::showNotice(const NoticeMsg &m) {
@@ -422,6 +446,7 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::switchToPage(Page page) {
+        log::info("switchToPage {}", {}, static_cast<int>(page));
         // Always hide all pages first to avoid overlapping views when switching.
         homePage->hide();
         loadingPage->hide();
@@ -450,6 +475,7 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::resizeItems(int width, int height) {
+        log::info("resizeItems {} {}", {}, width, height);
         pixmapWidget->resize(width, height);
         centralWidget->setGeometry(0, 0, width, height);
         const int contentX = 0;

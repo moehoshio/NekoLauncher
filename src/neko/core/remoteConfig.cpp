@@ -41,7 +41,7 @@ namespace neko::core {
             api::LauncherConfigResponse response;
             try {
                 nlohmann::json config = nlohmann::json::parse(result.content);
-                response = config.get<api::LauncherConfigResponse>();
+                response = config.get<api::StaticConfig>().staticLauncherConfig;
             } catch (const nlohmann::json::exception &e) {
                 log::error(std::string("Failed to parse remote launcher config: ") + e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));
@@ -77,7 +77,7 @@ namespace neko::core {
             try {
                 // Parse the response content as JSON
                 nlohmann::json config = nlohmann::json::parse(result.content);
-                return config.get<api::StaticConfig>().staticLauncherConfig;
+                return config.get<api::LauncherConfigResponse>();
             } catch (const nlohmann::json::exception &e) {
                 log::error(std::string("Failed to parse remote launcher config: ") + e.what());
                 throw ex::Parse("Failed to parse remote launcher config: " + std::string(e.what()));

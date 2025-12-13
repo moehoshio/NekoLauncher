@@ -32,12 +32,19 @@ int main(int argc, char *argv[]) {
         app::init::initialize();
         auto runingInfo = app::run();
 
+        log::info("main: app::run complete");
+
         auto cfg = bus::config::getClientConfig();
+        log::info("main: config loaded");
         auto themeOpt = ui::themeio::loadThemeByName(cfg.style.theme, lc::ThemeFolderName.data());
+        log::info("main: theme loaded {}", {}, cfg.style.theme);
         ui::setCurrentTheme(themeOpt.value_or(ui::lightTheme));
+        log::info("main: creating NekoWindow");
         ui::window::NekoWindow window(cfg);
+        log::info("main: NekoWindow constructed");
         ui::UiEventDispatcher::setNekoWindow(&window);
         window.show();
+        log::info("main: window shown");
         
         bus::thread::submit([](){
             const bool installed = core::install::autoInstall();
