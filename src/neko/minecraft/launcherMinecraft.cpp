@@ -25,6 +25,7 @@
 #include <optional>
 #include <regex>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace neko::minecraft {
 
@@ -287,6 +288,19 @@ namespace neko::minecraft {
             };
         };
 
+        // Prevent concurrent downloads/write-checks to the same target path across threads.
+        inline std::shared_ptr<std::mutex> lockForPath(const std::string &path) {
+            static std::mutex mapMutex;
+            static std::unordered_map<std::string, std::shared_ptr<std::mutex>> pathLocks;
+
+            std::scoped_lock guard(mapMutex);
+            auto &ptr = pathLocks[path];
+            if (!ptr) {
+                ptr = std::make_shared<std::mutex>();
+            }
+            return ptr;
+        }
+
         /**
          * @brief Downloads a single archive file.
          * @param single The Classifiers object containing the archive information.
@@ -423,6 +437,10 @@ namespace neko::minecraft {
                                     artifact.artifact.size});
 
             for (const auto &it : SingleVector) {
+
+                // Ensure only one thread manipulates a given archive path at a time (download/hash/delete).
+                auto pathLock = lockForPath(it.path);
+                std::unique_lock<std::mutex> pathGuard(*pathLock);
 
                 // auto retry task
                 for (neko::uint32 i = 0; i < maxRetries; ++i) {
