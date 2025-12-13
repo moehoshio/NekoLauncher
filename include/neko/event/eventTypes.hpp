@@ -65,6 +65,8 @@ namespace neko::event {
         LoadingChangedEvent(const std::string &statusMessage, neko::uint32 progressValue)
             : LoadingValueChangedEvent{progressValue}, LoadingStatusChangedEvent{statusMessage} {}
     };
+    // Request UI to refresh localized text (e.g., after config or resource updates).
+    struct RefreshTextEvent {};
     struct HideInputEvent {};
 
 

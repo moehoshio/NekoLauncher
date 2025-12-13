@@ -217,13 +217,21 @@ namespace neko::core::update {
         std::atomic<bool> shouldStop(false);
 
         auto extractArchive = [](const std::string &filePath) -> std::optional<std::string> {
+            if (!archive::isArchiveFile(filePath)) {
+                return std::nullopt;
+            }
+
             archive::ExtractConfig cfg{
                 .inputArchivePath = filePath,
                 .destDir = system::workPath(),
                 .overwrite = true};
+
             try {
-                archive::zip::extract(cfg);
-                return std::nullopt;
+                if (archive::zip::isZipArchiveFile(filePath)) {
+                    archive::zip::extract(cfg);
+                    return std::nullopt;
+                }
+                return std::string{"Unsupported archive format for "} + filePath;
             } catch (const ex::Exception &e) {
                 return std::string{"Extract failed for "} + filePath + ": " + e.what();
             } catch (const std::exception &e) {
@@ -328,9 +336,9 @@ namespace neko::core::update {
             throw ex::Exception(failureReason);
         }
 
-        // Extract compressed archives into work path (zip supported)
+        // Extract compressed archives into work path
         for (const auto &file : data.files) {
-            if (!util::string::matchExtensionNames(file.fileName, {".zip"})) {
+            if (!archive::isArchiveFile(file.fileName)) {
                 continue;
             }
             if (auto err = extractArchive(file.fileName)) {

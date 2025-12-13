@@ -37,6 +37,8 @@ namespace neko::core {
         });
         (void)bus::event::subscribe<event::UpdateCompleteEvent>([](const event::UpdateCompleteEvent &) {
             log::info("UpdateCompleteEvent received: Application has been updated successfully.");
+            // Trigger UI text refresh so version/resource labels update immediately.
+            bus::event::publish(event::RefreshTextEvent{});
         });
         (void)bus::event::subscribe<event::UpdateFailedEvent>([](const event::UpdateFailedEvent &evt) {
             log::error("UpdateFailedEvent received: {}", {}, evt.reason);

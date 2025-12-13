@@ -76,5 +76,12 @@ namespace neko::ui {
                     emit nekoWindow->setLoadingStatusD(e.statusMessage);
                 }
             });
+
+        bus::event::subscribe<event::RefreshTextEvent>(
+            [](const event::RefreshTextEvent &) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->refreshTextD();
+                }
+            });
     }
 } // namespace neko::ui

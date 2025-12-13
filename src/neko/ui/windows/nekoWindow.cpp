@@ -172,6 +172,7 @@ namespace neko::ui::window {
         connect(this, &NekoWindow::switchToPageD, this, &NekoWindow::switchToPage);
         connect(this, &NekoWindow::setLoadingValueD, loadingPage, &page::LoadingPage::setLoadingValue);
         connect(this, &NekoWindow::setLoadingStatusD, loadingPage, &page::LoadingPage::setLoadingStatus);
+        connect(this, &NekoWindow::refreshTextD, this, &NekoWindow::setupText);
 
         connect(homePage, &page::HomePage::startButtonClicked, this, [this]() {
             if (!core::auth::isLoggedIn()) {

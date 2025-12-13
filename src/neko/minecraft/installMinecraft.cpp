@@ -42,9 +42,9 @@ namespace neko::minecraft {
 
         // Ensure we have enough workers for thousands of download tasks; keep original to restore.
         const auto originalThreads = bus::thread::getThreadCount();
-        if (originalThreads < 128) {
-            bus::thread::setThreadCount(128);
-            log::info("MC install: bump thread pool from {} to 128 for download parallelism", {}, originalThreads);
+        if (originalThreads < 64) {
+            bus::thread::setThreadCount(64);
+            log::info("MC install: bump thread pool from {} to 64 for download parallelism", {}, originalThreads);
         }
 
         auto sendStatus = [](const std::string &msg) {
@@ -105,10 +105,18 @@ namespace neko::minecraft {
             .progressMax = progressMax}));
 
         std::atomic<neko::uint32> progress{0};
+        std::atomic<neko::uint32> lastPublished{0};
         auto bumpProgress = [&]() {
-            auto val = ++progress;
+            const auto val = progress.fetch_add(1, std::memory_order_relaxed) + 1;
             log::info("MC install progress: {}/{}", {}, val, progressMax);
-            bus::event::publish(event::LoadingValueChangedEvent{.progressValue = val});
+
+            auto observed = lastPublished.load(std::memory_order_relaxed);
+            while (val > observed && !lastPublished.compare_exchange_weak(observed, val, std::memory_order_release, std::memory_order_relaxed)) {
+                // observed is updated with the latest published value; loop until we either win or see a newer value.
+            }
+            if (val > observed) {
+                bus::event::publish(event::LoadingValueChangedEvent{.progressValue = val});
+            }
         };
 
         std::mutex errorMutex;
@@ -188,7 +196,7 @@ namespace neko::minecraft {
         for (auto &task : tasks) {
             task.wait();
         }
-        if (originalThreads < 128) {
+        if (originalThreads < 64) {
             bus::thread::setThreadCount(originalThreads);
             log::info("MC install: restored thread pool size to {}", {}, originalThreads);
         }

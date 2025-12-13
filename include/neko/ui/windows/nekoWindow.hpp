@@ -78,6 +78,7 @@ namespace neko::ui::window {
         void switchToPageD(Page page);
         void setLoadingValueD(int value);
         void setLoadingStatusD(const std::string& msg);
+        void refreshTextD();
 
     public slots:
         void onThemeChanged(const QString &themeName);
