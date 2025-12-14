@@ -8,14 +8,14 @@
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
+#include "neko/core/crashReporter.hpp"
 #include "neko/core/install.hpp"
 #include "neko/core/update.hpp"
-#include "neko/core/crashReporter.hpp"
 
 #include "neko/ui/themeIO.hpp"
 #include "neko/ui/uiEventDispatcher.hpp"
-#include "neko/ui/windows/nekoWindow.hpp"
 #include "neko/ui/windows/logViewerWindow.hpp"
+#include "neko/ui/windows/nekoWindow.hpp"
 
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/QApplication>
@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 
         // Initialize Application
         QApplication qtApp(argc, argv);
-        app::init::initialize();
+        auto networkReady = app::init::initialize();
         auto runingInfo = app::run();
 
         log::info("main: app::run complete");
@@ -46,22 +46,28 @@ int main(int argc, char *argv[]) {
         ui::UiEventDispatcher::setNekoWindow(&window);
         window.show();
         log::info("main: window shown");
-        
-        bus::thread::submit([](){
-            const bool installed = core::install::autoInstall();
-            if (!installed) {
-                core::update::autoUpdate();
-            }
 
-            bus::event::publish(event::CurrentPageChangeEvent{
-                .page = ui::Page::home
-            });
+        bus::thread::submit([&networkReady]() {
+            try {
+                networkReady.get();
+                const bool installed = core::install::autoInstall();
+                if (!installed) {
+                    core::update::autoUpdate();
+                }
+                bus::event::publish(event::CurrentPageChangeEvent{
+                .page = ui::Page::home});
+            } catch (const ex::Exception &e) {
+                std::string reason = std::string("Auto-update/install failed: ") + e.what();
+                log::error(reason);
+                bus::event::publish(event::UpdateFailedEvent{.reason = reason});
+                bus::event::publish(event::CurrentPageChangeEvent{
+                .page = ui::Page::home});
+            }
         });
 
         // Start Qt event loop
         qtApp.exec();
 
-        // Stop event loop and worker threads before waiting on the loop future to prevent deadlock
         app::shutdown();
         runingInfo.eventLoopFuture.get();
         ui::UiEventDispatcher::clearNekoWindow();

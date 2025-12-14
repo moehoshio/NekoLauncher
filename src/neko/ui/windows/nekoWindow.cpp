@@ -82,7 +82,6 @@ namespace neko::ui::window {
         settingFromConfig(config);
         log::info("NekoWindow ctor: setup connections");
         setupConnections();
-        subscribeUiEvents();
         if (auto *hints = QGuiApplication::styleHints()) {
             connect(hints, &QStyleHints::colorSchemeChanged, this, [this]() {
                 applySystemThemeIfNeeded();
@@ -103,44 +102,6 @@ namespace neko::ui::window {
         log::info("NekoWindow ctor: done");
     }
     NekoWindow::~NekoWindow() {
-        clearUiEvents();
-    }
-
-    void NekoWindow::subscribeUiEvents() {
-        clearUiEvents();
-
-        eventSubs.show = bus::event::subscribe<event::ShowLoadingEvent>([this](const event::ShowLoadingEvent &e) {
-            QMetaObject::invokeMethod(this, [this, e]() {
-                showLoading(e);
-            }, Qt::QueuedConnection);
-        });
-
-        eventSubs.value = bus::event::subscribe<event::LoadingValueChangedEvent>([this](const event::LoadingValueChangedEvent &e) {
-            QMetaObject::invokeMethod(this, [this, e]() {
-                emit setLoadingValueD(static_cast<int>(e.progressValue));
-            }, Qt::QueuedConnection);
-        });
-
-        eventSubs.status = bus::event::subscribe<event::LoadingStatusChangedEvent>([this](const event::LoadingStatusChangedEvent &e) {
-            QMetaObject::invokeMethod(this, [this, e]() {
-                emit setLoadingStatusD(e.statusMessage);
-            }, Qt::QueuedConnection);
-        });
-
-        eventSubs.combined = bus::event::subscribe<event::LoadingChangedEvent>([this](const event::LoadingChangedEvent &e) {
-            QMetaObject::invokeMethod(this, [this, e]() {
-                emit setLoadingStatusD(e.statusMessage);
-                emit setLoadingValueD(static_cast<int>(e.progressValue));
-            }, Qt::QueuedConnection);
-        });
-    }
-
-    void NekoWindow::clearUiEvents() {
-        if (eventSubs.show != 0) bus::event::unsubscribe<event::ShowLoadingEvent>(eventSubs.show);
-        if (eventSubs.value != 0) bus::event::unsubscribe<event::LoadingValueChangedEvent>(eventSubs.value);
-        if (eventSubs.status != 0) bus::event::unsubscribe<event::LoadingStatusChangedEvent>(eventSubs.status);
-        if (eventSubs.combined != 0) bus::event::unsubscribe<event::LoadingChangedEvent>(eventSubs.combined);
-        eventSubs = {};
     }
 
     void NekoWindow::setupTheme(const Theme &theme) {

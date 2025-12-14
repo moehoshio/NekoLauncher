@@ -257,9 +257,11 @@ namespace neko::app::init {
         lang::language(cfg.main.lang);
     }
 
-    inline void initNetwork() {
+    inline auto initNetwork() {
+
         auto cfg = bus::config::getClientConfig();
-        network::initialize([cfg](network::config::NetConfig &config) {
+
+        auto init = [cfg](network::config::NetConfig &config) {
             std::string proxy(cfg.net.proxy);
             bool
                 dev = cfg.dev.enable,
@@ -309,10 +311,17 @@ namespace neko::app::init {
 
                 neko::log::warn("Network::initialize() : Testing host failed, host: {}, statusCode: {}, errorMessage: {}", {}, it, std::to_string(result.statusCode), result.errorMessage);
             }
-        });
+        };
+        
+        auto result = bus::thread::submitWithPriority(Priority::Critical,network::initialize,init);
+        return result;
     }
 
-    inline void initialize() {
+    /**
+     * @brief Initialize the NekoLauncher application.
+     * @return Result of network initialization.
+     */
+    inline auto initialize() {
         bus::config::load(app::getConfigFileName());
 
         // Mark this run as in-progress and remember if the last run ended uncleanly.
@@ -328,7 +337,7 @@ namespace neko::app::init {
 
         configInfoPrint(bus::config::getClientConfig());
 
-        initNetwork();
+        auto result = initNetwork();
 
         // Upload logs if the previous run crashed before proceeding.
         core::crash::uploadLogsIfNeeded(previousRunUnclean);
@@ -337,5 +346,7 @@ namespace neko::app::init {
         core::subscribeToCoreEvents();
         minecraft::subscribeToMinecraftEvents();
         ui::subscribeToUiEvent();
+
+        return result;
     }
 } // namespace neko::app::init

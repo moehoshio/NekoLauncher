@@ -58,15 +58,6 @@ namespace neko::ui::window {
         void applyPendingWindowSize();
         void applyWindowSizeText(const QString &sizeText, bool save);
 
-        struct EventSubscriptions {
-            neko::event::HandlerId show{};
-            neko::event::HandlerId value{};
-            neko::event::HandlerId status{};
-            neko::event::HandlerId combined{};
-        } eventSubs;
-        void subscribeUiEvents();
-        void clearUiEvents();
-
     public:
         NekoWindow(const ClientConfig &config);
         ~NekoWindow();
