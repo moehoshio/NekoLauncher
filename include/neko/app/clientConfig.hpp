@@ -67,6 +67,7 @@ namespace neko {
             long logRetentionDays;
             long maxLogFiles;
             bool lastRunUnclean;
+            bool immediateSave;
         } other;
 
         /**
@@ -135,6 +136,7 @@ namespace neko {
             other.logRetentionDays = cfg.GetLongValue("other", "logRetentionDays", 14);
             other.maxLogFiles = cfg.GetLongValue("other", "maxLogFiles", 20);
             other.lastRunUnclean = cfg.GetBoolValue("other", "lastRunUnclean", false);
+            other.immediateSave = cfg.GetBoolValue("other", "immediateSave", false);
 
             minecraft.minecraftFolder = cfg.GetValue("minecraft", "minecraftFolder", "./.minecraft");
             minecraft.javaPath = cfg.GetValue("minecraft", "javaPath", "");
@@ -195,6 +197,7 @@ namespace neko {
             cfg.SetLongValue("other", "logRetentionDays", other.logRetentionDays);
             cfg.SetLongValue("other", "maxLogFiles", other.maxLogFiles);
             cfg.SetBoolValue("other", "lastRunUnclean", other.lastRunUnclean);
+            cfg.SetBoolValue("other", "immediateSave", other.immediateSave);
 
             cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder.c_str());
             cfg.SetValue("minecraft", "javaPath", minecraft.javaPath.c_str());

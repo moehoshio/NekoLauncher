@@ -49,11 +49,12 @@ namespace neko::ui::window {
 
         bool useImageBackground = false;
         bool followSystemTheme = false;
+        bool saveImmediately = false;
         void applyThemeSelection(const std::string &themeName);
         void applySystemThemeIfNeeded();
         void applyCentralBackground(const Theme &theme);
         void showLangLoadWarningIfNeeded();
-        void persistConfigFromUi();
+        void persistConfigFromUi(bool saveToFile);
         void applyPendingWindowSize();
         void applyWindowSizeText(const QString &sizeText, bool save);
 

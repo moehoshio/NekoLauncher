@@ -355,11 +355,13 @@ namespace neko::ui::window {
         });
     }
 
-    void NekoWindow::persistConfigFromUi() {
+    void NekoWindow::persistConfigFromUi(bool saveToFile) {
         bus::config::updateClientConfig([this](ClientConfig &cfg) {
             settingPage->writeToConfig(cfg);
         });
-        bus::config::save(app::getConfigFileName());
+        if (saveToFile) {
+            bus::config::save(app::getConfigFileName());
+        }
     }
 
     void NekoWindow::onThemeChanged(const QString &themeName) {
@@ -500,7 +502,11 @@ namespace neko::ui::window {
     }
 
     void NekoWindow::onConfigChanged() {
-        persistConfigFromUi();
+        const bool wantsImmediateSave = settingPage->isImmediateSaveEnabled();
+        const bool immediateFlagChanged = (wantsImmediateSave != saveImmediately);
+        saveImmediately = wantsImmediateSave;
+        const bool saveNow = saveImmediately || immediateFlagChanged;
+        persistConfigFromUi(saveNow);
     }
 
     void NekoWindow::applyPendingWindowSize() {
@@ -525,7 +531,7 @@ namespace neko::ui::window {
         this->resize(width, height);
         settingPage->setWindowSizeDisplay(QStringLiteral("%1x%2").arg(width).arg(height));
         if (save) {
-            persistConfigFromUi();
+            persistConfigFromUi(saveImmediately);
         }
     }
 
@@ -545,6 +551,8 @@ namespace neko::ui::window {
         if (resolution) {
             this->resize(std::stoi(resolution->width), std::stoi(resolution->height));
         }
+
+        saveImmediately = config.other.immediateSave;
 
         // Style
         QFont textFont(QString::fromStdString(config.style.fontFamilies));

@@ -27,6 +27,7 @@ debug = true
 server = auto
 tls = true
 showLogViewer = false
+; show log viewer when exiting the app if dev.enable is true
 
 
 [other]
@@ -37,6 +38,8 @@ logRetentionDays = 14
 maxLogFiles = 20
 ; crash flag (managed automatically)
 lastRunUnclean = false
+; save changes immediately when editing settings
+immediateSave = false
 
 
 [minecraft]

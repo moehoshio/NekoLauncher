@@ -41,7 +41,7 @@ namespace neko::core {
             .method = network::RequestType::Post,
             .requestId = "feedbackLog-" + util::random::generateRandomString(6),
             .header = network::header::jsonContentHeader,
-            .postData = payload.dump()};
+            .postData = json.dump()};
         auto res = net.execute(reqConfig);
 
         if (!res.isSuccess()) {

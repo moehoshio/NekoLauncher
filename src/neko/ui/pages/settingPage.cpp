@@ -72,6 +72,7 @@ namespace neko::ui::page {
           proxyCheck(new QCheckBox(networkGroup)),
           proxyEdit(new QLineEdit(networkGroup)),
           otherGroup(new QGroupBox(QStringLiteral("Other"), mainTab)),
+          immediateSaveCheck(new QCheckBox(otherGroup)),
           customTempDirEdit(new QLineEdit(otherGroup)),
           customTempDirBrowseBtn(new QToolButton(otherGroup)),
           closeTabButton(new QToolButton(tabWidget)),
@@ -243,6 +244,8 @@ namespace neko::ui::page {
 
         // other group
         auto *otherLayout = makeVBox(otherGroup, 12, 8);
+        immediateSaveCheck->setObjectName(QStringLiteral("immediateSaveCheck"));
+        otherLayout->addWidget(immediateSaveCheck);
         auto *customTempDirLabel = new QLabel(otherGroup);
         customTempDirLabel->setObjectName(QStringLiteral("customTempDirLabel"));
         otherLayout->addWidget(customTempDirLabel);
@@ -531,6 +534,12 @@ namespace neko::ui::page {
             emit customTempDirChanged(text);
             emit configChanged();
         });
+        connect(immediateSaveCheck, &QCheckBox::toggled, this, [this](bool) {
+            if (suppressSignals) {
+                return;
+            }
+            emit configChanged();
+        });
         connect(threadSpin, qOverload<int>(&QSpinBox::valueChanged), this, [this](int value) {
             if (suppressSignals) {
                 return;
@@ -720,6 +729,8 @@ namespace neko::ui::page {
         proxyCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::useSystemProxy, "Use system proxy"));
         proxyEdit->setPlaceholderText(tr(lang::keys::setting::category, lang::keys::setting::proxyPlaceholder, "http://host:port or socks5://..."));
 
+        immediateSaveCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::immediateSave, "Save immediately"));
+
         if (auto *label = otherGroup->findChild<QLabel *>(QStringLiteral("customTempDirLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::customTempDir, "Custom temp dir"));
         }
@@ -743,7 +754,7 @@ namespace neko::ui::page {
 
         devEnableCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devEnable, "Enable dev"));
         devDebugCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devDebug, "Debug"));
-        devLogViewerCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devShowLogViewer, "Show log viewer"));
+        devLogViewerCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devShowLogViewer, "Show log viewer on exit"));
         devTlsCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devTls, "TLS"));
         if (auto *label = devGroup->findChild<QLabel *>(QStringLiteral("devServerLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::devServer, "Server"));
@@ -852,7 +863,7 @@ namespace neko::ui::page {
                                        .arg(theme.colors.surface.data())
                                        .arg(theme.colors.accent.data())
                                        .arg(theme.colors.focus.data());
-        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck}) {
+        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {
             c->setStyleSheet(checkStyle);
         }
 
@@ -903,7 +914,7 @@ namespace neko::ui::page {
         for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
             w->setFont(text);
         }
-        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck}) {
+        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {
             c->setFont(text);
         }
         for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin, javaPathBrowseBtn, themeCombo}) {
@@ -964,6 +975,10 @@ namespace neko::ui::page {
         windowSizeEdit->setText(size);
     }
 
+    bool SettingPage::isImmediateSaveEnabled() const {
+        return immediateSaveCheck->isChecked();
+    }
+
     void SettingPage::settingFromConfig(const neko::ClientConfig &cfg) {
 
         suppressSignals = true;
@@ -1020,6 +1035,7 @@ namespace neko::ui::page {
         proxyEdit->setText(useSystemProxy ? QString() : QString::fromStdString(cfg.net.proxy));
         proxyEdit->setVisible(!useSystemProxy);
 
+        immediateSaveCheck->setChecked(cfg.other.immediateSave);
         customTempDirEdit->setText(QString::fromStdString(cfg.other.tempFolder));
 
         javaPathEdit->setText(QString::fromStdString(cfg.minecraft.javaPath));
@@ -1106,6 +1122,7 @@ namespace neko::ui::page {
 
         auto tpStd = tp.toStdString();
         cfg.other.tempFolder = std::move(tpStd);
+        cfg.other.immediateSave = immediateSaveCheck->isChecked();
 
         const QString jp = javaPathEdit->text();
 

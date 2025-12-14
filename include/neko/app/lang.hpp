@@ -272,6 +272,7 @@ namespace neko::lang {
                 threads = "threads",
                 useSystemProxy = "useSystemProxy",
                 proxyPlaceholder = "proxyPlaceholder",
+                immediateSave = "immediateSave",
                 customTempDir = "customTempDir",
                 selectTempDir = "selectTempDir",
                 javaPath = "javaPath",

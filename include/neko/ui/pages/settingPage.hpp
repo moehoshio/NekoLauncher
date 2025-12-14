@@ -64,6 +64,7 @@ namespace neko::ui::page {
         QLineEdit *proxyEdit;
 
         QGroupBox *otherGroup;
+        QCheckBox *immediateSaveCheck;
         QLineEdit *customTempDirEdit;
         QToolButton *customTempDirBrowseBtn;
         QToolButton *closeTabButton;
@@ -109,6 +110,7 @@ namespace neko::ui::page {
         void setupText();
         void resizeItems(int windowWidth, int windowHeight);
         void setWindowSizeDisplay(const QString &size);
+        bool isImmediateSaveEnabled() const;
 
         void settingFromConfig(const neko::ClientConfig &cfg);
         void writeToConfig(neko::ClientConfig &cfg) const;
