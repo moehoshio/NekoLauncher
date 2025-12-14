@@ -1,14 +1,18 @@
 #pragma once
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QMetaObject>
 
 #include <neko/log/nlog.hpp>
 
 #include "neko/ui/uiMsg.hpp"
 #include "neko/bus/eventBus.hpp"
 #include "neko/bus/configBus.hpp"
+#include "neko/core/launcherProcess.hpp"
 #include "neko/event/eventTypes.hpp"
 #include "neko/ui/uiEventDispatcher.hpp"
+#include "neko/app/lang.hpp"
+#include "neko/system/platform.hpp"
 
 namespace neko::ui {
 
@@ -89,6 +93,54 @@ namespace neko::ui {
                         .message = lang::tr(lang::keys::launcher::category, lang::keys::launcher::launchFailedMessage) + e.reason,
                         .buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok)}};
                     emit nekoWindow->showNoticeD(notice);
+                }
+            });
+
+        bus::event::subscribe<event::UpdateCompleteEvent>(
+            [](const event::UpdateCompleteEvent &) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    NoticeMsg notice{
+                        .title = "Update",
+                        .message = "Update completed. You can continue using the launcher.",
+                        .buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")}};
+                    QMetaObject::invokeMethod(nekoWindow, [nekoWindow, notice]() {
+                        emit nekoWindow->switchToPageD(ui::Page::home);
+                        nekoWindow->showNotice(notice);
+                    }, Qt::QueuedConnection);
+                }
+            });
+
+        bus::event::subscribe<event::UpdateFailedEvent>(
+            [](const event::UpdateFailedEvent &e) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    NoticeMsg notice{
+                        .title = "Update failed",
+                        .message = e.reason,
+                        .buttonText = {lang::tr(lang::keys::button::category, lang::keys::button::ok, "OK")}};
+                    QMetaObject::invokeMethod(nekoWindow, [nekoWindow, notice]() {
+                        emit nekoWindow->switchToPageD(ui::Page::home);
+                        nekoWindow->showNotice(notice);
+                    }, Qt::QueuedConnection);
+                }
+            });
+
+        bus::event::subscribe<event::RestartRequestEvent>(
+            [](const event::RestartRequestEvent &e) {
+                log::info("Restart requested: {}", {}, e.reason);
+                try {
+                    core::launcherNewProcess(e.command, system::workPath());
+                } catch (const std::exception &ex) {
+                    log::error("Failed to start updater: {}", {}, ex.what());
+                }
+
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    QMetaObject::invokeMethod(nekoWindow, [nekoWindow]() {
+                        emit nekoWindow->quitAppD();
+                    }, Qt::QueuedConnection);
+                } else {
+                    QMetaObject::invokeMethod(QCoreApplication::instance(), []() {
+                        QCoreApplication::quit();
+                    }, Qt::QueuedConnection);
                 }
             });
 

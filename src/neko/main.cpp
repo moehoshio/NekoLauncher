@@ -10,6 +10,7 @@
 
 #include "neko/core/install.hpp"
 #include "neko/core/update.hpp"
+#include "neko/core/crashReporter.hpp"
 
 #include "neko/ui/themeIO.hpp"
 #include "neko/ui/uiEventDispatcher.hpp"
@@ -70,12 +71,19 @@ int main(int argc, char *argv[]) {
             if (cfg.dev.enable && cfg.dev.showLogViewer) {
                 ui::window::LogViewerWindow logWindow(QString::fromStdString(system::workPath()) + "/logs/new-debug.log");
                 logWindow.show();
-                return qtApp.exec();
+                auto code = qtApp.exec();
+                core::crash::markCleanShutdown();
+                return code;
             }
         }
+
+        core::crash::markCleanShutdown();
+        return 0;
     } catch (const ex::Exception &e) {
         log::error("Unhandled Exception: " + std::string(e.what()));
     } catch (const std::exception &e) {
         log::error("Unexpected error: " + std::string(e.what()));
     }
+
+    return 1;
 }

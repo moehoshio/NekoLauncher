@@ -32,15 +32,16 @@ namespace neko::core {
         log::autoLog log;
         network::Network net;
         auto url = network::buildUrl(lc::api::feedbackLog);
-        nlohmann::json dataJson = {
-            {"feedbacklog", {{"coreVersion", app::getVersion()}, {"resourceVersion", app::getResourceVersion()}, {"os", system::getOsName()}, {"language", lang::language()}, {"timestamp", util::time::timeToString()}, {"content", feedbackLog}}}};
+
+        auto json = app::getRequestJson("feedbackLogRequest");
+        json["content"] = feedbackLog;
 
         network::RequestConfig reqConfig{
             .url = url,
             .method = network::RequestType::Post,
             .requestId = "feedbackLog-" + util::random::generateRandomString(6),
             .header = network::header::jsonContentHeader,
-            .postData = dataJson.dump()};
+            .postData = payload.dump()};
         auto res = net.execute(reqConfig);
 
         if (!res.isSuccess()) {

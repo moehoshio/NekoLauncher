@@ -16,12 +16,18 @@
 
 #include <QtCore/QMetaType>
 
+#include <filesystem>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+
 #include "neko/app/appinfo.hpp"
 #include "neko/app/clientConfig.hpp"
 #include "neko/app/lang.hpp"
 #include "neko/app/appSubscribe.hpp"
 
 #include "neko/core/coreSubscribe.hpp"
+#include "neko/core/crashReporter.hpp"
 
 #include "neko/minecraft/minecraftSubscribe.hpp"
 
@@ -33,6 +39,8 @@
 #include <sstream>
 
 namespace neko::app::init {
+
+    inline bool previousRunUnclean = false;
 
     inline void registerQtMetaTypes() {
         qRegisterMetaType<std::string>("std::string");
@@ -70,6 +78,67 @@ namespace neko::app::init {
 
         if (!std::filesystem::exists(logDir)) {
             std::filesystem::create_directory(logDir);
+        }
+
+        // Clean old logs before we append new ones (skip if we need them for crash upload)
+        auto cleanupLogs = [](const std::string &dir, long keepDays, long maxFiles) {
+            namespace fs = std::filesystem;
+            if (!fs::exists(dir) || !fs::is_directory(dir)) {
+                return;
+            }
+
+            const auto now = std::chrono::file_clock::now();
+            const auto maxAge = std::chrono::hours(24 * std::max<long>(keepDays, 0));
+
+            std::vector<fs::directory_entry> logEntries;
+            for (const auto &entry : fs::directory_iterator(dir)) {
+                if (!entry.is_regular_file()) {
+                    continue;
+                }
+                const auto ext = entry.path().extension().string();
+                if (ext != ".log") {
+                    continue;
+                }
+
+                // Drop by age
+                if (keepDays > 0) {
+                    std::error_code ec;
+                    const auto ftime = entry.last_write_time(ec);
+                    if (!ec && (now - ftime) > maxAge) {
+                        fs::remove(entry, ec);
+                        if (ec) {
+                            log::warn("Failed to remove old log: {}", {}, entry.path().string());
+                        } else {
+                            log::info("Removed old log: {}", {}, entry.path().string());
+                        }
+                        continue;
+                    }
+                }
+
+                logEntries.push_back(entry);
+            }
+
+            // Enforce max file count (keep newest)
+            if (maxFiles > 0 && static_cast<long>(logEntries.size()) > maxFiles) {
+                std::sort(logEntries.begin(), logEntries.end(), [](const fs::directory_entry &a, const fs::directory_entry &b) {
+                    std::error_code ea, eb;
+                    return a.last_write_time(ea) > b.last_write_time(eb);
+                });
+
+                for (long i = maxFiles; i < static_cast<long>(logEntries.size()); ++i) {
+                    std::error_code ec;
+                    fs::remove(logEntries[i], ec);
+                    if (ec) {
+                        log::warn("Failed to remove excess log: {}", {}, logEntries[i].path().string());
+                    } else {
+                        log::info("Removed excess log: {}", {}, logEntries[i].path().string());
+                    }
+                }
+            }
+        };
+
+        if (!previousRunUnclean) {
+            cleanupLogs(logDir, cfg.other.logRetentionDays, cfg.other.maxLogFiles);
         }
 
         if (!dev) {
@@ -246,6 +315,9 @@ namespace neko::app::init {
     inline void initialize() {
         bus::config::load(app::getConfigFileName());
 
+        // Mark this run as in-progress and remember if the last run ended uncleanly.
+        previousRunUnclean = core::crash::markRunStart();
+
         initLog();
         initThreads();
 
@@ -257,6 +329,9 @@ namespace neko::app::init {
         configInfoPrint(bus::config::getClientConfig());
 
         initNetwork();
+
+        // Upload logs if the previous run crashed before proceeding.
+        core::crash::uploadLogsIfNeeded(previousRunUnclean);
 
         app::subscribeToAppEvent();
         core::subscribeToCoreEvents();

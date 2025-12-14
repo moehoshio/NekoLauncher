@@ -31,6 +31,12 @@ showLogViewer = false
 
 [other]
 customTempDir = 
+; days to keep .log files (0 to disable age-based cleanup)
+logRetentionDays = 14
+; maximum number of .log files to keep (0 to disable count-based cleanup)
+maxLogFiles = 20
+; crash flag (managed automatically)
+lastRunUnclean = false
 
 
 [minecraft]

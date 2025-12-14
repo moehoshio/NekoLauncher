@@ -265,6 +265,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/remoteConfig.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/update.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/crashReporter.cpp
 
     # Minecraft
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/minecraft/installMinecraft.cpp

@@ -64,6 +64,9 @@ namespace neko {
          */
         struct Other {
             std::string tempFolder;
+            long logRetentionDays;
+            long maxLogFiles;
+            bool lastRunUnclean;
         } other;
 
         /**
@@ -129,6 +132,9 @@ namespace neko {
             dev.tls = cfg.GetBoolValue("dev", "tls", true);
 
             other.tempFolder = cfg.GetValue("other", "customTempDir", "");
+            other.logRetentionDays = cfg.GetLongValue("other", "logRetentionDays", 14);
+            other.maxLogFiles = cfg.GetLongValue("other", "maxLogFiles", 20);
+            other.lastRunUnclean = cfg.GetBoolValue("other", "lastRunUnclean", false);
 
             minecraft.minecraftFolder = cfg.GetValue("minecraft", "minecraftFolder", "./.minecraft");
             minecraft.javaPath = cfg.GetValue("minecraft", "javaPath", "");
@@ -186,6 +192,9 @@ namespace neko {
             cfg.SetBoolValue("dev", "tls", dev.tls);
 
             cfg.SetValue("other", "customTempDir", other.tempFolder.c_str());
+            cfg.SetLongValue("other", "logRetentionDays", other.logRetentionDays);
+            cfg.SetLongValue("other", "maxLogFiles", other.maxLogFiles);
+            cfg.SetBoolValue("other", "lastRunUnclean", other.lastRunUnclean);
 
             cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder.c_str());
             cfg.SetValue("minecraft", "javaPath", minecraft.javaPath.c_str());
