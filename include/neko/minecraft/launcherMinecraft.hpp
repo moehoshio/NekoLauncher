@@ -163,5 +163,5 @@ namespace neko::minecraft {
      * @throws ex::OutOfRange if the minecraft version json does not contain required keys
      * @throws ex::NetworkError if the download fails or the file hash does not match
      */
-    void launcherMinecraft(neko::ClientConfig cfg, std::function<void()> onStart = nullptr, std::function<void(int)> onExit = nullptr);
+    void launcherMinecraft(neko::ClientConfig cfg, std::function<void()> onStart = nullptr, std::function<void(int)> onExit = nullptr, bool detach = false);
 } // namespace neko::minecraft

@@ -4,6 +4,11 @@
 
 #include <nlohmann/json.hpp>
 
+#include <QtGui/QGuiApplication>
+#include <QtGui/QColor>
+#include <QtGui/QPalette>
+#include <QtGui/QStyleHints>
+
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -30,6 +35,32 @@ namespace neko::ui::themeio {
             if (lower == "light") return ThemeType::Light;
             if (lower == "dark") return ThemeType::Dark;
             return ThemeType::Custom;
+        }
+
+        bool isSystemName(const std::string &s) {
+            std::string lower = s;
+            for (auto &c : lower) c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
+            return lower == "system";
+        }
+
+        Theme resolveSystemTheme() {
+            const auto *hints = QGuiApplication::styleHints();
+            if (hints != nullptr) {
+                const auto scheme = hints->colorScheme();
+                if (scheme == Qt::ColorScheme::Dark) {
+                    return darkTheme;
+                }
+                if (scheme == Qt::ColorScheme::Light) {
+                    return lightTheme;
+                }
+            }
+
+            const auto palette = QGuiApplication::palette();
+            const QColor windowColor = palette.color(QPalette::Window);
+            if (windowColor.lightness() < 128) {
+                return darkTheme;
+            }
+            return lightTheme;
         }
 
         nlohmann::json toJson(const Theme &t) {
@@ -111,6 +142,7 @@ namespace neko::ui::themeio {
 
     std::optional<Theme> loadThemeByName(const std::string &name, const std::string &themeDir) {
         if (name.empty()) return std::nullopt;
+        if (isSystemName(name)) return resolveSystemTheme();
         if (auto b = builtinByName(name)) return b;
 
         const auto dir = ensureFolder(themeDir);
@@ -128,7 +160,7 @@ namespace neko::ui::themeio {
     }
 
     std::vector<std::string> listThemeNames(const std::string &themeDir) {
-        std::vector<std::string> names = {kLightName, kDarkName};
+        std::vector<std::string> names = {kSystemName, kLightName, kDarkName};
         const auto dir = ensureFolder(themeDir);
         if (!fs::exists(dir)) return names;
         for (const auto &entry : fs::directory_iterator(dir)) {

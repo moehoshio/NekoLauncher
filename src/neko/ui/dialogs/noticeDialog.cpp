@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <memory>
 #include <string_view>
+#include <deque>
 
 #include <QtCore/QTimer>
 #include <QtGui/QMouseEvent>
@@ -32,8 +33,8 @@ namespace neko::ui::dialog {
 
         this->setAttribute(Qt::WA_TranslucentBackground, true);
         // The overlay will be sized to just the card, so we keep mouse events enabled here.
-        poster->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-        centralWidget->setAttribute(Qt::WA_TransparentForMouseEvents, false);
+        // poster->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        // centralWidget->setAttribute(Qt::WA_TransparentForMouseEvents, false);
 
         centralWidget->setObjectName("noticeCentral");
         buttonContainer->setObjectName("noticeButtons");
@@ -104,6 +105,22 @@ namespace neko::ui::dialog {
     }
 
     void NoticeDialog::showNotice(const NoticeMsg &m) {
+        noticeQueue.push_back(m);
+        if (showing) {
+            return;
+        }
+        presentNextNotice();
+    }
+
+    void NoticeDialog::presentNextNotice() {
+        if (noticeQueue.empty()) {
+            return;
+        }
+
+        const NoticeMsg m = noticeQueue.front();
+        noticeQueue.pop_front();
+        showing = true;
+
         // Clear any previous UI state so buttons do not accumulate between notices.
         resetButtons();
         disconnect(this, &QWidget::destroyed, nullptr, nullptr);
@@ -114,10 +131,10 @@ namespace neko::ui::dialog {
         // Build buttons and content before showing to avoid any blank flash.
         title->setText(QString::fromStdString(m.title));
         msg->setText(QString::fromStdString(m.message));
-        if (!m.posterPath.empty()){
+        if (!m.posterPath.empty()) {
             (void)poster->setPixmap(std::string_view(m.posterPath));
         }
-            
+
         const auto configureButton = [](QPushButton *button) {
             button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         };
@@ -154,30 +171,29 @@ namespace neko::ui::dialog {
 
         // If no buttons, add the default button
         if (m.buttonText.empty()) {
-            auto btn = new QPushButton(QString::fromStdString(lang::tr(lang::keys::button::category,lang::keys::button::ok)), buttonContainer);
+            auto btn = new QPushButton(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::ok)), buttonContainer);
             buttons.push_back(btn);
             buttonLayout->addWidget(btn);
             configureButton(btn);
             btn->setDefault(true);
             btn->setFocus();
             applyUniformButtonSize();
-            return;
-        }
+        } else {
+            // Push the buttons to the custom layout
+            for (neko::uint32 i = 0; i < m.buttonText.size(); ++i) {
+                auto btn = new QPushButton(QString::fromStdString(m.buttonText[i]), buttonContainer);
+                buttons.push_back(btn);
+                buttonLayout->addWidget(btn);
+                configureButton(btn);
+            }
 
-        // Push the buttons to the custom layout
-        for (neko::uint32 i = 0; i < m.buttonText.size(); ++i) {
-            auto btn = new QPushButton(QString::fromStdString(m.buttonText[i]), buttonContainer);
-            buttons.push_back(btn);
-            buttonLayout->addWidget(btn);
-            configureButton(btn);
-        }
-
-        applyUniformButtonSize();
-        // Set the default button if specified
-        buttonContainer->setFocus();
-        if (m.defaultButtonIndex >= 0 && m.defaultButtonIndex < buttons.size()) {
-            buttons[m.defaultButtonIndex]->setDefault(true);
-            buttons[m.defaultButtonIndex]->setFocus();
+            applyUniformButtonSize();
+            // Set the default button if specified
+            buttonContainer->setFocus();
+            if (m.defaultButtonIndex >= 0 && m.defaultButtonIndex < buttons.size()) {
+                buttons[m.defaultButtonIndex]->setDefault(true);
+                buttons[m.defaultButtonIndex]->setFocus();
+            }
         }
 
         // Now show once everything is ready to avoid empty frames.
@@ -193,7 +209,7 @@ namespace neko::ui::dialog {
                 if (m.callback && !*did) {
                     m.callback(m.defaultButtonIndex);
                     *did = true;
-                    resetState();
+                    finishCurrent();
                 }
             });
         }
@@ -202,7 +218,7 @@ namespace neko::ui::dialog {
         if (!m.callback) {
             for (auto btn : buttons) {
                 connect(btn, &QPushButton::clicked, this, [this]() {
-                    resetState();
+                    finishCurrent();
                 });
             }
             return;
@@ -212,16 +228,22 @@ namespace neko::ui::dialog {
             connect(buttons[i], &QPushButton::clicked, this, [this, m, did, i]() {
                 m.callback(i);
                 *did = true;
-                resetState();
+                finishCurrent();
             });
         }
 
         connect(this, &QWidget::destroyed, this, [this, m, did](QObject *) {
             if (!*did) {
                 m.callback(m.defaultButtonIndex);
-                resetState();
+                finishCurrent();
             }
         });
+    }
+
+    void NoticeDialog::finishCurrent() {
+        resetState();
+        showing = false;
+        presentNextNotice();
     }
 
     void NoticeDialog::resetState() {
@@ -231,6 +253,7 @@ namespace neko::ui::dialog {
         msg->clear();
         resetButtons();
         disconnect(this, &QWidget::destroyed, nullptr, nullptr);
+        showing = false;
     }
     void NoticeDialog::resetButtons() {
         disconnect(buttonContainer);

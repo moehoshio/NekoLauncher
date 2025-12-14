@@ -30,6 +30,7 @@ namespace neko::ui::page {
     private:
         QTabWidget *tabWidget;
         std::string themeDir;
+        bool suppressSignals = false;
 
         QScrollArea *authScroll;
 
@@ -81,6 +82,7 @@ namespace neko::ui::page {
         QGroupBox *devGroup;
         QCheckBox *devEnableCheck;
         QCheckBox *devDebugCheck;
+        QCheckBox *devLogViewerCheck;
         QCheckBox *devServerCheck;
         QLineEdit *devServerEdit;
         QCheckBox *devTlsCheck;
@@ -106,6 +108,7 @@ namespace neko::ui::page {
         void setupFont(QFont text, QFont h1Font, QFont h2Font);
         void setupText();
         void resizeItems(int windowWidth, int windowHeight);
+        void setWindowSizeDisplay(const QString &size);
 
         void settingFromConfig(const neko::ClientConfig &cfg);
         void writeToConfig(neko::ClientConfig &cfg) const;
@@ -127,6 +130,18 @@ namespace neko::ui::page {
         void blurRadiusChanged(int radius);
         void backgroundTypeChanged(const QString &type);
         void backgroundPathChanged(const QString &path);
+        void windowSizeEdited(const QString &sizeText);
+        void windowSizeApplyRequested(const QString &sizeText);
+        void launcherMethodChanged(const QString &method);
+        void javaPathChanged(const QString &path);
+        void downloadSourceChanged(const QString &source);
+        void customResolutionChanged(const QString &resolution);
+        void joinServerAddressChanged(const QString &address);
+        void joinServerPortChanged(int port);
+        void customTempDirChanged(const QString &dir);
+        void threadCountChanged(int threads);
+        void proxyValueChanged(bool useSystemProxy, const QString &value);
+        void configChanged();
         void showNoticePreviewRequested();
         void showInputPreviewRequested();
         void showLoadingPreviewRequested();

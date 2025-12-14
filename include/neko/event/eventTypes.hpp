@@ -82,6 +82,17 @@ namespace neko::event {
     struct LaunchFinishedEvent {
         int exitCode = 0;
     };
+
+    struct ProcessStartedEvent {
+        std::string command;
+        std::string workingDir;
+        bool detached = false;
+    };
+    struct ProcessExitedEvent {
+        std::string command;
+        int exitCode = 0;
+        bool detached = false;
+    };
     struct LaunchFailedEvent {
         std::string reason;
         int exitCode = -1;

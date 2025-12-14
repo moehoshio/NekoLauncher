@@ -12,6 +12,7 @@
 namespace neko::ui::themeio {
 
     // Known built-in names
+    inline constexpr neko::cstr kSystemName = "System";
     inline constexpr neko::cstr kLightName = "Light";
     inline constexpr neko::cstr kDarkName = "Dark";
 

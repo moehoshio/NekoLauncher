@@ -16,17 +16,21 @@
 #include <neko/function/utilities.hpp>
 
 #include <QtCore/QTimer>
+#include <QtCore/QMetaObject>
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDragMoveEvent>
 #include <QtGui/QDropEvent>
 #include <QtGui/QHoverEvent>
 #include <QtGui/QMouseEvent>
+#include <QtGui/QStyleHints>
 #include <QtGui/QWindow>
 
 #include <QtWidgets/QGraphicsBlurEffect>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
+
+#include <algorithm>
 
 namespace neko::ui::window {
 
@@ -78,6 +82,15 @@ namespace neko::ui::window {
         settingFromConfig(config);
         log::info("NekoWindow ctor: setup connections");
         setupConnections();
+        subscribeUiEvents();
+        if (auto *hints = QGuiApplication::styleHints()) {
+            connect(hints, &QStyleHints::colorSchemeChanged, this, [this]() {
+                applySystemThemeIfNeeded();
+            });
+        }
+        windowSizeApplyTimer = new QTimer(this);
+        windowSizeApplyTimer->setSingleShot(true);
+        connect(windowSizeApplyTimer, &QTimer::timeout, this, &NekoWindow::applyPendingWindowSize);
         log::info("NekoWindow ctor: resizeItems start");
         resizeItems(this->width(), this->height());
         log::info("NekoWindow ctor: showLoading start");
@@ -89,7 +102,46 @@ namespace neko::ui::window {
         showLangLoadWarningIfNeeded();
         log::info("NekoWindow ctor: done");
     }
-    NekoWindow::~NekoWindow() = default;
+    NekoWindow::~NekoWindow() {
+        clearUiEvents();
+    }
+
+    void NekoWindow::subscribeUiEvents() {
+        clearUiEvents();
+
+        eventSubs.show = bus::event::subscribe<event::ShowLoadingEvent>([this](const event::ShowLoadingEvent &e) {
+            QMetaObject::invokeMethod(this, [this, e]() {
+                showLoading(e);
+            }, Qt::QueuedConnection);
+        });
+
+        eventSubs.value = bus::event::subscribe<event::LoadingValueChangedEvent>([this](const event::LoadingValueChangedEvent &e) {
+            QMetaObject::invokeMethod(this, [this, e]() {
+                emit setLoadingValueD(static_cast<int>(e.progressValue));
+            }, Qt::QueuedConnection);
+        });
+
+        eventSubs.status = bus::event::subscribe<event::LoadingStatusChangedEvent>([this](const event::LoadingStatusChangedEvent &e) {
+            QMetaObject::invokeMethod(this, [this, e]() {
+                emit setLoadingStatusD(e.statusMessage);
+            }, Qt::QueuedConnection);
+        });
+
+        eventSubs.combined = bus::event::subscribe<event::LoadingChangedEvent>([this](const event::LoadingChangedEvent &e) {
+            QMetaObject::invokeMethod(this, [this, e]() {
+                emit setLoadingStatusD(e.statusMessage);
+                emit setLoadingValueD(static_cast<int>(e.progressValue));
+            }, Qt::QueuedConnection);
+        });
+    }
+
+    void NekoWindow::clearUiEvents() {
+        if (eventSubs.show != 0) bus::event::unsubscribe<event::ShowLoadingEvent>(eventSubs.show);
+        if (eventSubs.value != 0) bus::event::unsubscribe<event::LoadingValueChangedEvent>(eventSubs.value);
+        if (eventSubs.status != 0) bus::event::unsubscribe<event::LoadingStatusChangedEvent>(eventSubs.status);
+        if (eventSubs.combined != 0) bus::event::unsubscribe<event::LoadingChangedEvent>(eventSubs.combined);
+        eventSubs = {};
+    }
 
     void NekoWindow::setupTheme(const Theme &theme) {
         homePage->setupTheme(theme);
@@ -98,6 +150,32 @@ namespace neko::ui::window {
         noticeDialog->setupTheme(theme);
         inputDialog->setupTheme(theme);
         applyCentralBackground(theme);
+    }
+
+    void NekoWindow::applySystemThemeIfNeeded() {
+        if (!followSystemTheme) {
+            return;
+        }
+        applyThemeSelection("system");
+    }
+
+    void NekoWindow::applyThemeSelection(const std::string &themeName) {
+        std::string lower = themeName;
+        for (auto &c : lower) {
+            c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
+        }
+        followSystemTheme = (lower == "system");
+
+        auto themeOpt = ui::themeio::loadThemeByName(themeName, lc::ThemeFolderName.data());
+        if (!themeOpt.has_value()) {
+            themeOpt = ui::lightTheme;
+        }
+
+        this->setUpdatesEnabled(false);
+        ui::setCurrentTheme(*themeOpt);
+        setupTheme(ui::getCurrentTheme());
+        this->setUpdatesEnabled(true);
+        this->update();
     }
 
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
@@ -173,6 +251,16 @@ namespace neko::ui::window {
         connect(this, &NekoWindow::setLoadingValueD, loadingPage, &page::LoadingPage::setLoadingValue);
         connect(this, &NekoWindow::setLoadingStatusD, loadingPage, &page::LoadingPage::setLoadingStatus);
         connect(this, &NekoWindow::refreshTextD, this, &NekoWindow::setupText);
+        connect(this, &NekoWindow::hideWindowD, this, &QWidget::hide);
+        connect(this, &NekoWindow::showWindowD, this, [this]() {
+            this->show();
+            this->raise();
+            this->activateWindow();
+        });
+        connect(this, &NekoWindow::quitAppD, this, [this]() {
+            this->close();
+            app::quit();
+        });
 
         connect(homePage, &page::HomePage::startButtonClicked, this, [this]() {
             if (!core::auth::isLoggedIn()) {
@@ -199,6 +287,9 @@ namespace neko::ui::window {
         connect(settingPage, &page::SettingPage::blurRadiusChanged, this, &NekoWindow::onBlurRadiusChanged);
         connect(settingPage, &page::SettingPage::backgroundTypeChanged, this, &NekoWindow::onBackgroundTypeChanged);
         connect(settingPage, &page::SettingPage::backgroundPathChanged, this, &NekoWindow::onBackgroundPathChanged);
+        connect(settingPage, &page::SettingPage::windowSizeEdited, this, &NekoWindow::onWindowSizeEdited);
+        connect(settingPage, &page::SettingPage::windowSizeApplyRequested, this, &NekoWindow::onWindowSizeApplyRequested);
+        connect(settingPage, &page::SettingPage::configChanged, this, &NekoWindow::onConfigChanged);
         connect(settingPage, &page::SettingPage::loginRequested, this, &NekoWindow::onLoginRequested);
         connect(settingPage, &page::SettingPage::logoutRequested, this, &NekoWindow::onLogoutRequested);
         connect(settingPage, &page::SettingPage::showNoticePreviewRequested, this, [this]() {
@@ -264,19 +355,15 @@ namespace neko::ui::window {
         });
     }
 
-    void NekoWindow::onThemeChanged(const QString &themeName) {
-        const auto nameStd = themeName.toStdString();
-        auto themeOpt = ui::themeio::loadThemeByName(nameStd, lc::ThemeFolderName.data());
-        if (!themeOpt.has_value()) {
-            themeOpt = ui::lightTheme;
-        }
+    void NekoWindow::persistConfigFromUi() {
+        bus::config::updateClientConfig([this](ClientConfig &cfg) {
+            settingPage->writeToConfig(cfg);
+        });
+        bus::config::save(app::getConfigFileName());
+    }
 
-        // Avoid mid-apply repaints for a smoother switch
-        this->setUpdatesEnabled(false);
-        ui::setCurrentTheme(*themeOpt);
-        setupTheme(ui::getCurrentTheme());
-        this->setUpdatesEnabled(true);
-        this->update();
+    void NekoWindow::onThemeChanged(const QString &themeName) {
+        applyThemeSelection(themeName.toStdString());
     }
 
     void NekoWindow::onFontPointSizeChanged(int pointSize) {
@@ -397,6 +484,51 @@ namespace neko::ui::window {
         }
     }
 
+    void NekoWindow::onWindowSizeEdited(const QString &sizeText) {
+        pendingWindowSizeText = sizeText;
+        if (windowSizeApplyTimer) {
+            windowSizeApplyTimer->start(1000);
+        }
+    }
+
+    void NekoWindow::onWindowSizeApplyRequested(const QString &sizeText) {
+        pendingWindowSizeText = sizeText;
+        if (windowSizeApplyTimer && windowSizeApplyTimer->isActive()) {
+            windowSizeApplyTimer->stop();
+        }
+        applyWindowSizeText(sizeText, true);
+    }
+
+    void NekoWindow::onConfigChanged() {
+        persistConfigFromUi();
+    }
+
+    void NekoWindow::applyPendingWindowSize() {
+        if (pendingWindowSizeText.isEmpty()) {
+            return;
+        }
+
+        applyWindowSizeText(pendingWindowSizeText, true);
+    }
+
+    void NekoWindow::applyWindowSizeText(const QString &sizeText, bool save) {
+        auto resolution = util::check::matchResolution(sizeText.toStdString());
+        if (!resolution.has_value()) {
+            return;
+        }
+
+        int width = std::stoi(resolution->width);
+        int height = std::stoi(resolution->height);
+        width = std::max(width, this->minimumWidth());
+        height = std::max(height, this->minimumHeight());
+
+        this->resize(width, height);
+        settingPage->setWindowSizeDisplay(QStringLiteral("%1x%2").arg(width).arg(height));
+        if (save) {
+            persistConfigFromUi();
+        }
+    }
+
     void NekoWindow::settingFromConfig(const ClientConfig &config) {
 
         // Main
@@ -426,6 +558,15 @@ namespace neko::ui::window {
         setupFont(textFont, h1Font, h2Font);
         settingPage->settingFromConfig(config);
         setupText();
+
+        {
+            std::string lower = config.style.theme;
+            for (auto &c : lower) {
+                c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
+            }
+            followSystemTheme = (lower == "system");
+            applySystemThemeIfNeeded();
+        }
 
         const bool logged = minecraft::auth::isLoggedIn();
         const auto playerName = minecraft::auth::getPlayerName();
@@ -498,6 +639,7 @@ namespace neko::ui::window {
     void NekoWindow::resizeEvent(QResizeEvent *event) {
         QMainWindow::resizeEvent(event);
         resizeItems(this->width(), this->height());
+        settingPage->setWindowSizeDisplay(QStringLiteral("%1x%2").arg(this->width()).arg(this->height()));
     }
 
     void NekoWindow::closeEvent(QCloseEvent *event) {

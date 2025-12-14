@@ -87,6 +87,7 @@ namespace neko::ui::page {
           devGroup(new QGroupBox(QStringLiteral("Advanced"), advancedTab)),
           devEnableCheck(new QCheckBox(devGroup)),
           devDebugCheck(new QCheckBox(devGroup)),
+          devLogViewerCheck(new QCheckBox(devGroup)),
           devServerCheck(new QCheckBox(devGroup)),
           devServerEdit(new QLineEdit(devGroup)),
           devTlsCheck(new QCheckBox(devGroup)),
@@ -231,7 +232,12 @@ namespace neko::ui::page {
         netLayout->addWidget(proxyEdit);
         connect(proxyCheck, &QCheckBox::toggled, this, [this](bool checked) {
             proxyEdit->setVisible(!checked);
+            if (suppressSignals) {
+                return;
+            }
             emit proxyModeChanged(checked);
+            emit proxyValueChanged(checked, proxyEdit->text());
+            emit configChanged();
         });
         netLayout->addStretch();
 
@@ -329,9 +335,11 @@ namespace neko::ui::page {
         auto *devLayout = makeVBox(devGroup, 12, 8);
         devEnableCheck->setObjectName(QStringLiteral("devEnableCheck"));
         devDebugCheck->setObjectName(QStringLiteral("devDebugCheck"));
+        devLogViewerCheck->setObjectName(QStringLiteral("devLogViewerCheck"));
         devTlsCheck->setObjectName(QStringLiteral("devTlsCheck"));
         devLayout->addWidget(devEnableCheck);
         devLayout->addWidget(devDebugCheck);
+        devLayout->addWidget(devLogViewerCheck);
         auto *devServerLabel = new QLabel(devGroup);
         devServerLabel->setObjectName(QStringLiteral("devServerLabel"));
         devLayout->addWidget(devServerLabel);
@@ -354,7 +362,11 @@ namespace neko::ui::page {
 
         connect(devServerCheck, &QCheckBox::toggled, this, [this](bool checked) {
             devServerEdit->setVisible(!checked);
+            if (suppressSignals) {
+                return;
+            }
             emit devServerModeChanged(checked);
+            emit configChanged();
         });
         connect(devShowNoticeBtn, &QPushButton::clicked, this, [this]() {
             emit showNoticePreviewRequested();
@@ -374,11 +386,19 @@ namespace neko::ui::page {
             }
             lang::language(langCode.toStdString());
             retranslateUi();
+            if (suppressSignals) {
+                return;
+            }
             emit languageChanged(langCode);
+            emit configChanged();
         });
-        connect(themeCombo, &QComboBox::currentTextChanged, this, [this](const QString &name) {
+        connect(themeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+            if (suppressSignals) {
+                return;
+            }
             updateEditThemeState();
-            emit themeChanged(name);
+            emit themeChanged(themeCombo->currentData().toString());
+            emit configChanged();
         });
         connect(editThemeBtn, &QPushButton::clicked, this, [this]() {
             const std::string name = themeCombo->currentText().toStdString();
@@ -397,22 +417,158 @@ namespace neko::ui::page {
                 return;
             }
             refreshThemeList();
-            themeCombo->setCurrentText(QString::fromStdString(edited.info.name));
-            emit themeChanged(QString::fromStdString(edited.info.name));
+            const QString editedName = QString::fromStdString(edited.info.name);
+            const int idx = themeCombo->findData(editedName);
+            if (idx >= 0) {
+                themeCombo->setCurrentIndex(idx);
+            }
+            emit themeChanged(editedName);
+            emit configChanged();
         });
-        connect(fontPointSizeSpin, qOverload<int>(&QSpinBox::valueChanged), this, &SettingPage::fontPointSizeChanged);
+        connect(fontPointSizeSpin, qOverload<int>(&QSpinBox::valueChanged), this, [this](int value) {
+            if (suppressSignals) {
+                return;
+            }
+            emit fontPointSizeChanged(value);
+            emit configChanged();
+        });
         connect(fontFamiliesCombo, &QFontComboBox::currentFontChanged, this, [this](const QFont &f) {
+            if (suppressSignals) {
+                return;
+            }
             emit fontFamiliesChanged(f.family());
+            emit configChanged();
         });
-        connect(blurEffectCombo, &QComboBox::currentTextChanged, this, &SettingPage::blurEffectChanged);
+        connect(blurEffectCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+            if (suppressSignals) {
+                return;
+            }
+            emit blurEffectChanged(blurEffectCombo->currentData().toString());
+            emit configChanged();
+        });
         connect(blurRadiusSlider, &QSlider::valueChanged, this, [this](int value) {
             if (value == 1) {
                 return; // skip problematic radius
             }
+            if (suppressSignals) {
+                return;
+            }
             emit blurRadiusChanged(value);
+            emit configChanged();
         });
-        connect(backgroundTypeCombo, &QComboBox::currentTextChanged, this, &SettingPage::backgroundTypeChanged);
-        connect(backgroundPathEdit, &QLineEdit::textChanged, this, &SettingPage::backgroundPathChanged);
+        connect(backgroundTypeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+            if (suppressSignals) {
+                return;
+            }
+            emit backgroundTypeChanged(backgroundTypeCombo->currentData().toString());
+            emit configChanged();
+        });
+        connect(backgroundPathEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit backgroundPathChanged(text);
+            emit configChanged();
+        });
+        connect(windowSizeEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit windowSizeEdited(text);
+        });
+        connect(windowSizeEdit, &QLineEdit::returnPressed, this, [this]() {
+            if (suppressSignals) {
+                return;
+            }
+            emit windowSizeApplyRequested(windowSizeEdit->text());
+        });
+        connect(launcherMethodCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+            if (suppressSignals) {
+                return;
+            }
+            emit launcherMethodChanged(launcherMethodCombo->currentData().toString());
+            emit configChanged();
+        });
+        connect(javaPathEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit javaPathChanged(text);
+            emit configChanged();
+        });
+        connect(downloadSourceCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+            if (suppressSignals) {
+                return;
+            }
+            emit downloadSourceChanged(downloadSourceCombo->currentData().toString());
+            emit configChanged();
+        });
+        connect(customResolutionEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit customResolutionChanged(text);
+            emit configChanged();
+        });
+        connect(joinServerAddressEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit joinServerAddressChanged(text);
+            emit configChanged();
+        });
+        connect(joinServerPortSpin, qOverload<int>(&QSpinBox::valueChanged), this, [this](int value) {
+            if (suppressSignals) {
+                return;
+            }
+            emit joinServerPortChanged(value);
+            emit configChanged();
+        });
+        connect(customTempDirEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit customTempDirChanged(text);
+            emit configChanged();
+        });
+        connect(threadSpin, qOverload<int>(&QSpinBox::valueChanged), this, [this](int value) {
+            if (suppressSignals) {
+                return;
+            }
+            emit threadCountChanged(value);
+            emit configChanged();
+        });
+        connect(proxyEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (suppressSignals) {
+                return;
+            }
+            emit proxyValueChanged(proxyCheck->isChecked(), text);
+            emit configChanged();
+        });
+        connect(devEnableCheck, &QCheckBox::toggled, this, [this](bool) {
+            if (suppressSignals) {
+                return;
+            }
+            emit configChanged();
+        });
+        connect(devDebugCheck, &QCheckBox::toggled, this, [this](bool) {
+            if (suppressSignals) {
+                return;
+            }
+            emit configChanged();
+        });
+        connect(devLogViewerCheck, &QCheckBox::toggled, this, [this](bool) {
+            if (suppressSignals) {
+                return;
+            }
+            emit configChanged();
+        });
+        connect(devTlsCheck, &QCheckBox::toggled, this, [this](bool) {
+            if (suppressSignals) {
+                return;
+            }
+            emit configChanged();
+        });
     }
 
     QString SettingPage::getBackgroundPath() const {
@@ -420,10 +576,27 @@ namespace neko::ui::page {
     }
 
     void SettingPage::setupCombos() {
-        backgroundTypeCombo->addItems({"image", "none"});
-        blurEffectCombo->addItems({"performance", "quality", "animation"});
-        launcherMethodCombo->addItems({"launchVisible", "launchHidden", "launchHideRestore"});
-        downloadSourceCombo->addItems({"Official", "BMCLAPI"});
+        const auto tr = [](neko::cstr category, neko::cstr key, const char *fallback) {
+            return QString::fromStdString(lang::tr(category, key, fallback));
+        };
+
+        backgroundTypeCombo->clear();
+        backgroundTypeCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::backgroundTypeImage, "Image background"), QStringLiteral("image"));
+        backgroundTypeCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::backgroundTypeNone, "No background"), QStringLiteral("none"));
+
+        blurEffectCombo->clear();
+        blurEffectCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::blurEffectPerformance, "Performance"), QStringLiteral("performance"));
+        blurEffectCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::blurEffectQuality, "Quality"), QStringLiteral("quality"));
+        blurEffectCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::blurEffectAnimation, "Animation"), QStringLiteral("animation"));
+
+        launcherMethodCombo->clear();
+        launcherMethodCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::launcherVisible, "Keep launcher visible"), QStringLiteral("launchVisible"));
+        launcherMethodCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::launcherExit, "Exit after launch"), QStringLiteral("launchExit"));
+        launcherMethodCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::launcherHideRestore, "Hide launcher and restore when done"), QStringLiteral("launchHideRestore"));
+
+        downloadSourceCombo->clear();
+        downloadSourceCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::downloadSourceOfficial, "Official"), QStringLiteral("Official"));
+        downloadSourceCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::downloadSourceBmclapi, "BMCLAPI"), QStringLiteral("BMCLAPI"));
         refreshThemeList();
 
         languageCombo->clear();
@@ -445,6 +618,9 @@ namespace neko::ui::page {
         if (langIndex >= 0) {
             languageCombo->setCurrentIndex(langIndex);
         }
+
+        // Theme list uses data roles for stable values; refresh to apply translations.
+        refreshThemeList();
 
         fontFamiliesCombo->setWritingSystem(QFontDatabase::Any);
         fontFamiliesCombo->setMaxVisibleItems(8);
@@ -472,6 +648,16 @@ namespace neko::ui::page {
         if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("backgroundTypeLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::backgroundType, "Background Type"));
         }
+        {
+            const int idxImg = backgroundTypeCombo->findData(QStringLiteral("image"));
+            if (idxImg >= 0) {
+                backgroundTypeCombo->setItemText(idxImg, tr(lang::keys::setting::category, lang::keys::setting::backgroundTypeImage, "Image background"));
+            }
+            const int idxNone = backgroundTypeCombo->findData(QStringLiteral("none"));
+            if (idxNone >= 0) {
+                backgroundTypeCombo->setItemText(idxNone, tr(lang::keys::setting::category, lang::keys::setting::backgroundTypeNone, "No background"));
+            }
+        }
         if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("backgroundLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::background, "Background"));
         }
@@ -482,6 +668,20 @@ namespace neko::ui::page {
         if (auto *label = mainGroup->findChild<QLabel *>(QStringLiteral("launcherMethodLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::launcherMethod, "Launcher Method"));
         }
+        {
+            const int idxVis = launcherMethodCombo->findData(QStringLiteral("launchVisible"));
+            if (idxVis >= 0) {
+                launcherMethodCombo->setItemText(idxVis, tr(lang::keys::setting::category, lang::keys::setting::launcherVisible, "Keep launcher visible"));
+            }
+            const int idxExit = launcherMethodCombo->findData(QStringLiteral("launchExit"));
+            if (idxExit >= 0) {
+                launcherMethodCombo->setItemText(idxExit, tr(lang::keys::setting::category, lang::keys::setting::launcherExit, "Exit after launch"));
+            }
+            const int idxHide = launcherMethodCombo->findData(QStringLiteral("launchHideRestore"));
+            if (idxHide >= 0) {
+                launcherMethodCombo->setItemText(idxHide, tr(lang::keys::setting::category, lang::keys::setting::launcherHideRestore, "Hide launcher and restore when done"));
+            }
+        }
 
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("themeLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::theme, "Theme"));
@@ -490,6 +690,20 @@ namespace neko::ui::page {
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("blurEffectLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::blurEffect, "Blur effect"));
         }
+            {
+                const int idxPerf = blurEffectCombo->findData(QStringLiteral("performance"));
+                if (idxPerf >= 0) {
+                    blurEffectCombo->setItemText(idxPerf, tr(lang::keys::setting::category, lang::keys::setting::blurEffectPerformance, "Performance"));
+                }
+                const int idxQual = blurEffectCombo->findData(QStringLiteral("quality"));
+                if (idxQual >= 0) {
+                    blurEffectCombo->setItemText(idxQual, tr(lang::keys::setting::category, lang::keys::setting::blurEffectQuality, "Quality"));
+                }
+                const int idxAnim = blurEffectCombo->findData(QStringLiteral("animation"));
+                if (idxAnim >= 0) {
+                    blurEffectCombo->setItemText(idxAnim, tr(lang::keys::setting::category, lang::keys::setting::blurEffectAnimation, "Animation"));
+                }
+            }
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("blurRadiusLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::blurRadius, "Blur radius"));
         }
@@ -529,6 +743,7 @@ namespace neko::ui::page {
 
         devEnableCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devEnable, "Enable dev"));
         devDebugCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devDebug, "Debug"));
+        devLogViewerCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devShowLogViewer, "Show log viewer"));
         devTlsCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devTls, "TLS"));
         if (auto *label = devGroup->findChild<QLabel *>(QStringLiteral("devServerLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::devServer, "Server"));
@@ -553,11 +768,13 @@ namespace neko::ui::page {
 
     bool SettingPage::isBuiltinTheme(const QString &name) {
         const QString lower = name.trimmed().toLower();
-        return lower == QString::fromLatin1(themeio::kLightName).toLower() || lower == QString::fromLatin1(themeio::kDarkName).toLower();
+        return lower == QString::fromLatin1(themeio::kSystemName).toLower() ||
+               lower == QString::fromLatin1(themeio::kLightName).toLower() ||
+               lower == QString::fromLatin1(themeio::kDarkName).toLower();
     }
 
     void SettingPage::updateEditThemeState() {
-        editThemeBtn->setEnabled(!isBuiltinTheme(themeCombo->currentText()));
+        editThemeBtn->setEnabled(!isBuiltinTheme(themeCombo->currentData().toString()));
     }
 
     void SettingPage::setupTheme(const Theme &theme) {
@@ -635,7 +852,7 @@ namespace neko::ui::page {
                                        .arg(theme.colors.surface.data())
                                        .arg(theme.colors.accent.data())
                                        .arg(theme.colors.focus.data());
-        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
+        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck}) {
             c->setStyleSheet(checkStyle);
         }
 
@@ -686,7 +903,7 @@ namespace neko::ui::page {
         for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
             w->setFont(text);
         }
-        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devServerCheck, devTlsCheck}) {
+        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck}) {
             c->setFont(text);
         }
         for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin, javaPathBrowseBtn, themeCombo}) {
@@ -707,16 +924,32 @@ namespace neko::ui::page {
 
     void SettingPage::refreshThemeList() {
         const auto names = themeio::listThemeNames(themeDir);
-        const QString current = themeCombo->currentText();
+        const QString currentData = themeCombo->currentData().toString();
         themeCombo->blockSignals(true);
         themeCombo->clear();
+
         for (const auto &name : names) {
-            themeCombo->addItem(QString::fromStdString(name));
+            const QString raw = QString::fromStdString(name);
+            QString display = raw;
+            const QString lower = raw.trimmed().toLower();
+            if (lower == QString::fromLatin1(themeio::kSystemName).toLower()) {
+                display = QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::themeSystem, raw.toUtf8().constData()));
+            } else if (lower == QString::fromLatin1(themeio::kLightName).toLower()) {
+                display = QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::themeLight, raw.toUtf8().constData()));
+            } else if (lower == QString::fromLatin1(themeio::kDarkName).toLower()) {
+                display = QString::fromStdString(lang::tr(lang::keys::setting::category, lang::keys::setting::themeDark, raw.toUtf8().constData()));
+            }
+            themeCombo->addItem(display, raw);
         }
-        const int idx = themeCombo->findText(current, Qt::MatchFixedString);
+
+        int idx = themeCombo->findData(currentData, Qt::MatchExactly);
+        if (idx < 0) {
+            idx = themeCombo->findText(currentData, Qt::MatchFixedString);
+        }
         if (idx >= 0) {
             themeCombo->setCurrentIndex(idx);
         }
+
         themeCombo->blockSignals(false);
         updateEditThemeState();
     }
@@ -726,12 +959,29 @@ namespace neko::ui::page {
         tabWidget->setGeometry(0, 0, windowWidth, windowHeight);
     }
 
+    void SettingPage::setWindowSizeDisplay(const QString &size) {
+        QSignalBlocker blocker(windowSizeEdit);
+        windowSizeEdit->setText(size);
+    }
+
     void SettingPage::settingFromConfig(const neko::ClientConfig &cfg) {
 
-        backgroundTypeCombo->setCurrentText(QString::fromStdString(cfg.main.backgroundType));
+        suppressSignals = true;
+
+        {
+            const int idx = backgroundTypeCombo->findData(QString::fromStdString(cfg.main.backgroundType));
+            if (idx >= 0) {
+                backgroundTypeCombo->setCurrentIndex(idx);
+            }
+        }
         backgroundPathEdit->setText(QString::fromStdString(cfg.main.background));
         windowSizeEdit->setText(QString::fromStdString(cfg.main.windowSize));
-        launcherMethodCombo->setCurrentText(QString::fromStdString(cfg.main.launcherMethod));
+        {
+            const int idx = launcherMethodCombo->findData(QString::fromStdString(cfg.main.launcherMethod));
+            if (idx >= 0) {
+                launcherMethodCombo->setCurrentIndex(idx);
+            }
+        }
 
         {
             QSignalBlocker blocker(languageCombo);
@@ -746,9 +996,19 @@ namespace neko::ui::page {
         }
         retranslateUi();
 
-        themeCombo->setCurrentText(QString::fromStdString(cfg.style.theme));
+        {
+            const int idx = themeCombo->findData(QString::fromStdString(cfg.style.theme));
+            if (idx >= 0) {
+                themeCombo->setCurrentIndex(idx);
+            }
+        }
         updateEditThemeState();
-        blurEffectCombo->setCurrentText(QString::fromStdString(cfg.style.blurEffect));
+        {
+            const int idx = blurEffectCombo->findData(QString::fromStdString(cfg.style.blurEffect));
+            if (idx >= 0) {
+                blurEffectCombo->setCurrentIndex(idx);
+            }
+        }
         const int blurRadiusVal = static_cast<int>(cfg.style.blurRadius);
         blurRadiusSlider->setValue(blurRadiusVal == 1 ? 0 : blurRadiusVal);
         fontPointSizeSpin->setValue(static_cast<int>(cfg.style.fontPointSize));
@@ -763,7 +1023,12 @@ namespace neko::ui::page {
         customTempDirEdit->setText(QString::fromStdString(cfg.other.tempFolder));
 
         javaPathEdit->setText(QString::fromStdString(cfg.minecraft.javaPath));
-        downloadSourceCombo->setCurrentText(QString::fromStdString(cfg.minecraft.downloadSource));
+        {
+            const int idx = downloadSourceCombo->findData(QString::fromStdString(cfg.minecraft.downloadSource));
+            if (idx >= 0) {
+                downloadSourceCombo->setCurrentIndex(idx);
+            }
+        }
         customResolutionEdit->setText(QString::fromStdString(cfg.minecraft.customResolution));
         joinServerAddressEdit->setText(QString::fromStdString(cfg.minecraft.joinServerAddress));
         bool okPort = false;
@@ -774,11 +1039,14 @@ namespace neko::ui::page {
 
         devEnableCheck->setChecked(cfg.dev.enable);
         devDebugCheck->setChecked(cfg.dev.debug);
+        devLogViewerCheck->setChecked(cfg.dev.showLogViewer);
         const bool useDefaultDevServer = (cfg.dev.server == neko::strview("auto"));
         devServerCheck->setChecked(useDefaultDevServer);
         devServerEdit->setText(useDefaultDevServer ? QString() : QString::fromStdString(cfg.dev.server));
         devServerEdit->setVisible(!useDefaultDevServer);
         devTlsCheck->setChecked(cfg.dev.tls);
+
+        suppressSignals = false;
     }
 
     void SettingPage::setAuthState(bool loggedIn, const std::string &statusText) {
@@ -795,7 +1063,7 @@ namespace neko::ui::page {
 
         const QString langCode = languageCombo->currentData().toString();
         cfg.main.lang = langCode.isEmpty() ? languageCombo->currentText().toStdString() : langCode.toStdString();
-        const QString bgType = backgroundTypeCombo->currentText();
+        const QString bgType = backgroundTypeCombo->currentData().toString();
         auto bgTypeStd = bgType.toStdString();
         cfg.main.backgroundType = std::move(bgTypeStd);
         const QString bgPath = backgroundPathEdit->text();
@@ -804,13 +1072,13 @@ namespace neko::ui::page {
         const QString ws = windowSizeEdit->text();
         auto wsStd = ws.toStdString();
         cfg.main.windowSize = std::move(wsStd);
-        const QString lm = launcherMethodCombo->currentText();
+        const QString lm = launcherMethodCombo->currentData().toString();
         auto lmStd = lm.toStdString();
         cfg.main.launcherMethod = std::move(lmStd);
-        const QString th = themeCombo->currentText();
+        const QString th = themeCombo->currentData().toString();
         auto thStd = th.toStdString();
         cfg.style.theme = std::move(thStd);
-        const QString be = blurEffectCombo->currentText();
+        const QString be = blurEffectCombo->currentData().toString();
         auto beStd = be.toStdString();
         cfg.style.blurEffect = std::move(beStd);
         const int radiusVal = blurRadiusSlider->value();
@@ -845,7 +1113,7 @@ namespace neko::ui::page {
 
         cfg.minecraft.javaPath = std::move(jpStd);
 
-        const QString ds = downloadSourceCombo->currentText();
+        const QString ds = downloadSourceCombo->currentData().toString();
         auto dsStd = ds.toStdString();
         cfg.minecraft.downloadSource = std::move(dsStd);
 
@@ -862,6 +1130,7 @@ namespace neko::ui::page {
         cfg.dev.enable = devEnableCheck->isChecked();
 
         cfg.dev.debug = devDebugCheck->isChecked();
+        cfg.dev.showLogViewer = devLogViewerCheck->isChecked();
         std::string serverVal;
         if (devServerCheck->isChecked()) {
             serverVal = "auto";

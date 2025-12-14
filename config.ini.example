@@ -26,6 +26,7 @@ enable = true
 debug = true
 server = auto
 tls = true
+showLogViewer = false
 
 
 [other]

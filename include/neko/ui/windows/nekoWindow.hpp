@@ -1,10 +1,10 @@
 #pragma once
 
-#include "neko/ui/theme.hpp"
 #include "neko/ui/page.hpp"
+#include "neko/ui/theme.hpp"
 
-#include "neko/ui/dialogs/noticeDialog.hpp"
 #include "neko/ui/dialogs/inputDialog.hpp"
+#include "neko/ui/dialogs/noticeDialog.hpp"
 
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
@@ -13,14 +13,16 @@
 #include "neko/ui/pages/settingPage.hpp"
 
 #include "neko/app/clientConfig.hpp"
+#include "neko/event/event.hpp"
 
-#include <QtWidgets/QMainWindow>
+#include <QtCore/QString>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
-#include <QtCore/QString>
+#include <QtWidgets/QMainWindow>
 
 class QWidget;
 class QGraphicsBlurEffect;
+class QTimer;
 
 namespace neko::ui::window {
 
@@ -32,6 +34,8 @@ namespace neko::ui::window {
 
         QWidget *centralWidget;
         QGraphicsBlurEffect *blurEffect;
+        QTimer *windowSizeApplyTimer = nullptr;
+        QString pendingWindowSizeText;
 
         // Dialogs
         dialog::NoticeDialog *noticeDialog;
@@ -44,8 +48,23 @@ namespace neko::ui::window {
         page::SettingPage *settingPage;
 
         bool useImageBackground = false;
+        bool followSystemTheme = false;
+        void applyThemeSelection(const std::string &themeName);
+        void applySystemThemeIfNeeded();
         void applyCentralBackground(const Theme &theme);
         void showLangLoadWarningIfNeeded();
+        void persistConfigFromUi();
+        void applyPendingWindowSize();
+        void applyWindowSizeText(const QString &sizeText, bool save);
+
+        struct EventSubscriptions {
+            neko::event::HandlerId show{};
+            neko::event::HandlerId value{};
+            neko::event::HandlerId status{};
+            neko::event::HandlerId combined{};
+        } eventSubs;
+        void subscribeUiEvents();
+        void clearUiEvents();
 
     public:
         NekoWindow(const ClientConfig &config);
@@ -62,6 +81,7 @@ namespace neko::ui::window {
         void hideInput();
         std::vector<std::string> getLines();
         void showLoading(const LoadingMsg &m);
+
     protected:
         void resizeEvent(QResizeEvent *event) override;
         void closeEvent(QCloseEvent *event) override;
@@ -77,8 +97,11 @@ namespace neko::ui::window {
         void resetNoticeButtonsD();
         void switchToPageD(Page page);
         void setLoadingValueD(int value);
-        void setLoadingStatusD(const std::string& msg);
+        void setLoadingStatusD(const std::string &msg);
         void refreshTextD();
+        void hideWindowD();
+        void showWindowD();
+        void quitAppD();
 
     public slots:
         void onThemeChanged(const QString &themeName);
@@ -89,9 +112,11 @@ namespace neko::ui::window {
         void onBackgroundTypeChanged(const QString &type);
         void onBackgroundPathChanged(const QString &path);
         void onLanguageChanged(const QString &langCode);
-		void onLoginRequested();
-		void onLogoutRequested();
-        
+        void onLoginRequested();
+        void onLogoutRequested();
+        void onWindowSizeEdited(const QString &sizeText);
+        void onWindowSizeApplyRequested(const QString &sizeText);
+        void onConfigChanged();
     };
 
 } // namespace neko::ui::window

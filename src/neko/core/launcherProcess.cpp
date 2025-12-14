@@ -10,6 +10,8 @@
 #include <neko/schema/exception.hpp>
 
 #include "neko/core/launcherProcess.hpp"
+#include "neko/bus/eventBus.hpp"
+#include "neko/event/eventTypes.hpp"
 
 #include <boost/process/v1/child.hpp>
 #include <boost/process/v1/io.hpp>
@@ -103,6 +105,7 @@ namespace neko::core {
             if (processInfo.onStart) {
                 processInfo.onStart();
             }
+            bus::event::publish(event::ProcessStartedEvent{.command = processInfo.command, .workingDir = processInfo.workingDir, .detached = false});
             // Always drain the pipe to avoid missing errors; log when no callback provided.
             std::string line;
             while (std::getline(pipeStream, line)) {
@@ -131,6 +134,7 @@ namespace neko::core {
             }
             log::info("Launcher exit code: {}", {} , code);
 
+            bus::event::publish(event::ProcessExitedEvent{.command = processInfo.command, .exitCode = code, .detached = false});
             if (processInfo.onExit) {
                 processInfo.onExit(code);
             }
@@ -169,6 +173,7 @@ namespace neko::core {
                 : bp::child("/bin/sh", "-c", command, bp::start_dir = workingDir);
 #endif
             proc.detach();
+            bus::event::publish(event::ProcessStartedEvent{.command = command, .workingDir = workingDir, .detached = true});
         } catch (const std::system_error &e) {
             log::error("Launcher error: {} , code: {}", {} , e.what(), e.code().value());
             throw ex::Runtime("Failed to launch process : " + std::string(e.what()));

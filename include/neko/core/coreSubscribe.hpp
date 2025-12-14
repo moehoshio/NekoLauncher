@@ -44,17 +44,5 @@ namespace neko::core {
             log::error("UpdateFailedEvent received: {}", {}, evt.reason);
         });
 
-        (void)bus::event::subscribe<event::LaunchRequestEvent>([](const event::LaunchRequestEvent &evt) {
-            // Run launch flow on thread pool to keep UI responsive
-            bus::thread::submit([evt] {
-                try {
-                    bus::event::publish(event::LaunchStartedEvent{});
-                    core::launcher(evt.onStart, evt.onExit);
-                } catch (const std::exception &e) {
-                    bus::event::publish(event::LaunchFailedEvent{.reason = e.what(), .exitCode = -1});
-                    log::error("Launch failed: {}", {}, e.what());
-                }
-            });
-        });
     }
 } // namespace neko::core

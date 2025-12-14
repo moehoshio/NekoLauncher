@@ -26,7 +26,7 @@ namespace neko::ui::dialog {
                     msg(new QLabel(centralWidget)),
                     dialogButton(new QDialogButtonBox(centralWidget)) {
                 this->setAttribute(Qt::WA_TranslucentBackground, true);
-                poster->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+                // poster->setAttribute(Qt::WA_TransparentForMouseEvents, true);
                 centralWidget->setAttribute(Qt::WA_StyledBackground, true);
                 poster->lower();
 

@@ -54,6 +54,7 @@ namespace neko {
         struct Dev {
             bool enable;
             bool debug;
+            bool showLogViewer;
             std::string server;
             bool tls;
         } dev;
@@ -123,6 +124,7 @@ namespace neko {
 
             dev.enable = cfg.GetBoolValue("dev", "enable", false);
             dev.debug = cfg.GetBoolValue("dev", "debug", false);
+            dev.showLogViewer = cfg.GetBoolValue("dev", "showLogViewer", false);
             dev.server = cfg.GetValue("dev", "server", "auto");
             dev.tls = cfg.GetBoolValue("dev", "tls", true);
 
@@ -179,6 +181,7 @@ namespace neko {
 
             cfg.SetBoolValue("dev", "enable", dev.enable);
             cfg.SetBoolValue("dev", "debug", dev.debug);
+            cfg.SetBoolValue("dev", "showLogViewer", dev.showLogViewer);
             cfg.SetValue("dev", "server", dev.server.c_str());
             cfg.SetBoolValue("dev", "tls", dev.tls);
 

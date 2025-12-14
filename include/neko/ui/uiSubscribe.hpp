@@ -6,6 +6,7 @@
 
 #include "neko/ui/uiMsg.hpp"
 #include "neko/bus/eventBus.hpp"
+#include "neko/bus/configBus.hpp"
 #include "neko/event/eventTypes.hpp"
 #include "neko/ui/uiEventDispatcher.hpp"
 
@@ -22,6 +23,7 @@ namespace neko::ui {
         bus::event::subscribe<event::ShowLoadingEvent>(
             [](const event::ShowLoadingEvent &e) {
                 if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    emit nekoWindow->switchToPageD(ui::Page::loading);
                     emit nekoWindow->showLoadingD(static_cast<const neko::ui::LoadingMsg &>(e));
                 }
             });
@@ -49,8 +51,33 @@ namespace neko::ui {
 
         bus::event::subscribe<event::LaunchStartedEvent>(
             [](const event::LaunchStartedEvent &) {
+                const auto cfg = bus::config::getClientConfig();
+                const auto &method = cfg.main.launcherMethod;
                 if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    if (method == "launchExit") {
+                        nekoWindow->close();
+                        app::quit();
+                        return;
+                    }
+                    if (method == "launchHideRestore") {
+                        emit nekoWindow->hideWindowD();
+                        return;
+                    }
                     emit nekoWindow->switchToPageD(ui::Page::home);
+                }
+            });
+
+        bus::event::subscribe<event::LaunchFinishedEvent>(
+            [](const event::LaunchFinishedEvent &) {
+                const auto cfg = bus::config::getClientConfig();
+                const auto &method = cfg.main.launcherMethod;
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    if (method == "launchHideRestore") {
+                        emit nekoWindow->showWindowD();
+                        emit nekoWindow->switchToPageD(ui::Page::home);
+                    } else if (method == "launchVisible") {
+                        emit nekoWindow->switchToPageD(ui::Page::home);
+                    }
                 }
             });
 

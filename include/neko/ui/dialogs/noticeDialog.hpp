@@ -6,6 +6,7 @@
 
 #include <QtWidgets/QWidget>
 
+#include <deque>
 #include <vector>
 
 class QFrame;
@@ -31,6 +32,11 @@ namespace neko::ui::dialog {
         QLabel *msg;
         QWidget *buttonContainer;
         QHBoxLayout *buttonLayout;
+        std::deque<NoticeMsg> noticeQueue;
+        bool showing = false;
+
+        void presentNextNotice();
+        void finishCurrent();
 
     public:
         NoticeDialog(QWidget *parent = nullptr);

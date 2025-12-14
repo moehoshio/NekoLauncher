@@ -308,6 +308,16 @@ namespace neko::minecraft {
          */
         void downloadTask(const Classifiers &single) {
             network::Network net;
+            // Ensure destination directory exists before opening the file for writing.
+            const auto parentDir = std::filesystem::path(single.path).parent_path();
+            if (!parentDir.empty()) {
+                std::error_code ec;
+                std::filesystem::create_directories(parentDir, ec);
+                if (ec) {
+                    throw ex::FileError{
+                        "Failed to create directory for archive: " + parentDir.string() + ", error: " + ec.message()};
+                }
+            }
             network::RequestConfig reqConfig{
                 .url = single.url,
                 .method = network::RequestType::DownloadFile,
@@ -1016,7 +1026,7 @@ namespace neko::minecraft {
     }
 
 
-    void launcherMinecraft(neko::ClientConfig cfg, std::function<void()> onStart, std::function<void(int)> onExit) {
+    void launcherMinecraft(neko::ClientConfig cfg, std::function<void()> onStart, std::function<void(int)> onExit, bool detach) {
 
         auto resolution = util::check::matchResolution(cfg.minecraft.customResolution);
         LauncherMinecraftConfig launcherCfg{
@@ -1042,9 +1052,51 @@ namespace neko::minecraft {
         }
 
         auto command = neko::minecraft::getLauncherMinecraftCommand(launcherCfg);
+        auto workingDir = internal::getAbsoluteMinecraftPath(cfg.minecraft.minecraftFolder);
+
+        if (detach) {
+#ifdef _WIN32
+            // Avoid Windows command-length limits by writing a temp script when needed.
+            std::optional<std::filesystem::path> tempScript;
+            if (command.length() >= core::windowsCommandLengthLimit) {
+                auto tmpDir = std::filesystem::temp_directory_path();
+                auto scriptPath = tmpDir / ("nekolauncher-detach-" + std::to_string(::GetCurrentProcessId()) + "-" + std::to_string(::GetTickCount64()) + ".cmd");
+                std::ofstream ofs(scriptPath, std::ios::out | std::ios::trunc);
+                if (!ofs.is_open()) {
+                    if (onExit) {
+                        onExit(-1);
+                    }
+                    throw ex::Runtime("Failed to create temp launch script for detach: " + scriptPath.string());
+                }
+                ofs << "@echo off\r\n" << command << "\r\n";
+                ofs.close();
+                tempScript = scriptPath;
+                command = "\"" + scriptPath.string() + "\"";
+                log::info("Using temp script for detached launch (len {}): {}", {}, command.length(), scriptPath.string());
+            }
+#endif
+
+            // Fire-and-forget launch; caller handles lifecycle (e.g., exiting launcher immediately).
+            try {
+                core::launcherNewProcess(command, workingDir);
+                if (onStart) {
+                    onStart();
+                }
+                if (onExit) {
+                    onExit(0);
+                }
+            } catch (...) {
+                if (onExit) {
+                    onExit(-1);
+                }
+                throw;
+            }
+            return;
+        }
+
         core::ProcessInfo pi{
             .command = command,
-            .workingDir = internal::getAbsoluteMinecraftPath(cfg.minecraft.minecraftFolder),
+            .workingDir = workingDir,
             .onStart = onStart,
             .onExit = onExit};
         core::launcherProcess(pi);

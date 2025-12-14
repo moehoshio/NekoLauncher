@@ -59,13 +59,15 @@ int main(int argc, char *argv[]) {
 
         // Start Qt event loop
         qtApp.exec();
-        runingInfo.eventLoopFuture.get();
+
+        // Stop event loop and worker threads before waiting on the loop future to prevent deadlock
         app::shutdown();
+        runingInfo.eventLoopFuture.get();
         ui::UiEventDispatcher::clearNekoWindow();
 
         {
             auto cfg = bus::config::getClientConfig();
-            if (cfg.dev.enable && cfg.dev.debug) {
+            if (cfg.dev.enable && cfg.dev.showLogViewer) {
                 ui::window::LogViewerWindow logWindow(QString::fromStdString(system::workPath()) + "/logs/new-debug.log");
                 logWindow.show();
                 return qtApp.exec();
