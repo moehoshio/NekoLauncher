@@ -10,7 +10,8 @@ namespace neko::ui::page {
         : QWidget(parent),
           startButton(new QPushButton(this)),
           menuButton(new QPushButton(this)),
-          versionButton(new QPushButton(this)) {
+          versionButton(new QPushButton(this)),
+          newsPanel(new widget::NewsPanel(this)) {
             
         this->setAttribute(Qt::WA_TranslucentBackground);
         startButton->setFocusPolicy(Qt::FocusPolicy::TabFocus);
@@ -21,6 +22,13 @@ namespace neko::ui::page {
         connect(menuButton, &QPushButton::clicked, this, &HomePage::menuButtonClicked);
         connect(startButton, &QPushButton::clicked, this, &HomePage::startButtonClicked);
         connect(versionButton, &QPushButton::clicked, this, &HomePage::versionButtonClicked);
+        
+        // Connect news panel signals
+        connect(newsPanel, &widget::NewsPanel::newsItemClicked, this, &HomePage::newsItemClicked);
+        connect(newsPanel, &widget::NewsPanel::closeRequested, this, [this]() {
+            setNewsPanelVisible(false);
+            emit newsPanelClosed();
+        });
     }
     void HomePage::setupTheme(const Theme &theme) {
         QString startButtonStyle =
@@ -68,11 +76,14 @@ namespace neko::ui::page {
                 "background-color: transparent;"
                 "}")
                 .arg(theme.colors.text.data()));
+        
+        newsPanel->setupTheme(theme);
     }
     void HomePage::setupFont(QFont text, QFont h1Font, QFont h2Font) {
         startButton->setFont(h1Font);
         menuButton->setFont(h2Font);
         versionButton->setFont(text);
+        newsPanel->setupFont(text, h2Font);
     }
     void HomePage::setupText() {
         startButton->setText(QString::fromStdString(lang::tr(lang::keys::button::category, lang::keys::button::start, "Start")));
@@ -89,5 +100,29 @@ namespace neko::ui::page {
         startButton->setGeometry(windowWidth * 0.3, windowHeight * 0.75, windowWidth * 0.4, windowHeight * 0.18);
         menuButton->setGeometry(windowWidth * 0.82, windowHeight * 0.82, windowWidth * 0.15, windowHeight * 0.1);
         versionButton->setGeometry(10, windowHeight - std::max<double>(windowHeight * 0.01, 60), std::max<double>(width() * 0.12, 180), std::max<double>(height() * 0.1, 65));
+        
+        // Position news panel on the right side
+        int newsPanelWidth = std::max<int>(windowWidth * 0.28, 260);
+        int newsPanelHeight = std::max<int>(windowHeight * 0.5, 200);
+        int newsPanelX = windowWidth - newsPanelWidth - 15;
+        int newsPanelY = 15;
+        newsPanel->setGeometry(newsPanelX, newsPanelY, newsPanelWidth, newsPanelHeight);
+    }
+    
+    void HomePage::setNews(const std::vector<api::NewsItem> &items) {
+        newsPanel->setNews(items);
+    }
+    
+    void HomePage::clearNews() {
+        newsPanel->clearNews();
+    }
+    
+    void HomePage::setNewsPanelVisible(bool visible) {
+        newsPanelVisible = visible;
+        newsPanel->setVisible(visible);
+    }
+    
+    bool HomePage::isNewsPanelVisible() const {
+        return newsPanelVisible;
     }
 } // namespace neko::ui::page

@@ -210,6 +210,47 @@ namespace neko::api {
         }
     };
 
+    struct NewsItem {
+        std::string
+            id,
+            title,
+            summary,
+            content,
+            posterUrl,
+            link,
+            publishTime,
+            category;
+        std::vector<std::string> tags;
+        neko::int32 priority = 0;
+
+        bool empty() const noexcept {
+            return id.empty() && title.empty() && summary.empty();
+        }
+    };
+
+    struct NewsResponse {
+        std::vector<NewsItem> items;
+        bool hasMore = false;
+        Meta meta;
+
+        bool empty() const noexcept {
+            return items.empty() && meta.empty();
+        }
+    };
+
+    struct NewsRequest {
+        ClientInfo clientInfo;
+        neko::int64 timestamp;
+        neko::int32 limit = 10;
+        std::vector<std::string> categories;
+        std::string lastId;
+        Preferences preferences;
+
+        bool empty() const noexcept {
+            return clientInfo.empty() && timestamp == 0;
+        }
+    };
+
     struct FeedbackLogRequest {
         ClientInfo clientInfo;
         neko::int64 timestamp;
@@ -608,6 +649,81 @@ namespace neko::api {
                 update.files.push_back(file);
             }
         }
+    }
+
+    // NewsItem
+    inline void to_json(nlohmann::json &j, const NewsItem &item) {
+        j = nlohmann::json{
+            {"id", item.id},
+            {"title", item.title},
+            {"summary", item.summary},
+            {"content", item.content},
+            {"posterUrl", item.posterUrl},
+            {"link", item.link},
+            {"publishTime", item.publishTime},
+            {"category", item.category},
+            {"tags", item.tags},
+            {"priority", item.priority}};
+    }
+    inline void from_json(const nlohmann::json &j, NewsItem &item) {
+        item.id = j.value("id", "");
+        item.title = j.value("title", "");
+        item.summary = j.value("summary", "");
+        item.content = j.value("content", "");
+        item.posterUrl = j.value("posterUrl", "");
+        item.link = j.value("link", "");
+        item.publishTime = j.value("publishTime", "");
+        item.category = j.value("category", "");
+        item.tags = j.value("tags", std::vector<std::string>{});
+        item.priority = j.value("priority", 0);
+    }
+
+    // NewsResponse
+    inline void to_json(nlohmann::json &j, const NewsResponse &response) {
+        j = nlohmann::json{
+            {"items", response.items},
+            {"hasMore", response.hasMore},
+            {"meta", response.meta}};
+    }
+    inline void from_json(const nlohmann::json &j, NewsResponse &response) {
+        // Allow wrapped payload: {"newsResponse": {...}, "meta": {...}}
+        const nlohmann::json &payload = j.contains("newsResponse") ? j.at("newsResponse") : j;
+
+        if (payload.contains("items")) {
+            for (const auto &itemJson : payload.at("items")) {
+                NewsItem item;
+                from_json(itemJson, item);
+                response.items.push_back(item);
+            }
+        }
+        response.hasMore = payload.value("hasMore", false);
+
+        if (payload.contains("meta")) {
+            from_json(payload.at("meta"), response.meta);
+        } else if (j.contains("meta")) {
+            from_json(j.at("meta"), response.meta);
+        } else {
+            response.meta = {};
+        }
+    }
+
+    // NewsRequest
+    inline void to_json(nlohmann::json &j, const NewsRequest &request) {
+        j = nlohmann::json{
+            {"clientInfo", request.clientInfo},
+            {"timestamp", request.timestamp},
+            {"limit", request.limit},
+            {"categories", request.categories},
+            {"lastId", request.lastId},
+            {"preferences", request.preferences}};
+    }
+    inline void from_json(const nlohmann::json &j, NewsRequest &request) {
+        from_json(j.at("clientInfo"), request.clientInfo);
+        request.timestamp = j.value("timestamp", 0);
+        request.limit = j.value("limit", 10);
+        request.categories = j.value("categories", std::vector<std::string>{});
+        request.lastId = j.value("lastId", "");
+        from_json(j.at("preferences"), request.preferences);
     }
 
     // FeedbackLogRequest

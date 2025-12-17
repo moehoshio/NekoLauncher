@@ -157,6 +157,7 @@ namespace neko::lc {
         constexpr neko::cstr launcherConfig = "/v0/api/launcherConfig";
         constexpr neko::cstr maintenance = "/v0/api/maintenance";
         constexpr neko::cstr checkUpdates = "/v0/api/checkUpdates";
+        constexpr neko::cstr news = "/v0/api/news";
         constexpr neko::cstr feedbackLog = "/v0/api/feedbackLog";
 
         namespace authlib {

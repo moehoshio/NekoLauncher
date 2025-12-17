@@ -35,6 +35,7 @@ namespace neko::ui::page {
           backButton(new QPushButton(card)) {
 
         this->setAttribute(Qt::WA_TranslucentBackground);
+                card->setObjectName(QStringLiteral("aboutCard"));
         card->setAttribute(Qt::WA_StyledBackground);
 
         auto *layout = new QVBoxLayout(card);
@@ -121,7 +122,7 @@ namespace neko::ui::page {
         const auto cardBg = theme.colors.panel.empty() ? theme.colors.surface : theme.colors.panel;
         card->setStyleSheet(
             QString(
-                "QWidget {"
+                "QWidget#aboutCard {"
                 "background: %1;"
                 "border: 1.5px solid %2;"
                 "border-radius: 18px;"
@@ -137,6 +138,10 @@ namespace neko::ui::page {
                 "border: none;"
                 "}")
                 .arg(theme.colors.text.data());
+
+        for (auto *label : std::vector<QLabel *>{titleLabel, subtitleLabel, versionLabel, resourceLabel, buildLabel, descriptionLabel}) {
+            label->setStyleSheet(labelStyle);
+        }
 
         const QString buttonStyle =
             QString(

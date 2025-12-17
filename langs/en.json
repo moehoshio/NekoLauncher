@@ -13,6 +13,13 @@
         "parseIng": "Parsing maintenance status...",
         "downloadPoster": "Downloading maintenance poster..."
     },
+    "news": {
+        "title": "News",
+        "noNews": "No news available",
+        "loading": "Loading news...",
+        "loadMore": "Load more",
+        "readMore": "Read more"
+    },
     "update": {
         "title": "Update",
         "startingUpdate": "Starting update...",

@@ -34,7 +34,7 @@ namespace neko::core {
         auto url = network::buildUrl(lc::api::feedbackLog);
 
         auto json = app::getRequestJson("feedbackLogRequest");
-        json["content"] = feedbackLog;
+        json["feedbackLogRequest"]["content"] = feedbackLog;
 
         network::RequestConfig reqConfig{
             .url = url,

@@ -894,7 +894,7 @@ namespace neko::ui::page {
             w->setStyleSheet(editStyle);
         }
         for (auto *w : {static_cast<QWidget *>(backgroundTypeCombo), static_cast<QWidget *>(blurEffectCombo),
-                        static_cast<QWidget *>(launcherMethodCombo), static_cast<QWidget *>(blurRadiusSlider),
+                        static_cast<QWidget *>(animationCombo), static_cast<QWidget *>(launcherMethodCombo), static_cast<QWidget *>(blurRadiusSlider),
                         static_cast<QWidget *>(fontPointSizeSpin), static_cast<QWidget *>(threadSpin),
                         static_cast<QWidget *>(downloadSourceCombo), static_cast<QWidget *>(joinServerPortSpin),
                         static_cast<QWidget *>(customTempDirBrowseBtn), static_cast<QWidget *>(fontFamiliesCombo), static_cast<QWidget *>(backgroundBrowseBtn)}) {
@@ -966,10 +966,10 @@ namespace neko::ui::page {
         Q_UNUSED(h1Font);
         Q_UNUSED(h2Font);
 
-        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, devServerEdit, languageCombo, backgroundBrowseBtn, devPreviewLabel, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
+        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, animationCombo, devServerEdit, languageCombo, backgroundBrowseBtn, devPreviewLabel, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
             w->setFont(text);
         }
-        for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
+        for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, animationCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
             w->setFont(text);
         }
         for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {

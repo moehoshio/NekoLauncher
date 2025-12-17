@@ -15,6 +15,7 @@
 
 #include <string>
 #include <functional>
+#include <vector>
 
 namespace neko::event {
 
@@ -118,6 +119,14 @@ namespace neko::event {
     };
     struct UpdateCompleteEvent {};
     struct UpdateFailedEvent {
+        std::string reason;
+    };
+
+    struct NewsLoadedEvent {
+        std::vector<api::NewsItem> items;
+        bool hasMore = false;
+    };
+    struct NewsLoadFailedEvent {
         std::string reason;
     };
     

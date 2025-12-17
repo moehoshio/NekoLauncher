@@ -13,6 +13,13 @@
         "parseIng": "正在解析维护状态...",
         "downloadPoster": "正在下载维护海报..."
     },
+    "news": {
+        "title": "新闻",
+        "noNews": "暂无新闻",
+        "loading": "正在加载新闻...",
+        "loadMore": "加载更多",
+        "readMore": "阅读更多"
+    },
     "update": {
         "title": "更新",
         "startingUpdate": "正在开始更新...",

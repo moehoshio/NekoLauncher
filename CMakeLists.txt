@@ -266,6 +266,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/update.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/crashReporter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/news.cpp
 
     # Minecraft
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/minecraft/installMinecraft.cpp
@@ -288,6 +289,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/newsWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
     # Headers (for Qt MOC)
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/animation.hpp
@@ -300,6 +302,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/settingPage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/widgets/newsWidget.hpp
     
     # Main
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/main.cpp

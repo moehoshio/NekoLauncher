@@ -352,6 +352,16 @@ namespace neko::lang {
                 downloadPoster = "downloadPoster";
         } // namespace maintenance
 
+        namespace news {
+            constexpr neko::cstr
+                category = "news",
+                title = "title",
+                noNews = "noNews",
+                loading = "loading",
+                loadMore = "loadMore",
+                readMore = "readMore";
+        } // namespace news
+
         namespace update {
             constexpr neko::cstr
                 category = "update",
