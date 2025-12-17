@@ -10,6 +10,8 @@ deviceID = 38912750-4ede-40cf-8559-f2f746ab2093
 
 
 [style]
+theme = Light
+animation=ios
 blurEffect = Animation
 blurRadius = 10
 fontPointSize = 10

@@ -5,6 +5,7 @@ namespace neko::ui {
     enum class Page {
         none,
         home,
+        about,
         setting,
         loading
     };

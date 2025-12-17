@@ -262,6 +262,12 @@ namespace neko::lang {
                 useSysWindowFrame = "useSysWindowFrame",
                 headBarKeepRight = "headBarKeepRight",
                 theme = "theme",
+                animationStyle = "animationStyle",
+                animationNone = "animationNone",
+                animationMinimal = "animationMinimal",
+                animationSmooth = "animationSmooth",
+                animationiOS = "animationiOS",
+                animationBounce = "animationBounce",
                 blurEffect = "blurEffect",
                 blurEffectPerformance = "blurEffectPerformance",
                 blurEffectQuality = "blurEffectQuality",
@@ -315,6 +321,16 @@ namespace neko::lang {
                 launchFailedTitle = "launchFailedTitle",
                 launchFailedMessage = "launchFailedMessage";
         } // namespace launcher
+
+        namespace about {
+            constexpr neko::cstr
+                category = "about",
+                title = "title",
+                tagline = "tagline",
+                description = "description",
+                openRepo = "openRepo",
+                feedbackLogs = "feedbackLogs";
+        } // namespace about
 
 
         namespace input {

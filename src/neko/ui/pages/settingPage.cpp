@@ -3,6 +3,7 @@
 #include "neko/app/lang.hpp"
 #include "neko/app/nekoLc.hpp"
 #include "neko/bus/configBus.hpp"
+#include "neko/ui/animation.hpp"
 #include "neko/ui/dialogs/themeEditorDialog.hpp"
 #include "neko/ui/themeIO.hpp"
 
@@ -25,6 +26,8 @@
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QSlider>
 #include <QtWidgets/QSpinBox>
+#include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QTabBar>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
@@ -63,6 +66,7 @@ namespace neko::ui::page {
           styleGroup(new QGroupBox(QStringLiteral("Style"), mainTab)),
           themeCombo(new QComboBox(styleGroup)),
           editThemeBtn(new QPushButton(QStringLiteral("Edit"), styleGroup)),
+          animationCombo(new QComboBox(styleGroup)),
           blurEffectCombo(new QComboBox(styleGroup)),
           blurRadiusSlider(new QSlider(Qt::Horizontal, styleGroup)),
           fontPointSizeSpin(new QSpinBox(styleGroup)),
@@ -108,6 +112,14 @@ namespace neko::ui::page {
         rootLayout->addWidget(tabWidget);
         tabWidget->setTabPosition(QTabWidget::North);
         tabWidget->setUsesScrollButtons(true);
+
+        // Connect tab change for animation
+        connect(tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+            QWidget *currentWidget = tabWidget->widget(index);
+            if (currentWidget) {
+                anim::tabFadeIn(currentWidget, anim::Duration::Fast);
+            }
+        });
 
         closeTabButton->setText(QStringLiteral("X"));
         closeTabButton->setToolTip(QStringLiteral("Close"));
@@ -196,6 +208,10 @@ namespace neko::ui::page {
         editThemeBtn->setFixedWidth(72);
         themeRow->addWidget(editThemeBtn, 0);
         styleLayout->addLayout(themeRow);
+        auto *animationLabel = new QLabel(styleGroup);
+        animationLabel->setObjectName(QStringLiteral("animationLabel"));
+        styleLayout->addWidget(animationLabel);
+        styleLayout->addWidget(animationCombo);
         auto *blurEffectLabel = new QLabel(styleGroup);
         blurEffectLabel->setObjectName(QStringLiteral("blurEffectLabel"));
         styleLayout->addWidget(blurEffectLabel);
@@ -224,7 +240,7 @@ namespace neko::ui::page {
         auto *threadsLabel = new QLabel(networkGroup);
         threadsLabel->setObjectName(QStringLiteral("threadsLabel"));
         netLayout->addWidget(threadsLabel);
-        threadSpin->setRange(0, 128);
+        threadSpin->setRange(0, 256);
         netLayout->addWidget(threadSpin);
         proxyCheck->setObjectName(QStringLiteral("proxyCheck"));
         netLayout->addWidget(proxyCheck);
@@ -442,6 +458,13 @@ namespace neko::ui::page {
             emit fontFamiliesChanged(f.family());
             emit configChanged();
         });
+        connect(animationCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+            if (suppressSignals) {
+                return;
+            }
+            emit animationStyleChanged(animationCombo->currentData().toString());
+            emit configChanged();
+        });
         connect(blurEffectCombo, &QComboBox::currentIndexChanged, this, [this](int) {
             if (suppressSignals) {
                 return;
@@ -544,6 +567,9 @@ namespace neko::ui::page {
             if (suppressSignals) {
                 return;
             }
+            if (value <3) {
+                value = 3; // minimum 3 threads
+            }
             emit threadCountChanged(value);
             emit configChanged();
         });
@@ -592,6 +618,13 @@ namespace neko::ui::page {
         backgroundTypeCombo->clear();
         backgroundTypeCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::backgroundTypeImage, "Image background"), QStringLiteral("image"));
         backgroundTypeCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::backgroundTypeNone, "No background"), QStringLiteral("none"));
+
+        animationCombo->clear();
+        animationCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::animationNone, "None"), QStringLiteral("none"));
+        animationCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::animationMinimal, "Minimal"), QStringLiteral("minimal"));
+        animationCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::animationSmooth, "Smooth"), QStringLiteral("smooth"));
+        animationCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::animationiOS, "iOS"), QStringLiteral("ios"));
+        animationCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::animationBounce, "Bounce"), QStringLiteral("bounce"));
 
         blurEffectCombo->clear();
         blurEffectCombo->addItem(tr(lang::keys::setting::category, lang::keys::setting::blurEffectPerformance, "Performance"), QStringLiteral("performance"));
@@ -696,6 +729,31 @@ namespace neko::ui::page {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::theme, "Theme"));
         }
         editThemeBtn->setText(tr(lang::keys::button::category, lang::keys::button::edit, "Edit"));
+        if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("animationLabel"))) {
+            label->setText(tr(lang::keys::setting::category, lang::keys::setting::animationStyle, "Animation"));
+        }
+            {
+                const int idxNone = animationCombo->findData(QStringLiteral("none"));
+                if (idxNone >= 0) {
+                    animationCombo->setItemText(idxNone, tr(lang::keys::setting::category, lang::keys::setting::animationNone, "None"));
+                }
+                const int idxMinimal = animationCombo->findData(QStringLiteral("minimal"));
+                if (idxMinimal >= 0) {
+                    animationCombo->setItemText(idxMinimal, tr(lang::keys::setting::category, lang::keys::setting::animationMinimal, "Minimal"));
+                }
+                const int idxSmooth = animationCombo->findData(QStringLiteral("smooth"));
+                if (idxSmooth >= 0) {
+                    animationCombo->setItemText(idxSmooth, tr(lang::keys::setting::category, lang::keys::setting::animationSmooth, "Smooth"));
+                }
+                const int idxiOS = animationCombo->findData(QStringLiteral("ios"));
+                if (idxiOS >= 0) {
+                    animationCombo->setItemText(idxiOS, tr(lang::keys::setting::category, lang::keys::setting::animationiOS, "iOS"));
+                }
+                const int idxBounce = animationCombo->findData(QStringLiteral("bounce"));
+                if (idxBounce >= 0) {
+                    animationCombo->setItemText(idxBounce, tr(lang::keys::setting::category, lang::keys::setting::animationBounce, "Bounce"));
+                }
+            }
         if (auto *label = styleGroup->findChild<QLabel *>(QStringLiteral("blurEffectLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::blurEffect, "Blur effect"));
         }
@@ -1019,6 +1077,12 @@ namespace neko::ui::page {
         }
         updateEditThemeState();
         {
+            const int idx = animationCombo->findData(QString::fromStdString(cfg.style.animation));
+            if (idx >= 0) {
+                animationCombo->setCurrentIndex(idx);
+            }
+        }
+        {
             const int idx = blurEffectCombo->findData(QString::fromStdString(cfg.style.blurEffect));
             if (idx >= 0) {
                 blurEffectCombo->setCurrentIndex(idx);
@@ -1094,6 +1158,9 @@ namespace neko::ui::page {
         const QString th = themeCombo->currentData().toString();
         auto thStd = th.toStdString();
         cfg.style.theme = std::move(thStd);
+        const QString anim = animationCombo->currentData().toString();
+        auto animStd = anim.toStdString();
+        cfg.style.animation = std::move(animStd);
         const QString be = blurEffectCombo->currentData().toString();
         auto beStd = be.toStdString();
         cfg.style.blurEffect = std::move(beStd);

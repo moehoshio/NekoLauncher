@@ -1,4 +1,5 @@
 #include "neko/ui/windows/nekoWindow.hpp"
+#include "neko/ui/animation.hpp"
 #include "neko/ui/fonts.hpp"
 #include "neko/ui/themeIO.hpp"
 #include "neko/app/nekoLc.hpp"
@@ -31,6 +32,7 @@
 #include <QtWidgets/QWidget>
 
 #include <algorithm>
+#include <initializer_list>
 
 namespace neko::ui::window {
 
@@ -40,6 +42,7 @@ namespace neko::ui::window {
                     noticeDialog(new dialog::NoticeDialog(this)),
                     inputDialog(new dialog::InputDialog(this)),
                     pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
+                    aboutPage(new page::AboutPage(this)),
                     homePage(new page::HomePage(this)),
                     loadingPage(new page::LoadingPage(this)),
                     settingPage(new page::SettingPage(this)) {
@@ -49,12 +52,14 @@ namespace neko::ui::window {
         pixmapWidget->lower();
         centralWidget->raise();
         homePage->raise();
+        aboutPage->raise();
         loadingPage->raise();
         settingPage->raise();
         inputDialog->raise();
         noticeDialog->raise();
 
         homePage->hide();
+        aboutPage->hide();
         loadingPage->hide();
         noticeDialog->hide();
         inputDialog->hide();
@@ -106,6 +111,7 @@ namespace neko::ui::window {
 
     void NekoWindow::setupTheme(const Theme &theme) {
         homePage->setupTheme(theme);
+        aboutPage->setupTheme(theme);
         loadingPage->setupTheme(theme);
         settingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
@@ -141,6 +147,7 @@ namespace neko::ui::window {
 
     void NekoWindow::setupFont(const QFont &textFont, const QFont &h1Font, const QFont &h2Font) {
         homePage->setupFont(textFont, h1Font, h2Font);
+        aboutPage->setupFont(textFont, h1Font, h2Font);
         loadingPage->setupFont(textFont, h1Font, h2Font);
         settingPage->setupFont(textFont, h1Font, h2Font);
         noticeDialog->setupFont(textFont, h2Font);
@@ -149,6 +156,7 @@ namespace neko::ui::window {
 
     void NekoWindow::setupText() {
         homePage->setupText();
+        aboutPage->setupText();
         settingPage->setupText();
         // Add other widgets/pages here when they expose setupText.
     }
@@ -233,6 +241,13 @@ namespace neko::ui::window {
         });
         connect(homePage, &page::HomePage::menuButtonClicked, this, [this]() {
             switchToPage(Page::setting);
+        });
+        connect(homePage, &page::HomePage::versionButtonClicked, this, [this]() {
+            switchToPage(Page::about);
+        });
+
+        connect(aboutPage, &page::AboutPage::backRequested, this, [this]() {
+            switchToPage(Page::home);
         });
 
         connect(settingPage, &page::SettingPage::closeRequested, this, [this]() {
@@ -558,31 +573,57 @@ namespace neko::ui::window {
 
     void NekoWindow::switchToPage(Page page) {
         log::info("switchToPage {}", {}, static_cast<int>(page));
-        // Always hide all pages first to avoid overlapping views when switching.
-        homePage->hide();
-        loadingPage->hide();
-        settingPage->hide();
-
-        currentPage = page;
-
+        
+        if (currentPage == page) return;
+        
+        // Determine the target page widget
+        QWidget *targetPage = nullptr;
         switch (page) {
             case Page::home:
-                homePage->show();
-                homePage->raise();
+                targetPage = homePage;
+                break;
+            case Page::about:
+                targetPage = aboutPage;
                 break;
             case Page::loading:
-                loadingPage->show();
-                loadingPage->raise();
+                targetPage = loadingPage;
                 break;
             case Page::setting:
-                settingPage->show();
-                settingPage->raise();
+                targetPage = settingPage;
                 break;
             default:
                 break;
         }
 
+        if (!targetPage) return;
+
+        // Determine animation direction based on page order
+        auto pageIndex = [](Page p) -> int {
+            switch (p) {
+                case Page::loading: return 0;
+                case Page::home: return 1;
+                case Page::setting: return 2;
+                case Page::about: return 3;
+                default: return -1;
+            }
+        };
+
+        int oldIdx = pageIndex(currentPage);
+        int newIdx = pageIndex(page);
+        anim::Direction direction = (oldIdx < newIdx) ? anim::Direction::Right : anim::Direction::Left;
+
+        // FIRST: Immediately hide ALL other pages to prevent any visual artifacts
+        for (auto *p : std::initializer_list<QWidget*>{homePage, aboutPage, loadingPage, settingPage}) {
+            if (p != targetPage) {
+                p->hide();
+            }
+        }
+
+        currentPage = page;
         resizeItems(this->width(), this->height());
+
+        // iOS-style slide in animation
+        anim::slideIn(targetPage, direction, anim::Duration::Slow);
     }
 
     void NekoWindow::resizeItems(int width, int height) {
@@ -597,6 +638,9 @@ namespace neko::ui::window {
         inputDialog->resizeItems(width, height);
         homePage->setGeometry(contentX, contentY, contentWidth, contentHeight);
         homePage->resizeItems(contentWidth, contentHeight);
+
+        aboutPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+        aboutPage->resizeItems(contentWidth, contentHeight);
 
         loadingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
         loadingPage->resizeItems(contentWidth, contentHeight);

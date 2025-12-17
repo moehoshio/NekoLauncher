@@ -27,6 +27,13 @@
         "launchFailedTitle": "启动失败",
         "launchFailedMessage": "启动过程中发生错误："
     },
+    "about": {
+        "title": "NekoLauncher",
+        "tagline": "开源，现代的自动更新解决方案",
+        "description": "有关更多资讯，请访问<a href=\"https://nekolc.oha.li\">nekolc.oha.li</a>",
+        "openRepo": "源码仓库",
+        "feedbackLogs": "反馈日志"
+    },
     "button": {
         "open": "打开",
         "close": "关闭",
@@ -92,6 +99,12 @@
         "useSysWindowFrame": "使用系统窗口框架",
         "headBarKeepRight": "标题栏靠右",
         "theme": "主题",
+        "animationStyle": "动画效果",
+        "animationNone": "无",
+        "animationMinimal": "简约",
+        "animationSmooth": "平滑",
+        "animationiOS": "iOS",
+        "animationBounce": "弹跳",
         "blurEffect": "模糊效果",
         "blurEffectPerformance": "性能优先",
         "blurEffectQuality": "质量优先",

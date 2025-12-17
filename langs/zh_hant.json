@@ -13,7 +13,6 @@
         "parseIng": "正在解析維護狀態...",
         "downloadPoster": "正在下載維護海報..."
     },
-    
     "update": {
         "title": "更新",
         "startingUpdate": "正在開始更新...",
@@ -27,6 +26,13 @@
     "launcher": {
         "launchFailedTitle": "啟動失敗",
         "launchFailedMessage": "啟動過程中發生錯誤："
+    },
+    "about": {
+        "title": "NekoLauncher",
+        "tagline": "開源，現代的自動更新解決方案",
+        "description": "有關更多資訊，請訪問<a href=\"https://nekolc.oha.li\">nekolc.oha.li</a>",
+        "openRepo": "原始碼倉庫",
+        "feedbackLogs": "回報日誌"
     },
     "button": {
         "open": "打開",
@@ -87,16 +93,22 @@
         "launcherVisible": "保持啟動器可見",
         "launcherExit": "啟動後退出",
         "launcherHideRestore": "啟動後隱藏並在結束時顯示",
-            "themeLight": "亮色",
-            "themeDark": "暗色",
-            "themeSystem": "跟隨系統",
+        "themeLight": "亮色",
+        "themeDark": "暗色",
+        "themeSystem": "跟隨系統",
         "useSysWindowFrame": "使用系統視窗框架",
         "headBarKeepRight": "標題列靠右",
         "theme": "主題",
+        "animationStyle": "動畫效果",
+        "animationNone": "無",
+        "animationMinimal": "簡約",
+        "animationSmooth": "平滑",
+        "animationiOS": "iOS",
+        "animationBounce": "彈跳",
         "blurEffect": "模糊效果",
-            "blurEffectPerformance": "效能優先",
-            "blurEffectQuality": "品質優先",
-            "blurEffectAnimation": "動畫平滑",
+        "blurEffectPerformance": "效能優先",
+        "blurEffectQuality": "品質優先",
+        "blurEffectAnimation": "動畫平滑",
         "blurRadius": "模糊半徑",
         "fontSize": "字體大小",
         "fontFamilies": "字體",
@@ -110,8 +122,8 @@
         "browseJava": "選擇 Java 執行檔",
         "javaExecutableFilter": "可執行檔 (*.exe);;所有檔案 (*.*)",
         "downloadSource": "下載來源",
-            "downloadSourceOfficial": "官方",
-            "downloadSourceBmclapi": "BMCLAPI",
+        "downloadSourceOfficial": "官方",
+        "downloadSourceBmclapi": "BMCLAPI",
         "playerName": "玩家名稱",
         "customResolution": "自訂解析度",
         "joinServerAddress": "伺服器位址",

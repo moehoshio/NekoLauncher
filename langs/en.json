@@ -27,6 +27,13 @@
         "launchFailedTitle": "Launch Failed",
         "launchFailedMessage": "An error occurred during launch: "
     },
+    "about": {
+        "title": "NekoLauncher",
+        "tagline": "Open source, modern auto-updating solution",
+        "description": "For more information, visit <a href=\"https://nekolc.oha.li\">nekolc.oha.li</a>",
+        "openRepo": "Repository",
+        "feedbackLogs": "Send Logs"
+    },
     "button": {
         "open": "Open",
         "close": "Close",
@@ -92,6 +99,12 @@
         "useSysWindowFrame": "Use system window frame",
         "headBarKeepRight": "Head bar keep right",
         "theme": "Theme",
+        "animationStyle": "Animation",
+        "animationNone": "None",
+        "animationMinimal": "Minimal",
+        "animationSmooth": "Smooth",
+        "animationiOS": "iOS",
+        "animationBounce": "Bounce",
         "blurEffect": "Blur effect",
         "blurEffectPerformance": "Performance",
         "blurEffectQuality": "Quality",

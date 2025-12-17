@@ -1,4 +1,5 @@
 #include "neko/ui/dialogs/noticeDialog.hpp"
+#include "neko/ui/animation.hpp"
 #include "neko/ui/theme.hpp"
 #include "neko/ui/uiMsg.hpp"
 #include "neko/app/lang.hpp"
@@ -197,8 +198,8 @@ namespace neko::ui::dialog {
         }
 
         // Now show once everything is ready to avoid empty frames.
-        this->show();
-        this->raise();
+        // Use pop-in animation for a nice effect
+        anim::popIn(this, anim::Duration::Normal);
 
         // If did ( user clicked ) , window is closed , the do not call the callback
         auto did = std::make_shared<bool>(false);
@@ -241,9 +242,15 @@ namespace neko::ui::dialog {
     }
 
     void NoticeDialog::finishCurrent() {
-        resetState();
-        showing = false;
-        presentNextNotice();
+        // Use pop-out animation before hiding
+        anim::popOut(this, anim::Duration::Fast);
+        
+        // Delayed cleanup after animation
+        QTimer::singleShot(anim::Duration::Fast + 50, this, [this]() {
+            resetState();
+            showing = false;
+            presentNextNotice();
+        });
     }
 
     void NoticeDialog::resetState() {

@@ -8,6 +8,7 @@
 
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
+#include "neko/ui/pages/aboutPage.hpp"
 #include "neko/ui/pages/homePage.hpp"
 #include "neko/ui/pages/loadingPage.hpp"
 #include "neko/ui/pages/settingPage.hpp"
@@ -43,6 +44,7 @@ namespace neko::ui::window {
         // Widgets
         widget::PixmapWidget *pixmapWidget;
         // Pages
+        page::AboutPage *aboutPage;
         page::HomePage *homePage;
         page::LoadingPage *loadingPage;
         page::SettingPage *settingPage;

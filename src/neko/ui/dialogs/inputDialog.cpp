@@ -1,5 +1,6 @@
 #include "neko/ui/dialogs/inputDialog.hpp"
 
+#include "neko/ui/animation.hpp"
 #include "neko/ui/theme.hpp"
 #include "neko/ui/uiMsg.hpp"
 
@@ -7,6 +8,7 @@
 
 #include "neko/app/lang.hpp"
 
+#include <QTimer>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -58,29 +60,32 @@ namespace neko::ui::dialog {
         }
 
     void InputDialog::hideInput() {
-        this->hide();
-        poster->clearPixmap();
-        for (auto it : lines) {
-            centralWidgetLayout->removeWidget(it);
-            it->deleteLater();
-        }
-        lines.clear();
-        centralWidgetLayout->removeWidget(dialogButton);
-        disconnect(dialogButton);
-
-        // Remove any spacers inserted by setLines to avoid layout stacking.
-        for (int i = centralWidgetLayout->count() - 1; i >= 0; --i) {
-            QLayoutItem *item = centralWidgetLayout->itemAt(i);
-            if (item && item->spacerItem()) {
-                auto taken = centralWidgetLayout->takeAt(i);
-                delete taken;
+        // Use pop-out animation before cleaning up
+        anim::popOut(this, anim::Duration::Fast);
+        
+        // Use a delayed cleanup (after animation completes)
+        QTimer::singleShot(anim::Duration::Fast + 50, this, [this]() {
+            poster->clearPixmap();
+            for (auto it : lines) {
+                centralWidgetLayout->removeWidget(it);
+                it->deleteLater();
             }
-        }
+            lines.clear();
+            centralWidgetLayout->removeWidget(dialogButton);
+            disconnect(dialogButton);
+
+            // Remove any spacers inserted by setLines to avoid layout stacking.
+            for (int i = centralWidgetLayout->count() - 1; i >= 0; --i) {
+                QLayoutItem *item = centralWidgetLayout->itemAt(i);
+                if (item && item->spacerItem()) {
+                    auto taken = centralWidgetLayout->takeAt(i);
+                    delete taken;
+                }
+            }
+        });
     }
 
     void InputDialog::showInput(const InputMsg &m) {
-        this->show();
-        this->raise();
         title->setText(QString::fromStdString(m.title));
         msg->setText(QString::fromStdString(m.message));
         if (!m.posterPath.empty())
@@ -91,6 +96,9 @@ namespace neko::ui::dialog {
         } else {
             setLines(m.lineText);
         }
+
+        // Use pop-in animation for showing
+        anim::popIn(this, anim::Duration::Normal);
 
         auto did = std::make_shared<bool>(false);
         if (!m.callback)

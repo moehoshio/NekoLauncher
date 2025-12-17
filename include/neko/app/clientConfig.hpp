@@ -38,6 +38,7 @@ namespace neko {
             long blurRadius;
             long fontPointSize;
             std::string fontFamilies;
+            std::string animation;  // Animation style: none, minimal, smooth, ios, bounce
         } style;
 
         /**
@@ -122,6 +123,7 @@ namespace neko {
             style.blurRadius = cfg.GetLongValue("style", "blurRadius", 10);
             style.fontPointSize = cfg.GetLongValue("style", "fontPointSize", 10);
             style.fontFamilies = cfg.GetValue("style", "fontFamilies", "");
+            style.animation = cfg.GetValue("style", "animation", "ios");
 
             net.thread = cfg.GetLongValue("net", "thread", 0);
             net.proxy = cfg.GetValue("net", "proxy", "true");
@@ -183,6 +185,7 @@ namespace neko {
             cfg.SetLongValue("style", "blurRadius", style.blurRadius);
             cfg.SetLongValue("style", "fontPointSize", style.fontPointSize);
             cfg.SetValue("style", "fontFamilies", style.fontFamilies.c_str());
+            cfg.SetValue("style", "animation", style.animation.c_str());
 
             cfg.SetLongValue("net", "thread", net.thread);
             cfg.SetValue("net", "proxy", net.proxy.c_str());

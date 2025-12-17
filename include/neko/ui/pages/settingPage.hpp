@@ -53,6 +53,7 @@ namespace neko::ui::page {
         QGroupBox *styleGroup;
         QComboBox *themeCombo;
         QPushButton *editThemeBtn;
+        QComboBox *animationCombo;
         QComboBox *blurEffectCombo;
         QSlider *blurRadiusSlider;
         QSpinBox *fontPointSizeSpin;
@@ -129,6 +130,7 @@ namespace neko::ui::page {
         void fontPointSizeChanged(int pointSize);
         void fontFamiliesChanged(const QString &families);
         void blurEffectChanged(const QString &effect);
+        void animationStyleChanged(const QString &style);
         void blurRadiusChanged(int radius);
         void backgroundTypeChanged(const QString &type);
         void backgroundPathChanged(const QString &path);
