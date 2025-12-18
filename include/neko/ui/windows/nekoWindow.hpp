@@ -11,8 +11,10 @@
 #include "neko/ui/pages/aboutPage.hpp"
 #include "neko/ui/pages/homePage.hpp"
 #include "neko/ui/pages/loadingPage.hpp"
+#include "neko/ui/pages/newsPage.hpp"
 #include "neko/ui/pages/settingPage.hpp"
 
+#include "neko/app/api.hpp"
 #include "neko/app/clientConfig.hpp"
 #include "neko/event/event.hpp"
 
@@ -47,7 +49,10 @@ namespace neko::ui::window {
         page::AboutPage *aboutPage;
         page::HomePage *homePage;
         page::LoadingPage *loadingPage;
+        page::NewsPage *newsPage;
         page::SettingPage *settingPage;
+
+        bool newsPreviewMode = false;
 
         bool useImageBackground = false;
         bool followSystemTheme = false;
@@ -75,6 +80,8 @@ namespace neko::ui::window {
         void hideInput();
         std::vector<std::string> getLines();
         void showLoading(const LoadingMsg &m);
+        void setNews(std::vector<api::NewsItem> items, bool hasMore);
+        void handleNewsLoadFailed(const std::string &reason);
 
     protected:
         void resizeEvent(QResizeEvent *event) override;

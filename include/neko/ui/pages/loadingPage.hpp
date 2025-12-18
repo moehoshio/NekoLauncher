@@ -10,6 +10,7 @@
 #include <QtWidgets/QWidget>
 
 #include <string>
+#include <vector>
 
 
 class QProgressBar;

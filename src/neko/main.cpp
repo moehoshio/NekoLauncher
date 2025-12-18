@@ -2,6 +2,7 @@
 #include <neko/log/nlog.hpp>
 
 #include "neko/app/app.hpp"
+#include "neko/app/appinfo.hpp"
 #include "neko/app/appinit.hpp"
 
 #include "neko/bus/configBus.hpp"
@@ -10,6 +11,8 @@
 
 #include "neko/core/crashReporter.hpp"
 #include "neko/core/install.hpp"
+#include "neko/core/news.hpp"
+#include "neko/core/remoteConfig.hpp"
 #include "neko/core/update.hpp"
 
 #include "neko/ui/themeIO.hpp"
@@ -20,6 +23,7 @@
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/QApplication>
 
+#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -54,8 +58,65 @@ int main(int argc, char *argv[]) {
                 if (!installed) {
                     core::update::autoUpdate();
                 }
-                bus::event::publish(event::CurrentPageChangeEvent{
-                .page = ui::Page::home});
+
+                // Preload launcher news once network and updates are ready.
+                try {
+                    const auto launcherConfig = core::getRemoteLauncherConfig();
+                    const auto newsResponse = core::fetchNews(launcherConfig, 8);
+                    if (newsResponse.has_value() && !newsResponse->items.empty()) {
+                        bus::event::publish(event::NewsLoadedEvent{
+                            .items = newsResponse->items,
+                            .hasMore = newsResponse->hasMore});
+                        
+                        // Check if news should be shown based on dismiss settings
+                        const auto clientCfg = bus::config::getClientConfig();
+                        bool showNews = true;
+                        
+                        // Check time-based dismiss
+                        if (clientCfg.other.newsDismissUntil > 0) {
+                            auto now = std::chrono::system_clock::now();
+                            auto nowSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+                                now.time_since_epoch()).count();
+                            if (nowSeconds < clientCfg.other.newsDismissUntil) {
+                                showNews = false;
+                            }
+                        }
+                        
+                        // Check version-based dismiss
+                        if (!clientCfg.other.newsDismissVersion.empty()) {
+                            if (clientCfg.other.newsDismissVersion == std::string(app::getVersion())) {
+                                showNews = false;
+                            }
+                        }
+                        
+                        if (showNews) {
+                            // Switch to news page to display news
+                            bus::event::publish(event::CurrentPageChangeEvent{
+                                .page = ui::Page::news});
+                        } else {
+                            // News dismissed, go directly to home
+                            bus::event::publish(event::CurrentPageChangeEvent{
+                                .page = ui::Page::home});
+                        }
+                    } else {
+                        bus::event::publish(event::NewsLoadedEvent{});
+                        // No news, go directly to home
+                        bus::event::publish(event::CurrentPageChangeEvent{
+                            .page = ui::Page::home});
+                    }
+                } catch (const ex::Exception &e) {
+                    log::warn("News preload failed: {}", {}, e.what());
+                    bus::event::publish(event::NewsLoadFailedEvent{.reason = e.what()});
+                    // On failure, go to home
+                    bus::event::publish(event::CurrentPageChangeEvent{
+                        .page = ui::Page::home});
+                } catch (const std::exception &e) {
+                    log::warn("News preload failed (std): {}", {}, e.what());
+                    bus::event::publish(event::NewsLoadFailedEvent{.reason = e.what()});
+                    // On failure, go to home
+                    bus::event::publish(event::CurrentPageChangeEvent{
+                        .page = ui::Page::home});
+                }
             } catch (const ex::Exception &e) {
                 std::string reason = std::string("Auto-update/install failed: ") + e.what();
                 log::error(reason);

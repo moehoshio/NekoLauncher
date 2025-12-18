@@ -7,7 +7,8 @@ namespace neko::ui {
         home,
         about,
         setting,
-        loading
+        loading,
+        news
     };
     
 } // namespace neko::ui

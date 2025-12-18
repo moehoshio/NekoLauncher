@@ -32,6 +32,7 @@
 #include <QtWidgets/QWidget>
 
 #include <algorithm>
+#include <chrono>
 #include <initializer_list>
 
 namespace neko::ui::window {
@@ -45,6 +46,7 @@ namespace neko::ui::window {
                     aboutPage(new page::AboutPage(this)),
                     homePage(new page::HomePage(this)),
                     loadingPage(new page::LoadingPage(this)),
+                    newsPage(new page::NewsPage(this)),
                     settingPage(new page::SettingPage(this)) {
 
         log::info("NekoWindow ctor: start widgets");
@@ -54,6 +56,7 @@ namespace neko::ui::window {
         homePage->raise();
         aboutPage->raise();
         loadingPage->raise();
+        newsPage->raise();
         settingPage->raise();
         inputDialog->raise();
         noticeDialog->raise();
@@ -61,6 +64,7 @@ namespace neko::ui::window {
         homePage->hide();
         aboutPage->hide();
         loadingPage->hide();
+        newsPage->hide();
         noticeDialog->hide();
         inputDialog->hide();
         settingPage->hide();
@@ -113,6 +117,7 @@ namespace neko::ui::window {
         homePage->setupTheme(theme);
         aboutPage->setupTheme(theme);
         loadingPage->setupTheme(theme);
+        newsPage->setupTheme(theme);
         settingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
         inputDialog->setupTheme(theme);
@@ -149,6 +154,7 @@ namespace neko::ui::window {
         homePage->setupFont(textFont, h1Font, h2Font);
         aboutPage->setupFont(textFont, h1Font, h2Font);
         loadingPage->setupFont(textFont, h1Font, h2Font);
+        newsPage->setupFont(textFont, h1Font, h2Font);
         settingPage->setupFont(textFont, h1Font, h2Font);
         noticeDialog->setupFont(textFont, h2Font);
         inputDialog->setupFont(textFont, h2Font);
@@ -157,6 +163,7 @@ namespace neko::ui::window {
     void NekoWindow::setupText() {
         homePage->setupText();
         aboutPage->setupText();
+        newsPage->setupText();
         settingPage->setupText();
         // Add other widgets/pages here when they expose setupText.
     }
@@ -208,6 +215,17 @@ namespace neko::ui::window {
         emit showLoadingD(m);
     }
 
+    void NekoWindow::setNews(std::vector<api::NewsItem> items, bool hasMore) {
+        Q_UNUSED(hasMore);
+        newsPage->setNews(items);
+    }
+
+    void NekoWindow::handleNewsLoadFailed(const std::string &reason) {
+        log::warn("News load failed: {}", {}, reason);
+        // If news loading fails, skip to home page directly
+        switchToPage(Page::home);
+    }
+
     void NekoWindow::setupConnections() {
         connect(this, &NekoWindow::showNoticeD, noticeDialog, &dialog::NoticeDialog::showNotice);
         connect(this, &NekoWindow::showInputD, inputDialog, &dialog::InputDialog::showInput);
@@ -225,6 +243,49 @@ namespace neko::ui::window {
             this->show();
             this->raise();
             this->activateWindow();
+        });
+
+        // News page connections
+        connect(newsPage, &page::NewsPage::continueClicked, this, [this]() {
+            // If preview mode, just return to setting page without saving
+            if (newsPreviewMode) {
+                newsPreviewMode = false;
+                switchToPage(Page::setting);
+                return;
+            }
+
+            // Save dismiss option before switching
+            auto dismissOption = newsPage->getDismissOption();
+            bus::config::updateClientConfig([dismissOption](ClientConfig &cfg) {
+                switch (dismissOption) {
+                    case page::NewsDismissOption::Days3: {
+                        auto now = std::chrono::system_clock::now();
+                        auto future = now + std::chrono::hours(72);
+                        cfg.other.newsDismissUntil = std::chrono::duration_cast<std::chrono::seconds>(
+                            future.time_since_epoch()).count();
+                        cfg.other.newsDismissVersion = "";
+                        break;
+                    }
+                    case page::NewsDismissOption::Days7: {
+                        auto now = std::chrono::system_clock::now();
+                        auto future = now + std::chrono::hours(168);
+                        cfg.other.newsDismissUntil = std::chrono::duration_cast<std::chrono::seconds>(
+                            future.time_since_epoch()).count();
+                        cfg.other.newsDismissVersion = "";
+                        break;
+                    }
+                    case page::NewsDismissOption::UntilUpdate:
+                        cfg.other.newsDismissUntil = 0;
+                        cfg.other.newsDismissVersion = std::string(app::getVersion());
+                        break;
+                    default:
+                        cfg.other.newsDismissUntil = 0;
+                        cfg.other.newsDismissVersion = "";
+                        break;
+                }
+            });
+            bus::config::save(app::getConfigFileName());
+            switchToPage(Page::home);
         });
         connect(this, &NekoWindow::quitAppD, this, [this]() {
             this->close();
@@ -328,6 +389,35 @@ namespace neko::ui::window {
                 }
             });
             timer->start();
+        });
+        connect(settingPage, &page::SettingPage::showNewsPreviewRequested, this, [this]() {
+            newsPreviewMode = true;
+            std::vector<api::NewsItem> demoItems{
+                api::NewsItem{
+                    .id = "preview-001",
+                    .title = "Preview: Maintenance window",
+                    .summary = "Planned downtime for backend upgrades",
+                    .content = "Maintenance is scheduled to improve stability and add new features.",
+                    .posterUrl = "",
+                    .link = "https://example.com/news/maintenance",
+                    .publishTime = "2024-06-01T12:00:00Z",
+                    .category = "maintenance",
+                    .tags = {"windows", "linux"},
+                    .priority = 10},
+                api::NewsItem{
+                    .id = "preview-002",
+                    .title = "Preview: New launcher experience",
+                    .summary = "UI refresh and better update flow",
+                    .content = "The latest launcher improves update reliability and adds clearer progress messaging.",
+                    .posterUrl = "",
+                    .link = "https://example.com/news/launcher",
+                    .publishTime = "2024-06-02T08:30:00Z",
+                    .category = "general",
+                    .tags = {"release"},
+                    .priority = 5}
+            };
+            newsPage->setNews(demoItems);
+            switchToPage(Page::news);
         });
     }
 
@@ -588,6 +678,9 @@ namespace neko::ui::window {
             case Page::loading:
                 targetPage = loadingPage;
                 break;
+            case Page::news:
+                targetPage = newsPage;
+                break;
             case Page::setting:
                 targetPage = settingPage;
                 break;
@@ -601,9 +694,10 @@ namespace neko::ui::window {
         auto pageIndex = [](Page p) -> int {
             switch (p) {
                 case Page::loading: return 0;
-                case Page::home: return 1;
-                case Page::setting: return 2;
-                case Page::about: return 3;
+                case Page::news: return 1;
+                case Page::home: return 2;
+                case Page::setting: return 3;
+                case Page::about: return 4;
                 default: return -1;
             }
         };
@@ -613,7 +707,7 @@ namespace neko::ui::window {
         anim::Direction direction = (oldIdx < newIdx) ? anim::Direction::Right : anim::Direction::Left;
 
         // FIRST: Immediately hide ALL other pages to prevent any visual artifacts
-        for (auto *p : std::initializer_list<QWidget*>{homePage, aboutPage, loadingPage, settingPage}) {
+        for (auto *p : std::initializer_list<QWidget*>{homePage, aboutPage, loadingPage, newsPage, settingPage}) {
             if (p != targetPage) {
                 p->hide();
             }
@@ -644,6 +738,9 @@ namespace neko::ui::window {
 
         loadingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
         loadingPage->resizeItems(contentWidth, contentHeight);
+
+        newsPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
+        newsPage->resizeItems(contentWidth, contentHeight);
 
         settingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
         settingPage->resizeItems(contentWidth, contentHeight);

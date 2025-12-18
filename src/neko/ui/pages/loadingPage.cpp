@@ -205,7 +205,6 @@ namespace neko::ui::page {
         }
 
         process->setStyleSheet(QString("QLabel { color: %1; background-color: transparent; border: none; font-style: italic; }").arg(theme.colors.text.data()));
-
     }
 
     void LoadingPage::setupFont(QFont text, QFont h1Font, QFont h2Font) {

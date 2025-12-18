@@ -359,7 +359,12 @@ namespace neko::lang {
                 noNews = "noNews",
                 loading = "loading",
                 loadMore = "loadMore",
-                readMore = "readMore";
+                readMore = "readMore",
+                dismissNone = "dismissNone",
+                dismiss3Days = "dismiss3Days",
+                dismiss7Days = "dismiss7Days",
+                dismissUntilUpdate = "dismissUntilUpdate",
+                continueBtn = "continue";
         } // namespace news
 
         namespace update {

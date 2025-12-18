@@ -69,6 +69,8 @@ namespace neko {
             long maxLogFiles;
             bool lastRunUnclean;
             bool immediateSave;
+            long newsDismissUntil;           // Unix timestamp until which news is dismissed
+            std::string newsDismissVersion;   // Version string until which news is dismissed
         } other;
 
         /**
@@ -139,6 +141,8 @@ namespace neko {
             other.maxLogFiles = cfg.GetLongValue("other", "maxLogFiles", 20);
             other.lastRunUnclean = cfg.GetBoolValue("other", "lastRunUnclean", false);
             other.immediateSave = cfg.GetBoolValue("other", "immediateSave", false);
+            other.newsDismissUntil = cfg.GetLongValue("other", "newsDismissUntil", 0);
+            other.newsDismissVersion = cfg.GetValue("other", "newsDismissVersion", "");
 
             minecraft.minecraftFolder = cfg.GetValue("minecraft", "minecraftFolder", "./.minecraft");
             minecraft.javaPath = cfg.GetValue("minecraft", "javaPath", "");
@@ -201,6 +205,8 @@ namespace neko {
             cfg.SetLongValue("other", "maxLogFiles", other.maxLogFiles);
             cfg.SetBoolValue("other", "lastRunUnclean", other.lastRunUnclean);
             cfg.SetBoolValue("other", "immediateSave", other.immediateSave);
+            cfg.SetLongValue("other", "newsDismissUntil", other.newsDismissUntil);
+            cfg.SetValue("other", "newsDismissVersion", other.newsDismissVersion.c_str());
 
             cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder.c_str());
             cfg.SetValue("minecraft", "javaPath", minecraft.javaPath.c_str());

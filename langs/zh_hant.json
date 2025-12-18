@@ -18,7 +18,12 @@
         "noNews": "暫無新聞",
         "loading": "正在載入新聞...",
         "loadMore": "載入更多",
-        "readMore": "閱讀更多"
+        "readMore": "閱讀更多",
+        "dismissNone": "每次都顯示",
+        "dismiss3Days": "3 天內不再顯示",
+        "dismiss7Days": "7 天內不再顯示",
+        "dismissUntilUpdate": "直到更新前不再顯示",
+        "continue": "繼續"
     },
     "update": {
         "title": "更新",

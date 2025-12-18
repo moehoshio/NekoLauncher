@@ -164,5 +164,27 @@ namespace neko::ui {
                     emit nekoWindow->refreshTextD();
                 }
             });
+
+        bus::event::subscribe<event::NewsLoadedEvent>(
+            [](const event::NewsLoadedEvent &e) {
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    auto items = e.items;
+                    const bool hasMore = e.hasMore;
+                    QMetaObject::invokeMethod(nekoWindow, [nekoWindow, items = std::move(items), hasMore]() mutable {
+                        nekoWindow->setNews(std::move(items), hasMore);
+                    }, Qt::QueuedConnection);
+                }
+            });
+
+        bus::event::subscribe<event::NewsLoadFailedEvent>(
+            [](const event::NewsLoadFailedEvent &e) {
+                log::warn("NewsLoadFailedEvent: {}", {}, e.reason);
+                if (auto nekoWindow = UiEventDispatcher::getNekoWindow()) {
+                    const std::string reason = e.reason;
+                    QMetaObject::invokeMethod(nekoWindow, [nekoWindow, reason]() {
+                        nekoWindow->handleNewsLoadFailed(reason);
+                    }, Qt::QueuedConnection);
+                }
+            });
     }
 } // namespace neko::ui

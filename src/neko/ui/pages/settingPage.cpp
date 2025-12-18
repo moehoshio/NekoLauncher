@@ -99,7 +99,8 @@ namespace neko::ui::page {
           devPreviewLabel(new QLabel(devGroup)),
           devShowNoticeBtn(new QPushButton(devGroup)),
           devShowInputBtn(new QPushButton(devGroup)),
-          devShowLoadingBtn(new QPushButton(devGroup)) {
+          devShowLoadingBtn(new QPushButton(devGroup)),
+          devShowNewsBtn(new QPushButton(devGroup)) {
         this->setAttribute(Qt::WA_TranslucentBackground);
         buildUi();
         setupCombos();
@@ -376,6 +377,7 @@ namespace neko::ui::page {
         devPreviewRow->addWidget(devShowNoticeBtn);
         devPreviewRow->addWidget(devShowInputBtn);
         devPreviewRow->addWidget(devShowLoadingBtn);
+        devPreviewRow->addWidget(devShowNewsBtn);
         devLayout->addLayout(devPreviewRow);
         devLayout->addStretch();
 
@@ -395,6 +397,9 @@ namespace neko::ui::page {
         });
         connect(devShowLoadingBtn, &QPushButton::clicked, this, [this]() {
             emit showLoadingPreviewRequested();
+        });
+        connect(devShowNewsBtn, &QPushButton::clicked, this, [this]() {
+            emit showNewsPreviewRequested();
         });
 
         // Live update signals
@@ -823,6 +828,7 @@ namespace neko::ui::page {
         devShowNoticeBtn->setText(QStringLiteral("Show Notice"));
         devShowInputBtn->setText(QStringLiteral("Show Input"));
         devShowLoadingBtn->setText(QStringLiteral("Show Loading"));
+        devShowNewsBtn->setText(QStringLiteral("Show News"));
 
         customTempDirBrowseBtn->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::selectTempDir, "Select temp folder"));
         closeTabButton->setToolTip(tr(lang::keys::setting::category, lang::keys::setting::close, "Close"));
@@ -944,7 +950,7 @@ namespace neko::ui::page {
                                      .arg(theme.colors.primary.data())
                                      .arg(theme.colors.text.data())
                                      .arg(theme.colors.hover.data());
-        for (auto *btn : {authButton, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
+        for (auto *btn : {authButton, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn, devShowNewsBtn}) {
             btn->setStyleSheet(btnStyle);
         }
 
@@ -966,7 +972,7 @@ namespace neko::ui::page {
         Q_UNUSED(h1Font);
         Q_UNUSED(h2Font);
 
-        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, animationCombo, devServerEdit, languageCombo, backgroundBrowseBtn, devPreviewLabel, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn}) {
+        for (auto w : std::initializer_list<QWidget *>{authStatusLabel, authButton, backgroundPathEdit, windowSizeEdit, themeCombo, fontFamiliesCombo, animationCombo, devServerEdit, languageCombo, backgroundBrowseBtn, devPreviewLabel, devShowNoticeBtn, devShowInputBtn, devShowLoadingBtn, devShowNewsBtn}) {
             w->setFont(text);
         }
         for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, animationCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {

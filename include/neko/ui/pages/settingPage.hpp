@@ -92,6 +92,7 @@ namespace neko::ui::page {
         QPushButton *devShowNoticeBtn;
         QPushButton *devShowInputBtn;
         QPushButton *devShowLoadingBtn;
+        QPushButton *devShowNewsBtn;
 
         std::string authStatusText;
 
@@ -149,6 +150,7 @@ namespace neko::ui::page {
         void showNoticePreviewRequested();
         void showInputPreviewRequested();
         void showLoadingPreviewRequested();
+        void showNewsPreviewRequested();
     };
 
 } // namespace neko::ui::page

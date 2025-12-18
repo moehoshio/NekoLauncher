@@ -18,7 +18,12 @@
         "noNews": "暂无新闻",
         "loading": "正在加载新闻...",
         "loadMore": "加载更多",
-        "readMore": "阅读更多"
+        "readMore": "阅读更多",
+        "dismissNone": "每次都显示",
+        "dismiss3Days": "3 天内不再显示",
+        "dismiss7Days": "7 天内不再显示",
+        "dismissUntilUpdate": "直到更新前不再显示",
+        "continue": "继续"
     },
     "update": {
         "title": "更新",

@@ -18,7 +18,12 @@
         "noNews": "No news available",
         "loading": "Loading news...",
         "loadMore": "Load more",
-        "readMore": "Read more"
+        "readMore": "Read more",
+        "dismissNone": "Show every time",
+        "dismiss3Days": "Don't show for 3 days",
+        "dismiss7Days": "Don't show for 7 days",
+        "dismissUntilUpdate": "Don't show until update",
+        "continue": "Continue"
     },
     "update": {
         "title": "Update",
