@@ -396,8 +396,14 @@ namespace neko::minecraft {
 
                 if (rules.contains("features") && rules["features"].is_object()) {
                     auto features = rules["features"];
-                    rulesMap.isDemoUser = features.value("isDemoUser", false);
-                    rulesMap.hasCustomResolution = features.value("hasCustomResolution", false);
+                    auto readFeatureFlag = [&](const char *camelKey, const char *snakeKey) {
+                        if (features.contains(camelKey)) {
+                            return features.value(camelKey, false);
+                        }
+                        return features.value(snakeKey, false);
+                    };
+                    rulesMap.isDemoUser = readFeatureFlag("isDemoUser", "is_demo_user");
+                    rulesMap.hasCustomResolution = readFeatureFlag("hasCustomResolution", "has_custom_resolution");
                     featuresOk = checkFeatures(rulesMap, cfg);
                 }
 
