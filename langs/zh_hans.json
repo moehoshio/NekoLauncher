@@ -80,8 +80,16 @@
     "error": {
         "invalidInput": "无效的输入",
         "networkError": "网络错误",
+        "networkInitFailed": "网络初始化失败",
+        "networkInitFailedMessage": "请检查您的网络连接或代理设置。",
         "parseError": "解析错误",
         "updateFailed": "更新失败"
+    },
+    "network": {
+        "retrying": "正在重试连接...",
+        "testConnection": "测试连接",
+        "goToSettings": "前往设置",
+        "skip": "跳过"
     },
     "setting": {
         "tabAccount": "账号",
@@ -145,6 +153,7 @@
         "devTls": "TLS",
         "devServer": "服务器",
             "devShowLogViewer": "退出时显示日志窗口",
+            "devShowMusicControl": "显示音乐控制",
         "useDefaultServer": "使用默认服务器",
         "devServerPlaceholder": "https://example.com",
         "notLoggedIn": "未登录",

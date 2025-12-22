@@ -49,7 +49,6 @@ For other toolchains, replace the generator/commands accordingly. Set `NEKO_LC_L
 
 ## Contributing
 
-- UI: transition animations, richer theming/style presets, stronger visual design
 - Templates: additional launch targets beyond Minecraft
 - QoL: drag-and-drop layout customization, optional music playback, more tests
 

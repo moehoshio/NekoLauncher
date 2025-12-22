@@ -129,5 +129,68 @@ namespace neko::event {
     struct NewsLoadFailedEvent {
         std::string reason;
     };
+
+    /*****************/
+    /** BGM Events ***/
+    /*****************/
+
+    /**
+     * @brief Event published when a line is read from process stdout.
+     */
+    struct ProcessOutputEvent {
+        std::string line;
+    };
+
+    /**
+     * @brief Event published when a new line is read from a log file.
+     * Used by LogFileWatcher to notify BGM system of Minecraft log events.
+     */
+    struct LogFileLineEvent {
+        std::string line;   ///< The log line content
+        std::string source; ///< Path to the log file
+    };
+
+    struct BgmStateChangedEvent {
+        int state; // Maps to neko::core::BgmState enum value
+        std::string track;
+    };
+
+    struct BgmTriggerMatchedEvent {
+        std::string triggerName;
+        std::string pattern;
+        std::string musicPath;
+        std::string outputLine;
+    };
+
+    /*******************/
+    /** Network Events **/
+    /*******************/
+
+    /**
+     * @brief Event published when network initialization fails.
+     * UI should display an error dialog with options to retry or adjust settings.
+     */
+    struct NetworkInitFailedEvent {
+        std::string reason;
+        bool allowRetry = true;
+    };
+
+    /**
+     * @brief Event to request network re-initialization.
+     * Published when user clicks "Retry" after a network failure.
+     */
+    struct NetworkRetryRequestEvent {};
+
+    /**
+     * @brief Event published when user navigates to settings due to network error.
+     * Used to track that we need to show network error dialog when leaving settings.
+     */
+    struct NetworkSettingsRequestedEvent {};
+
+    /**
+     * @brief Event published when user leaves settings page after a network error.
+     * Triggers re-display of network error dialog.
+     */
+    struct NetworkSettingsClosedEvent {};
     
 } // namespace neko::event

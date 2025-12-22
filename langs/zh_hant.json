@@ -80,8 +80,16 @@
     "error": {
         "invalidInput": "無效的輸入",
         "networkError": "網路錯誤",
+        "networkInitFailed": "網路初始化失敗",
+        "networkInitFailedMessage": "請檢查您的網路連線或代理設定。",
         "parseError": "解析錯誤",
         "updateFailed": "更新失敗"
+    },
+    "network": {
+        "retrying": "正在重試連線...",
+        "testConnection": "測試連線",
+        "goToSettings": "前往設定",
+        "skip": "略過"
     },
     "setting": {
         "tabAccount": "帳號",
@@ -143,6 +151,7 @@
         "devEnable": "啟用開發模式",
         "devDebug": "除錯",
         "devShowLogViewer": "退出時顯示日誌視窗",
+        "devShowMusicControl": "顯示音樂控制",
         "devTls": "TLS",
         "devServer": "伺服器",
         "useDefaultServer": "使用預設伺服器",

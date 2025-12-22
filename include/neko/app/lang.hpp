@@ -294,6 +294,7 @@ namespace neko::lang {
                 devEnable = "devEnable",
                 devDebug = "devDebug",
                 devShowLogViewer = "devShowLogViewer",
+                devShowMusicControl = "devShowMusicControl",
                 devTls = "devTls",
                 devServer = "devServer",
                 useDefaultServer = "useDefaultServer",
@@ -423,11 +424,22 @@ namespace neko::lang {
                 category = "error",
                 invalidInput = "invalidInput",
                 networkError = "networkError",
+                networkInitFailed = "networkInitFailed",
+                networkInitFailedMessage = "networkInitFailedMessage",
                 parseError = "parseError",
                 updateFailed = "updateFailed",
                 launchFailed = "launchFailed",
                 seeLog = "seeLog";
         } // namespace error
+
+        namespace network {
+            constexpr neko::cstr
+                category = "network",
+                retrying = "retrying",
+                testConnection = "testConnection",
+                goToSettings = "goToSettings",
+                skip = "skip";
+        } // namespace network
 
         
 

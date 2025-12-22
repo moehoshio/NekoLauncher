@@ -13,6 +13,8 @@ dist/
 release/
 debug/
 config.ini
+bgm.json
+bgm/
 
 # CMake/Make
 CMakeLists.txt.user

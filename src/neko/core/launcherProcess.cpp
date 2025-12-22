@@ -112,6 +112,8 @@ namespace neko::core {
                 if (childLog) {
                     (*childLog) << line << std::endl;
                 }
+                // Publish output event for BGM and other subscribers
+                bus::event::publish(event::ProcessOutputEvent{.line = line});
                 if (processInfo.pipeStreamCb) {
                     processInfo.pipeStreamCb(line);
                 } else {

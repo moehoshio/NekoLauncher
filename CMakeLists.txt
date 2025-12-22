@@ -61,7 +61,7 @@ find_package(NekoNetwork QUIET)
 
 # External Libraries
 find_package(Boost COMPONENTS process)
-find_package(Qt6 COMPONENTS Core Gui Widgets)
+find_package(Qt6 COMPONENTS Core Gui Widgets Multimedia)
 find_package(GTest QUIET)
 find_package(nlohmann_json QUIET)
 find_package(SimpleIni QUIET)
@@ -267,6 +267,8 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/launcherProcess.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/crashReporter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/news.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/bgm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/core/logFileWatcher.cpp
 
     # Minecraft
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/minecraft/installMinecraft.cpp
@@ -290,6 +292,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/nekoWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/windows/logViewerWindow.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/musicWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/newsWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/neko/ui/widgets/pixmapWidget.cpp
     # Headers (for Qt MOC)
@@ -304,6 +307,7 @@ list(APPEND NEKO_SRCFILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/pages/settingPage.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/nekoWindow.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/windows/logViewerWindow.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/widgets/musicWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/ui/widgets/newsWidget.hpp
     
     # Main
@@ -335,7 +339,7 @@ target_link_libraries(NekoLc PRIVATE
     # Others
     Neko_Commons_Other
     # Qt
-    Qt6::Core Qt6::Widgets Qt6::Gui
+    Qt6::Core Qt6::Widgets Qt6::Gui Qt6::Multimedia
     # Boost
     Boost::process
 )

@@ -6,6 +6,7 @@
 #include "neko/ui/dialogs/inputDialog.hpp"
 #include "neko/ui/dialogs/noticeDialog.hpp"
 
+#include "neko/ui/widgets/musicWidget.hpp"
 #include "neko/ui/widgets/pixmapWidget.hpp"
 
 #include "neko/ui/pages/aboutPage.hpp"
@@ -45,6 +46,7 @@ namespace neko::ui::window {
         dialog::InputDialog *inputDialog;
         // Widgets
         widget::PixmapWidget *pixmapWidget;
+        widget::MusicWidget *musicWidget;
         // Pages
         page::AboutPage *aboutPage;
         page::HomePage *homePage;

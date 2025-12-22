@@ -56,6 +56,7 @@ namespace neko {
             bool enable;
             bool debug;
             bool showLogViewer;
+            bool showMusicControl;            // Whether to show music control widget
             std::string server;
             bool tls;
         } dev;
@@ -71,6 +72,8 @@ namespace neko {
             bool immediateSave;
             long newsDismissUntil;           // Unix timestamp until which news is dismissed
             std::string newsDismissVersion;   // Version string until which news is dismissed
+            bool bgmEnabled;                  // Whether background music is enabled
+            float bgmVolume;                  // BGM master volume (0.0 to 1.0)
         } other;
 
         /**
@@ -133,6 +136,7 @@ namespace neko {
             dev.enable = cfg.GetBoolValue("dev", "enable", false);
             dev.debug = cfg.GetBoolValue("dev", "debug", false);
             dev.showLogViewer = cfg.GetBoolValue("dev", "showLogViewer", false);
+            dev.showMusicControl = cfg.GetBoolValue("dev", "showMusicControl", false);
             dev.server = cfg.GetValue("dev", "server", "auto");
             dev.tls = cfg.GetBoolValue("dev", "tls", true);
 
@@ -143,6 +147,8 @@ namespace neko {
             other.immediateSave = cfg.GetBoolValue("other", "immediateSave", false);
             other.newsDismissUntil = cfg.GetLongValue("other", "newsDismissUntil", 0);
             other.newsDismissVersion = cfg.GetValue("other", "newsDismissVersion", "");
+            other.bgmEnabled = cfg.GetBoolValue("other", "bgmEnabled", true);
+            other.bgmVolume = static_cast<float>(cfg.GetDoubleValue("other", "bgmVolume", 0.7));
 
             minecraft.minecraftFolder = cfg.GetValue("minecraft", "minecraftFolder", "./.minecraft");
             minecraft.javaPath = cfg.GetValue("minecraft", "javaPath", "");
@@ -197,6 +203,7 @@ namespace neko {
             cfg.SetBoolValue("dev", "enable", dev.enable);
             cfg.SetBoolValue("dev", "debug", dev.debug);
             cfg.SetBoolValue("dev", "showLogViewer", dev.showLogViewer);
+            cfg.SetBoolValue("dev", "showMusicControl", dev.showMusicControl);
             cfg.SetValue("dev", "server", dev.server.c_str());
             cfg.SetBoolValue("dev", "tls", dev.tls);
 
@@ -207,6 +214,8 @@ namespace neko {
             cfg.SetBoolValue("other", "immediateSave", other.immediateSave);
             cfg.SetLongValue("other", "newsDismissUntil", other.newsDismissUntil);
             cfg.SetValue("other", "newsDismissVersion", other.newsDismissVersion.c_str());
+            cfg.SetBoolValue("other", "bgmEnabled", other.bgmEnabled);
+            cfg.SetDoubleValue("other", "bgmVolume", static_cast<double>(other.bgmVolume));
 
             cfg.SetValue("minecraft", "minecraftFolder", minecraft.minecraftFolder.c_str());
             cfg.SetValue("minecraft", "javaPath", minecraft.javaPath.c_str());

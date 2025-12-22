@@ -47,7 +47,6 @@ cmake --build build --config Release
 
 ## 貢獻
 
-- UI：轉場動畫、更豐富的主題/樣式預設、更佳視覺設計
 - 模板：擴充至更多啟動目標（不只 Minecraft）
 - 體驗：拖放式版面自訂、選用的音樂播放、更多測試
 

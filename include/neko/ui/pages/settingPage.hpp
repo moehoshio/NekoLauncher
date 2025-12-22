@@ -85,6 +85,7 @@ namespace neko::ui::page {
         QCheckBox *devEnableCheck;
         QCheckBox *devDebugCheck;
         QCheckBox *devLogViewerCheck;
+        QCheckBox *devMusicControlCheck;
         QCheckBox *devServerCheck;
         QLineEdit *devServerEdit;
         QCheckBox *devTlsCheck;

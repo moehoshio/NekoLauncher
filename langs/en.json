@@ -80,8 +80,16 @@
     "error": {
         "invalidInput": "Invalid input",
         "networkError": "Network error",
+        "networkInitFailed": "Network Initialization Failed",
+        "networkInitFailedMessage": "Please check your network connection or proxy settings.",
         "parseError": "Parse error",
         "updateFailed": "Update failed"
+    },
+    "network": {
+        "retrying": "Retrying connection...",
+        "testConnection": "Test Connection",
+        "goToSettings": "Go to Settings",
+        "skip": "Skip"
     },
     "setting": {
         "tabAccount": "Account",
@@ -143,6 +151,7 @@
         "devEnable": "Enable dev",
         "devDebug": "Debug",
         "devShowLogViewer": "Show log viewer on exit",
+        "devShowMusicControl": "Show music control",
         "devTls": "TLS",
         "devServer": "Server",
         "useDefaultServer": "Use default server",

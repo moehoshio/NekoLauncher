@@ -43,6 +43,7 @@ namespace neko::ui::window {
                     noticeDialog(new dialog::NoticeDialog(this)),
                     inputDialog(new dialog::InputDialog(this)),
                     pixmapWidget(new widget::PixmapWidget(Qt::KeepAspectRatioByExpanding, this)),
+                    musicWidget(new widget::MusicWidget(this)),
                     aboutPage(new page::AboutPage(this)),
                     homePage(new page::HomePage(this)),
                     loadingPage(new page::LoadingPage(this)),
@@ -58,6 +59,7 @@ namespace neko::ui::window {
         loadingPage->raise();
         newsPage->raise();
         settingPage->raise();
+        musicWidget->raise();
         inputDialog->raise();
         noticeDialog->raise();
 
@@ -68,6 +70,7 @@ namespace neko::ui::window {
         noticeDialog->hide();
         inputDialog->hide();
         settingPage->hide();
+        musicWidget->hide(); // Hidden by default, shown if config enables it
 
         centralWidget->setObjectName("centralWidget");
         centralWidget->setAttribute(Qt::WA_StyledBackground, true);
@@ -121,6 +124,7 @@ namespace neko::ui::window {
         settingPage->setupTheme(theme);
         noticeDialog->setupTheme(theme);
         inputDialog->setupTheme(theme);
+        musicWidget->setupTheme(theme);
         applyCentralBackground(theme);
     }
 
@@ -312,7 +316,10 @@ namespace neko::ui::window {
         });
 
         connect(settingPage, &page::SettingPage::closeRequested, this, [this]() {
-            switchToPage(Page::home);
+            // Publish event so network error recovery can intercept if needed
+            bus::event::publish(event::NetworkSettingsClosedEvent{});
+            // The event handler will switch to appropriate page
+            // If not in recovery mode, this will be handled and go to home
         });
 
         // Live setting updates
@@ -659,6 +666,13 @@ namespace neko::ui::window {
         } else {
             blurEffect->setBlurHints(QGraphicsBlurEffect::AnimationHint);
         }
+
+        // Show/hide music widget based on dev settings
+        if (config.dev.showMusicControl) {
+            musicWidget->show();
+        } else {
+            musicWidget->hide();
+        }
     }
 
     void NekoWindow::switchToPage(Page page) {
@@ -744,6 +758,12 @@ namespace neko::ui::window {
 
         settingPage->setGeometry(contentX, contentY, contentWidth, contentHeight);
         settingPage->resizeItems(contentWidth, contentHeight);
+
+        // Position music widget at bottom-right corner
+        const int musicMargin = 10;
+        const int musicWidth = musicWidget->width();
+        const int musicHeight = musicWidget->height();
+        musicWidget->move(width - musicWidth - musicMargin, height - musicHeight - musicMargin);
     }
 
     void NekoWindow::resizeEvent(QResizeEvent *event) {

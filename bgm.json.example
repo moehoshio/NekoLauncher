@@ -1,0 +1,85 @@
+{
+    "enabled": true,
+    "basePath": "./bgm",
+    "masterVolume": 0.7,
+    "defaultFadeMs": 500,
+    "triggers": [
+        {
+            "name": "game_started",
+            "comment": "Triggered when game starts (authlib-injector stdout)",
+            "pattern": "authlib-injector.*Httpd is running",
+            "musicPath": "menu.mp3",
+            "loop": true,
+            "fadeInMs": 2000,
+            "fadeOutMs": 1500,
+            "volume": 0.4,
+            "priority": 5
+        },
+        {
+            "name": "world_loading",
+            "comment": "Triggered from Minecraft log file when loading world",
+            "pattern": "Render thread.*Preparing level|Loading\\s+world",
+            "musicPath": "loading.mp3",
+            "loop": true,
+            "fadeInMs": 1000,
+            "fadeOutMs": 1000,
+            "volume": 0.5,
+            "priority": 10
+        },
+        {
+            "name": "server_bgm_battle",
+            "comment": "Server command: /say [BGM] battle - plays battle music",
+            "pattern": "\\[Server\\].*\\[BGM\\]\\s*battle|CHAT.*\\[BGM\\]\\s*battle",
+            "musicPath": "battle.mp3",
+            "loop": true,
+            "fadeInMs": 500,
+            "fadeOutMs": 500,
+            "volume": 0.7,
+            "priority": 50
+        },
+        {
+            "name": "server_bgm_peaceful",
+            "comment": "Server command: /say [BGM] peaceful - plays peaceful music",
+            "pattern": "\\[Server\\].*\\[BGM\\]\\s*peaceful|CHAT.*\\[BGM\\]\\s*peaceful",
+            "musicPath": "peaceful.mp3",
+            "loop": true,
+            "fadeInMs": 1000,
+            "fadeOutMs": 1000,
+            "volume": 0.5,
+            "priority": 50
+        },
+        {
+            "name": "server_bgm_boss",
+            "comment": "Server command: /say [BGM] boss - plays boss fight music",
+            "pattern": "\\[Server\\].*\\[BGM\\]\\s*boss|CHAT.*\\[BGM\\]\\s*boss",
+            "musicPath": "boss.mp3",
+            "loop": true,
+            "fadeInMs": 300,
+            "fadeOutMs": 500,
+            "volume": 0.8,
+            "priority": 60
+        },
+        {
+            "name": "server_bgm_stop",
+            "comment": "Server command: /say [BGM] stop - stops current music",
+            "pattern": "\\[Server\\].*\\[BGM\\]\\s*stop|CHAT.*\\[BGM\\]\\s*stop",
+            "musicPath": "",
+            "loop": false,
+            "fadeInMs": 0,
+            "fadeOutMs": 1000,
+            "volume": 0.0,
+            "priority": 100
+        },
+        {
+            "name": "stop_on_disconnect",
+            "comment": "Stop music when disconnecting from server",
+            "pattern": "Disconnected|Stopping!|Shutting\\s+down",
+            "musicPath": "",
+            "loop": false,
+            "fadeInMs": 0,
+            "fadeOutMs": 1000,
+            "volume": 0.0,
+            "priority": 100
+        }
+    ]
+}

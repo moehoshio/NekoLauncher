@@ -93,6 +93,7 @@ namespace neko::ui::page {
           devEnableCheck(new QCheckBox(devGroup)),
           devDebugCheck(new QCheckBox(devGroup)),
           devLogViewerCheck(new QCheckBox(devGroup)),
+          devMusicControlCheck(new QCheckBox(devGroup)),
           devServerCheck(new QCheckBox(devGroup)),
           devServerEdit(new QLineEdit(devGroup)),
           devTlsCheck(new QCheckBox(devGroup)),
@@ -356,10 +357,12 @@ namespace neko::ui::page {
         devEnableCheck->setObjectName(QStringLiteral("devEnableCheck"));
         devDebugCheck->setObjectName(QStringLiteral("devDebugCheck"));
         devLogViewerCheck->setObjectName(QStringLiteral("devLogViewerCheck"));
+        devMusicControlCheck->setObjectName(QStringLiteral("devMusicControlCheck"));
         devTlsCheck->setObjectName(QStringLiteral("devTlsCheck"));
         devLayout->addWidget(devEnableCheck);
         devLayout->addWidget(devDebugCheck);
         devLayout->addWidget(devLogViewerCheck);
+        devLayout->addWidget(devMusicControlCheck);
         auto *devServerLabel = new QLabel(devGroup);
         devServerLabel->setObjectName(QStringLiteral("devServerLabel"));
         devLayout->addWidget(devServerLabel);
@@ -603,6 +606,12 @@ namespace neko::ui::page {
             }
             emit configChanged();
         });
+        connect(devMusicControlCheck, &QCheckBox::toggled, this, [this](bool) {
+            if (suppressSignals) {
+                return;
+            }
+            emit configChanged();
+        });
         connect(devTlsCheck, &QCheckBox::toggled, this, [this](bool) {
             if (suppressSignals) {
                 return;
@@ -818,6 +827,7 @@ namespace neko::ui::page {
         devEnableCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devEnable, "Enable dev"));
         devDebugCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devDebug, "Debug"));
         devLogViewerCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devShowLogViewer, "Show log viewer on exit"));
+        devMusicControlCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devShowMusicControl, "Show music control"));
         devTlsCheck->setText(tr(lang::keys::setting::category, lang::keys::setting::devTls, "TLS"));
         if (auto *label = devGroup->findChild<QLabel *>(QStringLiteral("devServerLabel"))) {
             label->setText(tr(lang::keys::setting::category, lang::keys::setting::devServer, "Server"));
@@ -927,7 +937,7 @@ namespace neko::ui::page {
                                        .arg(theme.colors.surface.data())
                                        .arg(theme.colors.accent.data())
                                        .arg(theme.colors.focus.data());
-        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {
+        for (auto *c : {proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devMusicControlCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {
             c->setStyleSheet(checkStyle);
         }
 
@@ -978,7 +988,7 @@ namespace neko::ui::page {
         for (auto w : std::initializer_list<QWidget *>{backgroundTypeCombo, blurEffectCombo, animationCombo, launcherMethodCombo, blurRadiusSlider, fontPointSizeSpin, threadSpin}) {
             w->setFont(text);
         }
-        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {
+        for (auto c : std::initializer_list<QWidget *>{proxyCheck, devEnableCheck, devDebugCheck, devLogViewerCheck, devMusicControlCheck, devServerCheck, devTlsCheck, immediateSaveCheck}) {
             c->setFont(text);
         }
         for (auto w : std::initializer_list<QWidget *>{customTempDirEdit, customTempDirBrowseBtn, closeTabButton, proxyEdit, javaPathEdit, downloadSourceCombo, customResolutionEdit, joinServerAddressEdit, joinServerPortSpin, javaPathBrowseBtn, themeCombo}) {
@@ -1126,6 +1136,7 @@ namespace neko::ui::page {
         devEnableCheck->setChecked(cfg.dev.enable);
         devDebugCheck->setChecked(cfg.dev.debug);
         devLogViewerCheck->setChecked(cfg.dev.showLogViewer);
+        devMusicControlCheck->setChecked(cfg.dev.showMusicControl);
         const bool useDefaultDevServer = (cfg.dev.server == neko::strview("auto"));
         devServerCheck->setChecked(useDefaultDevServer);
         devServerEdit->setText(useDefaultDevServer ? QString() : QString::fromStdString(cfg.dev.server));
@@ -1221,6 +1232,7 @@ namespace neko::ui::page {
 
         cfg.dev.debug = devDebugCheck->isChecked();
         cfg.dev.showLogViewer = devLogViewerCheck->isChecked();
+        cfg.dev.showMusicControl = devMusicControlCheck->isChecked();
         std::string serverVal;
         if (devServerCheck->isChecked()) {
             serverVal = "auto";

@@ -4,13 +4,16 @@
 #include "neko/app/app.hpp"
 #include "neko/app/appinfo.hpp"
 #include "neko/app/appinit.hpp"
+#include "neko/app/lang.hpp"
 
 #include "neko/bus/configBus.hpp"
 #include "neko/bus/eventBus.hpp"
 #include "neko/event/eventTypes.hpp"
 
+#include "neko/core/bgm.hpp"
 #include "neko/core/crashReporter.hpp"
 #include "neko/core/install.hpp"
+#include "neko/core/logFileWatcher.hpp"
 #include "neko/core/news.hpp"
 #include "neko/core/remoteConfig.hpp"
 #include "neko/core/update.hpp"
@@ -29,31 +32,51 @@
 
 using namespace neko;
 
-int main(int argc, char *argv[]) {
-    try {
+namespace {
+    // Store the last network error reason for re-displaying dialog after settings
+    std::string lastNetworkErrorReason;
+    
+    // Flag to track if we're in network error recovery mode
+    bool networkErrorRecoveryMode = false;
 
-        // Initialize Application
-        QApplication qtApp(argc, argv);
-        auto networkReady = app::init::initialize();
-        auto runingInfo = app::run();
+    /**
+     * @brief Show network error dialog with options to retry or go to settings.
+     * @param reason The error message to display.
+     */
+    void showNetworkErrorDialog(const std::string &reason) {
+        // Store reason for later use when returning from settings
+        lastNetworkErrorReason = reason;
+        networkErrorRecoveryMode = true;
+        
+        neko::ui::NoticeMsg notice;
+        notice.title = lang::tr(lang::keys::error::category, lang::keys::error::networkInitFailed, "Network Initialization Failed");
+        notice.message = reason + "\n\n" + 
+            lang::tr(lang::keys::error::category, lang::keys::error::networkInitFailedMessage, 
+                     "Please check your network connection or proxy settings.");
+        notice.buttonText = {
+            lang::tr(lang::keys::network::category, lang::keys::network::goToSettings, "Go to Settings"),
+            lang::tr(lang::keys::button::category, lang::keys::button::retry, "Retry")
+        };
+        notice.callback = [](neko::uint32 buttonIndex) {
+            if (buttonIndex == 0) {
+                // Go to settings page - publish event so we know to return to network error flow
+                bus::event::publish(event::NetworkSettingsRequestedEvent{});
+                bus::event::publish(event::CurrentPageChangeEvent{.page = ui::Page::setting});
+            } else {
+                // Retry network initialization
+                networkErrorRecoveryMode = false;
+                bus::event::publish(event::NetworkRetryRequestEvent{});
+            }
+        };
+        bus::event::publish(event::ShowNoticeEvent(notice));
+    }
 
-        log::info("main: app::run complete");
-
-        auto cfg = bus::config::getClientConfig();
-        log::info("main: config loaded");
-        auto themeOpt = ui::themeio::loadThemeByName(cfg.style.theme, lc::ThemeFolderName.data());
-        log::info("main: theme loaded {}", {}, cfg.style.theme);
-        ui::setCurrentTheme(themeOpt.value_or(ui::lightTheme));
-        log::info("main: creating NekoWindow");
-        ui::window::NekoWindow window(cfg);
-        log::info("main: NekoWindow constructed");
-        ui::UiEventDispatcher::setNekoWindow(&window);
-        window.show();
-        log::info("main: window shown");
-
-        bus::thread::submit([&networkReady]() {
+    /**
+     * @brief Execute post-network initialization tasks (auto-install, update, news).
+     */
+    void executePostNetworkTasks() {
+        bus::thread::submit([]() {
             try {
-                networkReady.get();
                 const bool installed = core::install::autoInstall();
                 if (!installed) {
                     core::update::autoUpdate();
@@ -122,8 +145,141 @@ int main(int argc, char *argv[]) {
                 log::error(reason);
                 bus::event::publish(event::UpdateFailedEvent{.reason = reason});
                 bus::event::publish(event::CurrentPageChangeEvent{
-                .page = ui::Page::home});
+                    .page = ui::Page::home});
             }
+        });
+    }
+
+    /**
+     * @brief Handle network initialization completion.
+     * Checks if hosts are available and shows error dialog if not.
+     * @param networkReady The future from network initialization.
+     */
+    void handleNetworkInitCompletion(std::future<void> &networkReady) {
+        try {
+            networkReady.get();
+            
+            // Check if we have available hosts
+            auto status = app::init::checkNetworkStatus();
+            if (!status.success) {
+                log::warn("Network initialization completed but no hosts available");
+                bus::event::publish(event::NetworkInitFailedEvent{
+                    .reason = status.errorMessage,
+                    .allowRetry = true
+                });
+                return;
+            }
+            
+            // Network is ready, proceed with post-network tasks
+            executePostNetworkTasks();
+            
+        } catch (const ex::Exception &e) {
+            log::error("Network initialization failed: {}", {}, e.what());
+            bus::event::publish(event::NetworkInitFailedEvent{
+                .reason = e.what(),
+                .allowRetry = true
+            });
+        } catch (const std::exception &e) {
+            log::error("Network initialization failed (std): {}", {}, e.what());
+            bus::event::publish(event::NetworkInitFailedEvent{
+                .reason = e.what(),
+                .allowRetry = true
+            });
+        }
+    }
+
+    /**
+     * @brief Subscribe to network-related events.
+     */
+    void subscribeToNetworkEvents() {
+        // Handle network initialization failure
+        bus::event::subscribe<event::NetworkInitFailedEvent>([](const event::NetworkInitFailedEvent &e) {
+            log::info("NetworkInitFailedEvent received: {}", {}, e.reason);
+            showNetworkErrorDialog(e.reason);
+        });
+
+        // Handle network retry request
+        bus::event::subscribe<event::NetworkRetryRequestEvent>([](const event::NetworkRetryRequestEvent &) {
+            log::info("NetworkRetryRequestEvent received, retrying network initialization...");
+            
+            // Clear recovery mode
+            networkErrorRecoveryMode = false;
+            
+            // Show loading status
+            bus::event::publish(event::ShowLoadingEvent(neko::ui::LoadingMsg{
+                .type = neko::ui::LoadingMsg::Type::OnlyRaw,
+                .process = lang::tr(lang::keys::network::category, lang::keys::network::retrying, "Retrying connection...")
+            }));
+            bus::event::publish(event::CurrentPageChangeEvent{.page = ui::Page::loading});
+            
+            // Retry network initialization in background thread
+            bus::thread::submit([]() {
+                auto retryFuture = app::init::retryNetworkInit();
+                handleNetworkInitCompletion(retryFuture);
+            });
+        });
+
+        // Handle when user closes settings page after network error
+        bus::event::subscribe<event::NetworkSettingsClosedEvent>([](const event::NetworkSettingsClosedEvent &) {
+            log::info("NetworkSettingsClosedEvent received, networkErrorRecoveryMode={}", {}, networkErrorRecoveryMode ? "true" : "false");
+            if (networkErrorRecoveryMode && !lastNetworkErrorReason.empty()) {
+                // Switch back to loading page and show error dialog again
+                bus::event::publish(event::CurrentPageChangeEvent{.page = ui::Page::loading});
+                showNetworkErrorDialog(lastNetworkErrorReason);
+            } else {
+                // Normal close - go to home page
+                bus::event::publish(event::CurrentPageChangeEvent{.page = ui::Page::home});
+            }
+        });
+    }
+} // anonymous namespace
+
+int main(int argc, char *argv[]) {
+    try {
+
+        // Initialize Application
+        QApplication qtApp(argc, argv);
+        auto networkReady = app::init::initialize();
+        auto runingInfo = app::run();
+
+        log::info("main: app::run complete");
+
+        auto cfg = bus::config::getClientConfig();
+        log::info("main: config loaded");
+        auto themeOpt = ui::themeio::loadThemeByName(cfg.style.theme, lc::ThemeFolderName.data());
+        log::info("main: theme loaded {}", {}, cfg.style.theme);
+        ui::setCurrentTheme(themeOpt.value_or(ui::lightTheme));
+        log::info("main: creating NekoWindow");
+        ui::window::NekoWindow window(cfg);
+        log::info("main: NekoWindow constructed");
+        ui::UiEventDispatcher::setNekoWindow(&window);
+        window.show();
+        log::info("main: window shown");
+
+        // Initialize BGM system from JSON config
+        {
+            std::string bgmConfigPath = system::workPath() + "/bgm.json";
+            try {
+                core::BgmConfig bgmConfig = core::loadBgmConfigFromJson(bgmConfigPath);
+                // Override enabled and volume from client config
+                bgmConfig.enabled = cfg.other.bgmEnabled;
+                bgmConfig.masterVolume = cfg.other.bgmVolume;
+                core::getBgmManager().initialize(bgmConfig);
+                core::subscribeBgmToProcessEvents();
+                // Subscribe LogFileWatcher to start watching Minecraft logs when game launches
+                core::subscribeLogWatcherToProcessEvents();
+                log::info("main: BGM system initialized from {}", {}, bgmConfigPath);
+            } catch (const std::exception &e) {
+                log::warn("main: Failed to load BGM config, BGM disabled: {}", {}, e.what());
+            }
+        }
+
+        // Subscribe to network events before handling network initialization
+        subscribeToNetworkEvents();
+
+        // Handle network initialization in background thread
+        bus::thread::submit([networkReady = std::move(networkReady)]() mutable {
+            handleNetworkInitCompletion(networkReady);
         });
 
         // Start Qt event loop

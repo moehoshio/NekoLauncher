@@ -257,6 +257,19 @@ namespace neko::app::init {
         lang::language(cfg.main.lang);
     }
 
+    /**
+     * @brief Structure containing network initialization result.
+     */
+    struct NetworkInitResult {
+        bool success = false;
+        std::string errorMessage;
+        std::vector<std::string> availableHosts;
+    };
+
+    /**
+     * @brief Initialize the network and test available hosts.
+     * @return A future that resolves to NetworkInitResult.
+     */
     inline auto initNetwork() {
 
         auto cfg = bus::config::getClientConfig();
@@ -315,6 +328,35 @@ namespace neko::app::init {
         
         auto result = bus::thread::submitWithPriority(Priority::Critical,network::initialize,init);
         return result;
+    }
+
+    /**
+     * @brief Check if network has available hosts after initialization.
+     * @return NetworkInitResult with success status and available hosts.
+     */
+    inline NetworkInitResult checkNetworkStatus() {
+        NetworkInitResult result;
+        const auto &netConfig = network::config::globalConfig;
+        const auto host = netConfig.getAvailableHost();
+        result.success = !host.empty();
+        if (result.success) {
+            result.availableHosts.push_back(host);
+        } else {
+            result.errorMessage = "No available hosts found. Please check your network or proxy settings.";
+        }
+        return result;
+    }
+
+    /**
+     * @brief Re-initialize network configuration and test hosts again.
+     * Call this after user changes proxy settings.
+     * @return A future that resolves when network re-initialization is complete.
+     */
+    inline auto retryNetworkInit() {
+        log::info("Network retry requested, re-initializing...");
+        // Clear existing available hosts before retry
+        network::config::globalConfig.clearAvailableHost();
+        return initNetwork();
     }
 
     /**
