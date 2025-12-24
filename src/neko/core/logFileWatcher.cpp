@@ -74,6 +74,8 @@ namespace neko::core {
                     line.pop_back();
                 }
 
+                log::debug("LogFileWatcher read line: {}", {}, line);
+
                 // Publish event for BGM system
                 bus::event::publish(event::LogFileLineEvent{.line = line, .source = logFilePath});
 
@@ -197,6 +199,7 @@ namespace neko::core {
             }
 
             if (!logPath.empty()) {
+                log::info("LogFileWatcher starting to watch: {}", {}, logPath.string());
                 getLogFileWatcher().start(logPath.string(), true);
             }
         });

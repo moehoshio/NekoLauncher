@@ -213,11 +213,13 @@ namespace neko::core {
             return;
         }
 
+        log::debug("BGM processOutput: {}", {}, outputLine);
+
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
         for (const auto &[regex, trigger] : pImpl->compiledTriggers) {
             if (std::regex_search(outputLine, regex)) {
-                log::debug("BGM trigger matched: '{}' for pattern '{}'", {}, trigger.name, trigger.pattern);
+                log::info("BGM trigger matched: '{}' for pattern '{}'", {}, trigger.name, trigger.pattern);
 
                 // Handle stop trigger (empty musicPath)
                 if (trigger.musicPath.empty()) {
